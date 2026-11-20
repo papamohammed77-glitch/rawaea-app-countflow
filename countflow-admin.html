@@ -462,6 +462,7 @@
   catch(err){return fail('تعذر تجهيز بيانات الاستيراد',err);}
   const expectedRows=normalized.filter(r=>r.expected_qty!=='');
   const locationRows=normalized.filter(r=>r.location_code!=='');
+  const costRows=normalized.filter(r=>[r.purchase_unit_cost,r.currency_code,r.purchase_unit,r.unit_factor_to_base,r.cost_source_type,r.cost_source_reference,r.cost_source_date].some(v=>v!==null&&v!==''));
   const projectId=state.project.id;
   const sessionId=$('productImportSession').value||null;
   const session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
@@ -472,6 +473,7 @@
    const missingLocation=expectedRows.find(r=>!r.location_code);
    if(missingLocation)return notify('الصف '+missingLocation._row_number+' يحتوي كمية دفترية دون كود موقع. أكمل الموقع أو أزل الكمية من هذا الصف.',true);
   }
+  if(costRows.length&&!sessionId)return notify('بيانات تكلفة الشراء تُحفظ كلقطة مرتبطة بجلسة؛ اختر جلسة أو أزل أعمدة التكلفة من الملف.',true);
   if(sessionId&&!session)return notify('جلسة الربط لم تعد ضمن قائمة الجلسات المتاحة. حدّث البيانات.',true);
   if(session&&!['planned','active','paused','review'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
   const file=$('productImportFile').files[0];if(!file)return notify('أعد اختيار ملف الاستيراد.',true);
