@@ -268,7 +268,7 @@
  function renderProductImportSessions(){
   const select=$('productImportSession');if(!select)return;
   const keep=select.value;
-  const eligible=(state.sessions||[]).filter(s=>['planned','active','paused'].includes(s.status));
+  const eligible=(state.sessions||[]).filter(s=>['planned','active','paused','review'].includes(s.status));
   select.innerHTML='<option value="">كتالوج فقط</option>'+eligible.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.status)+'</option>').join('');
   if(eligible.some(s=>s.id===keep))select.value=keep;
  }
@@ -460,14 +460,20 @@
   let normalized;
   try{normalized=state.productImportRows.map((r,i)=>normalizeProductImportRow(r,i));}
   catch(err){return fail('تعذر تجهيز بيانات الاستيراد',err);}
-  if(normalized.some(r=>r.expected_qty!==''||r.location_code!=='')){
-   if(!$('productImportSession').value)return notify('اختر جلسة جرد عند استيراد كميات دفترية أو مواقع؛ وإلا استورد الكتالوج فقط.',true);
-  }
+  const expectedRows=normalized.filter(r=>r.expected_qty!=='');
+  const locationRows=normalized.filter(r=>r.location_code!=='');
   const projectId=state.project.id;
   const sessionId=$('productImportSession').value||null;
   const session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
+  if(locationRows.length&&!sessionId)return notify('اختر جلسة جرد عند ربط الأصناف بمواقع؛ وإلا استورد الكتالوج فقط.',true);
+  if(expectedRows.length){
+   if(!sessionId)return notify('استيراد الكميات الدفترية يتطلب جلسة جرد محددة.',true);
+   if(!state.productImportMapping.location_code)return notify('اربط عمود كود الموقع؛ قاعدة CountFlow لا تنشئ رصيداً مرجعياً بلا موقع.',true);
+   const missingLocation=expectedRows.find(r=>!r.location_code);
+   if(missingLocation)return notify('الصف '+missingLocation._row_number+' يحتوي كمية دفترية دون كود موقع. أكمل الموقع أو أزل الكمية من هذا الصف.',true);
+  }
   if(sessionId&&!session)return notify('جلسة الربط لم تعد ضمن قائمة الجلسات المتاحة. حدّث البيانات.',true);
-  if(session&&!['planned','active','paused'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
+  if(session&&!['planned','active','paused','review'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
   const file=$('productImportFile').files[0];if(!file)return notify('أعد اختيار ملف الاستيراد.',true);
   const btn=$('productImportCommitBtn');btn.disabled=true;const oldText=btn.textContent;btn.textContent='جار تجهيز الدفعة…';$('projectPicker').disabled=true;$('productImportFile').disabled=true;$('productImportSession').disabled=true;$('productImportPreviewBtn').disabled=true;$('productImportResetBtn').disabled=true;
   try{
@@ -485,7 +491,7 @@
    }
    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
    if(commitError)throw commitError;
-   const successMessage='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · رقم الدفعة '+batchId;
+   const successMessage='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · رقم الدفعة '+batchId;
    notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
    resetProductImport();$('productImportResult').textContent=successMessage;
    try{if(state.project?.id===projectId)await loadProjectData();}catch(reloadError){fail('تم اعتماد الاستيراد لكن تعذر تحديث عرض الكتالوج',reloadError);await loadProductImportHistory();}
@@ -499,7 +505,7 @@
   if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
   if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
-  $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
+  $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
   $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
  }
  async function showProductImportDetails(batchId){
