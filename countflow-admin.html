@@ -247,7 +247,7 @@
   const keep=state.project&&state.projects.some(p=>p.id===state.project.id)?state.project.id:state.projects[0].id;
   $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
  }
- function clearProjectViews(){state.products=[];state.members=[];state.locations=[];state.sessions=[];state.productPage=1;['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
+ function clearProjectViews(){state.products=[];state.members=[];state.locations=[];state.sessions=[];state.productPage=1;state.productImportRows=[];state.productImportMapping={};state.productImportMappingId=null;if($('productImportHistory'))$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';if($('productImportDetails'))$('productImportDetails').innerHTML='';['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
  function statusPill(s){const cls=['active','ready','completed'].includes(s)?'ok':['paused','review','planned','draft'].includes(s)?'warn':['closed','archived','cancelled','removed'].includes(s)?'off':'';return '<span class="pill '+cls+'">'+esc(s)+'</span>';}
  function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—';}
  async function loadProjectData(){
@@ -424,7 +424,7 @@
    const raw=units.trim();
    if(!raw)units=[];
    else{try{units=JSON.parse(raw);if(!Array.isArray(units))throw new Error('صيغة الوحدات يجب أن تكون مصفوفة JSON.');}
-    catch(e){throw new Error('قيمة الوحدات في صف '+(index+2)+' ليست JSON صالحاً. استخدم مصفوفة JSON لتعريف معاملات التحويل.');}}
+    catch(e){units=raw.split('|').map(v=>v.trim()).filter(Boolean);}}
   }
   if(!Array.isArray(units))throw new Error('صيغة الوحدات غير صحيحة في الصف '+(index+2)+'.');
   const value=key=>String(productImportValue(row,key)??'').trim();
@@ -439,7 +439,8 @@
  async function previewProductImport(){
   const file=$('productImportFile').files[0];if(!file)return notify('اختر ملف Excel أو CSV أولاً.',true);
   if(!state.project)return notify('اختر تكليفاً أولاً.',true);
-  $('productImportPreviewBtn').disabled=true;$('productImportCommitBtn').disabled=true;$('productImportResult').textContent='جار قراءة الملف والتحقق من بنيته…';
+  const projectId=state.project.id;
+  $('productImportPreviewBtn').disabled=true;$('productImportCommitBtn').disabled=true;$('projectPicker').disabled=true;$('productImportFile').disabled=true;$('productImportSession').disabled=true;$('productImportResetBtn').disabled=true;$('productImportResult').textContent='جار قراءة الملف والتحقق من بنيته…';
   try{
    const rows=await parseProductImportFile(file);
    const clean=(rows||[]).filter(r=>r&&Object.keys(r).some(k=>String(r[k]??'').trim()!==''));
@@ -450,7 +451,7 @@
    await renderProductImportMapping();renderProductImportPreview();
    $('productImportResult').textContent='تمت قراءة الملف محلياً. راجع مطابقة الأعمدة والعينة ثم اعتمد الدفعة لإجراء الفحص والحفظ من خلال خادم CountFlow.';
   }catch(err){state.productImportRows=[];$('productImportPreview').textContent='';$('productImportCommitBtn').disabled=true;fail('تعذر معاينة ملف الأصناف',err);}
-  finally{$('productImportPreviewBtn').disabled=false;}
+  finally{$('productImportPreviewBtn').disabled=false;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportResetBtn').disabled=false;}
  }
  async function commitProductImport(){
   if(!state.project||!state.productImportRows.length)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
@@ -462,17 +463,18 @@
   if(normalized.some(r=>r.expected_qty!==''||r.location_code!=='')){
    if(!$('productImportSession').value)return notify('اختر جلسة جرد عند استيراد كميات دفترية أو مواقع؛ وإلا استورد الكتالوج فقط.',true);
   }
+  const projectId=state.project.id;
   const sessionId=$('productImportSession').value||null;
   const session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
   if(sessionId&&!session)return notify('جلسة الربط لم تعد ضمن قائمة الجلسات المتاحة. حدّث البيانات.',true);
   if(session&&!['planned','active','paused'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
   const file=$('productImportFile').files[0];if(!file)return notify('أعد اختيار ملف الاستيراد.',true);
-  const btn=$('productImportCommitBtn');btn.disabled=true;const oldText=btn.textContent;btn.textContent='جار تجهيز الدفعة…';
+  const btn=$('productImportCommitBtn');btn.disabled=true;const oldText=btn.textContent;btn.textContent='جار تجهيز الدفعة…';$('projectPicker').disabled=true;$('productImportFile').disabled=true;$('productImportSession').disabled=true;$('productImportPreviewBtn').disabled=true;$('productImportResetBtn').disabled=true;
   try{
    const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),checksum=[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
-   const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{p_project_id:state.project.id,p_session_id:sessionId,p_source_name:file.name,p_source_format:state.productImportSourceFormat,p_source_checksum:checksum});
+   const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{p_project_id:projectId,p_session_id:sessionId,p_source_name:file.name,p_source_format:state.productImportSourceFormat,p_source_checksum:checksum});
    if(createError)throw createError;
-   const {error:mappingError}=await db.from('count_import_batches').update({mapping_id:state.productImportMappingId,metadata:{column_mapping:state.productImportMapping,headers:Object.keys(state.productImportRows[0]||{}),import_surface:'countflow-admin'}}).eq('id',batchId).eq('project_id',state.project.id);
+   const {error:mappingError}=await db.from('count_import_batches').update({mapping_id:state.productImportMappingId,metadata:{column_mapping:state.productImportMapping,headers:Object.keys(state.productImportRows[0]||{}),import_surface:'countflow-admin'}}).eq('id',batchId).eq('project_id',projectId);
    if(mappingError)throw mappingError;
    let stagedAccepted=0,stagedRejected=0;
    for(let i=0;i<normalized.length;i+=1000){
@@ -483,15 +485,17 @@
    }
    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
    if(commitError)throw commitError;
-   $('productImportResult').textContent='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows||0)+' · مرفوض '+Number(committed?.rejected_rows||0)+' · تنبيهات '+Number(committed?.warning_rows||0)+' · رقم الدفعة '+batchId;
+   const successMessage='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · رقم الدفعة '+batchId;
    notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
-   resetProductImport();await loadProjectData();
+   resetProductImport();$('productImportResult').textContent=successMessage;
+   try{if(state.project?.id===projectId)await loadProjectData();}catch(reloadError){fail('تم اعتماد الاستيراد لكن تعذر تحديث عرض الكتالوج',reloadError);await loadProductImportHistory();}
   }catch(err){
    $('productImportResult').textContent='لم يكتمل اعتماد الدفعة. بقي سجلها متاحاً للمراجعة؛ لم يتم تجاوز فحص الخادم. '+(err.message||String(err));
    fail('فشل استيراد الأصناف',err);await loadProductImportHistory();
-  }finally{btn.disabled=!state.productImportRows.length;btn.textContent=oldText;}
+  }finally{btn.disabled=!state.productImportRows.length;btn.textContent=oldText;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportPreviewBtn').disabled=false;$('productImportResetBtn').disabled=false;}
  }
  async function loadProductImportHistory(){
+  $('productImportDetails').innerHTML='';
   if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
   if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
@@ -842,7 +846,7 @@
   state.project=null;state.selectedSession=null;await loadProjects();state.project=state.projects.find(p=>p.id===projectId)||state.project;
   $('projectPicker').value=state.project?.id||'';await loadProjectData();await loadGlobalOperations();await selectOperation(sessionId);
  }catch(err){fail('تعذر إنشاء التكليف والعملية',err);}finally{setBusy(f,false);}});
- $('projectPicker').addEventListener('change',async()=>{state.project=state.projects.find(p=>p.id===$('projectPicker').value)||null;try{await loadProjectData();}catch(e){fail('تعذر تحميل المشروع',e);}});
+ $('projectPicker').addEventListener('change',async()=>{resetProductImport();$('productImportDetails').innerHTML='';state.project=state.projects.find(p=>p.id===$('projectPicker').value)||null;try{await loadProjectData();}catch(e){fail('تعذر تحميل المشروع',e);}});
  $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.project)return notify('سجّل تكليفاً أولاً',true);const f=e.currentTarget;setBusy(f,true);try{
   const id=$('productId').value,sku=$('sku').value.trim()||null,barcode=$('barcode').value.trim()||null,name=$('productName').value.trim()||null,baseUnit=$('baseUnit').value.trim();
   if(!sku&&!barcode)throw new Error('أدخل SKU أو الباركود على الأقل لتعريف الصنف');
