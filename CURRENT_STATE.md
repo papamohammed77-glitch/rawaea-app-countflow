@@ -671,3 +671,66 @@ The permanent constitution §6.4 names SMART ERP Production as the sole executio
 No SMART ERP stock, treasury, journal, supplier/customer ledger or custody data was changed. No CountFlow migration, ACL, RLS, Edge Function or deployment was changed. The attempted 90k test has no PASS result and no persistent residue was observed.
 
 Next: obtain owner approval for the narrowly defined P0 security containment in SMART ERP and resolve the existing staging-governance conflict before further CountFlow write testing. Do not create accounts, commit QA data, deploy Pages, or broaden the schema.
+
+
+---
+
+## LVE-2026-11-21-748 — CountFlow master roles, users and Excel catalog import
+
+**Date:** 2026-11-21  
+**Status:** Source change committed; static verification PASS; database rollback checks PASS for the supported import paths; authenticated browser E2E and Cloudflare deployment verification remain OPEN.
+
+### Scope and isolation
+- CountFlow-only repository: `papamohammed77-glitch/rawaea-app-countflow`.
+- CountFlow database context: `rawaea-staging` / `hfzznsiprnwkpayskzhu`.
+- The only functional source file changed in this task is `countflow-admin.html`.
+- The reference `erp-frontend/companies/company-1/main.html` remained read-only and was not modified. The GitHub connector could not return its large file content for full review; do not claim the reference source was fully inspected. CountFlow's existing HTML/data model and its current database contracts were used instead.
+- No changes to SMART ERP / `fiilmooggumokxanwiyx`, legacy RAWAEA repository files, stock/treasury/accounting data, CountFlow schema, RLS, grants, migrations, Edge Functions, Supervisor app, Counter app, Core JS or Service Worker.
+
+### Source checkpoint — CONFIRMED
+- `countflow-admin.html` final blob: `884ada49d9cbb617d8f0b5917f2fde67875e0596`.
+- Functional source commit: `2e503f9b8945483337a60c88f1e562f3d7e85ec9`.
+- Execution report: `FINAL_EXECUTION_REPORT_LVE-748.md`; report commit `0f170ccf55012d93dd80bdda3db134109e8ad683`.
+- No other application source was changed for LVE-748.
+
+### Implemented in the CountFlow master
+1. **User-role management tab:** new `roles` tab with role descriptions and a project-scoped membership roster, searching and actual role assignment changes.
+2. **Role model constraint retained:** only `supervisor`, `counter`, and `auditor` are accepted by the live `count_members.role` CHECK constraint and consumed by the current apps/RLS. No custom roles or client-only permission switches were invented. Changing roles is membership-scoped, not a global Auth role change.
+3. **Users tab expanded:** existing account/member provisioning still goes through the existing JWT-protected `counting-provision-member` Edge Function. Added membership pause/resume actions (`active` / `paused`) without deleting the Auth identity or other project memberships. The current account is blocked from self-role-change/self-pause in the UI; the UI also guards against demoting or pausing the last active supervisor.
+4. **Products tab expanded:** XLSX/XLS/CSV parsing, first-sheet/headers preview, automatic and manual column matching, saved mapping templates, batch import via existing RPCs in chunks of 1,000, batch history and rejection/warning details. Product table is paginated 100 rows at a time; product retrieval is paginated from PostgREST with a 200,000 row operational cap.
+5. **Import invariants enforced in the UI:** catalog-only import remains available when no session-bound fields are present. Expected quantities require a session and a valid location code; the import database routine only creates expected-balance rows where a location resolves. Location-scoped rows require a session. Purchase-cost metadata requires a session because costs are snapshots stored at session scope, not master product attributes.
+6. No direct import writes to `count_import_rows`; staging and commit use the existing server-side RPC contract `count_create_import_batch`, `count_stage_import_rows`, and `count_commit_import_batch`.
+
+### Verification — PASS / UNKNOWN
+**Static PASS**
+- Extracted inline JavaScript parses successfully.
+- All ten admin navigation tabs have matching sections.
+- No duplicate HTML IDs.
+- Presence of the role assignment, pause/resume, XLSX parser, import RPC pipeline, session/location/cost preflight and product pagination was verified from the final GitHub blob.
+
+**Rollback integration checks — PASS for the tested paths**
+- Catalog-only synthetic import completed inside a transaction ending in `ROLLBACK`, without creating a business balance.
+- Session + synthetic location + expected quantity import completed inside a transaction ending in `ROLLBACK`; the import returned one accepted row and the expected balance was found with the correct project/session/product/location/quantity.
+- An earlier test of expected quantity without a location demonstrated that the server does not create an expected-balance row without a resolved location. The UI now prevents this incomplete input from being committed.
+- A read-only post-test residue query returned zero rows in: `count_projects`, `count_members`, `count_products`, `count_sessions`, `count_locations`, `count_import_batches`, `count_import_rows`, `count_expected_balances`, `count_session_product_costs`, and `count_entries`. No synthetic business data remains.
+
+**Identity — CONFIRMED**
+- In the CountFlow project only, `owner@rawaea.com` now exists in Supabase Auth with `email_confirmed_at` populated. This updates the older LVE-747 observation, which preceded the owner's account creation.
+- No CountFlow projects or memberships currently exist; the master roster will remain empty until a real project and memberships are created by the owner.
+
+**Not verified**
+- Browser-based signed-in E2E for role changes, membership lifecycle, workbook parsing and batch import.
+- Actual Excel/CSV file selected through the page and opened/round-tripped in a browser.
+- 90,000-row load/performance regression. The UI currently caps a file at 90,000 rows; this is not proof that a 90k test passed.
+- Cloudflare Pages deployment of this commit and behavior on the published origin. Deployment status remains UNKNOWN.
+- User-facing responsive/mobile and multi-account checks.
+
+### Governance hold from LVE-747 — MUST PRESERVE
+LVE-747 records a conflict between the standing operational constitution's database restriction and the newer daily QA protocol, and directs that no further CountFlow write tests or deployment against `rawaea-staging` occur until the owner explicitly resolves the conflict. The transient rollback-only SQL checks recorded above were performed before this prior hold was read; this is documented transparently in `FINAL_EXECUTION_REPORT_LVE-748.md`. The post-test residue check found no persistent test rows. **Do not run additional write tests or deploy this source until the owner explicitly resolves the LVE-747 governance hold.** Read-only verification and source review may continue.
+
+### Mandatory successor instructions
+- Resume from this LVE-748 checkpoint and inspect the current GitHub HEAD before editing; do not recreate the app or duplicate tabs.
+- Keep all work in `rawaea-app-countflow` and `rawaea-staging` only when the governance hold has been expressly resolved. Never edit the legacy reference repository or SMART ERP.
+- Do not add custom roles until the role model, all affected RLS policies and all three applications have been designed and validated together.
+- Once the owner resolves the governance hold, proceed with narrow authenticated browser E2E and a small synthetic workbook first; do not assume Cloudflare deployed automatically.
+- Use `FINAL_EXECUTION_REPORT_LVE-748.md` as the detailed evidence and handoff; preserve PASS / UNKNOWN / OPEN labels and do not mark deployment or 90k load verification as passed without evidence.
