@@ -36,6 +36,7 @@
     <button class="nav" data-tab="projects">مشاريع الجرد</button>
     <button class="nav" data-tab="products">الأصناف</button>
     <button class="nav" data-tab="members">المستخدمون</button>
+    <button class="nav" data-tab="roles">إدارة أدوار المستخدمين</button>
     <button class="nav" data-tab="operations">عمليات الجرد القائمة</button>
     <button class="nav" data-tab="locations">المواقع</button>
     <button class="nav" data-tab="sessions">جلسات الجرد</button>
@@ -77,6 +78,20 @@
     </section>
     <section id="tab-products" class="section">
      <div class="headrow"><h2>كتالوج الأصناف</h2><span class="pill" id="productCount">0 صنف</span></div>
+     <div class="panel">
+      <h3>استيراد الأصناف من Excel / CSV</h3>
+      <p class="hint">ارفع ملف XLSX أو XLS أو CSV، ثم طابق الأعمدة وراجع عينة السجلات قبل الاعتماد. يُنفذ الاستيراد عبر دفعات CountFlow المعتمدة، ولا ينشئ حركة مخزون. اختر «كتالوج فقط» عند استيراد بيانات التعريف دون رصيد مرجعي.</p>
+      <div class="fields">
+       <div class="field"><label for="productImportFile">ملف الأصناف</label><input id="productImportFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"></div>
+       <div class="field"><label for="productImportSession">جلسة ربط الكميات والمواقع المرجعية (اختياري)</label><select id="productImportSession"><option value="">كتالوج فقط</option></select></div>
+      </div>
+      <div class="actions"><button id="productImportPreviewBtn" type="button" class="soft">قراءة الملف ومعاينة الأعمدة</button><button id="productImportCommitBtn" type="button" class="primary" disabled>اعتماد الاستيراد</button><button id="productImportResetBtn" type="button" class="soft">إلغاء الملف الحالي</button></div>
+      <div id="productImportMapping" class="hidden" style="margin-top:12px"></div>
+      <div id="productImportPreview" class="hint" style="margin-top:12px"></div>
+      <div id="productImportResult" class="hint" style="margin-top:10px"></div>
+      <div id="productImportHistory" class="tablewrap" style="margin-top:14px"><div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div></div>
+      <div id="productImportDetails" class="tablewrap" style="margin-top:10px"></div>
+     </div>
      <div class="split">
       <div class="panel"><h3 id="productFormTitle">إضافة صنف</h3><form id="productForm"><input id="productId" type="hidden"><div class="fields">
        <div class="field"><label>كود الصنف SKU (اختياري عند إدخال الباركود)</label><input id="sku" maxlength="100" placeholder="يمكن تركه فارغاً"></div><div class="field"><label>الباركود</label><input id="barcode" maxlength="120"></div>
@@ -84,7 +99,24 @@
        <div class="field"><label>التصنيف</label><input id="category" maxlength="120"></div><div class="field"><label>وحدة القياس الأساسية</label><input id="baseUnit" required maxlength="40" placeholder="مثال: قطعة، كرتونة"></div>
        <div class="field"><label>الكمية الدفترية المرجعية (اختياري)</label><input id="expectedQty" type="number" min="0" step="0.0001"></div><div class="field"><label>رابط صورة HTTPS (اختياري)</label><input id="imageUrl" type="url" placeholder="https://…"></div>
       </div><div class="actions"><button class="primary">حفظ الصنف</button><button type="button" id="productCancel" class="soft">إلغاء</button></div></form></div>
-      <div class="panel"><h3>الأصناف المسجلة</h3><div class="toolbar"><input id="productSearch" placeholder="بحث بالكود أو الاسم أو الباركود"></div><div id="productTable" class="tablewrap"><div class="empty">لا توجد أصناف بعد.</div></div></div>
+      <div class="panel"><h3>الأصناف المسجلة</h3><div class="toolbar"><input id="productSearch" placeholder="بحث بالكود أو الاسم أو الباركود"></div><div id="productTable" class="tablewrap"><div class="empty">لا توجد أصناف بعد.</div></div><div id="productPager" class="actions"></div></div>
+     </div>
+    </section>
+    <section id="tab-roles" class="section">
+     <div class="headrow"><h2>إدارة أدوار المستخدمين</h2><span class="pill">3 أدوار معتمدة</span></div>
+     <div class="panel">
+      <h3>الأدوار التشغيلية المعتمدة في CountFlow</h3>
+      <p class="hint">الأدوار التالية هي القيم الفعلية المسموح بها في قاعدة البيانات وسياسات RLS. هذه الشاشة تغيّر الدور المسند إلى عضوية تكليف محدد؛ ولا تنشئ أدواراً مخصصة أو صلاحيات شكلية لا تنفذها التطبيقات.</p>
+      <div class="tablewrap"><table><thead><tr><th>الدور</th><th>نطاق الاستخدام</th><th>حدود الصلاحية</th></tr></thead><tbody>
+       <tr><td><b>مشرف الجرد</b><span class="sub">supervisor</span></td><td>إدارة التكليف والفريق والهيكل المكاني والجلسات والاستيراد والإعدادات التشغيلية.</td><td>داخل التكليف الذي يحمل فيه عضوية مشرف نشطة، مع صلاحيات مالك المنصة وفق هوية Auth المؤكدة.</td></tr>
+       <tr><td><b>مندوب الجرد</b><span class="sub">counter</span></td><td>تطبيق العد الميداني وتسجيل نتائج المواقع المسندة.</td><td>مقيد بعضوية نشطة وإسناد الجلسة/الموقع واعتماد الجهاز وسياسات التسجيل.</td></tr>
+       <tr><td><b>مراجع / مدقق</b><span class="sub">auditor</span></td><td>دخول تطبيق CountFlow الميداني بحساب مراجع.</td><td>لا يمنحه هذا الدور وحده صلاحيات مشرف أو تجاوزاً لقواعد الإسناد وRLS.</td></tr>
+      </tbody></table></div>
+     </div>
+     <div class="panel">
+      <h3>توزيع الأدوار على عضويات التكليفات</h3>
+      <div class="toolbar"><input id="roleSearch" placeholder="بحث بالمستخدم أو التكليف أو الدور"></div>
+      <div id="roleTable" class="tablewrap"><div class="empty">جار تحميل عضويات CountFlow…</div></div>
      </div>
     </section>
     <section id="tab-members" class="section">
@@ -196,7 +228,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,operationImportRows:[],operationImportFormat:'csv',operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
  const fail=(label,error)=>{console.error(label,error);notify(label+': '+(error?.message||error||'خطأ غير معروف'),true)};
@@ -211,44 +243,272 @@
   $('projectPicker').innerHTML=state.projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
   $('projectList').innerHTML=state.projects.length?'<div class="tablewrap"><table><thead><tr><th>التكليف</th><th>الكود</th><th>الحالة</th><th>تاريخ الإنشاء</th></tr></thead><tbody>'+state.projects.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.code)+'</td><td>'+statusPill(p.status)+'</td><td>'+date(p.created_at)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد تكليفات مرتبطة بهذا الحساب. سجّل تكليفاً من النموذج.</div>';
   $('kProjects').textContent=state.projects.length;
-  if(!state.projects.length){state.project=null;$('projectPicker').innerHTML='<option value="">لا توجد جهة</option>';clearProjectViews();state.allMembers=[];state.allSessions=[];renderMembers();renderGlobalOperations();subscribeGlobalRealtime();return;}
+  if(!state.projects.length){state.project=null;$('projectPicker').innerHTML='<option value="">لا توجد جهة</option>';clearProjectViews();state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();subscribeGlobalRealtime();return;}
   const keep=state.project&&state.projects.some(p=>p.id===state.project.id)?state.project.id:state.projects[0].id;
   $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
  }
- function clearProjectViews(){state.products=[];state.members=[];state.locations=[];state.sessions=[];['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
+ function clearProjectViews(){state.products=[];state.members=[];state.locations=[];state.sessions=[];state.productPage=1;['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
  function statusPill(s){const cls=['active','ready','completed'].includes(s)?'ok':['paused','review','planned','draft'].includes(s)?'warn':['closed','archived','cancelled','removed'].includes(s)?'off':'';return '<span class="pill '+cls+'">'+esc(s)+'</span>';}
  function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—';}
  async function loadProjectData(){
   if(!state.project){clearProjectViews();return;}
   const pid=state.project.id;
   const [products,members,locations,sessions]=await Promise.all([
-   db.from('count_products').select('*').eq('project_id',pid).order('name').limit(1000),
+   loadProjectRows('count_products','*',pid,'name',500).then(data=>({data,error:null})),
    db.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(500),
    db.from('count_locations').select('*').eq('project_id',pid).order('sort_order').limit(2000),
    db.from('count_sessions').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
   ]);
   for(const [label,res] of [['الأصناف',products],['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
   state.products=products.data||[];state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
+  state.productPage=1;
   renderProject();
-  await loadAudit();
+  await Promise.all([loadAudit(),loadProductImportHistory()]);
+ }
+ function renderProductImportSessions(){
+  const select=$('productImportSession');if(!select)return;
+  const keep=select.value;
+  const eligible=(state.sessions||[]).filter(s=>['planned','active','paused'].includes(s.status));
+  select.innerHTML='<option value="">كتالوج فقط</option>'+eligible.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.status)+'</option>').join('');
+  if(eligible.some(s=>s.id===keep))select.value=keep;
  }
  function renderProject(){
   const p=state.project;$('welcomeTitle').textContent=p.name;$('projectSummary').innerHTML='<b>'+esc(p.name)+'</b><p class="muted">الكود: '+esc(p.code)+'</p><p>الحالة: '+statusPill(p.status)+'</p><p class="hint">تم الإنشاء '+date(p.created_at)+'</p>';
   $('kProducts').textContent=state.products.filter(x=>x.is_active).length;$('kMembers').textContent=state.members.filter(x=>x.status==='active').length;$('kSessions').textContent=state.sessions.length;
-  $('productCount').textContent=state.products.length+' صنف';renderProducts();renderMembers();renderLocations();renderSessions();renderRecent();
+  $('productCount').textContent=state.products.length+' صنف';renderProductImportSessions();renderProducts();renderMembers();renderRoles();renderLocations();renderSessions();renderRecent();
+ }
+ function loadProjectRows(table,columns,projectId,orderColumn,pageSize=500){
+  return (async()=>{const all=[];let offset=0;while(true){const {data,error}=await db.from(table).select(columns).eq('project_id',projectId).order(orderColumn,{ascending:true}).range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];all.push(...page);if(all.length>200000)throw new Error('تجاوز عدد سجلات '+table+' الحد التشغيلي الآمن 200,000 صف.');if(page.length<pageSize)break;offset+=pageSize;}return all;})();
  }
  function renderProducts(){
   const q=$('productSearch').value.trim().toLowerCase();const rows=state.products.filter(x=>[x.sku,x.barcode,x.name,x.category].some(v=>String(v||'').toLowerCase().includes(q)));
-  $('productTable').innerHTML=rows.length?'<table><thead><tr><th>الصنف</th><th>SKU / باركود</th><th>الوحدة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.name||'اسم غير متوفر')+'<span class="sub">'+esc(x.category||'بدون تصنيف')+'</span></td><td>'+esc(x.sku||x.barcode||'—')+'<span class="sub">'+esc(x.sku&&x.barcode?x.barcode:'')+'</span></td><td>'+esc(x.base_unit)+'</td><td>'+statusPill(x.is_active?'نشط':'موقوف')+'</td><td><button class="soft" data-edit-product="'+x.id+'">تعديل</button> <button class="'+(x.is_active?'danger':'soft')+'" data-toggle-product="'+x.id+'">'+(x.is_active?'إيقاف':'تفعيل')+'</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد نتائج مطابقة.</div>';
+  const pageSize=100,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));state.productPage=Math.min(Math.max(1,state.productPage),totalPages);
+  const page=rows.slice((state.productPage-1)*pageSize,state.productPage*pageSize);
+  $('productCount').textContent=rows.length+' من '+state.products.length+' صنف';
+  $('productTable').innerHTML=page.length?'<table><thead><tr><th>الصنف</th><th>SKU / باركود</th><th>الوحدة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+page.map(x=>'<tr><td>'+esc(x.name||'اسم غير متوفر')+'<span class="sub">'+esc(x.category||'بدون تصنيف')+'</span></td><td>'+esc(x.sku||x.barcode||'—')+'<span class="sub">'+esc(x.sku&&x.barcode?x.barcode:'')+'</span></td><td>'+esc(x.base_unit)+'</td><td>'+statusPill(x.is_active?'نشط':'موقوف')+'</td><td><button class="soft" data-edit-product="'+x.id+'">تعديل</button> <button class="'+(x.is_active?'danger':'soft')+'" data-toggle-product="'+x.id+'">'+(x.is_active?'إيقاف':'تفعيل')+'</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد نتائج مطابقة.</div>';
+  $('productPager').innerHTML=rows.length>pageSize?'<span class="hint">صفحة '+state.productPage+' من '+totalPages+' · '+rows.length+' نتيجة</span><button type="button" class="soft" data-product-page="'+Math.max(1,state.productPage-1)+'" '+(state.productPage===1?'disabled':'')+'>السابق</button><button type="button" class="soft" data-product-page="'+Math.min(totalPages,state.productPage+1)+'" '+(state.productPage===totalPages?'disabled':'')+'>التالي</button>':'';
   $('productTable').querySelectorAll('[data-edit-product]').forEach(b=>b.onclick=()=>editProduct(b.dataset.editProduct));
   $('productTable').querySelectorAll('[data-toggle-product]').forEach(b=>b.onclick=()=>toggleProduct(b.dataset.toggleProduct));
+  $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>{state.productPage=Number(b.dataset.productPage);renderProducts();});
  }
  function renderMembers(){
   const q=$('memberSearch').value.trim().toLowerCase();
   const rows=(state.allMembers||[]).filter(x=>{const p=state.projects.find(v=>v.id===x.project_id);return [x.display_name,x.username,x.role,p?.name].some(v=>String(v||'').toLowerCase().includes(q));});
-  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th></tr></thead><tbody>'+rows.map(x=>{const p=state.projects.find(v=>v.id===x.project_id);return '<tr><td>'+esc(x.display_name)+'<span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleName(x.role)+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا يوجد مستخدمون في جهات الجرد التي يديرها هذا الحساب.</div>';
+  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إجراء</th></tr></thead><tbody>'+rows.map(x=>{const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;return '<tr><td>'+esc(x.display_name)+'<span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleName(x.role)+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td>'+(canPause?'<button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':(self?'الحساب الحالي':'عضوية مسحوبة'))+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا يوجد مستخدمون في جهات الجرد التي يديرها هذا الحساب.</div>';
+  $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
  }
  function roleName(r){return ({supervisor:'مشرف الجرد',counter:'مسؤول جرد / مندوب عدّ',auditor:'مراجع / مدقق'})[r]||r;}
+ function renderRoles(){
+  const q=($('roleSearch')?.value||'').trim().toLowerCase();
+  const rows=(state.allMembers||[]).filter(m=>{const p=state.projects.find(v=>v.id===m.project_id);return [m.display_name,m.username,m.role,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));});
+  $('roleTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور الحالي</th><th>الدور الجديد</th><th>حالة العضوية</th><th>إجراء</th></tr></thead><tbody>'+rows.map(m=>{const p=state.projects.find(v=>v.id===m.project_id),self=state.user?.id===m.user_id;return '<tr><td><b>'+esc(m.display_name)+'</b><span class="sub">'+esc(m.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'<span class="sub">'+esc(p?.code||'')+'</span></td><td>'+roleName(m.role)+'</td><td><select id="roleSelect-'+m.id+'" data-role-select="'+m.id+'" '+(self?'disabled':'')+'><option value="counter" '+(m.role==='counter'?'selected':'')+'>مندوب الجرد</option><option value="auditor" '+(m.role==='auditor'?'selected':'')+'>مراجع / مدقق</option><option value="supervisor" '+(m.role==='supervisor'?'selected':'')+'>مشرف الجرد</option></select></td><td>'+statusPill(m.status)+'</td><td>'+(self?'لا يمكن تعديل دورك من هنا':'<button type="button" class="soft" data-save-role="'+m.id+'">حفظ الدور</button>')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات مطابقة في التكليفات المتاحة.</div>';
+  $('roleTable').querySelectorAll('[data-save-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveRole));
+ }
+ async function reloadMemberViews(projectId){
+  await loadGlobalOperations();
+  if(state.project?.id===projectId)await loadProjectData();
+ }
+ async function saveMemberRole(memberId){
+  const m=(state.allMembers||[]).find(x=>x.id===memberId);if(!m)return notify('العضوية غير موجودة أو لم تعد ضمن نطاقك.',true);
+  if(m.user_id===state.user?.id)return notify('لا يمكن تغيير دور الحساب الحالي من هذه الشاشة.',true);
+  const select=$('roleSelect-'+memberId),next=select?.value;
+  if(!['supervisor','counter','auditor'].includes(next))return notify('الدور المطلوب غير معتمد في CountFlow.',true);
+  if(next===m.role)return notify('لم يتغير الدور.');
+  if(m.role==='supervisor'&&m.status==='active'&&next!=='supervisor'){
+   const activeSupervisors=state.allMembers.filter(x=>x.project_id===m.project_id&&x.role==='supervisor'&&x.status==='active').length;
+   if(activeSupervisors<=1)return notify('لا يمكن خفض دور آخر مشرف نشط في هذا التكليف.',true);
+  }
+  const warning=next==='supervisor'?'سيُمنح المستخدم صلاحيات مشرف التكليف. تأكد من صحة الإسناد.':'سيتم تغيير الدور وفق صلاحيات CountFlow الفعلية. هل تريد المتابعة؟';
+  if(!confirm(warning))return;
+  try{
+   const {error}=await db.from('count_members').update({role:next}).eq('id',memberId).eq('project_id',m.project_id);
+   if(error)throw error;
+   notify('تم تحديث دور العضوية. سُجل التغيير في سجل التدقيق.');
+   await reloadMemberViews(m.project_id);
+  }catch(err){fail('تعذر تحديث الدور',err);}
+ }
+ async function changeMemberStatus(memberId){
+  const m=(state.allMembers||[]).find(x=>x.id===memberId);if(!m)return notify('العضوية غير موجودة أو لم تعد ضمن نطاقك.',true);
+  if(m.user_id===state.user?.id)return notify('لا يمكن إيقاف الحساب الحالي من هذه الشاشة.',true);
+  if(!['active','paused'].includes(m.status))return notify('حالة العضوية الحالية لا تسمح بهذا الإجراء.',true);
+  const next=m.status==='active'?'paused':'active';
+  if(m.role==='supervisor'&&m.status==='active'){
+   const activeSupervisors=state.allMembers.filter(x=>x.project_id===m.project_id&&x.role==='supervisor'&&x.status==='active').length;
+   if(activeSupervisors<=1)return notify('لا يمكن إيقاف آخر مشرف نشط في هذا التكليف.',true);
+  }
+  if(!confirm(next==='paused'?'سيتم إيقاف العضوية مؤقتاً ومنع تسجيل عمليات جديدة. هل تريد المتابعة؟':'سيتم استئناف عضوية المستخدم بالدور الحالي. هل تريد المتابعة؟'))return;
+  try{
+   const {error}=await db.from('count_members').update({status:next}).eq('id',memberId).eq('project_id',m.project_id);
+   if(error)throw error;
+   notify(next==='paused'?'تم إيقاف العضوية مؤقتاً.':'تم استئناف العضوية.');
+   await reloadMemberViews(m.project_id);
+  }catch(err){fail('تعذر تحديث حالة العضوية',err);}
+ }
+ const productImportFields=[
+  {key:'sku',label:'كود الصنف SKU',aliases:['sku','code','item_code','product_code','كود الصنف','كود','رمز الصنف']},
+  {key:'barcode',label:'الباركود',aliases:['barcode','bar_code','ean','upc','باركود','الباركود']},
+  {key:'name',label:'اسم الصنف',aliases:['name','item_name','product_name','اسم الصنف','الصنف','الاسم']},
+  {key:'category',label:'الفئة / التصنيف',aliases:['category','group','الفئة','التصنيف']},
+  {key:'base_unit',label:'الوحدة الأساسية (مطلوبة للصنف الجديد)',aliases:['base_unit','unit','uom','الوحدة','وحدة القياس']},
+  {key:'units',label:'الوحدات والتحويلات (JSON)',aliases:['units','unit_options','الوحدات']},
+  {key:'expected_qty',label:'الكمية الدفترية المرجعية (تتطلب جلسة)',aliases:['expected_qty','expected_quantity','book_qty','الكمية الدفترية','الرصيد الدفتري']},
+  {key:'location_code',label:'كود الموقع (يتطلب جلسة)',aliases:['location_code','location','bin','shelf','الموقع','كود الموقع']},
+  {key:'image_url',label:'رابط الصورة HTTPS',aliases:['image_url','image','photo','رابط الصورة']},
+  {key:'purchase_unit_cost',label:'سعر شراء الوحدة (اختياري)',aliases:['purchase_unit_cost','purchase_price','unit_cost','price','سعر الشراء','سعر الشراء للوحدة']},
+  {key:'currency_code',label:'العملة',aliases:['currency_code','currency','العملة','عملة السعر']},
+  {key:'purchase_unit',label:'وحدة الشراء',aliases:['purchase_unit','purchase_uom','unit_of_purchase','وحدة الشراء','وحدة سعر الشراء']},
+  {key:'unit_factor_to_base',label:'معامل التحويل للوحدة الأساسية',aliases:['unit_factor_to_base','purchase_unit_factor_to_base','conversion_factor_to_base','معامل التحويل للوحدة الأساسية']},
+  {key:'cost_source_type',label:'نوع مصدر السعر',aliases:['cost_source_type','price_source','source_type','مصدر السعر']},
+  {key:'cost_source_reference',label:'مرجع مصدر السعر',aliases:['cost_source_reference','invoice_reference','price_reference','مرجع السعر']},
+  {key:'cost_source_date',label:'تاريخ السعر',aliases:['cost_source_date','price_date','تاريخ السعر']}
+ ];
+ function guessProductImportHeader(headers,key){
+  const field=productImportFields.find(x=>x.key===key);
+  return headers.find(h=>field.aliases.includes(String(h).trim().toLowerCase()))||'';
+ }
+ async function parseProductImportFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(['xlsx','xls'].includes(ext)){
+   if(!window.XLSX)throw new Error('مكتبة قراءة Excel غير متاحة. أعد تحميل الصفحة ثم حاول مرة أخرى.');
+   const buffer=await file.arrayBuffer(),book=XLSX.read(buffer,{type:'array',cellDates:false});
+   if(!book.SheetNames?.length)throw new Error('ملف Excel لا يحتوي على أوراق عمل.');
+   const sheet=book.Sheets[book.SheetNames[0]];
+   return XLSX.utils.sheet_to_json(sheet,{defval:'',raw:false,blankrows:false});
+  }
+  if(ext==='csv'){
+   if(!window.Papa)throw new Error('مكتبة قراءة CSV غير متاحة. أعد تحميل الصفحة ثم حاول مرة أخرى.');
+   return await new Promise((resolve,reject)=>Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,complete:r=>{if(r.errors?.length&&r.data.length===0)return reject(new Error(r.errors[0].message||'تعذر تحليل CSV'));resolve(r.data||[]);},error:reject}));
+  }
+  throw new Error('امتداد الملف غير مدعوم. استخدم XLSX أو XLS أو CSV.');
+ }
+ function resetProductImport(){
+  state.productImportRows=[];state.productImportMapping={};state.productImportMappingId=null;state.productImportFileName='';
+  $('productImportFile').value='';$('productImportMapping').classList.add('hidden');$('productImportMapping').innerHTML='';
+  $('productImportPreview').textContent='';$('productImportResult').textContent='';$('productImportCommitBtn').disabled=true;
+  $('productImportDetails').innerHTML='';
+ }
+ async function renderProductImportMapping(){
+  const headers=Object.keys(state.productImportRows[0]||{});if(!headers.length)throw new Error('لم يتم العثور على عناوين أعمدة في الصف الأول.');
+  const {data:saved,error}=await db.from('count_import_mappings').select('id,name,column_mapping,is_default').eq('project_id',state.project.id).eq('source_format',state.productImportSourceFormat).eq('is_default',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  if(error)throw error;
+  state.productImportMappingId=saved?.id||null;state.productImportMapping={};
+  for(const f of productImportFields){const candidate=saved?.column_mapping?.[f.key];state.productImportMapping[f.key]=headers.includes(candidate)?candidate:guessProductImportHeader(headers,f.key);}
+  $('productImportMapping').classList.remove('hidden');
+  $('productImportMapping').innerHTML='<div class="panel" style="box-shadow:none;margin:0;padding:12px"><b>مطابقة أعمدة الملف مع بيانات CountFlow</b><p class="hint">يجب ربط SKU أو الباركود والوحدة الأساسية. لا تُنشئ عمليات الاستيراد وحدات تحويل أو تكلفة غير موجودة في الملف.</p><div class="fields">'+productImportFields.map(f=>'<div class="field"><label>'+f.label+'</label><select data-product-import-map="'+f.key+'"><option value="">— تجاهل الحقل —</option>'+headers.map(h=>'<option value="'+esc(h)+'" '+(state.productImportMapping[f.key]===h?'selected':'')+'>'+esc(h)+'</option>').join('')+'</select></div>').join('')+'</div><div class="actions"><input id="productImportMappingName" placeholder="اسم تخطيط الأعمدة" value="'+esc(saved?.name||'')+'" style="min-width:180px;padding:9px;border:1px solid var(--line);border-radius:10px"><label class="hint"><input id="productImportMappingDefault" type="checkbox" '+(saved?.is_default?'checked':'')+'> جعله التخطيط الافتراضي لهذا النوع من الملفات</label><button type="button" id="saveProductImportMapping" class="soft">حفظ تخطيط الأعمدة</button></div></div>';
+  $('productImportMapping').querySelectorAll('[data-product-import-map]').forEach(s=>s.onchange=()=>{state.productImportMapping[s.dataset.productImportMap]=s.value;state.productImportMappingId=null;});
+  $('saveProductImportMapping').onclick=saveProductImportMapping;
+ }
+ async function saveProductImportMapping(){
+  if(!state.project)return notify('اختر تكليفاً أولاً.',true);
+  const mapping=state.productImportMapping;
+  if(!mapping.sku&&!mapping.barcode)return notify('اربط عمود SKU أو الباركود لتعريف الصنف.',true);
+  if(!mapping.base_unit)return notify('اربط عمود الوحدة الأساسية.',true);
+  const name=$('productImportMappingName').value.trim()||('تخطيط '+state.productImportSourceFormat.toUpperCase());
+  const makeDefault=$('productImportMappingDefault').checked;
+  try{
+   if(makeDefault){
+    const {error}=await db.from('count_import_mappings').update({is_default:false}).eq('project_id',state.project.id).eq('source_format',state.productImportSourceFormat);
+    if(error)throw error;
+   }
+   const {data,error}=await db.from('count_import_mappings').upsert({project_id:state.project.id,name,source_format:state.productImportSourceFormat,column_mapping:mapping,is_default:makeDefault,created_by:state.user.id},{onConflict:'project_id,name'}).select('id').single();
+   if(error)throw error;state.productImportMappingId=data.id;notify('تم حفظ تخطيط الأعمدة وإعادة استخدامه لهذا التكليف.');
+  }catch(err){fail('تعذر حفظ تخطيط الأعمدة',err);}
+ }
+ function productImportValue(row,key){
+  const header=state.productImportMapping[key];
+  return header&&Object.prototype.hasOwnProperty.call(row,header)?row[header]:'';
+ }
+ function normalizeProductImportRow(row,index){
+  let units=productImportValue(row,'units');
+  if(typeof units==='string'){
+   const raw=units.trim();
+   if(!raw)units=[];
+   else{try{units=JSON.parse(raw);if(!Array.isArray(units))throw new Error('صيغة الوحدات يجب أن تكون مصفوفة JSON.');}
+    catch(e){throw new Error('قيمة الوحدات في صف '+(index+2)+' ليست JSON صالحاً. استخدم مصفوفة JSON لتعريف معاملات التحويل.');}}
+  }
+  if(!Array.isArray(units))throw new Error('صيغة الوحدات غير صحيحة في الصف '+(index+2)+'.');
+  const value=key=>String(productImportValue(row,key)??'').trim();
+  return {_row_number:index+2,_source_row:row,sku:value('sku')||null,barcode:value('barcode')||null,name:value('name')||null,category:value('category')||null,base_unit:value('base_unit'),units,expected_qty:value('expected_qty'),location_code:value('location_code'),image_url:value('image_url')||null,purchase_unit_cost:value('purchase_unit_cost')||null,currency_code:value('currency_code').toUpperCase()||null,purchase_unit:value('purchase_unit')||null,unit_factor_to_base:value('unit_factor_to_base')||null,cost_source_type:value('cost_source_type')||null,cost_source_reference:value('cost_source_reference')||null,cost_source_date:value('cost_source_date')||null};
+ }
+ function renderProductImportPreview(){
+  const headers=Object.keys(state.productImportRows[0]||{}),rows=state.productImportRows.slice(0,8);
+  const sample=rows.length?'<div class="tablewrap"><table><thead><tr>'+headers.slice(0,8).map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.slice(0,8).map(h=>'<td>'+esc(String(r[h]??'').slice(0,80))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'';
+  $('productImportPreview').innerHTML='<b>معاينة الملف: '+state.productImportRows.length.toLocaleString('en-US')+' صف بيانات</b><span class="sub"> أول ورقة في الملف · عينة من '+rows.length+' صفوف · '+headers.length+' عمود</span>'+sample;
+  $('productImportCommitBtn').disabled=!state.productImportRows.length||!state.productImportMapping.sku&&!state.productImportMapping.barcode||!state.productImportMapping.base_unit;
+ }
+ async function previewProductImport(){
+  const file=$('productImportFile').files[0];if(!file)return notify('اختر ملف Excel أو CSV أولاً.',true);
+  if(!state.project)return notify('اختر تكليفاً أولاً.',true);
+  $('productImportPreviewBtn').disabled=true;$('productImportCommitBtn').disabled=true;$('productImportResult').textContent='جار قراءة الملف والتحقق من بنيته…';
+  try{
+   const rows=await parseProductImportFile(file);
+   const clean=(rows||[]).filter(r=>r&&Object.keys(r).some(k=>String(r[k]??'').trim()!==''));
+   if(!clean.length)throw new Error('لا توجد صفوف بيانات قابلة للقراءة.');
+   if(clean.length>90000)throw new Error('الحد التشغيلي المعتمد لهذه الدفعة هو 90,000 صف. قسّم الملف إلى دفعات أصغر.');
+   state.productImportRows=clean;state.productImportFileName=file.name;
+   const ext=(file.name.split('.').pop()||'').toLowerCase();state.productImportSourceFormat=ext==='xls'||ext==='xlsx'?'xlsx':'csv';
+   await renderProductImportMapping();renderProductImportPreview();
+   $('productImportResult').textContent='تمت قراءة الملف محلياً. راجع مطابقة الأعمدة والعينة ثم اعتمد الدفعة لإجراء الفحص والحفظ من خلال خادم CountFlow.';
+  }catch(err){state.productImportRows=[];$('productImportPreview').textContent='';$('productImportCommitBtn').disabled=true;fail('تعذر معاينة ملف الأصناف',err);}
+  finally{$('productImportPreviewBtn').disabled=false;}
+ }
+ async function commitProductImport(){
+  if(!state.project||!state.productImportRows.length)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
+  if(!state.productImportMapping.sku&&!state.productImportMapping.barcode)return notify('اربط عمود SKU أو الباركود.',true);
+  if(!state.productImportMapping.base_unit)return notify('اربط عمود الوحدة الأساسية.',true);
+  let normalized;
+  try{normalized=state.productImportRows.map((r,i)=>normalizeProductImportRow(r,i));}
+  catch(err){return fail('تعذر تجهيز بيانات الاستيراد',err);}
+  if(normalized.some(r=>r.expected_qty!==''||r.location_code!=='')){
+   if(!$('productImportSession').value)return notify('اختر جلسة جرد عند استيراد كميات دفترية أو مواقع؛ وإلا استورد الكتالوج فقط.',true);
+  }
+  const sessionId=$('productImportSession').value||null;
+  const session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
+  if(sessionId&&!session)return notify('جلسة الربط لم تعد ضمن قائمة الجلسات المتاحة. حدّث البيانات.',true);
+  if(session&&!['planned','active','paused'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
+  const file=$('productImportFile').files[0];if(!file)return notify('أعد اختيار ملف الاستيراد.',true);
+  const btn=$('productImportCommitBtn');btn.disabled=true;const oldText=btn.textContent;btn.textContent='جار تجهيز الدفعة…';
+  try{
+   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),checksum=[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+   const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{p_project_id:state.project.id,p_session_id:sessionId,p_source_name:file.name,p_source_format:state.productImportSourceFormat,p_source_checksum:checksum});
+   if(createError)throw createError;
+   const {error:mappingError}=await db.from('count_import_batches').update({mapping_id:state.productImportMappingId,metadata:{column_mapping:state.productImportMapping,headers:Object.keys(state.productImportRows[0]||{}),import_surface:'countflow-admin'}}).eq('id',batchId).eq('project_id',state.project.id);
+   if(mappingError)throw mappingError;
+   let stagedAccepted=0,stagedRejected=0;
+   for(let i=0;i<normalized.length;i+=1000){
+    const {data:staged,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:normalized.slice(i,i+1000),p_row_offset:i});
+    if(error)throw new Error('تعذر فحص الدفعة ابتداءً من الصف '+(i+2)+': '+error.message);
+    stagedAccepted+=Number(staged?.accepted_rows||0);stagedRejected+=Number(staged?.rejected_rows||0);
+    $('productImportResult').textContent='فحص آمن للدفعة '+batchId+' · '+Math.min(i+1000,normalized.length).toLocaleString('en-US')+' / '+normalized.length.toLocaleString('en-US')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+   }
+   const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
+   if(commitError)throw commitError;
+   $('productImportResult').textContent='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows||0)+' · مرفوض '+Number(committed?.rejected_rows||0)+' · تنبيهات '+Number(committed?.warning_rows||0)+' · رقم الدفعة '+batchId;
+   notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
+   resetProductImport();await loadProjectData();
+  }catch(err){
+   $('productImportResult').textContent='لم يكتمل اعتماد الدفعة. بقي سجلها متاحاً للمراجعة؛ لم يتم تجاوز فحص الخادم. '+(err.message||String(err));
+   fail('فشل استيراد الأصناف',err);await loadProductImportHistory();
+  }finally{btn.disabled=!state.productImportRows.length;btn.textContent=oldText;}
+ }
+ async function loadProductImportHistory(){
+  if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
+  const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
+  if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
+  $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
+  $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
+ }
+ async function showProductImportDetails(batchId){
+  const [rejected,warnings]=await Promise.all([
+   db.from('count_import_rows').select('row_number,sku,barcode,product_name,error_codes').eq('batch_id',batchId).eq('row_status','rejected').order('row_number').limit(500),
+   db.from('count_import_rows').select('row_number,sku,barcode,product_name,warning_codes').eq('batch_id',batchId).not('warning_codes','eq','{}').order('row_number').limit(500)
+  ]);
+  if(rejected.error||warnings.error)return fail('تعذر قراءة تفاصيل الدفعة',rejected.error||warnings.error);
+  const errRows=rejected.data||[],warnRows=warnings.data||[];
+  const table=(rows,key,title)=>'<h4>'+title+' ('+rows.length+' من أول 500)</h4>'+(rows.length?'<div class="tablewrap"><table><thead><tr><th>الصف</th><th>SKU</th><th>باركود</th><th>اسم الصنف</th><th>النتيجة</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.row_number+'</td><td>'+esc(r.sku||'')+'</td><td>'+esc(r.barcode||'')+'</td><td>'+esc(r.product_name||'')+'</td><td>'+esc((r[key]||[]).join('، '))+'</td></tr>').join('')+'</tbody></table></div>':'<p class="hint">لا توجد سجلات.</p>');
+  $('productImportDetails').innerHTML='<div class="panel"><div class="headrow"><h3>تفاصيل دفعة الاستيراد</h3><button type="button" class="soft" id="closeProductImportDetails">إغلاق التفاصيل</button></div>'+table(errRows,'error_codes','الصفوف المرفوضة')+table(warnRows,'warning_codes','تنبيهات الاستكمال')+'</div>';
+  $('closeProductImportDetails').onclick=()=>$('productImportDetails').innerHTML='';
+ }
  function renderLocations(){
   $('locationParent').innerHTML='<option value="">بدون أب (جذر)</option>'+state.locations.map(x=>'<option value="'+x.id+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
   $('locationTable').innerHTML=state.locations.length?'<table><thead><tr><th>الموقع</th><th>النوع</th><th>الكود</th><th>الموقع الأب</th></tr></thead><tbody>'+state.locations.map(x=>{const parent=state.locations.find(p=>p.id===x.parent_id);return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.location_type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(parent?.name||'جذر')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم تُعرّف مواقع بعد.</div>';
@@ -264,7 +524,7 @@
   return result;
  }
  async function loadGlobalOperations(){
-  const ids=state.projects.map(p=>p.id);if(!ids.length){state.allMembers=[];state.allSessions=[];renderMembers();renderGlobalOperations();return;}
+  const ids=state.projects.map(p=>p.id);if(!ids.length){state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();return;}
   const [members,sessions]=await Promise.all([
    loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,status,last_seen_at,created_at',ids,'created_at'),
    loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
@@ -283,7 +543,7 @@
   for(const id of Object.keys(state.assignmentCounts))state.assignmentCounts[id]=state.assignmentCounts[id].size;
   $('kMembers').textContent=members.filter(x=>x.status==='active').length;
   $('kSessions').textContent=sessions.length;
-  renderMembers();renderGlobalOperations();
+  renderMembers();renderRoles();renderGlobalOperations();
  }
  function renderGlobalOperations(){
   const all=state.allSessions||[];
@@ -592,7 +852,10 @@
   const result=id?await db.from('count_products').update(row).eq('id',id).eq('project_id',state.project.id):await db.from('count_products').insert({...row,units:[],is_active:true});
   if(result.error)throw result.error;notify(id?'تم تحديث الصنف':'تمت إضافة الصنف');resetProductForm();await loadProjectData();
  }catch(err){fail('تعذر حفظ الصنف',err);}finally{setBusy(f,false);}});
- $('productCancel').onclick=resetProductForm;$('productSearch').addEventListener('input',renderProducts);
+ $('productCancel').onclick=resetProductForm;$('productSearch').addEventListener('input',()=>{state.productPage=1;renderProducts();});
+ $('productImportFile').addEventListener('change',()=>{state.productImportRows=[];state.productImportMapping={};state.productImportMappingId=null;$('productImportPreview').textContent='';$('productImportResult').textContent='';$('productImportMapping').classList.add('hidden');$('productImportCommitBtn').disabled=true;});
+ $('productImportPreviewBtn').onclick=previewProductImport;$('productImportCommitBtn').onclick=commitProductImport;$('productImportResetBtn').onclick=resetProductImport;
+ $('roleSearch').addEventListener('input',renderRoles);
  $('memberSearch').addEventListener('input',renderMembers);
  $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
@@ -619,7 +882,7 @@
   const {data,error}=await db.from('count_sessions').insert({project_id:state.project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id}).select('id').single();
   if(error)throw error;notify('تم إنشاء عملية جرد جديدة داخل ملف التكليف.');f.reset();await loadProjectData();await loadGlobalOperations();await selectOperation(data.id);
  }catch(err){fail('تعذر إنشاء العملية',err);}finally{setBusy(f,false);}});
- document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license')loadLicenseSettings();}));
+ document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license')loadLicenseSettings();if(b.dataset.tab==='roles')renderRoles();if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
  db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){stopGlobalRealtime();state.user=null;state.project=null;showLogin();}});
