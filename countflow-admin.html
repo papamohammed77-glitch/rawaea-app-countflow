@@ -1090,14 +1090,15 @@
    if(ext==='csv'){
     if(!window.Papa)throw new Error('مكتبة قراءة CSV غير متاحة. أعد تحميل الصفحة ثم حاول مرة أخرى.');
     return await new Promise((resolve,reject)=>{
-     let pending=[],count=0,parseErrors=0,chain=Promise.resolve(),settled=false;
+     let pending=[],count=0,parseErrors=0,sourceRowNumber=2,chain=Promise.resolve(),settled=false;
      const failParse=error=>{if(settled)return;settled=true;reject(error);};
-     Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+     Papa.parse(file,{header:true,skipEmptyLines:false,dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
       step:(result,parser)=>{
+       const currentSourceRow=sourceRowNumber++;
        if(result.errors?.length){parseErrors+=result.errors.length;return;}
        const row=result.data||{};
        if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
-       count++;pending.push({row,rowNumber:count+1});
+       count++;pending.push({row,rowNumber:currentSourceRow});
        if(pending.length>=1000){
         parser.pause();const chunk=pending;pending=[];
         chain=chain.then(()=>onChunk(chunk)).then(()=>{if(!settled)parser.resume();}).catch(error=>{parser.abort();failParse(error);});
