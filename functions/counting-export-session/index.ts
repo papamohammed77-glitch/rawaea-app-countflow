@@ -11,6 +11,8 @@ const MAX_ENTRIES = 150000;
 const MAX_LINES = 150000;
 const MAX_PRODUCTS = 150000;
 const MAX_LOCATIONS = 100000;
+const MAX_EXPORT_ESTIMATED_MEMORY = 160 * 1024 * 1024;
+const MAX_CLIENT_BALANCE_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +78,31 @@ function addSheet(workbook: any, name: string, headers: string[], rows: unknown[
 }
 function toHex(buffer: ArrayBuffer) {
   return [...new Uint8Array(buffer)].map(v => v.toString(16).padStart(2, "0")).join("");
+}
+async function readBlobBounded(blob: Blob, maxBytes: number): Promise<Uint8Array> {
+  if (blob.size > maxBytes) throw new Error("IMAGE_EXCEEDS_BOUNDED_READ");
+  const reader = blob.stream().getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("IMAGE_EXCEEDS_BOUNDED_READ");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.byteLength; }
+  return result;
 }
 
 function xmlEscape(value: unknown) {
@@ -306,6 +333,8 @@ Deno.serve(async (req: Request) => {
       for(const cost of costs)productIds.add(cost.product_id);
       for(const entry of countEntries)productIds.add(entry.product_id);
       if(productIds.size>MAX_PRODUCTS)throw new Error("CLIENT_BALANCE_PRODUCT_LIMIT:"+MAX_PRODUCTS);
+      const estimatedPeakBytes=productIds.size*1500+countEntries.length*320+lines.length*420+committedImportRows.length*240+locations.length*300+32*1024*1024;
+      if(estimatedPeakBytes>MAX_EXPORT_ESTIMATED_MEMORY)throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance:estimated_bytes="+estimatedPeakBytes);
 
       const productIdArray=[...productIds];
       const products:any[]=[];
@@ -364,8 +393,8 @@ Deno.serve(async (req: Request) => {
           const mime=String(blob.type||"").toLowerCase();
           const extension=mime==="image/png"?"png":mime==="image/jpeg"?"jpg":"";
           if(!extension){imageByProduct.set(product.id,{status:"صيغة غير مدعومة للتضمين (PNG/JPEG فقط)",reference});continue;}
-          if(embeddedBytes+blob.size>12*1024*1024){imageByProduct.set(product.id,{status:"تجاوز حد حجم الصور الإجمالي",reference});continue;}
-          const bytes=new Uint8Array(await blob.arrayBuffer());
+          if(embeddedBytes+blob.size>MAX_CLIENT_BALANCE_IMAGE_BYTES||estimatedPeakBytes+(embeddedBytes+blob.size)*2>MAX_EXPORT_ESTIMATED_MEMORY){imageByProduct.set(product.id,{status:"تجاوز ميزانية الذاكرة/حجم الصور",reference});continue;}
+          const bytes=await readBlobBounded(blob,1024*1024);
           embeddedBytes+=bytes.byteLength;
           imageByProduct.set(product.id,{status:"مضمنة داخل Excel",extension,bytes,reference});
         }catch(_){imageByProduct.set(product.id,{status:"تعذر تحميل الصورة",reference});}
@@ -521,6 +550,8 @@ Deno.serve(async (req: Request) => {
         ["صور غير مضمنة/مفقودة",notEmbeddedCount,"",""],
         ["صفوف استيراد تحمل تنبيهات",importWarningCount,"",""],
         ["سياسة التسعير المعتمدة","UNKNOWN - لم تُعتمد بعد","",""],
+        ["أساس السعر","تكلفة وحدة الشراء ÷ معامل التحويل إلى الوحدة الأساسية؛ القيم مشتقة وليست تقييماً محاسبياً","",""],
+        ["تحويل العملات","لا يوجد تحويل FX؛ تُجمع القيم منفصلة لكل عملة محفوظة","",""],
         ["منهج القيمة","قيمة مشتقة من سعر الشراء المقدم ÷ معامل التحويل؛ ليست قيداً أو تقييماً محاسبياً معتمداً","",""],
         ["قاعدة النقص في العد","الموقع غير المعدود لا يُسجل صفراً؛ الرصيد الإجمالي يبقى فارغاً عند نقص أي موقع ضمن نطاق الصنف","",""],
       ];
@@ -560,6 +591,7 @@ Deno.serve(async (req: Request) => {
           value_scaled_micro:v.valueMicro.toString(),scale:6
         })),
         pricing_policy:"UNKNOWN",
+        pricing_basis:{status:"NOT_OWNER_APPROVED",base_unit_cost:"purchase_unit_cost / unit_factor_to_base",value:"complete_counted_base_quantity * derived_base_unit_cost",currency_handling:"Separate totals by stored currency; no FX conversion",accounting_valuation:false},
       };
       const {error:updateError}=await admin.from("count_exports").update({
         status:"ready",storage_path:storagePath,row_count:products.length,file_size_bytes:bytes.byteLength,
@@ -654,6 +686,8 @@ Deno.serve(async (req: Request) => {
     const sessionDevices = devices.filter((d:any)=>sessionDeviceIds.has(d.device_id));
     const combinedRows = entries.length + lines.length + importErrors.length + sessionImages.length;
     if (combinedRows > 250000) throw new Error("EXPORT_COMBINED_ROW_LIMIT:250000");
+    const estimatedFullExportBytes=entries.length*450+lines.length*400+products.length*1200+locations.length*300+importErrors.length*300+32*1024*1024;
+    if(estimatedFullExportBytes>MAX_EXPORT_ESTIMATED_MEMORY)throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:full:estimated_bytes="+estimatedFullExportBytes);
 
     const productMap = new Map(products.map((p:any) => [p.id,p]));
     const locationMap = new Map(locations.map((l:any) => [l.id,l]));
@@ -831,7 +865,7 @@ Deno.serve(async (req: Request) => {
     }
     const status = /SUPERVISOR_ACCESS_REQUIRED/.test(message) ? 403 :
       /CLIENT_BALANCE_REQUIRES_APPROVED_RECONCILIATION/.test(message) ? 409 :
-      /EXPORT_LIMIT|EXPORT_COMBINED_ROW_LIMIT|CLIENT_BALANCE_PRODUCT_LIMIT|CLIENT_BALANCE_EXPORT_EXCEEDS_50MB/.test(message) ? 413 : 500;
+      /EXPORT_LIMIT|EXPORT_COMBINED_ROW_LIMIT|CLIENT_BALANCE_PRODUCT_LIMIT|CLIENT_BALANCE_EXPORT_EXCEEDS_50MB|EXPORT_MEMORY_BUDGET_EXCEEDED/.test(message) ? 413 : 500;
     return json({error:message},status);
   }
 });
