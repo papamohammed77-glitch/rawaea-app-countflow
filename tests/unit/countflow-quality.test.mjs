@@ -683,3 +683,33 @@ test("Admin user management exposes audited password reset without self-reset", 
   assert.match(admin, /member\.user_id===state\.user\?\.id/);
   assert.match(admin, /audit_warning/);
 });
+
+
+test("confirmed platform owner can read CountFlow Admin data independently of project membership", () => {
+  const sql = read("database/migrations/20261121220000_countflow_platform_owner_read_and_image_storage_access.sql");
+  const policies = ["count_projects_read","count_products_read","count_sessions_read","count_locations_read","count_members_read","count_assignments_read","count_audit_read","count_alerts_read","count_anomaly_rules_read","count_devices_read","count_entries_read","count_entry_images_read","count_expected_read","count_exports_read","count_import_read","count_import_mappings_read","count_import_rows_read","count_presence_read","count_recon_lines_read","count_recon_runs_read","count_recount_tasks_read","count_session_product_costs_read"];
+  for (const policy of policies) {
+    const start = sql.indexOf("ALTER POLICY " + policy + " ON public.");
+    assert.ok(start >= 0, "Missing owner-aware read policy " + policy);
+    const end = sql.indexOf(";", start);
+    assert.ok(sql.slice(start, end + 1).includes("counting_private.is_platform_owner()"));
+  }
+  for (const policy of ["count_image_read", "count_image_upload", "count_image_update"]) {
+    const start = sql.indexOf("ALTER POLICY " + policy + " ON storage.objects");
+    assert.ok(start >= 0, "Missing private image Storage owner path " + policy);
+    const end = sql.indexOf(";", start);
+    const statement = sql.slice(start, end + 1);
+    assert.ok(statement.includes("counting_private.is_platform_owner()"));
+    assert.ok(statement.includes("counting-product-images"));
+  }
+  assert.ok(sql.includes("m.role='supervisor'"));
+  assert.ok(sql.includes("m.status='active'"));
+  assert.ok(sql.includes("m.status IN ('active','paused')"));
+  const storageFix = read("database/migrations/20261121210000_countflow_storage_owner_path_qualifier_fix.sql");
+  assert.equal(storageFix.split("storage.foldername(objects.name)").length - 1, 8);
+  assert.equal(storageFix.includes("storage.foldername(p.name)"), false);
+
+  for (const forbidden of ["CREATE POLICY","DROP POLICY","INSERT INTO public.","UPDATE public.","DELETE FROM public.","TRUNCATE","TO anon","storage.buckets"]) {
+    assert.equal(sql.includes(forbidden), false, "Forbidden policy/data-scope change: " + forbidden);
+  }
+});

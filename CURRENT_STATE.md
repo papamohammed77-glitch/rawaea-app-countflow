@@ -1,5 +1,46 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-21-761 — Owner RLS parity + private image Storage
+
+**التاريخ:** 21 نوفمبر 2026  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
+**الفرع / PR:** `work/lve-761-admin-image-owner-storage-access` / [PR #1](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/1)  
+**قاعدة CountFlow:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` فقط.  
+**مصدر التغيير:** PR head `048ec59162aeb181e1368223ae9bceb36ad7c8c1`؛ 22 سياسة قراءة CountFlow + 3 سياسات صور خاصة.  
+**CI:** run `44948880262` — SUCCESS: 35/35 اختبارات Node، Deno check، Pages allowlisted build، وPlaywright 2 passed / 1 skipped (اختبار مطابقة Production SHA يُتخطى في فرع PR).  
+**Cloudflare Preview:** نشر فرع PR نجح؛ هذا ليس Production deploy. سيتم التحقق من Production SHA بعد الدمج.
+
+### الخلل الجذري
+- LVE-760 جعل بوابة Admin تقبل المالك المؤكد `owner@rawaea.com` مستقلاً عن عضوية Supervisor؛ لكن RLS في قاعدة البيانات كانت لا تزال تحجب مشاريع/منتجات/جلسات/مواقع/استيرادات/تسويات وبيانات أجهزة عن هذا المالك عند غياب عضوية المشرف.
+- سياسات مخزن صور الأصناف الخاصة كانت تشترط عضوية Supervisor للرفع والتحديث، ولا يوجد Owner branch متسق مع بوابة Admin.
+- هذه مشكلة RLS فعلية حتى مع صحة تسجيل الدخول، وليست خللاً في واجهة النظام الأم.
+
+### ما نُفّذ على قاعدة CountFlow
+1. Migration `countflow_platform_owner_read_and_image_storage_access`، ledger version `20261121205438`: أضافت `counting_private.is_platform_owner()` إلى 22 سياسة SELECT في جداول CountFlow، مع إبقاء شروط العضوية/المشرف/الذات كما هي لبقية المستخدمين.
+2. Migration `countflow_storage_owner_path_qualifier_fix`، ledger version `20261121205720`: صححت مرجع مسار Storage إلى `storage.foldername(objects.name)` في سياسات قراءة/رفع/تحديث الصور.
+3. التحقق الحي للقراءة فقط: 22/22 سياسات قراءة تحمل Owner predicate؛ ثلاث سياسات Storage تحمل Owner predicate؛ لا يوجد `storage.foldername(p.name)`؛ مخزن `counting-product-images` ما زال `public=false` وبحدوده وأنواع MIME الأصلية.
+4. لم تتغير سياسات كتابة الجرد أو الأصناف أو التكليفات، ولا دوال Edge/Auth، ولا أدوار/عضويات المستخدمين.
+
+### اختبارات وحدود الإثبات
+- **PASS:** 35/35 source/unit tests، Deno checks، Pages build، Playwright العام 2 passed و1 skipped في سياق PR.
+- **PASS:** Migration ledger يسجل الترحيلين بالنسختين أعلاه، وسياسات RLS الفعلية تعكس Owner paths.
+- **OPEN:** دخول مالك مصادق عبر المتصفح دون عضوية Supervisor، رفع صورة حقيقي + signed URL، وتضمين صورة فعلية داخل XLSX لم تُختبر؛ لا تُدّعِ ذلك.
+- **OPEN:** Client Balance XLSX runtime/فتح Excel وقياس الذاكرة، التسعير غير المعتمد، E2E المصادق، Offline/متعدد الأجهزة والحمل.
+
+### حالة بيانات QA — لا تلمس
+- دفعة `qa-90000-products.csv` (`f799c5c1-b766-4712-b74f-c0bb19836ddc`) باقية `committing`: إجمالي 90,000، معتمد 41,000، مرحلي 49,000، مرفوض 0. لا تستأنفها أو توقفها أو تحذفها أو تعيد اعتمادها.
+- الرصد بعد الترحيل: 41,000 صنف، 90,000 صف استيراد؛ صفر إدخالات عد/حضور/أجهزة/صادرات. لم يغيّر LVE-761 أياً من هذه الأعداد.
+
+### تسليم وتنفيذ
+- PR #1 مفتوح حتى دمج هذه النسخة بعد مراجعة حالة الـCI والـbase SHA.
+- بعد الدمج: تحقق من Cloudflare Production SHA parity فقط؛ لا ترفع صورًا ولا تغيّر كلمات مرور ولا تنفذ أي DML تجريبي.
+- النطاق حصري لـCountFlow. لا تعديل على `countflow.html` أو `Countflow-supervisor.html` أو SMART ERP أو `erp-frontend`.
+
+Full prior checkpoint: LVE-760 below.
+
+---
+
+
 
 ## LVE-2026-11-21-760 — استكمال النظام الأم وفق P2
 
