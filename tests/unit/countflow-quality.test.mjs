@@ -367,3 +367,36 @@ test("Counter evidence upload failure branch remains valid and reports a safe wa
   assert.match(counter, /if\(uploadError\)\{console\.warn\('Counter evidence upload failed',uploadError\);evidenceWarning='تم تسجيل العد، لكن تعذر إرفاق الصورة حالياً\.';\}else\{/);
   assert.doesNotMatch(counter, /if\(uploadError\)console\.warn\([^;]+;evidenceWarning=[^;]+;else\{/);
 });
+
+test("all three operational pages keep technical implementation details out of user-facing copy", () => {
+  const visible = html => html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+  const admin = visible(read("countflow-admin.html"));
+  const supervisor = visible(read("Countflow-supervisor.html"));
+  const counter = visible(read("countflow.html"));
+  for (const [name, text] of [["Admin", admin], ["Supervisor", supervisor], ["Counter", counter]]) {
+    assert.doesNotMatch(text, /project_id|RLS|Realtime|Edge Function|service_role|Supabase Auth|PostgREST|UUID|JWT|SHA-256|IndexedDB|OOXML/i, name + " must not expose internal terminology");
+  }
+  assert.doesNotMatch(admin, />\s*supervisor\s*</i);
+  assert.doesNotMatch(admin, />\s*counter\s*</i);
+  assert.doesNotMatch(admin, />\s*auditor\s*</i);
+  assert.doesNotMatch(supervisor, /JSON\.stringify/i);
+  assert.doesNotMatch(counter, /JSON\.stringify/i);
+});
+
+test("Counter UI translates role and hides device queue identifiers from the member", () => {
+  const counter = read("countflow.html");
+  assert.match(counter, /function roleLabel\(role\)/);
+  assert.match(counter, /member\.display_name\+'\s*·\s*'\+roleLabel\(member\.role\)/);
+  assert.match(counter, /'حالة المزامنة: '\+Number\(data\?\.pending_queue_count\|\|0\)\+' عملية بانتظار الإرسال'/);
+  assert.doesNotMatch(counter, /esc\(x\.session_id/);
+  assert.doesNotMatch(counter, /esc\(x\.product_id/);
+  assert.match(counter, /friendlyErrorMessage\(x\.sync_error\)/);
+});
