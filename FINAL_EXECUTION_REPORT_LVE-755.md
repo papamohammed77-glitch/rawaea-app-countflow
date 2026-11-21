@@ -150,3 +150,20 @@ counting-export-session:
 - The test fetched the latest main SHA at runtime, waited for Production build-info.json, and verified an exact match.
 - The same run passed the 12 source/unit checks, both Deno Edge Function type-checks, the ten-file Pages build and three Playwright Chromium production smoke tests (owner login, SHA parity, three RTL mobile shells).
 - No authenticated Supervisor/Counter E2E, export invocation, DB import test, offline-device run or concurrency load test was included.
+
+
+## ملحق LVE-2026-11-21-756 — تحسين الواجهات وحارس التصدير
+
+**CI run:** 44944233547 على commit 4c7a614e620d4113eeed341b51b7977ce4dcb241 — SUCCESS.
+
+- 18/18 اختبارات Node، Deno check للوظيفتين، بناء Pages بعشرة ملفات مسموحة.
+- ثلاث Playwright Production smoke: شاشة دخول المالك، مطابقة SHA الدقيقة مع latest main، وثلاث شاشات RTL للهاتف (Admin/Supervisor/Counter). النتيجة 3 passed (3.8s).
+- Admin وSupervisor وCounter أصبحت تعرض أدواراً/حالات/تنبيهات ومزامنة بالعربية، مع إزالة معرفات وتشخيصات داخلية من النص الظاهر. Audit summaries تعرض حقولاً تشغيلية مختارة بدلاً من JSON كامل، وتفاصيل الأخطاء الخام تبقى في console لا واجهة المستخدم.
+- CSS/visual tokens وخط Cairo وfocus/hover وملاحظات aria حسنت التجربة، لكن هذا لا يساوي شهادة UX/Accessibility شاملة على جميع الأجهزة.
+- export source يطبق count preflight قبل bulk reads، وestimated memory budgets، وbounded image streaming (1 MiB per image / 8 MiB total / max 500 images) مع رفض الطلب خارج الحدود.
+- لا يوجد export run فعلي أو قياس peak memory؛ XLSX/ZIP النهائي ما زال يبنى في ذاكرة الوظيفة. لا تدّعِ export 90k PASS.
+- لم تُنفذ كتابة بيانات في Supabase، ولا SQL rollback tests، ولا Edge deployments في LVE-756. قاعدة CountFlow التشغيلية ما زالت فارغة.
+
+### حالة الإغلاق
+- **PASS:** P0 owner/role server boundaries، P1 CSV/XLSX import streaming/catalog virtualization، device queue barrier source/schema، normalized lookup indexes applied، public Pages SHA parity، source/Deno/Playwright smoke CI.
+- **OPEN:** Authenticated Supervisor/Counter E2E، DB 5k/90k imports، actual export validation/peak memory، real offline multi-device, concurrency/load, and pricing policy owner approval.
