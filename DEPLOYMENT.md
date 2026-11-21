@@ -19,7 +19,7 @@
 - المصدر الصحيح: المستودع `papamohammed77-glitch/rawaea-app-countflow`، الفرع `main`.
 - Build command المعتمد في هذا الدليل: `bash scripts/build-pages.sh`.
 - Build output directory المعتمد في هذا الدليل: `dist`.
-- تطابق GitHub SHA مع Cloudflare Production **اجتاز Playwright فعلياً** على commit `cf076ce362d9d964a1879feab25a8d421b4827d2` في run `44943689352`: قرأ الاختبار build-info.json من Production وانتظر SHA الحالي لـ main ثم طابقهما. اجتاز كذلك فحص الهاتف RTL للتطبيقات الثلاث. أي commit أحدث من هذا يحتاج إلى run جديد ناجح قبل اعتباره منشوراً.
+- تطابق GitHub SHA مع Cloudflare Production **اجتاز Playwright فعلياً** على commit `d90584874d5078040c7ae42db4327c30086004b8` في run `44946245444`: قرأ الاختبار build-info.json من Production وانتظر SHA الحالي لـ main ثم طابقهما. اجتاز كذلك فحص الهاتف RTL للتطبيقات الثلاث. أي commit أحدث من هذا يحتاج إلى run جديد ناجح قبل اعتباره منشوراً.
 - لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح الصفحات الثلاث على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
 - لا تستخدم `erp-frontend` أو `companies/company-1` أو `rawaea-erp.pages.dev` كجذر أو alias أو redirect.
 
@@ -38,4 +38,4 @@
 - ملفات الواجهة تستخدم Supabase Publishable Key فقط. لا تضف Service Role Key إلى ملفات الواجهة أو متغيرات Pages العامة.
 - Edge Functions الخاصة بـCountFlow يجب أن تبقى على مشروع `rawaea-staging`، مع JWT verification مفعّل.
 - مشروع Pages ونطاق الإنتاج موجودان، ونجح اختبار Playwright لمطابقة SHA الدقيقة على commit 5a86a311 في run 44943001441. فحوصات CI تقارن أحدث main عند لحظة التشغيل وتنتظر build-info.json؛ تحقق من أحدث run قبل إعلان أي SHA أحدث منشوراً. لا يوجد دليل على تعديل DNS أو إضافة دومين مخصص.
-- بعد ظهور نشر يطابق HEAD: شغّل Playwright باستخدام حسابَي مشرف ومندوب معتمدين، ثم اختبر دورة جرد تجريبية قابلة للحذف فقط بعد إزالة قيد حوكمة اختبارات الكتابة في rawaea-staging. لا تستخدم بيانات تشغيل حقيقية ولا تنفذ ترحيلاً إلى ERP.
+- بعد ظهور نشر يطابق HEAD: شغّل Playwright باستخدام حسابَي مشرف ومندوب معتمدين، ثم اختبر دورة جرد QA قابلة للتنظيف في `rawaea-staging` فقط. لا تستخدم بيانات تشغيل حقيقية ولا تنفذ ترحيلاً إلى ERP.
