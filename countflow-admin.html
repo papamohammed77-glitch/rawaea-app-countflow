@@ -229,7 +229,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
  const fail=(label,error)=>{console.error(label,error);notify(label+': '+(error?.message||error||'خطأ غير معروف'),true)};
@@ -1056,62 +1056,135 @@
   if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
   $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
  }
- function parseOperationFile(file){
-  return new Promise((resolve,reject)=>{
-   const ext=(file.name.split('.').pop()||'').toLowerCase();
-   if(['xlsx','xls'].includes(ext)){
-    const reader=new FileReader();reader.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',raw:false}));}catch(err){reject(err);}};reader.onerror=reject;reader.readAsArrayBuffer(file);
-   }else Papa.parse(file,{header:true,skipEmptyLines:true,transformHeader:x=>String(x||'').trim(),complete:r=>r.errors.length?reject(new Error(r.errors[0].message)):resolve(r.data),error:reject});
-  });
- }
  function operationValue(row,aliases){const keys=Object.keys(row||{});for(const alias of aliases){const key=keys.find(k=>String(k).trim().toLowerCase()===alias.toLowerCase());if(key!==undefined)return row[key];}return '';}
- $('operationImportFile').addEventListener('change',()=>{state.operationImportRows=[];$('operationImportPreview').textContent='';$('operationCommitImport').disabled=true;});
- $('operationPreviewImport').addEventListener('click',async()=>{
-  const file=$('operationImportFile').files[0];if(!file)return notify('اختر ملف CSV أو Excel أولاً.',true);
-  try{
-   const rows=await parseOperationFile(file);if(!rows.length)throw new Error('الملف لا يحتوي على صفوف بيانات.');
-   if(!operationValue(rows[0],['sku','item_code','code','كود الصنف'])||!operationValue(rows[0],['name','product_name','item_name','اسم الصنف']))throw new Error('يلزم وجود عمود SKU واسم الصنف.');
-   state.operationImportRows=rows;const ext=(file.name.split('.').pop()||'').toLowerCase();state.operationImportFormat=['xlsx','xls'].includes(ext)?'xlsx':'csv';
-   $('operationImportPreview').textContent='تمت معاينة '+rows.length.toLocaleString('ar-EG')+' صفاً. مثال: '+JSON.stringify(rows[0]).slice(0,450);
-   $('operationCommitImport').disabled=false;
-  }catch(e){state.operationImportRows=[];$('operationImportPreview').textContent='تعذر تحليل الملف: '+e.message;$('operationCommitImport').disabled=true;}
- });
- $('operationCommitImport').addEventListener('click',async()=>{
-  const s=state.selectedSession,p=state.project,file=$('operationImportFile').files[0],rows=state.operationImportRows;
-  if(!s||!p||!file||!rows.length)return notify('عاين ملف الأصناف أولاً.',true);
-  if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن الاستيراد إلى عملية مكتملة أو ملغاة.',true);
-  const btn=$('operationCommitImport');btn.disabled=true;
-  try{
-   const normalized=rows.map((r,i)=>{
-    let units=operationValue(r,['units','unit_options','الوحدات']);if(typeof units==='string'&&units.trim()){try{units=JSON.parse(units);}catch{units=[];}}if(!Array.isArray(units))units=[];
-    return {_row_number:i+2,_source_row:r,
-     sku:String(operationValue(r,['sku','item_code','code','كود الصنف'])).trim(),
-     barcode:String(operationValue(r,['barcode','bar_code','ean','upc','باركود'])).trim(),
-     name:String(operationValue(r,['name','product_name','item_name','اسم الصنف'])).trim(),
-     category:String(operationValue(r,['category','group','الفئة','التصنيف'])).trim(),
-     base_unit:String(operationValue(r,['base_unit','unit','uom','الوحدة','وحدة القياس'])||'وحدة').trim(),
-     units,expected_qty:String(operationValue(r,['expected_qty','expected_quantity','book_qty','الكمية الدفترية','الرصيد الدفتري'])??'').trim(),
-     location_code:String(operationValue(r,['location_code','location','bin','shelf','الموقع','كود الموقع'])).trim(),
-     image_url:String(operationValue(r,['image_url','image','photo','رابط الصورة'])).trim()
-    };
-   });
-   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),checksum=[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
-   const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{p_project_id:p.id,p_session_id:s.id,p_source_name:file.name,p_source_format:state.operationImportFormat,p_source_checksum:checksum});
-   if(createError)throw createError;
-   for(let i=0;i<normalized.length;i+=1000){
-    const {data,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:normalized.slice(i,i+1000),p_row_offset:i});
-    if(error)throw new Error('فشل فحص الدفعة عند الصف '+(i+1)+': '+error.message);
-    $('operationImportResult').textContent='تم فحص '+Math.min(i+1000,normalized.length)+' / '+normalized.length+' صف · مقبول '+(data?.accepted_rows||0)+' · مرفوض '+(data?.rejected_rows||0);
+  function normalizeOperationImportRow(row,rowNumber){
+   let units=operationValue(row,['units','unit_options','الوحدات']);
+   if(typeof units==='string'&&units.trim()){try{units=JSON.parse(units);}catch(_){units=[];}}
+   if(!Array.isArray(units))units=[];
+   const value=aliases=>String(operationValue(row,aliases)??'').trim();
+   return {
+    _row_number:Number(rowNumber)||2,_source_row:row,
+    sku:value(['sku','item_code','code','كود الصنف'])||null,
+    barcode:value(['barcode','bar_code','ean','upc','باركود'])||null,
+    name:value(['name','product_name','item_name','اسم الصنف'])||null,
+    category:value(['category','group','الفئة','التصنيف'])||null,
+    base_unit:value(['base_unit','unit','uom','الوحدة','وحدة القياس'])||null,
+    units,
+    expected_qty:value(['expected_qty','expected_quantity','book_qty','الكمية الدفترية','الرصيد الدفتري']),
+    location_code:value(['location_code','location','bin','shelf','الموقع','كود الموقع']),
+    image_url:value(['image_url','image','photo','رابط الصورة'])||null
+   };
+  }
+  async function streamOperationImportChunks(file,onChunk){
+   const ext=(file.name.split('.').pop()||'').toLowerCase();
+   if(ext==='xlsx'){
+    let pending=[],count=0;
+    const parsed=await streamXlsxProductRows(file,async row=>{
+     count++;pending.push({row,rowNumber:Number(row.__countflowRowNumber)||count+1});
+     if(pending.length>=1000){const chunk=pending;pending=[];await onChunk(chunk);}
+    });
+    if(pending.length)await onChunk(pending);
+    if(parsed.count!==count)throw new Error('تغير عدد سجلات XLSX أثناء الاستيراد.');
+    return {count,parseErrors:0};
    }
-   const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});if(commitError)throw commitError;
-   $('operationImportResult').textContent='اكتمل الاستيراد · مقبول '+committed.accepted_rows+' · مرفوض '+committed.rejected_rows+' · الدفعة '+batchId;
-   notify('تم استيراد الأصناف والكميات المرجعية إلى العملية.');
-   state.operationImportRows=[];$('operationImportFile').value='';$('operationImportPreview').textContent='';
-   await loadOperationImportHistory();await loadProjectData();await loadOperationMetrics();
-  }catch(e){$('operationImportResult').textContent='فشل الاستيراد: '+(e.message||String(e));fail('تعذر استيراد الأصناف',e);}
-  finally{btn.disabled=state.operationImportRows.length===0;}
- });
- async function loadOperationExportHistory(){
+   if(ext==='csv'){
+    if(!window.Papa)throw new Error('مكتبة قراءة CSV غير متاحة. أعد تحميل الصفحة ثم حاول مرة أخرى.');
+    return await new Promise((resolve,reject)=>{
+     let pending=[],count=0,parseErrors=0,chain=Promise.resolve(),settled=false;
+     const failParse=error=>{if(settled)return;settled=true;reject(error);};
+     Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+      step:(result,parser)=>{
+       if(result.errors?.length){parseErrors+=result.errors.length;return;}
+       const row=result.data||{};
+       if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
+       count++;pending.push({row,rowNumber:count+1});
+       if(pending.length>=1000){
+        parser.pause();const chunk=pending;pending=[];
+        chain=chain.then(()=>onChunk(chunk)).then(()=>{if(!settled)parser.resume();}).catch(error=>{parser.abort();failParse(error);});
+       }
+      },
+      complete:()=>{
+       if(settled)return;
+       chain.then(async()=>{
+        if(pending.length)await onChunk(pending);
+        if(!count)throw new Error('لم يتم العثور على صفوف بيانات صالحة في CSV.');
+        settled=true;resolve({count,parseErrors});
+       }).catch(failParse);
+      },
+      error:failParse
+     });
+    });
+   }
+   if(ext==='xls'){
+    const parsed=await parseProductImportFile(file),rows=parsed.rows||[];
+    if(!rows.length)throw new Error('لم يتم العثور على صفوف بيانات صالحة في XLS.');
+    for(let offset=0;offset<rows.length;offset+=1000){
+     const chunk=rows.slice(offset,offset+1000).map((row,index)=>({row,rowNumber:offset+index+2}));
+     await onChunk(chunk);
+    }
+    return {count:rows.length,parseErrors:0};
+   }
+   throw new Error('امتداد الملف غير مدعوم. استخدم XLSX أو CSV أو XLS حتى 8MB.');
+  }
+  $('operationImportFile').addEventListener('change',()=>{
+   state.operationImportRows=[];state.operationImportRowCount=0;
+   $('operationImportPreview').textContent='';$('operationImportResult').textContent='';
+   $('operationCommitImport').disabled=true;
+  });
+  $('operationPreviewImport').addEventListener('click',async()=>{
+   const file=$('operationImportFile').files[0];if(!file)return notify('اختر ملف CSV أو Excel أولاً.',true);
+   const button=$('operationPreviewImport');button.disabled=true;
+   try{
+    const parsed=await parseProductImportFile(file);
+    const rows=(parsed.rows||parsed.sample||[]),headers=parsed.headers||Object.keys(rows[0]||[]);
+    if(!parsed.count)throw new Error('الملف لا يحتوي على صفوف بيانات.');
+    if(parsed.count>90000)throw new Error('الحد التشغيلي المعتمد لهذه الدفعة هو 90,000 صف. قسّم الملف إلى دفعات أصغر.');
+    const identifierAliases=['sku','item_code','code','كود الصنف','barcode','bar_code','ean','upc','باركود'];
+    if(!headers.some(h=>identifierAliases.includes(String(h).trim().toLowerCase())))throw new Error('يلزم وجود عمود SKU أو باركود؛ تُرفض الصفوف التي لا تحتوي معرفاً على حدة دون إيقاف الدفعة.');
+    state.operationImportRows=rows.slice(0,20);state.operationImportRowCount=parsed.count;
+    const ext=(file.name.split('.').pop()||'').toLowerCase();state.operationImportFormat=['xlsx','xls'].includes(ext)?'xlsx':'csv';
+    $('operationImportPreview').textContent='تمت معاينة '+parsed.count.toLocaleString('ar-EG')+' صفاً على دفعات دون تحميلها كلها. عينة: '+JSON.stringify(state.operationImportRows[0]||{}).slice(0,450)+(parsed.parseErrors?' · أخطاء تحليل متجاوزة '+parsed.parseErrors:'');
+    $('operationImportResult').textContent='سيعاد تحليل الملف أثناء الاعتماد وإرسال كل 1,000 صف إلى فحص الخادم؛ الصفوف الناقصة أو ذات البيانات غير الصحيحة تسجل كمرفوضة ولا توقف بقية الدفعة.';
+    $('operationCommitImport').disabled=false;
+   }catch(e){
+    state.operationImportRows=[];state.operationImportRowCount=0;
+    $('operationImportPreview').textContent='تعذر تحليل الملف: '+(e.message||String(e));
+    $('operationCommitImport').disabled=true;
+   }finally{button.disabled=false;}
+  });
+  $('operationCommitImport').addEventListener('click',async()=>{
+   const s=state.selectedSession,p=state.project,file=$('operationImportFile').files[0];
+   if(!s||!p||!file||!state.operationImportRowCount)return notify('عاين ملف الأصناف أولاً.',true);
+   if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن الاستيراد إلى عملية مكتملة أو ملغاة.',true);
+   const btn=$('operationCommitImport');btn.disabled=true;
+   try{
+    const checksum=await hashFileInChunks(file);
+    const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{
+     p_project_id:p.id,p_session_id:s.id,p_source_name:file.name,p_source_format:state.operationImportFormat,p_source_checksum:checksum
+    });
+    if(createError)throw createError;
+    let stagedAccepted=0,stagedRejected=0,processed=0;
+    const stage=async items=>{
+     if(!items.length)return;
+     const normalized=items.map(item=>normalizeOperationImportRow(item.row,item.rowNumber));
+     const {data,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:normalized,p_row_offset:processed});
+     if(error)throw new Error('فشل فحص الدفعة ابتداءً من الصف '+(normalized[0]?._row_number||processed+2)+': '+error.message);
+     processed+=normalized.length;
+     stagedAccepted+=Number(data?.accepted_rows||0);stagedRejected+=Number(data?.rejected_rows||0);
+     $('operationImportResult').textContent='فحص الدفعة '+batchId+' · '+processed.toLocaleString('ar-EG')+' / '+state.operationImportRowCount.toLocaleString('ar-EG')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+    };
+    const parsed=await streamOperationImportChunks(file,stage);
+    if(parsed.count!==state.operationImportRowCount)throw new Error('تغير عدد صفوف الملف بعد المعاينة. أعد المعاينة قبل الاعتماد.');
+    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
+    if(commitError)throw commitError;
+    $('operationImportResult').textContent='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أخطاء تحليل متجاوزة '+Number(parsed.parseErrors||0)+' · الدفعة '+batchId;
+    notify('تم استيراد أصناف العملية عبر دفعات خادمية.');
+    state.operationImportRows=[];state.operationImportRowCount=0;$('operationImportFile').value='';$('operationImportPreview').textContent='';
+    await loadOperationImportHistory();await loadProjectData();await loadOperationMetrics();
+   }catch(e){$('operationImportResult').textContent='فشل الاستيراد: '+(e.message||String(e));fail('تعذر استيراد الأصناف',e);}
+   finally{btn.disabled=!state.operationImportRowCount;}
+  });
+  async function loadOperationExportHistory(){
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_exports').select('id,export_format,export_scope,status,storage_path,row_count,file_size_bytes,sha256,created_at').eq('session_id',s.id).eq('status','ready').order('created_at',{ascending:false}).limit(30);
   if(error){$('operationExportHistory').textContent='تعذر تحميل سجل التصدير: '+error.message;return;}
