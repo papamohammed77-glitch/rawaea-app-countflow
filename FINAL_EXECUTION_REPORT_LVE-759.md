@@ -3,8 +3,9 @@
 
 **التاريخ:** 21 نوفمبر 2026  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow` — `main`  
-**HEAD الذي اجتاز البوابة:** `d90584874d5078040c7ae42db4327c30086004b8`  
-**GitHub Actions:** run `44946245444` — SUCCESS  
+**SHA مصدر الوظائف الذي اجتاز الاختبارات:** `d90584874d5078040c7ae42db4327c30086004b8`  
+**آخر HEAD للمستودع/الوثائق المنشورة:** `88eea115830ba7b0c302e215d288c78eb8690f10`  
+**GitHub Actions:** run `44946476315` — SUCCESS (28/28 tests, Deno, Pages build, 3/3 Playwright and exact Production SHA parity).  
 **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`  
 **Cloudflare Pages:** https://rawaea-app-countflow.pages.dev  
 **النطاق:** CountFlow فقط؛ لا توجد تغييرات على SMART ERP أو مخزون/نقدية/حسابات RAWAEA ERP.
@@ -83,10 +84,10 @@ GitHub Actions run `44946245444` على SHA `d90584874d5078040c7ae42db4327c30086
 
 تم تعيين `rawaea-staging` في أحدث دستور مالك باعتباره **ملعب CountFlow الوحيد**. هذا يحسم اختيار البيئة الخاصة بهذا المشروع، ولا يجيز تعديل SMART ERP أو أي أرصدة/قيود محاسبية أو مخزون حقيقي. جداول CountFlow وعددها 23 كلها مفعّل عليها RLS؛ لم تُجرَ في هذا التحديث migrations أو DML أو Edge deployment بواسطة هذا المساعد.
 
-في قراءة الساعة **20:27:06 UTC**:
+في قراءة الساعة **20:28:46 UTC**:
 - مشروع QA واحد: `QA 90K Import Verification`، code `QA90K-20261121`، وحالة Draft.
 - عضو واحد (Supervisor نشط) وجلسة واحدة Planned.
-- دفعة `qa-90000-products.csv`: status `committing`، 90,000 صف مصدر، 27,000 committed/accepted حتى الرصد، صفر rejected، و63,000 staged؛ عدد منتجات المشروع 27,000.
+- دفعة `qa-90000-products.csv`: status `committing`، 90,000 صف مصدر، 30,000 committed/accepted حتى الرصد، صفر rejected، و60,000 staged؛ عدد منتجات المشروع 30,000.
 - لا توجد عمليات عد أو أرصدة متوقعة أو صور حضور/أجهزة أو مهام إعادة عد أو تسويات أو تنبيهات أو صادرات.
 - Audit log يحوي 6 أحداث مرتبطة بالإعداد/الاستيراد.
 
