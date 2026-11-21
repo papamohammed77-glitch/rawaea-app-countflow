@@ -131,7 +131,7 @@ Historical paragraphs below retain their original audit dates; earlier file coun
 
 ## 2026-11-21 — LVE-755 queue-barrier and finality migration reconciliation
 
-A further **read-only** reconciliation against the live migration ledger and CountFlow schema on `rawaea-staging` found 15 applied ledger entries after the P1 migration `20261121180246 countflow_p1_owner_only_admin_and_counter_only`. This addendum is an inventory only; it does not authorize replay.
+A further **read-only** reconciliation against the live migration ledger and CountFlow schema on `rawaea-staging` found 16 applied ledger entries after the P1 migration `20261121180246 countflow_p1_owner_only_admin_and_counter_only`. This addendum is an inventory only; it does not authorize replay.
 
 ### Live applied entries after P1
 
@@ -163,19 +163,27 @@ A further **read-only** reconciliation against the live migration ledger and Cou
 - The application `countflow.html` calls `count_report_device_queue` after queue changes/synchronization, after device presence heartbeat, on reconnect, and periodically. The owner-only system master renders each device queue and exposes the documented waiver action. Queue reporting is a device self-attestation: the server stores the reported digest and blocks finality until the device reports zero at the current lifecycle version or the owner records an explicit waiver; it cannot independently read browser IndexedDB.
 - The current lifecycle trigger contains additive `queue_barrier_action`, `queue_barrier_run_id` and `queue_barrier_requested_at` columns from the experimental two-phase migrations. The final public approval RPC was restored to the pause-first contract by `countflow_restore_pause_first_queue_approval`; these columns remain additive historical schema. No destructive cleanup was attempted.
 
-### Import lookup index proposal — NOT APPLIED
+### Import lookup indexes — APPLIED AND VERIFIED
 
-Tracked source `20261121212500_countflow_import_normalized_lookup_indexes.sql` proposes:
-- normalized per-batch SKU + location expression index;
-- normalized per-batch barcode + location expression index;
-- project + location-code lookup index.
+Tracked source: `20261121212500_countflow_import_normalized_lookup_indexes.sql`.
 
-A read-only `pg_indexes` check found none of these three exact index names in the live catalog. The source is therefore **pending/unapplied**. It must not be reported as a live performance improvement, and it must not be applied without a reviewed migration Change Set and a plan for index build/lock impact.
+Live Supabase migration ledger entry:
+- Version: `20261121194759`
+- Name: `countflow_import_normalized_lookup_indexes`
+- The filename timestamp differs from the migration ledger version; do not rename or replay it on that basis.
+
+A read-only `pg_indexes` query confirmed all three definitions exist in `rawaea-staging` and match the tracked SQL expressions:
+
+1. `count_import_rows_batch_sku_location_ci_idx` on `(batch_id, lower(btrim(sku)), nullif(btrim(location_code),'')) WHERE sku IS NOT NULL`.
+2. `count_import_rows_batch_barcode_location_idx` on `(batch_id, btrim(barcode), nullif(btrim(location_code),'')) WHERE barcode IS NOT NULL`.
+3. `count_locations_project_code_idx` on `(project_id, code)`.
+
+The migration is therefore **APPLIED / source present / catalog definitions verified**. No reapplication or destructive index maintenance is required. Query-plan improvement and 5k/90k database throughput have not been measured; the presence of indexes alone is not a benchmark.
 
 ### Current tracked SQL source inventory
 
 - Git tree at LVE-755 contains **54** `.sql` migration files.
-- The latest live CountFlow/Counting ledger inventory includes the original 68 entries at the LVE-749 audit plus the P1 and 15 post-P1 entries above. The repository is still not a clean-install/replayable baseline.
+- The latest live CountFlow/Counting ledger inventory includes the original 68 entries at the LVE-749 audit plus P1 and **16 post-P1** entries above. Four of the 16 entries have no standalone one-to-one SQL artifact (the import row-level location validation entry and two experimental two-phase entries; note the remaining timestamp/source mapping discrepancies). The repository is still not a clean-install/replayable baseline.
 - No SQL test in `tests/` was executed during LVE-755. The 5k and 90k rollback scripts are source artifacts only; their existence is not proof of database/RPC performance.
 - All current CountFlow business tables queried in the same read-only check remained at zero rows; the one confirmed `owner@rawaea.com` Auth identity remains present.
 
