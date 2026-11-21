@@ -117,15 +117,28 @@ BEGIN
   v_batch := public.count_create_import_batch(
     v_project,v_session,'qa-baseline.csv','csv','qa-baseline-checksum'
   );
-  v_stage := public.count_stage_import_rows(v_batch,jsonb_build_array(jsonb_build_object(
-    'sku',v_product_sku,'barcode',v_product_barcode,'name','QA Test Product',
-    'base_unit','قطعة','expected_qty','10','location_code','QA-S1'
-  )),0);
-  IF (v_stage->>'accepted_rows')::int<>1 OR (v_stage->>'rejected_rows')::int<>0
-  THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_STAGE_BASELINE:%',v_stage; END IF;
+  v_stage := public.count_stage_import_rows(v_batch,jsonb_build_array(
+    jsonb_build_object(
+      '_row_number',10,'sku',v_product_sku,'barcode',v_product_barcode,'name','QA Test Product',
+      'base_unit','قطعة','expected_qty','10','location_code','QA-S1'
+    ),
+    jsonb_build_object(
+      '_row_number',11,'sku','QA-UNKNOWN-LOCATION-'||substr(replace(gen_random_uuid()::text,'-',''),1,8),
+      'name','QA Partial Rejection','base_unit','قطعة','location_code','QA-DOES-NOT-EXIST'
+    )
+  ),0);
+  IF (v_stage->>'accepted_rows')::int<>1 OR (v_stage->>'rejected_rows')::int<>1
+  THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_STAGE_PARTIAL_ACCEPTANCE:%',v_stage; END IF;
+  IF NOT EXISTS(
+    SELECT 1 FROM public.count_import_rows
+    WHERE batch_id=v_batch AND row_number=11
+      AND row_status='rejected' AND 'UNKNOWN_LOCATION_CODE'=ANY(error_codes)
+  ) THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_ROW_LEVEL_LOCATION_REJECTION'; END IF;
   v_commit := public.count_commit_import_batch(v_batch);
-  IF (v_commit->>'accepted_rows')::int<>1 OR (v_commit->>'expected_balance_rows')::int<>1
-  THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_COMMIT_BASELINE:%',v_commit; END IF;
+  IF (v_commit->>'accepted_rows')::int<>1
+     OR (v_commit->>'rejected_rows')::int<>1
+     OR (v_commit->>'expected_balance_rows')::int<>1
+  THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_COMMIT_PARTIAL_ACCEPTANCE:%',v_commit; END IF;
 
   INSERT INTO public.count_devices(project_id,member_id,device_id,device_label,platform,app_version,status)
   VALUES
@@ -305,6 +318,7 @@ BEGIN
     'supervisor_engagement_denied',true,
     'auditor_recount_assignee_denied',true,
     'approved_run_recount_generation_denied',true,
+    'import_partial_acceptance_and_row_level_rejection',true,
     'entry_idempotency',true,
     'assignment_scope_rejection',true,
     'recount_creation_and_entry',true,
