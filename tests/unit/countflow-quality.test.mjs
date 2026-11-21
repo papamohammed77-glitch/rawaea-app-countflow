@@ -448,6 +448,21 @@ test("import rejection reasons are human-readable and every failed/warning row i
   assert.match(admin, /لا توجد سجلات في هذه الفئة/);
 });
 
+
+test("large import commit resumes in bounded server chunks for both catalog and operation import", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("async function commitImportBatchInChunks(batchId,onProgress)");
+  const end = admin.indexOf("async function commitProductImport()", start);
+  assert.ok(start >= 0 && end > start);
+  const helper = admin.slice(start, end);
+  assert.match(helper, /while\(attempt\+\+<10000\)/);
+  assert.match(helper, /status==='committed'/);
+  assert.match(helper, /status!=='committing'/);
+  assert.match(helper, /remaining_rows/);
+  assert.equal((admin.match(/commitImportBatchInChunks\(batchId,/g) || []).length, 2);
+  assert.doesNotMatch(admin, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
+});
+
 test("session workflow device acknowledgement row uses a parse-safe template literal", () => {
   const admin = read("countflow-admin.html");
   const start = admin.indexOf("const deviceHtml=presence.length?");
