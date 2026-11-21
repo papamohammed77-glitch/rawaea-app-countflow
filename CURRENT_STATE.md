@@ -1,5 +1,43 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-21-758 — أحدث نقطة تسليم موثقة
+
+**التاريخ:** 2026-11-21  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow` — `main`  
+**آخر SHA للتطبيق اجتاز CI وProduction parity:** `eebcee88dc82f45e159b87d3d2289c281faec0a5`  
+**GitHub Actions:** run `44945978877` — SUCCESS على SHA نفسه.  
+**التقرير التفصيلي:** `FINAL_EXECUTION_REPORT_LVE-758.md` (report commit `a45351615118c4df1ee85c85548bf2de181846c4`).
+
+### ما ثبت في المصدر وCI
+- P0 صلاحيات المالك/المشرف/المندوب محفوظة: Owner-only للوظائف الإدارية والاعتماد، Supervisor مراقبة وإسناد فقط، وCounter-only لتسجيل العد.
+- CSV/Papa Parse streaming وXLSX/OOXML streaming من Blob slices، CRC وZIP path traversal، أرقام صفوف المصدر، partial-row rejection، server pagination 100 صف وvirtual window 30 صفًا.
+- استيراد الكتالوج والعملية يستخدم RPCs القائمة. اعتماد الدفعة صار resumable: حتى 1,000 صف لكل RPC، مع `remaining_rows` وحالة `committing` وزر استكمال من سجل الدفعات؛ لا إعادة قراءة الملف عند الاستئناف.
+- Export source preflight يحسب أحجام العلاقات قبل bulk reads؛ الصور تُقرأ عبر stream بحد 1 MiB للصورة و8 MiB إجمالي و500 صورة، وتقدير الذاكرة 160 MiB. هذه حواجز مصدرية وليست قياس peak memory أو XLSX streaming كاملًا.
+- CI النهائي: **26/26 Node tests**، Deno type-check للوظيفتين، Pages allowlist build، و**3/3 Playwright Chromium Production smoke**. اختبار `build-info.json` طابق SHA المنشور مع `main`، واختُبرت login shells الثلاثة على هاتف RTL.
+
+### الحالة الحية لقاعدة CountFlow — قراءة فقط، آخر رصد عند 2026-11-21 20:23:43 UTC
+- مشروع CountFlow واحد، عضو واحد، جلسة واحدة، و19,000 منتج.
+- دفعة `qa-90000-products.csv` ما زالت `committing`: 90,000 صف، accepted 19,000، rejected 0، والمتبقي 71,000 staged. الدفعة غير مرتبطة بجلسة (`session_id IS NULL)).
+- لا توجد أرصدة متوقعة أو لقطات تكلفة أو عمليات عد أو صادرات مرتبطة بهذه الدفعة في آخر القراءة. المشروع Draft والجلسة Planned.
+- هذه عملية QA/استيراد متزامنة بدأها مالك CountFlow/مساعد آخر؛ لا توقفها أو تعتمدها أو تحذفها أو تستأنفها من مساعد آخر. 19,000 ليس اكتمال 90K.
+- اختبار XLSX الصناعي 90K نجح في CI. اختبار rollback للـDB 5K اجتاز تاريخيًا قبل تثبيت بوابة LVE-747. لا يوجد إثبات لاختبار DB 90K كامل مع rollback؛ الحالة الحالية تقدم حي في دفعة committing، وليست benchmark نهائيًا.
+
+### نشر Edge والحوكمة
+- Cloudflare Pages Production طابق SHA التطبيق أعلاه في Playwright run 44945978877.
+- Edge الحي `counting-export-session` لا يزال ACTIVE v14/JWT=true، و`counting-provision-member` v7/JWT=true. تعديلات Edge Export المصدرية الأحدث لم تُنشر على Supabase.
+- **LVE-747 ما زالت بوابة حوكمة مفتوحة:** لا SQL DML/rollback tests أو migrations/DDL أو RLS/GRANT/REVOKE أو Edge deploy إلى `rawaea-staging` حتى حسمها. استمر في Git/source/CI/Pages والقراءات فقط.
+
+### المفتوح فعليًا
+- تأكيد اكتمال/سلامة دفعة QA 90K دون التدخل في عملها المتزامن وبعد رفع حوكمة الكتابة.
+- Authenticated Supervisor/Counter E2E وباركود فعلي، Offline restart/reconnect/multi-device، اختبار export فعلي وفتح XLSX/فحص الصور والـSHA وقياس الذاكرة، وحمل 30–300 مستخدم.
+- Pricing policy لا تزال UNKNOWN؛ لا FX أو accounting valuation. لا تدّعِ جاهزية SAP-scale أو اعتماد export 90K.
+
+### تعليمات الاستكمال
+ابدأ من HEAD الحالي وسجل commits، واقرأ `FINAL_EXECUTION_REPORT_LVE-758.md`. لا تعِد migrations/الفهارس الموجودة، ولا تلمس مشروع RAWAEA ERP. لا تتدخل في دفعة QA الجارية؛ استأنف اختبارات الكتابة/النشر إلى Supabase فقط بعد رفع LVE-747 رسميًا.
+
+---
+
+
 ## LVE-2026-11-21-756 — آخر نقطة تشغيلية مثبتة
 
 **التاريخ:** 2026-11-21  
