@@ -530,3 +530,15 @@ test("an import already committed is not reported as failed when only a follow-u
   assert.match(resume, /اكتمل اعتماد الدفعة لكن تعذر تحديث العرض/);
   assert.ok(resume.indexOf("اكتمل استكمال دفعة الاستيراد") < resume.indexOf("catch(refreshError)"));
 });
+
+test("Admin dynamic metadata, import history and team roles use Arabic operator labels", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /function locationTypeName\(s\)/);
+  assert.match(admin, /esc\(locationTypeName\(x\.location_type\)\)/);
+  assert.match(admin, /statusName\(s\.status\)/);
+  assert.match(admin, /roleName\(m\.role\)/);
+  assert.match(admin, /exportFormatLabel\(b\.source_format\)/);
+  assert.match(admin, /committing:'قيد الاعتماد'/);
+  assert.match(admin, /'نشط':'نشط','موقوف':'موقوف'/);
+  assert.doesNotMatch(admin, /esc\(x\.location_type\)|esc\(m\.role\)|state\.project\.code\+' · '\+s\.status/);
+});
