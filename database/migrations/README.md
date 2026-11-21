@@ -152,6 +152,7 @@ A further **read-only** reconciliation against the live migration ledger and Cou
 | `20261121191944` | `countflow_two_phase_approval_queue_barrier` | No standalone source file found; historical/intermediate experimental ledger entry; do not reconstruct from memory |
 | `20261121192051` | `countflow_two_phase_approval_security_definer` | No standalone source file found; historical/intermediate experimental ledger entry; do not reconstruct from memory |
 | `20261121192512` | `countflow_restore_pause_first_queue_approval` | Source `20261121212000_countflow_restore_pause_first_queue_approval.sql`; final source contract is pause-first |
+| `20261121194759` | `countflow_import_normalized_lookup_indexes` | Source `20261121212500_countflow_import_normalized_lookup_indexes.sql` (filename timestamp differs); all three live index definitions verified |
 
 ### Verified live behavior — read only
 
