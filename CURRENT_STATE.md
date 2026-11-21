@@ -21,6 +21,7 @@
 ### حالة Supabase الحية — Read-only snapshot عند 2026-11-21 20:29:52 UTC
 - البيئة المحددة صراحة في دستور المالك الحالي: `rawaea-staging` هي ملعب CountFlow الوحيد. هذا يحسم اختيار نطاق CountFlow السابق؛ لا يجيز أي تغيير في SMART ERP أو أرصدة/قيود ERP الحقيقية.
 - جداول CountFlow وعددها 23: RLS enabled في 23/23، disabled في 0.
+- **فحص SECURITY DEFINER (قراءة حية 2026-11-21):** المستشار العام يحذر من خمس RPCs في CountFlow لأنها SECURITY DEFINER وقابلة للاستدعاء من authenticated. فحص ACL التفصيلي أكد أن EXECUTE ممنوح فقط لـauthenticated/postgres/service_role، ولا يوجد anon أو PUBLIC. جميع الخمس `search_path=""`; أربع وظائف إدارية تتحقق من `counting_private.is_platform_owner()`، ووظيفة تقرير الطابور تتحقق من auth.uid() مقابل عضوية counter نشطة وجهاز معتمد وجلسة مسموحة. هذا تحذير تصميمي متوقع مع حواجز خادمية، وليس ثغرة مثبتة؛ أبقِ اختبارات الحواجز ولا تمنح صلاحيات إضافية. وجد المستشار أيضًا 65 جدولًا عامًا قديمًا بلا RLS خارج نطاق CountFlow؛ لا تغيّرها ضمن هذا المشروع لأنها تخص تطبيقات أخرى على نفس Supabase.
 - تكليف QA واحد `QA 90K Import Verification`، عضو واحد بدور Supervisor نشط، وجلسة Planned واحدة.
 - دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 32,000 committed/accepted، صفر rejected، و58,000 staged؛ كتالوج المشروع يحوي 32,000 صنف في لحظة الرصد.
 - لا توجد عمليات عد أو أرصدة متوقعة أو حضور/أجهزة أو مهام إعادة عد أو تسويات أو تنبيهات أو صادرات. Audit log به 6 أحداث.
