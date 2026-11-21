@@ -80,7 +80,7 @@
      <div class="headrow"><h2>كتالوج الأصناف</h2><span class="pill" id="productCount">0 صنف</span></div>
      <div class="panel">
       <h3>استيراد الأصناف من Excel / CSV</h3>
-      <p class="hint">ارفع ملف XLSX أو XLS أو CSV، ثم طابق الأعمدة وراجع عينة السجلات قبل الاعتماد. يُنفذ الاستيراد عبر دفعات CountFlow المعتمدة، ولا ينشئ حركة مخزون. اختر «كتالوج فقط» عند استيراد بيانات التعريف دون رصيد مرجعي.</p>
+      <p class="hint">ارفع ملف XLSX أو CSV للاستيراد المتدفق، أو ملف XLS قديم لا يتجاوز 8MB. طابق الأعمدة وراجع العينة قبل الاعتماد. يُنفذ الاستيراد عبر دفعات CountFlow المعتمدة، ولا ينشئ حركة مخزون. اختر «كتالوج فقط» عند استيراد بيانات التعريف دون رصيد مرجعي.</p>
       <div class="fields">
        <div class="field"><label for="productImportFile">ملف الأصناف</label><input id="productImportFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"></div>
        <div class="field"><label for="productImportSession">جلسة ربط الكميات والمواقع المرجعية (اختياري)</label><select id="productImportSession"><option value="">كتالوج فقط</option></select></div>
@@ -389,8 +389,9 @@
   if(eocd<0)throw new Error('ملف XLSX غير صالح أو لا يحتوي على ZIP directory.');
   if(zipRead16(tailView,eocd+4)!==0||zipRead16(tailView,eocd+6)!==0)throw new Error('ملفات Excel متعددة الأقراص غير مدعومة.');
   const entries=zipRead16(tailView,eocd+10),entriesOnDisk=zipRead16(tailView,eocd+8),directorySize=zipRead32(tailView,eocd+12),directoryOffset=zipRead32(tailView,eocd+16),commentLength=zipRead16(tailView,eocd+20);
-  if(entries!==entriesOnDisk||entries===0xffff||directorySize===0xffffffff||directoryOffset===0xffffffff||eocd+22+commentLength>tail.length)throw new Error('صيغة XLSX ZIP64 أو بنية أرشيف غير مدعومة.');
-  if(entries>10000||directorySize>32*1024*1024||directoryOffset+directorySize>file.size)throw new Error('بيانات فهرس XLSX تتجاوز الحدود الآمنة.');
+  const eocdAbsolute=file.size-tailSize+eocd;
+  if(entries!==entriesOnDisk||entries===0xffff||directorySize===0xffffffff||directoryOffset===0xffffffff||eocd+22+commentLength!==tail.length)throw new Error('صيغة XLSX ZIP64 أو بنية أرشيف غير مدعومة.');
+  if(entries>10000||directorySize>32*1024*1024||directoryOffset+directorySize>eocdAbsolute)throw new Error('بيانات فهرس XLSX تتجاوز الحدود الآمنة.');
   const directory=new Uint8Array(await file.slice(directoryOffset,directoryOffset+directorySize).arrayBuffer()),view=new DataView(directory.buffer,directory.byteOffset,directory.byteLength),map=new Map();let offset=0;
   for(let i=0;i<entries;i++){
    if(offset+46>directory.length||zipRead32(view,offset)!==0x02014b50)throw new Error('فهرس XLSX المركزي تالف.');
@@ -399,9 +400,11 @@
    if(offset+46+nameLength+extraLength+comment>directory.length)throw new Error('بيانات اسم ملف داخل XLSX غير مكتملة.');
    const name=new TextDecoder('utf-8').decode(directory.slice(offset+46,offset+46+nameLength)).replace(/\\/g,'/');
    if(name.startsWith('/')||name.split('/').includes('..'))throw new Error('مسار داخلي غير صالح في ملف XLSX.');
+   if(map.has(name))throw new Error('أرشيف XLSX يحتوي على اسم عنصر مكرر.');
    map.set(name,{name,flags,method,crc32,compressedSize,uncompressedSize,localOffset});
    offset+=46+nameLength+extraLength+comment;
   }
+  if(offset!==directory.length)throw new Error('حجم فهرس ZIP لا يطابق عدد عناصر XLSX.');
   if(!map.has('xl/workbook.xml'))throw new Error('لم يتم العثور على xl/workbook.xml؛ الملف ليس XLSX صالحاً.');
   return map;
  }
@@ -426,7 +429,7 @@
     for(let i=0;i<value.length;i++)crc=xlsxCrcTable[(crc^value[i])&255]^(crc>>>8);
     await onChunk(value);
    }
-  }finally{reader.releaseLock();}
+  }catch(error){try{await reader.cancel(error);}catch(_){}throw error;}finally{reader.releaseLock();}
   if(total!==entry.uncompressedSize)throw new Error('حجم عنصر XLSX بعد فك الضغط لا يطابق الفهرس.');
   if(((crc^0xffffffff)>>>0)!==(entry.crc32>>>0))throw new Error('فشل التحقق من سلامة CRC لبيانات XLSX.');
  }
