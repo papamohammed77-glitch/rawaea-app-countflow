@@ -46,7 +46,7 @@ function zipArchive(entries, corruptEntry = null) {
     const fileName = Buffer.from(name, "utf8");
     const data = Buffer.from(content, "utf8");
     const compressed = deflateRawSync(data, { level: 6 });
-    const checksum = crc32(data) ^ (name === corruptEntry ? 1 : 0);
+    const checksum = (crc32(data) ^ (name === corruptEntry ? 1 : 0)) >>> 0;
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
