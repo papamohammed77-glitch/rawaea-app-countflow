@@ -8,7 +8,7 @@
 > قاعدة البيانات المستخدمة هي مشروع Supabase المستقل `rawaea-staging` (`hfzznsiprnwkpayskzhu`). جميع بيانات التشغيل الجديدة محصورة في جداول `count_*` ومخازن `counting-*`. لا تنفذ التطبيقات أي ترحيل للمخزون أو النقدية أو الحسابات أو قيود ERP.
 
 
-> **الحالة الحية LVE-2026-11-21-759:** اجتاز HEAD الوظيفي `d905848`، ثم اجتاز آخر HEAD للمستودع `88eea115` بوابة GitHub Actions رقم `44946476315`: 28/28 اختبارًا، Deno type-check لوظيفتي Edge، Pages build، و3/3 Playwright Production smoke مع مطابقة SHA الدقيقة. استيراد CSV/XLSX أصبح متدفقًا وقابلًا لاستئناف الدفعات على أجزاء 1,000 صف، مع مراجعة نتائج الرفض على صفحات 500 صف. واجهات Admin/Supervisor/Counter نُقّيت من رسائل الخادم الخام ومعرفات التنفيذ. قاعدة `rawaea-staging` تحتوي الآن على تكليف QA واحد وعضو وجلسة واحدة، ودفعة 90K ما زالت `committing`: 32,000 صنف committed و58,000 staged في آخر قراءة 20:29:52 UTC؛ لا توجد عمليات عد أو أرصدة أو تسويات أو صادرات. Client Balance math وOOXML image anchors اجتازت اختبارات المصدر، لكن XLSX runtime/فتح الملف وقياس الذاكرة ما زالت OPEN، وكذلك authenticated/offline/multi-device E2E وسياسة التسعير. راجع `CURRENT_STATE.md` و`FINAL_EXECUTION_REPORT_LVE-759.md` قبل المتابعة.
+> **الحالة الحية LVE-2026-11-21-761:** تم إصلاح Owner RLS parity في 22 سياسة قراءة، و3 سياسات صور Storage الخاصة، وسجلت Supabase الترحيلين `20261121205438` و`20261121205720`. CI لفرع PR نجح في 35/35 اختبارًا وDeno وPages وPlaywright العام (2 passed / 1 skipped). دفعة QA 90K لم تتغير: 41,000 committed و49,000 staged، ولا توجد إدخالات عد أو صادرات. لا تُعدّل الدفعة. دخول المالك المصادق ورفع الصور وفتح XLSX الحقيقي ما زالت غير مثبتة.
 
 ## التطبيقات
 

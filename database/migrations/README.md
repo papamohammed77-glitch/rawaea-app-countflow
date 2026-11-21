@@ -218,3 +218,14 @@ The Admin UI now calls the same commit RPC sequentially from both catalog and op
 - Neither script was executed in the LVE-757 continuation. The LVE-747 governance hold still blocks new database write tests until explicitly reconciled. Do not remove `ROLLBACK` or convert either script to a persistent seed.
 
 Do not replay either import migration, rename files to force version matching, or infer live state from filenames. The Supabase ledger and read-only live function/index catalog are the authority for current applied state.
+
+
+## 2026-11-21 — LVE-761 platform owner read and private image Storage
+
+- `20261121220000_countflow_platform_owner_read_and_image_storage_access.sql` was applied to `rawaea-staging`; Supabase ledger version: `20261121205438`.
+- The migration adds the confirmed platform-owner predicate to 22 CountFlow SELECT policies while preserving the existing member/supervisor/self access branches for all other identities.
+- It also adds the canonical owner to the private product-image read/upload/update policies, still restricted to the `counting-product-images` bucket and existing CountFlow project paths.
+- Post-apply verification identified an unqualified `name` reference resolving to `count_projects.name` inside a nested storage policy subquery. This was corrected by follow-up migration `20261121210000_countflow_storage_owner_path_qualifier_fix.sql`, ledger version `20261121205720`, explicitly using `storage.foldername(objects.name)`.
+- Verified read-only: 22/22 owner-aware public read policies; all three image policies owner-aware and using `objects.name`; no bad `p.name` path reference; bucket remains private (`public=false`).
+- No business data DML, Auth user changes, images uploaded/deleted, stock/finance/accounting changes, or field-app changes.
+
