@@ -1,3 +1,3 @@
 LVE-2026-11-21-760 — أُغلقت فجوات النظام الأم: قصر الدخول على المالك المؤكد، صور خاصة متوافقة مع Excel وروابط فتح موقعة، تحويلات UoM، وإعادة استخدام حساب Auth مؤكد دون تغيير كلمة مروره؛ واسم الجهة كان موجودًا أصلًا.
-CI 44947995397 على runtime commit 0a9df3f: **34/34 Node tests**, Deno checks، Pages build، و**3/3 Playwright** مع تطابق SHA في Production.
+CI 44947995397 على test commit 0a9df3f (يشمل Admin runtime commit 25a4d0b): **34/34 Node tests**, Deno checks، Pages build، و**3/3 Playwright** مع تطابق SHA في Production.
 لم تُجرَ كتابات Supabase أو تغييرات RLS/Storage policy أو Edge deploy؛ اختبار رفع صورة/تغيير كلمة مرور فعلي/تصدير XLSX وفتح الناتج ما زال OPEN وفق بوابة LVE-747.
