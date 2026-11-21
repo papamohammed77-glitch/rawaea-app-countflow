@@ -1,5 +1,31 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-21-756 — آخر نقطة تشغيلية مثبتة
+
+**التاريخ:** 2026-11-21  
+**Git HEAD المثبت:** `4c7a614e620d4113eeed341b51b7977ce4dcb241`  
+**CI:** GitHub Actions run `44944233547` على نفس SHA — **SUCCESS**.
+- 18/18 اختبارات Node للمصدر والسلوك؛ اختبار XLSX اصطناعي 90,000 صف وCRC/ZIP traversal؛ اختبارات streaming، أرقام الصفوف، partial row rejection، queue digest، export preflight والحدود، audit/error sanitization وواجهة اللغة.
+- Deno type-check لكل من `counting-provision-member` و`counting-export-session` نجح.
+- بناء Cloudflare Pages نجح مع عشرة ملفات allowlist.
+- Playwright اكتشف ستة اختبارات وشغّل ثلاثة اختبارات Production smoke: owner login، latest-main SHA parity، وواجهات Admin/Supervisor/Counter في Chromium بعرض هاتف RTL. النتيجة: **3 passed (3.8s)**.
+- اختبار الطباعة النصية تأكد أن الصفحات التشغيلية الثلاث لا تكشف project_id أو RLS أو Edge Function أو JWT أو SHA-256 أو IndexedDB أو مصطلحات داخلية أخرى في النص الظاهر. واختبارات تنقية Audit/Error نجحت.
+
+**تغييرات الواجهة المثبتة في المصدر:**
+- النظام الأم: هوية Cairo / خطوط عربية، درجات كحلي/أزرق، تباين وأزرار Focus/Hover، تسميات عربية للأدوار والحالات، ملخصات تدقيق وأخطاء صديقة للمستخدم دون إظهار تفاصيل Supabase/UUID/JSON الخام.
+- المشرف: تسميات بشرية للحالات والأدوار والتنبيهات، رسائل أخطاء آمنة، وعدم عرض معرفات الأجهزة الداخلية في لوحة الفريق.
+- المندوب: رسائل مزامنة/دخول/أجهزة عربية، إخفاء project/session/product/device IDs من واجهة الطابور، وعدم حفظ الخطأ التقني الخام للمزامنة، وتسميات دور عربية.
+- Edge Export: عدّ صفوف مسبق قبل تحميل العلاقات الكبيرة، تقدير حمل/ذاكرة التصدير الكامل وClient Balance قبل bulk fetch، تنزيل الصور عبر stream محدود بحد 1 MiB لكل صورة، 8 MiB إجمالي و500 صورة، ورفض الطلب إذا تجاوز تقدير الذاكرة 160 MiB أو حدود الملف/الصفوف.
+
+**حد التصدير:** الحارس يقلل خطر نفاد الذاكرة ويمنع bulk reads غير مقبولة، لكنه لا يحوّل XLSX النهائي إلى stream حقيقي؛ تكوين المصنف/ZIP ما زال يستخدم الذاكرة. لم يتم تشغيل تصدير على جلسة فعلية، ولم تُفتح وثيقة الناتج أو تُقَس ذروة الذاكرة. لذلك Export runtime/90k remains **OPEN**.
+
+**ما زال مفتوحاً:** مصادقة مستخدم مشرف/مندوب حقيقيين، E2E لمسح باركود في مشروع/موقع/صنف، استيراد قاعدة البيانات 5k/90k (ملفات rollback موجودة ولم تشغّل بسبب LVE-747 governance hold)، تصدير فعلي وفحص الصور/الـhash والذاكرة، Offline device/browser restart/multi-device، وقياس 30–300 مستخدم. لا بيانات تشغيل حالية في CountFlow؛ الجداول ما زالت صفرية. لا SQL/DML/Edge deploy جديد في هذا التحديث.
+
+**المصدر المرجعي:** `FINAL_EXECUTION_REPORT_LVE-755.md` (يضاف إليه ملحق LVE-756).  
+**المساعد التالي:** يبدأ من HEAD أعلاه وCI 44944233547؛ لا يعيد Phase 1/2/3 source work. ينتقل إلى E2E المصادق/تصدير فعلي فقط عندما تتوفر بيانات اختبار CountFlow معتمدة وتُرفع بوابة LVE-747. لا يلمس SMART ERP مطلقاً.
+
+---
+
 
 > **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-755 (FINAL DOC PIN)**  
 > **Date:** 2026-11-21  
