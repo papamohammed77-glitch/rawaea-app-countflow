@@ -18,13 +18,13 @@
 - **P3 PASS:** 28/28 Node tests، Deno type-check لوظيفتي Edge، Pages allowlist build، و3/3 Playwright Production smoke على Chromium؛ اختُبر build-info SHA parity مع main وصفحات الهاتف RTL.
 - Edge الحية: `counting-provision-member` v7/JWT=true، و`counting-export-session` v14/JWT=true. لم يُنشر تحديث Edge في LVE-759.
 
-### حالة Supabase الحية — Read-only snapshot عند 2026-11-21 20:27:06 UTC
+### حالة Supabase الحية — Read-only snapshot عند 2026-11-21 20:29:52 UTC
 - البيئة المحددة صراحة في دستور المالك الحالي: `rawaea-staging` هي ملعب CountFlow الوحيد. هذا يحسم اختيار نطاق CountFlow السابق؛ لا يجيز أي تغيير في SMART ERP أو أرصدة/قيود ERP الحقيقية.
 - جداول CountFlow وعددها 23: RLS enabled في 23/23، disabled في 0.
 - تكليف QA واحد `QA 90K Import Verification`، عضو واحد بدور Supervisor نشط، وجلسة Planned واحدة.
-- دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 30,000 committed/accepted، صفر rejected، و60,000 staged؛ كتالوج المشروع يحوي 30,000 صنف في لحظة الرصد.
+- دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 32,000 committed/accepted، صفر rejected، و58,000 staged؛ كتالوج المشروع يحوي 32,000 صنف في لحظة الرصد.
 - لا توجد عمليات عد أو أرصدة متوقعة أو حضور/أجهزة أو مهام إعادة عد أو تسويات أو تنبيهات أو صادرات. Audit log به 6 أحداث.
-- هذه دفعة QA متزامنة بدأها مالك المهمة/مساعد آخر. **30,000 تقدم جزئي وليس نجاح 90K. لا تتدخل في الدفعة ولا تستأنفها/توقفها/تحذفها ولا تنشئ نسخة ثانية.** أعد القراءة قبل تحديث الحالة.
+- هذه دفعة QA متزامنة بدأها مالك المهمة/مساعد آخر. **32,000 تقدم جزئي وليس نجاح 90K. لا تتدخل في الدفعة ولا تستأنفها/توقفها/تحذفها ولا تنشئ نسخة ثانية.** أعد القراءة قبل تحديث الحالة.
 
 ### تقييم المراحل
 | المرحلة | الحالة الحالية | الحد الذي لم يثبت |
