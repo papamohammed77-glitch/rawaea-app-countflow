@@ -458,7 +458,8 @@ test("large import commit resumes in bounded server chunks for both catalog and 
   assert.match(helper, /while\(attempt\+\+<10000\)/);
   assert.match(helper, /status==='committed'/);
   assert.match(helper, /status!=='committing'/);
-  assert.match(helper, /remaining_rows/);
+  assert.match(helper, /onProgress\(result\)/);
+  assert.match(admin, /Number\(progress\.remaining_rows\|\|0\)/);
   assert.equal((admin.match(/commitImportBatchInChunks\(batchId,/g) || []).length, 2);
   const withoutHelper = admin.slice(0, start) + admin.slice(end);
   assert.doesNotMatch(withoutHelper, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
