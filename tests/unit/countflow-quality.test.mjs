@@ -280,3 +280,15 @@ test("operation import row rejections retain original CSV source row numbers", (
   assert.match(csvStream, /const currentSourceRow=sourceRowNumber\+\+/);
   assert.match(csvStream, /pending\.push\(\{row,rowNumber:currentSourceRow\}\)/);
 });
+
+
+test("Supervisor uses server-authoritative polling when Broadcast delivery is unavailable", () => {
+  const supervisor = read("Countflow-supervisor.html");
+  assert.match(supervisor, /setInterval\(\(\)=>\{if\(project&&!document\.hidden\)refreshCockpitAuthoritatively\(\)/);
+  assert.match(supervisor, /document\.addEventListener\('visibilitychange',\(\)=>\{if\(!document\.hidden&&project\)refreshCockpitAuthoritatively\(\)\}\)/);
+  assert.match(supervisor, /async function refreshCockpitAuthoritatively\(\)/);
+  assert.match(supervisor, /مزامنة دورية/);
+  assert.doesNotMatch(supervisor, /liveBadge\)\.textContent=s==='SUBSCRIBED'\?'مباشر'/);
+  assert.match(supervisor, /limit\(500\)/);
+  assert.match(supervisor, /limit\(2000\)/);
+});
