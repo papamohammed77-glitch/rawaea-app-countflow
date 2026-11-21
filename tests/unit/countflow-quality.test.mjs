@@ -486,7 +486,7 @@ test("session workflow device acknowledgement row uses a parse-safe template lit
 test("resumable import SQL migration bounds each commit transaction and finalizes only after remaining rows reach zero", () => {
   const sql = read("database/migrations/20261121214000_countflow_import_commit_chunked_batches.sql");
   assert.match(sql, /LIMIT 1000/);
-  assert.match(sql, /status NOT IN \(''preview'',''committing''\)/);
+  assert.ok(sql.includes("IF v_batch.status NOT IN (''preview'',''committing'') THEN"));
   assert.match(sql, /row_status=''staged''/);
   assert.match(sql, /remaining_rows/);
   assert.match(sql, /IF v_remaining>0 THEN/);
