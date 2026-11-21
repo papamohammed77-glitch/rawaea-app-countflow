@@ -71,12 +71,12 @@
 
 ## 5. بوابة الجودة والنشر — الدليل الحالي
 
-GitHub Actions run `44946245444` على SHA `d90584874d5078040c7ae42db4327c30086004b8` — SUCCESS:
+GitHub Actions run `44946476315` على آخر HEAD للوثائق/النشر `88eea115830ba7b0c302e215d288c78eb8690f10` — SUCCESS (تم اختبار وظائف التطبيق عند SHA `d90584874d5078040c7ae42db4327c30086004b8`، والتغييرات بينهما وثائق فقط):
 - **28/28** Node source/unit tests.
 - Deno type-check لوظيفتي `counting-provision-member` و`counting-export-session`.
 - بناء Cloudflare Pages من قائمة الملفات المسموح بها.
 - **3/3** Playwright Chromium Production smoke: قراءة build-info ومطابقة SHA مع `main`، وصفحات Owner/Admin وSupervisor وCounter العامة على شاشة RTL بعرض هاتف، وصفحة دخول المالك.
-- سجل Cloudflare يعرض Production/main على commit `d905848`، مطابقًا للـSHA الذي اختبره Playwright.
+- سجل Cloudflare وPlaywright `build-info.json` يثبتان تطابق Production/main مع SHA `88eea115`.
 
 هذا لا يثبت login فعليًا لمستخدم Supervisor/Counter، أو عملية مسح/حفظ عد، أو Offline restart/reconnect/multi-device.
 
@@ -92,6 +92,11 @@ GitHub Actions run `44946245444` على SHA `d90584874d5078040c7ae42db4327c30086
 - Audit log يحوي 6 أحداث مرتبطة بالإعداد/الاستيراد.
 
 **التفسير:** استيراد QA مستمر نفّذه مساعد آخر/مالك المهمة على شكل أجزاء. رقم 32,000 هو تقدم جزئي وليس نجاح 90K. لا تتدخل في هذه الدفعة ولا تستأنفها أو توقفها أو تحذفها أو تبدأ نسخة ثانية منها. أعد قراءة الحالة قبل كتابة أي تقرير لاحق عنها.
+
+**نتيجة مستشار الأمان (قراءة حية 2026-11-21):**
+- تحذير `SECURITY DEFINER` على خمس RPCs في CountFlow قابل للاستدعاء من `authenticated` فقط؛ ACL التفصيلي يؤكد عدم وجود `anon` أو `PUBLIC` ضمن EXECUTE.
+- الخمس تضبط `search_path=""`. وظائف الاعتماد/إلغاء الحاجز/حل التنبيه/تجاوز الجهاز تتحقق من هوية مالك CountFlow؛ ووظيفة بلاغ طابور الجهاز تتحقق من العضوية النشطة المطابقة لـ`auth.uid()` ومن الجهاز المعتمد والجلسة المسموحة.
+- هذا تحذير تصميمي عام يستحق بقاء اختبارات الحراسة، وليس دليل وصول مجهول أو ثغرة مثبتة. فحص المستشار أظهر كذلك 65 جدولًا عامًا قديمًا خارج نطاق CountFlow بلا RLS؛ لم تُعدّل لأنها تخص تطبيقات أخرى في مشروع Supabase المشترك.
 
 ## 7. وظائف Edge وحدود النشر
 
