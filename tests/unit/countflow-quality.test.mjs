@@ -542,3 +542,58 @@ test("Admin dynamic metadata, import history and team roles use Arabic operator 
   assert.match(admin, /'نشط':'نشط','موقوف':'موقوف'/);
   assert.doesNotMatch(admin, /esc\(x\.location_type\)|esc\(m\.role\)|state\.project\.code\+' · '\+s\.status/);
 });
+
+
+test("Client Balance decimal arithmetic preserves purchase-unit to base-unit value", () => {
+  const source = read("functions/counting-export-session/index.ts");
+  const start = source.indexOf("function decimalToScaled(");
+  const end = source.indexOf("function excelColumn(", start);
+  assert.ok(start >= 0 && end > start, "Client Balance decimal helpers must exist");
+  const helpers = source.slice(start, end)
+    .replace(/value: unknown/g, "value")
+    .replace(/scale: number/g, "scale")
+    .replace(/numerator: bigint/g, "numerator")
+    .replace(/denominator: bigint/g, "denominator")
+    .replace(/value: bigint/g, "value")
+    .replace(/: bigint \\| null/g, "")
+    .replace(/: bigint/g, "")
+    .replace(/: number/g, "");
+  const { decimalToScaled, roundDivide, scaledToNumber } =
+    new Function(helpers + "; return {decimalToScaled,roundDivide,scaledToNumber};")();
+
+  const purchasePrice = decimalToScaled("120.00", 6);
+  const unitsPerBox = decimalToScaled("12", 6);
+  assert.equal(purchasePrice, 120000000n);
+  assert.equal(unitsPerBox, 12000000n);
+
+  const baseUnitCost = roundDivide(purchasePrice * 1000000n, unitsPerBox);
+  assert.equal(baseUnitCost, 10000000n);
+  assert.equal(scaledToNumber(baseUnitCost, 6), 10);
+
+  const completeBaseQuantity = decimalToScaled("25.5", 4);
+  const finalValue = roundDivide(completeBaseQuantity * baseUnitCost, 10000n);
+  assert.equal(finalValue, 255000000n);
+  assert.equal(scaledToNumber(finalValue, 6), 255);
+
+  assert.equal(decimalToScaled("1.2345678", 6), 1234568n);
+  assert.equal(decimalToScaled("-1.2345678", 6), -1234568n);
+  assert.equal(decimalToScaled("", 6), null);
+  assert.equal(decimalToScaled(null, 6), null);
+  assert.equal(roundDivide(-5n, 2n), -3n);
+  assert.throws(() => decimalToScaled("1e3", 6), /INVALID_DECIMAL_VALUE/);
+  assert.throws(() => roundDivide(100n, 0n), /INVALID_DECIMAL_DENOMINATOR/);
+});
+
+test("Client Balance workbook image anchors and right-to-left layout reference the exact product row", () => {
+  const source = read("functions/counting-export-session/index.ts");
+  assert.match(source, /rightToLeft="1"/);
+  assert.match(source, /imageRows\?:Set<number>/);
+  assert.match(source, /options\.imageRows\?\.has\(ri\+1\)/);
+  assert.match(source, /const fromRow=im\.row-1,toRow=im\.row/);
+  assert.match(source, /<xdr:col>0<\\/xdr:col>/);
+  assert.match(source, /<xdr:col>1<\\/xdr:col>/);
+  assert.match(source, /<xdr:blip r:embed="rId/);
+  assert.match(source, /imageByProduct\.set\(product\.id,\{status:"مضمنة داخل Excel"/);
+  assert.match(source, /images_embedded:embeddedCount/);
+  assert.match(source, /images_not_embedded:notEmbeddedCount/);
+});
