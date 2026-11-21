@@ -1,5 +1,54 @@
 # CountFlow — CURRENT_STATE
 
+> **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-754**  
+> **Date:** 2026-11-21  
+> **Status:** P1 security remains applied and verified. Phase 2 catalog + operation import use bounded CSV/XLSX parsing and 1,000-row RPC chunks; product listing is server-paged and virtualized. Phase 3 export source/deployment safeguards are present in ACTIVE Edge Function v14; pricing remains UNKNOWN. Phase 4 paths and build are correct, Playwright tests are discoverable, and a Cloudflare Pages Production project exists with auto deployments enabled. The currently visible Production deployment is older than current Git HEAD, so latest-source deployment parity is NOT VERIFIED.  
+> **Repository:** papamohammed77-glitch/rawaea-app-countflow (standalone; not erp-frontend).  
+> **Current Git HEAD:** f54035ba5f86d8d88af80b8ebfc302ae863e0a38. Application source HEAD used by CI: 5dcdf76a856d78f4f6268bcc0d1c9cd2f13e2f77; subsequent commits in this checkpoint update documentation only.  
+> **Relevant source blobs:** countflow-admin.html = e72949afea346b079152e1f87e0f07c0c8a2eee5; tests/unit/countflow-quality.test.mjs = a7302bbdae962105a4d64feacc6998c0a3d9b2f6; workflow = 0e1622cb867dd4fda4be0eec1d40d288c13c07e6; Edge source = d8c32ed72f5a1ff36f62b42cd62f25f308836eb3; Playwright spec = e3dc4dd613fcaa02f6a76659febee97461c7e9cf.  
+> **CI:** GitHub Actions run 44941236636 — SUCCESS. Ten unit/source tests passed; the allowlisted Pages build passed; three Playwright tests were discovered (not executed).  
+> **Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu only. Last read-only query: 0 projects, members, products, sessions, count entries, import batches, import rows, exports and expected balances; exactly one owner@rawaea.com Auth identity and its email is confirmed. No database writes, migrations, RLS changes or Edge deployments were performed in this continuation.  
+> **Live export Edge Function:** counting-export-session ACTIVE v14, JWT=true; deployed source digest 147a21d8389ca6f87c911352895aaa0e3ae56ef1f875cb147c3f455f0a34c788 matches the tracked source.  
+> **Cloudflare Pages:** project rawaea-app-countflow, Production, automatic deployments enabled; origin https://rawaea-app-countflow.pages.dev. The latest Production commit visible in the connected Cloudflare dashboard at inspection was 195bbe8, not the newer Git HEAD. Do not claim HEAD f54035b is deployed until a deployment record shows the same commit.  
+>
+> ### Phase 1 — P0 / SECURITY: CONFIRMED
+> - LVE-749 migration is already applied. Do not replay it.
+> - Engagement creation, account provisioning, owner Admin writes/import/export and sensitive lifecycle/RPC operations require the confirmed platform-owner identity.
+> - Supervisor is limited to monitoring and team/location assignments; it cannot create engagements/accounts, reset passwords, import/export, edit master data, control session lifecycle, reconcile, approve or mutate alerts.
+> - Field entry/recount remains counter-only; auditor cannot submit field counts.
+>
+> ### Phase 2 — P1 / IMPORT & CATALOG: SOURCE + CI PASS
+> - Product catalog reads use exact-count server-side filtering and 100-row .range() pages. The DOM uses a 30-row virtual window; the browser does not download 90k/200k products to render one table.
+> - CSV parsing uses Papa Parse step with pause/resume and bounded 1,000-row staging. Original source record numbers are preserved by counting source records including blank/error records.
+> - XLSX reads the ZIP/OOXML sheet stream from Blob slices, validates CRC and emits row callbacks; the 90,000-row synthetic XLSX test passed. No full-workbook SheetJS XLSX.read(file.arrayBuffer()) path remains for XLSX.
+> - Catalog import and operation-level import share bounded CSV/XLSX streaming and existing RPCs count_create_import_batch, count_stage_import_rows, count_commit_import_batch; server-side validation decides accepted/rejected rows.
+> - Optional category/price/name/identity fields normalize to NULL/empty as appropriate; malformed unit JSON is normalized to an empty units array so a bad optional field does not throw and abort all rows. Rows missing mandatory identity/base unit are expected to be rejected individually by the server.
+> - Legacy binary .xls remains supported only with an 8 MiB file limit and SheetJS full read; it is explicitly not a streaming format. Convert large workbooks to .xlsx.
+> - CI run 44941236636 passed 10/10 unit/source checks including synthetic 90k XLSX, CRC/traversal rejection, role boundaries, operation streaming, row-number preservation and partial failures. This is parser/source regression coverage, not a 90k database import benchmark.
+>
+> ### Phase 3 — P2 / EXPORT: SOURCE DEPLOYED, RUNTIME NOT VERIFIED
+> - Edge Function v14 includes a 160 MiB estimated-memory guard, explicit 413 budget rejection, bounded image reads (1 MiB/image, max 500 images, 8 MiB aggregate) and per-currency pricing output with no FX conversion.
+> - Pricing policy remains UNKNOWN / not owner-approved. Derived unit-cost/value fields are not an approved stock valuation or accounting basis and must not be posted to ERP accounts.
+> - No authenticated export job has been run in this continuation. Workbook opening, image placement, large-output peak memory, and 90k export remain UNKNOWN. The estimate guard is not a measured memory guarantee.
+> - UI visual polish is not certified as SAP-level; responsive/mobile usability, keyboard/accessibility review and multi-device runtime behavior need real browser/device review.
+>
+> ### Phase 4 — PUBLISH & E2E: PATHS FIXED, DEPLOYMENT PARITY / AUTH E2E OPEN
+> - Pages root is the standalone repository root. Build command: bash scripts/build-pages.sh; output: dist. Build produced the nine allowlisted browser files and excluded source-only folders.
+> - Correct app routes: /countflow-admin.html, /countflow.html, /Countflow-supervisor.html. Playwright config has testDir: . because it is located in tests/e2e.
+> - CI installs Playwright and lists all three tests successfully. It does not launch a browser or run authenticated scenarios.
+> - Read-only connected-browser inspection showed the Production master page accessible with the owner session and zero dashboard counts. This is a manual read-only smoke observation, not Playwright E2E and not proof that latest HEAD is live.
+> - No authenticated supervisor/counter credentials or assigned test location/product were available to CI. Actual sign-in, scan, offline/reconnect and multi-device Playwright tests remain OPEN.
+> - Cloudflare project is present and automatic deployments are enabled. Last visible production revision 195bbe8 predates current HEAD; verify deployment parity before saying source is live.
+>
+> ### Governance / next execution
+> - Do not touch SMART ERP, erp-frontend, company-1, ERP tables, inventory, treasury, sales or accounting.
+> - Do not run SQL write tests, create Auth users or publish a new Edge Function until the LVE-747 staging-write/deployment governance gate is resolved. Read-only SQL verification is permitted.
+> - Next assistant: inspect current main HEAD and CI run, then check the Cloudflare Production deployment revision. After deployment parity, obtain approved supervisor/counter test credentials and run the three Playwright E2E cases against the published origin. Keep all test data CountFlow-only and rollbackable. Verify export with a real but approved test session before claiming Phase 3 runtime PASS; leave pricing UNKNOWN until owner approval.
+> - Full handoff: FINAL_EXECUTION_REPORT_LVE-754.md.
+>
+> ---
+
+
 > **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-751**  
 > **Date:** 2026-11-21  
 > **Status:** Phase 1 LVE-749 remains confirmed. Phase 2 LVE-750 source changes remain committed; CSV streaming and server-paged/virtual product rendering have static syntax PASS. Phase 3 export guard/source changes are committed and `counting-export-session` is ACTIVE v14 with exact source match and JWT required. Deployment paths and Playwright paths are corrected. Actual export, E2E, XLSX runtime, 90k stress, and Cloudflare Pages deployment remain NOT VERIFIED.  
