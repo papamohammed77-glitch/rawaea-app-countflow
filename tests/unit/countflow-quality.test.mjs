@@ -589,10 +589,10 @@ test("Client Balance workbook image anchors and right-to-left layout reference t
   assert.match(source, /rightToLeft="1"/);
   assert.match(source, /imageRows\?:Set<number>/);
   assert.match(source, /options\.imageRows\?\.has\(ri\+1\)/);
-  assert.match(source, /const fromRow=im\.row-1,toRow=im\.row/);
+  assert.match(source, /id=i\+1,fromRow=im\.row-1,toRow=im\.row/);
   assert.ok(source.includes("<xdr:col>0</xdr:col>"));
   assert.ok(source.includes("<xdr:col>1</xdr:col>"));
-  assert.match(source, /<xdr:blip r:embed="rId/);
+  assert.match(source, /<a:blip r:embed="rId/);
   assert.match(source, /imageByProduct\.set\(product\.id,\{status:"مضمنة داخل Excel"/);
   assert.match(source, /images_embedded:embeddedCount/);
   assert.match(source, /images_not_embedded:notEmbeddedCount/);
