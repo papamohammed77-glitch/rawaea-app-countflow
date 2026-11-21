@@ -44,7 +44,7 @@ The CountFlow master dashboard provides:
 - **History preservation:** completed operations remain available for review, preview and export. Historical operations cannot be reopened or have their team/import altered from the supervisor UI.
 - **Live refresh:** `count_sessions` and `count_members` Postgres Changes events invalidate the dashboard snapshot; the UI re-fetches authoritative rows through RLS. A 30-second visible-page reconciliation remains the fallback.
 
-The supervisor page provides the same operation-level team assignment/removal and account provisioning flow, a searchable historical session register, existing CSV/XLSX staged import, server-side result export, and printable result preview.
+The supervisor page is limited to live operational monitoring and scoped team participation: read-only member/device/presence visibility, assignment and removal of counter-to-session/location assignments, and live count/coverage observation. Engagement creation, account provisioning/password reset, catalog/location administration, import/export, session lifecycle, alert-rule mutation, reconciliation, recount generation/review, and approval remain in the owner-only Admin application.
 
 ## 4. RAWAEA architecture patterns adopted by principle, not by code
 
@@ -79,8 +79,8 @@ CountFlow now has its own `countflow-core.js` and `countflow-sw.js`, configured 
 **Known gaps that remain open:**
 
 - A CountFlow-only Service Worker and manifest have now been added. The worker precaches the three app shells, the core, manifest, icon and the three approved CDN runtime libraries; it uses network-first HTML with cached fallback, caches static assets, and never caches Supabase Auth/REST/Storage/Edge Function responses. This is **implemented but not browser-verified**; first-install offline boot and CDN cache success remain UNKNOWN.
-- Queue replay requires the currently loaded session to be active/paused. Once the server moves the session to review/completed, pending local operations can become hidden and non-syncable.
-- The retry control currently clears sync errors across all local queue records rather than only the active project/session/member/device.
+- Queue replay requires the currently loaded session to be `active`; it does not transmit into a paused/review/completed session. Pending rows for other sessions remain visible as held local work, not reassigned or deleted.
+- Retry is scoped to the exact current project, member, device, and active session. This is source-verified; browser behavior is not yet E2E-verified.
 - There is no per-device server acknowledgement barrier preventing a supervisor from closing a session while an offline device still has unacknowledged local entries.
 - Browser-termination recovery, real-device offline boot, and authenticated multi-device synchronization remain unverified.
 
@@ -88,9 +88,9 @@ CountFlow now has its own `countflow-core.js` and `countflow-sw.js`, configured 
 
 1. **DONE — implementation:** Add a CountFlow-only Service Worker and manifest. Cache only the approved app shell/static dependencies; never cache Auth responses, Supabase API payloads, signed URLs or business records. Browser verification is still required.
 2. Preserve IndexedDB operations with project/session/member/device identity, immutable event ID and payload hash.
-3. Implement a server-authoritative close barrier: a session cannot be finalized while a registered device has unacknowledged operations, unless the supervisor explicitly revokes/records that device through an audited recovery path.
+3. **OPEN:** Implement a server-authoritative close barrier so a session cannot be finalized while a registered device has unacknowledged operations, unless the owner records an audited device revocation/recovery path. The current client queue does not yet publish a trustworthy empty-queue acknowledgement for every device.
 4. Replay acknowledged queue items through idempotent RPCs without allowing a closed-session write to bypass the state machine.
-5. Scope retry and queue display to the exact signed-in user, project, session and device; never bulk-clear unrelated errors.
+5. **DONE — source:** Retry errors only for the exact signed-in project/member/device/current active session; retain unrelated and held queue entries.
 6. Add authenticated browser E2E tests for first online boot, offline reload, offline entry, browser termination/restart, reconnect, duplicate replay, multi-device concurrency and close-barrier enforcement.
 
 ## 6. Realtime contract
@@ -108,7 +108,7 @@ CountFlow field/supervisor apps still use their existing private Broadcast contr
 - Do not create persistent owner/staff identities or use legacy Auth users without a confirmed roster and explicit identity mapping.
 - Keep QA data synthetic, CountFlow-only, rollbackable and residue-checked.
 
-## 8. Verification status at LVE-740
+## 8. Historical verification status at LVE-740 (superseded by the current checkpoint below)
 
 - Admin JavaScript syntax: **PASS**.
 - Master UI global member/session aggregation: **implemented; browser behavior UNKNOWN**.
