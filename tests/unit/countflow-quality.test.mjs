@@ -626,19 +626,40 @@ test("Admin operations keep the institution name and engagement code visible", (
   assert.match(admin, /state\.project\.name\+' · '\+state\.project\.code/);
 });
 
-test("Admin private product images use project-scoped storage, signed reads and bounded upload", () => {
+test("Admin private product images use project-scoped storage, signed reads and Excel-compatible bounded upload", () => {
   const admin = read("countflow-admin.html");
   assert.match(admin, /createSignedUrls\(paths,3600\)/);
   assert.match(admin, /storage\.from\('counting-product-images'\)\.upload\(path,file/);
   assert.match(admin, /projectId\+'\/products\/'\+crypto\.randomUUID\(\)/);
-  assert.match(admin, /file\.size>5\*1024\*1024/);
-  assert.match(admin, /'image\/jpeg':'jpg','image\/png':'png','image\/webp':'webp'/);
+  assert.match(admin, /MAX_PRODUCT_IMAGE_BYTES=1024\*1024/);
+  assert.match(admin, /file\.size>MAX_PRODUCT_IMAGE_BYTES/);
+  assert.match(admin, /'image\/jpeg':'jpg','image\/png':'png'/);
+  assert.doesNotMatch(admin, /'image\/webp':'webp'/);
   assert.match(admin, /function productImageDisplayUrl\(product\)/);
+  assert.match(admin, /class="product-image-link" href=/);
+  assert.match(admin, /target="_blank" rel="noopener noreferrer"/);
   assert.match(admin, /class="product-thumb"/);
   assert.match(admin, /data-product-image/);
+  assert.match(admin, /hasImageReference\?'الصورة غير متاحة':'بدون صورة'/);
   assert.match(admin, /productImagePreview/);
   assert.match(admin, /image_url:imageRef/);
+  assert.match(admin, /requestToken=\+\+state\.productImageToken/);
+  assert.match(admin, /state\.productImageUrls\.clear\(\)/);
   assert.doesNotMatch(admin, /createPublicUrl\(/);
+});
+
+test("Admin can reuse an existing confirmed Auth account without requesting or changing its password", () => {
+  const admin = read("countflow-admin.html");
+  const passwordField = admin.slice(admin.indexOf('id="memberPassword"') - 100, admin.indexOf('id="memberPassword"') + 180);
+  assert.match(passwordField, /minlength="10"/);
+  assert.doesNotMatch(passwordField, /required/);
+  assert.match(admin, /data\.account_reused\?/);
+  assert.match(admin, /دون تغيير كلمة مروره/);
+  assert.match(admin, /error\.context\?\.clone\?\.\(\)\.json\(\)/);
+  const provision = read("functions/counting-provision-member/index.ts");
+  assert.match(provision, /if \(password.length < 10\) return reply\(\{ error: "PASSWORD_REQUIRED_FOR_NEW_ACCOUNT" \}/);
+  assert.match(provision, /existing_password_changed: false/);
+  assert.match(provision, /if \(!authUser.email_confirmed_at\)/);
 });
 
 test("Admin product UoM editor validates and persists conversion factors", () => {
