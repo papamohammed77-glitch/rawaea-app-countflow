@@ -147,8 +147,8 @@ BEGIN
     IF SQLERRM NOT LIKE '%LOCATION_NOT_ASSIGNED%' THEN RAISE; END IF;
   END;
 
-  PERFORM set_config('request.jwt.claim.sub',v_supervisor::text,true);
-  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
 
   v_run := public.count_reconcile_session(v_session);
   BEGIN
@@ -166,8 +166,8 @@ BEGIN
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
   PERFORM public.count_record_recount_entry(v_task,9,'قطعة',gen_random_uuid(),'QA-BARCODE',v_device,'second count');
 
-  PERFORM set_config('request.jwt.claim.sub',v_supervisor::text,true);
-  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
 
   v_result := public.count_review_recount_task(v_task,'accept','QA accepted');
   IF v_result->>'status'<>'reviewed' THEN RAISE EXCEPTION 'QA_FAIL_RECOUNT_REVIEW'; END IF;
