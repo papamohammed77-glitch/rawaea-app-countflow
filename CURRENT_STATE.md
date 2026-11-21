@@ -1,5 +1,35 @@
 # CountFlow — CURRENT_STATE
 
+> **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-751**  
+> **Date:** 2026-11-21  
+> **Status:** Phase 1 LVE-749 remains confirmed. Phase 2 LVE-750 source changes remain committed; CSV streaming and server-paged/virtual product rendering have static syntax PASS. Phase 3 export guard/source changes are committed and `counting-export-session` is ACTIVE v14 with exact source match and JWT required. Deployment paths and Playwright paths are corrected. Actual export, E2E, XLSX runtime, 90k stress, and Cloudflare Pages deployment remain NOT VERIFIED.  
+> **Repository:** `papamohammed77-glitch/rawaea-app-countflow` (standalone CountFlow; not `erp-frontend`).  
+> **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` only. SMART ERP / `fiilmooggumokxanwiyx` and legacy ERP remain untouched.  
+> **Latest source commits:** export `34028902c18950249909f6cc59cf49f21b46e80f`, metadata `d1da9cd0bdf75b23c36c7ba39497a5fb3a6bcd6f`; deployment `ce9f714e470b136ec627681c713cb9bc1db52e63`; Playwright paths `0364b4a002a23fb2e75cd87b2ef58635d4e98e94`; current function source blob `d8c32ed72f5a1ff36f62b42cd62f25f308836eb3`.  
+> **Live Edge Function:** `counting-export-session` v14 ACTIVE, JWT=true, deployed SHA `147a21d8389ca6f87c911352895aaa0e3ae56ef1f875cb147c3f455f0a34c788`; source byte-match confirmed.  
+>
+> ### Phase 3 — SOURCE / DEPLOYMENT STATUS
+> - Client Balance and full export have estimated peak-memory guards (160 MiB) and explicit 413 rejection for estimated over-budget jobs.
+> - Image read is bounded by stream with 1 MiB per image, 500-image cap, and 8 MiB aggregate cap. Image bytes remain retained for workbook assembly within these limits.
+> - Pricing policy is still UNKNOWN / not owner-approved. Export documents purchase-unit-cost divided by unit factor, totals per stored currency, no FX conversion, and no accounting valuation.
+> - `DEPLOYMENT.md` uses standalone repository root, `scripts/build-pages.sh`, `dist`, and canonical root HTML files.
+> - Playwright config/test paths use standalone root pages; suite has not run.
+>
+> ### OPEN / NOT VERIFIED
+> - Edge Function runtime compile and actual export invocation/workbook opening/image placement/peak memory.
+> - XLSX admin import still reads whole workbook via SheetJS `XLSX.read(file.arrayBuffer())`; true streaming XLSX import remains open.
+> - 90,000-row import/export stress; full 90k target cannot be claimed based on estimated memory guard.
+> - Cloudflare Pages deployment and authenticated Playwright E2E.
+> - Pricing policy approval.
+>
+> ### Continuation rules
+> - Resume from LVE-751 and read current HEAD before edits. Detailed handoff: `FINAL_EXECUTION_REPORT_LVE-751.md`.
+> - Do not reapply LVE-749/750/751. Integrate other assistant work rather than overwriting.
+> - No irreversible stock/accounting operations or persistent QA data. Use rollback-only CountFlow tests only after the applicable governance gate is resolved.
+> - Do not call XLSX streaming, 90k scale, runtime export, or deployment PASS without direct evidence.
+>
+> ---
+>
 > **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-750**  
 > **Date:** 2026-11-21  
 > **Status:** Phase 1 P0 enforcement remains confirmed at LVE-749. Phase 2 source improvements committed; CSV streaming and product pagination are implemented with static syntax PASS. XLSX parsing, runtime import, 90k load, deployment, and Phase 3 export remain OPEN/NOT VERIFIED.  
