@@ -36,11 +36,11 @@ BEGIN
   IF v_commit->>'status'<>'committed' OR (v_commit->>'accepted_rows')::bigint<>5000 OR v_staged<>5000 OR v_products<>5000
   THEN RAISE EXCEPTION 'QA_5K_IMPORT_ASSERTION_FAILED: %, staged %, products %',v_commit,v_staged,v_products; END IF;
   PERFORM set_config('role','none',true);
-  INSERT INTO pg_temp.countflow_90k_result(result)
+  INSERT INTO pg_temp.countflow_5k_result(result)
   VALUES(jsonb_build_object('status','PASS','rows_submitted',5000,'rows_staged',v_staged,
     'rows_accepted',(v_commit->>'accepted_rows')::bigint,'products_committed',v_products,
     'batch_chunks',5,'rollback_only',true));
 END
 $countflow_90k$;
-SELECT result FROM pg_temp.countflow_90k_result;
+SELECT result FROM pg_temp.countflow_5k_result;
 ROLLBACK;
