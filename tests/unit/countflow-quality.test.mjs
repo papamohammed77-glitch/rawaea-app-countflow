@@ -268,3 +268,15 @@ test("operation import preserves per-row partial failure semantics for optional 
   assert.match(normalizer, /sku:value\(\['sku','item_code','code','كود الصنف'\]\)\|\|null/);
   assert.match(normalizer, /barcode:value\(\['barcode','bar_code','ean','upc','باركود'\]\)\|\|null/);
 });
+
+test("operation import row rejections retain original CSV source row numbers", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("async function streamOperationImportChunks(file,onChunk)");
+  const end = admin.indexOf("$('operationImportFile').addEventListener('change')", start);
+  assert.ok(start >= 0 && end > start);
+  const csvStream = admin.slice(start, end);
+  assert.match(csvStream, /sourceRowNumber=2/);
+  assert.match(csvStream, /skipEmptyLines:false/);
+  assert.match(csvStream, /const currentSourceRow=sourceRowNumber\+\+/);
+  assert.match(csvStream, /pending\.push\(\{row,rowNumber:currentSourceRow\}\)/);
+});
