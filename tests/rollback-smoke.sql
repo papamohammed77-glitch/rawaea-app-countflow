@@ -145,6 +145,19 @@ BEGIN
   PERFORM public.count_report_device_queue(v_session,v_device,0,NULL);
   PERFORM public.count_report_device_queue(v_session,v_device2,0,NULL);
 
+  -- A device already acknowledged clear for this lifecycle cannot be waived.
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+  BEGIN
+    PERFORM public.count_waive_device_queue(v_session,v_member,v_device2,'No waiver should be needed.');
+    RAISE EXCEPTION 'QA_FAIL_WAIVED_ALREADY_CLEAR_DEVICE';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_WAIVED_ALREADY_CLEAR_DEVICE' THEN RAISE; END IF;
+    IF SQLERRM<>'DEVICE_QUEUE_ALREADY_CLEAR' THEN RAISE; END IF;
+  END;
+  PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
+
   v_entry := public.count_record_entry(v_session,v_product,v_loc1,8,'قطعة',v_event,'QA-BARCODE',v_device,'first count');
   v_retry := public.count_record_entry(v_session,v_product,v_loc1,8,'قطعة',v_event,'QA-BARCODE',v_device,'retry');
   IF v_entry.id IS DISTINCT FROM v_retry.id THEN RAISE EXCEPTION 'QA_FAIL_IDEMPOTENT_RETRY'; END IF;
