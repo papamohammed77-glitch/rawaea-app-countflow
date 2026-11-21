@@ -667,12 +667,18 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    });
    if(committed?.status!=='committed')throw new Error('لم تكتمل دفعة الاستيراد بعد. يمكنك استئنافها من السجل.');
    notify('اكتمل استكمال دفعة الاستيراد · مقبول '+Number(committed.accepted_rows||0)+' · مرفوض '+Number(committed.rejected_rows||0));
-   if(scope==='product'){
-    await loadProjectData();
-   }else{
-    await loadOperationImportHistory();
-    await loadProjectData();
-    await loadOperationMetrics();
+   try{
+    if(scope==='product'){
+     await loadProjectData();
+    }else{
+     await loadOperationImportHistory();
+     await loadProjectData();
+     await loadOperationMetrics();
+    }
+   }catch(refreshError){
+    fail('اكتمل اعتماد الدفعة لكن تعذر تحديث العرض',refreshError);
+    if(scope==='product')await loadProductImportHistory();
+    else await loadOperationImportHistory();
    }
   }catch(error){
    fail('تعذر استكمال دفعة الاستيراد',error);
