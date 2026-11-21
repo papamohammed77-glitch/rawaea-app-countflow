@@ -228,7 +228,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
  const fail=(label,error)=>{console.error(label,error);notify(label+': '+(error?.message||error||'خطأ غير معروف'),true)};
@@ -247,23 +247,22 @@
   const keep=state.project&&state.projects.some(p=>p.id===state.project.id)?state.project.id:state.projects[0].id;
   $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
  }
- function clearProjectViews(){state.products=[];state.members=[];state.locations=[];state.sessions=[];state.productPage=1;state.productImportRows=[];state.productImportMapping={};state.productImportMappingId=null;if($('productImportHistory'))$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';if($('productImportDetails'))$('productImportDetails').innerHTML='';['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
+ function clearProjectViews(){state.products=[];state.productTotal=0;state.productQuery='';state.productScrollTop=0;state.members=[];state.locations=[];state.sessions=[];state.productPage=1;state.productImportRows=[];state.productImportRowCount=0;state.productImportMapping={};state.productImportMappingId=null;if($('productImportHistory'))$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';if($('productImportDetails'))$('productImportDetails').innerHTML='';['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
  function statusPill(s){const cls=['active','ready','completed'].includes(s)?'ok':['paused','review','planned','draft'].includes(s)?'warn':['closed','archived','cancelled','removed'].includes(s)?'off':'';return '<span class="pill '+cls+'">'+esc(s)+'</span>';}
  function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—';}
  async function loadProjectData(){
   if(!state.project){clearProjectViews();return;}
   const pid=state.project.id;
-  const [products,members,locations,sessions]=await Promise.all([
-   loadProjectRows('count_products','*',pid,'name',500).then(data=>({data,error:null})),
+  const [members,locations,sessions]=await Promise.all([
    db.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(500),
    db.from('count_locations').select('*').eq('project_id',pid).order('sort_order').limit(2000),
    db.from('count_sessions').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
   ]);
-  for(const [label,res] of [['الأصناف',products],['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
-  state.products=products.data||[];state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
-  state.productPage=1;
+  for(const [label,res] of [['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
+  state.products=[];state.productTotal=0;state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
+  state.productPage=1;state.productQuery=$('productSearch').value.trim();state.productScrollTop=0;
   renderProject();
-  await Promise.all([loadAudit(),loadProductImportHistory()]);
+  await Promise.all([loadProductsPage(1,state.productQuery),loadAudit(),loadProductImportHistory()]);
  }
  function renderProductImportSessions(){
   const select=$('productImportSession');if(!select)return;
@@ -274,22 +273,36 @@
  }
  function renderProject(){
   const p=state.project;$('welcomeTitle').textContent=p.name;$('projectSummary').innerHTML='<b>'+esc(p.name)+'</b><p class="muted">الكود: '+esc(p.code)+'</p><p>الحالة: '+statusPill(p.status)+'</p><p class="hint">تم الإنشاء '+date(p.created_at)+'</p>';
-  $('kProducts').textContent=state.products.filter(x=>x.is_active).length;$('kMembers').textContent=state.members.filter(x=>x.status==='active').length;$('kSessions').textContent=state.sessions.length;
-  $('productCount').textContent=state.products.length+' صنف';renderProductImportSessions();renderProducts();renderMembers();renderRoles();renderLocations();renderSessions();renderRecent();
+  $('kProducts').textContent=state.productTotal;$('kMembers').textContent=state.members.filter(x=>x.status==='active').length;$('kSessions').textContent=state.sessions.length;
+  $('productCount').textContent=state.productTotal+' صنف';renderProductImportSessions();renderProducts();renderMembers();renderRoles();renderLocations();renderSessions();renderRecent();
  }
  function loadProjectRows(table,columns,projectId,orderColumn,pageSize=500){
   return (async()=>{const all=[];let offset=0;while(true){const {data,error}=await db.from(table).select(columns).eq('project_id',projectId).order(orderColumn,{ascending:true}).range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];all.push(...page);if(all.length>200000)throw new Error('تجاوز عدد سجلات '+table+' الحد التشغيلي الآمن 200,000 صف.');if(page.length<pageSize)break;offset+=pageSize;}return all;})();
  }
+ async function loadProductsPage(page=1,query=state.productQuery){
+  if(!state.project)return;
+  const pid=state.project.id,limit=100,q=String(query||'').trim().replace(/[(),]/g,' ').replace(/[%_]/g,' ').slice(0,100);
+  let request=db.from('count_products').select('*',{count:'exact'}).eq('project_id',pid);
+  if(q)request=request.or(['name','sku','barcode','category'].map(k=>k+'.ilike.%'+q+'%').join(','));
+  const {data,error,count}=await request.order('name',{ascending:true}).order('id',{ascending:true}).range((Math.max(1,page)-1)*limit,Math.max(1,page)*limit-1);
+  if(error)throw error;
+  if(state.project?.id!==pid)return;
+  state.products=data||[];state.productTotal=count||0;state.productPage=Math.max(1,page);state.productQuery=query||'';state.productScrollTop=0;
+  renderProducts();
+ }
  function renderProducts(){
-  const q=$('productSearch').value.trim().toLowerCase();const rows=state.products.filter(x=>[x.sku,x.barcode,x.name,x.category].some(v=>String(v||'').toLowerCase().includes(q)));
-  const pageSize=100,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));state.productPage=Math.min(Math.max(1,state.productPage),totalPages);
-  const page=rows.slice((state.productPage-1)*pageSize,state.productPage*pageSize);
-  $('productCount').textContent=rows.length+' من '+state.products.length+' صنف';
-  $('productTable').innerHTML=page.length?'<table><thead><tr><th>الصنف</th><th>SKU / باركود</th><th>الوحدة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+page.map(x=>'<tr><td>'+esc(x.name||'اسم غير متوفر')+'<span class="sub">'+esc(x.category||'بدون تصنيف')+'</span></td><td>'+esc(x.sku||x.barcode||'—')+'<span class="sub">'+esc(x.sku&&x.barcode?x.barcode:'')+'</span></td><td>'+esc(x.base_unit)+'</td><td>'+statusPill(x.is_active?'نشط':'موقوف')+'</td><td><button class="soft" data-edit-product="'+x.id+'">تعديل</button> <button class="'+(x.is_active?'danger':'soft')+'" data-toggle-product="'+x.id+'">'+(x.is_active?'إيقاف':'تفعيل')+'</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد نتائج مطابقة.</div>';
-  $('productPager').innerHTML=rows.length>pageSize?'<span class="hint">صفحة '+state.productPage+' من '+totalPages+' · '+rows.length+' نتيجة</span><button type="button" class="soft" data-product-page="'+Math.max(1,state.productPage-1)+'" '+(state.productPage===1?'disabled':'')+'>السابق</button><button type="button" class="soft" data-product-page="'+Math.min(totalPages,state.productPage+1)+'" '+(state.productPage===totalPages?'disabled':'')+'>التالي</button>':'';
+  const rows=state.products||[],pageSize=100,totalPages=Math.max(1,Math.ceil(state.productTotal/pageSize)),windowSize=30,rowHeight=48;
+  state.productPage=Math.min(Math.max(1,state.productPage),totalPages);
+  const first=Math.min(Math.max(0,Math.floor((state.productScrollTop||0)/rowHeight)),Math.max(0,rows.length-windowSize)),visible=rows.slice(first,first+windowSize);
+  const rowHtml=x=>'<tr><td>'+esc(x.name||'اسم غير متوفر')+'<span class="sub">'+esc(x.category||'بدون تصنيف')+'</span></td><td>'+esc(x.sku||x.barcode||'—')+'<span class="sub">'+esc(x.sku&&x.barcode?x.barcode:'')+'</span></td><td>'+esc(x.base_unit)+'</td><td>'+statusPill(x.is_active?'نشط':'موقوف')+'</td><td><button class="soft" data-edit-product="'+x.id+'">تعديل</button> <button class="'+(x.is_active?'danger':'soft')+'" data-toggle-product="'+x.id+'">'+(x.is_active?'إيقاف':'تفعيل')+'</button></td></tr>';
+  const top=first*rowHeight,bottom=Math.max(0,(rows.length-first-visible.length)*rowHeight);
+  $('productCount').textContent=state.productTotal.toLocaleString('en-US')+' نتيجة · صفحة '+state.productPage+' من '+totalPages;
+  $('productTable').innerHTML=rows.length?'<div id="productVirtualScroller" style="max-height:520px;overflow:auto;position:relative"><table><thead><tr><th>الصنف</th><th>SKU / باركود</th><th>الوحدة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+(top?'<tr aria-hidden="true"><td colspan="5" style="height:'+top+'px;padding:0;border:0"></td></tr>':'')+visible.map(rowHtml).join('')+(bottom?'<tr aria-hidden="true"><td colspan="5" style="height:'+bottom+'px;padding:0;border:0"></td></tr>':'')+'</tbody></table></div>':'<div class="empty">لا توجد نتائج مطابقة.</div>';
+  $('productPager').innerHTML=state.productTotal>pageSize?'<span class="hint">إجمالي '+state.productTotal.toLocaleString('en-US')+' صنف</span><button type="button" class="soft" data-product-page="'+Math.max(1,state.productPage-1)+'" '+(state.productPage===1?'disabled':'')+'>السابق</button><button type="button" class="soft" data-product-page="'+Math.min(totalPages,state.productPage+1)+'" '+(state.productPage===totalPages?'disabled':'')+'>التالي</button>':'';
+  const scroller=$('productVirtualScroller');if(scroller){scroller.scrollTop=state.productScrollTop||0;scroller.onscroll=()=>{state.productScrollTop=scroller.scrollTop;renderProducts();};}
   $('productTable').querySelectorAll('[data-edit-product]').forEach(b=>b.onclick=()=>editProduct(b.dataset.editProduct));
   $('productTable').querySelectorAll('[data-toggle-product]').forEach(b=>b.onclick=()=>toggleProduct(b.dataset.toggleProduct));
-  $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>{state.productPage=Number(b.dataset.productPage);renderProducts();});
+  $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>loadProductsPage(Number(b.dataset.productPage),state.productQuery).catch(e=>fail('تعذر تحميل صفحة الأصناف',e)));
  }
  function renderMembers(){
   const q=$('memberSearch').value.trim().toLowerCase();
@@ -864,7 +877,7 @@
   const result=id?await db.from('count_products').update(row).eq('id',id).eq('project_id',state.project.id):await db.from('count_products').insert({...row,units:[],is_active:true});
   if(result.error)throw result.error;notify(id?'تم تحديث الصنف':'تمت إضافة الصنف');resetProductForm();await loadProjectData();
  }catch(err){fail('تعذر حفظ الصنف',err);}finally{setBusy(f,false);}});
- $('productCancel').onclick=resetProductForm;$('productSearch').addEventListener('input',()=>{state.productPage=1;renderProducts();});
+ $('productCancel').onclick=resetProductForm;let productSearchTimer=null;$('productSearch').addEventListener('input',()=>{clearTimeout(productSearchTimer);productSearchTimer=setTimeout(()=>loadProductsPage(1,$('productSearch').value.trim()).catch(e=>fail('تعذر البحث في الأصناف',e)),250);});
  $('productImportFile').addEventListener('change',()=>{state.productImportRows=[];state.productImportMapping={};state.productImportMappingId=null;$('productImportPreview').textContent='';$('productImportResult').textContent='';$('productImportMapping').classList.add('hidden');$('productImportCommitBtn').disabled=true;});
  $('productImportPreviewBtn').onclick=previewProductImport;$('productImportCommitBtn').onclick=commitProductImport;$('productImportResetBtn').onclick=resetProductImport;
  $('roleSearch').addEventListener('input',renderRoles);
