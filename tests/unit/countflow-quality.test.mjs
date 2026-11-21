@@ -408,3 +408,38 @@ test("operation importer does not throw when a staging RPC succeeds and keeps co
   assert.match(admin, /تم حفظ النتيجة في السجل'\+\(parseErrors\?/);
   assert.doesNotMatch(admin, /تم حفظ النتيجة في السجل\+\(parseErrors\?/);
 });
+
+
+test("import rejection reasons are human-readable and every failed/warning row is pageable in both import surfaces", () => {
+  const admin = read("countflow-admin.html");
+  const serverCodes = [
+    "INVALID_ROW_SHAPE",
+    "MISSING_PRODUCT_IDENTIFIER",
+    "PRODUCT_IDENTITY_MATCHES_MULTIPLE_PRODUCTS",
+    "MISSING_BASE_UNIT",
+    "INVALID_IMAGE_REFERENCE",
+    "INVALID_EXPECTED_QUANTITY",
+    "NEGATIVE_EXPECTED_QUANTITY",
+    "SESSION_REQUIRED_FOR_EXPECTED_QTY",
+    "LOCATION_REQUIRED_FOR_EXPECTED_QUANTITY",
+    "UNKNOWN_LOCATION_CODE",
+    "AMBIGUOUS_LOCATION_CODE",
+    "DUPLICATE_PRODUCT_IDENTIFIER_AT_SAME_LOCATION",
+    "INVALID_PURCHASE_UNIT_COST",
+    "INVALID_CURRENCY_CODE",
+    "INVALID_UNIT_FACTOR",
+    "INVALID_COST_SOURCE_DATE",
+    "COST_DATA_INCOMPLETE",
+    "COST_REQUIRES_OPERATION_SCOPE"
+  ];
+  assert.match(admin, /function importIssueLabel\(code,kind='error'\)/);
+  for (const code of serverCodes) assert.ok(admin.includes(code + ":"), "Missing Arabic label mapping for " + code);
+  assert.match(admin, /function importIssueRowsHtml\(rows,key,kind\)/);
+  assert.match(admin, /count:'exact'/);
+  assert.match(admin, /range\(offset,offset\+IMPORT_DETAIL_PAGE_SIZE-1\)/);
+  assert.match(admin, /عرض 500 نتيجة أخرى/);
+  assert.match(admin, /showProductImportDetails\(b\.dataset\.productImportDetail\)/);
+  assert.match(admin, /data-operation-import-detail/);
+  assert.match(admin, /showProductImportDetails\(b\.dataset\.operationImportDetail,'operationImportDetails'\)/);
+  assert.match(admin, /لا توجد سجلات في هذه الفئة/);
+});
