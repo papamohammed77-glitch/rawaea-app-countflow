@@ -644,6 +644,18 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }catch(err){state.productImportRows=[];state.productImportRowCount=0;$('productImportPreview').textContent='';$('productImportCommitBtn').disabled=true;fail('تعذر معاينة ملف الأصناف',err);}
   finally{$('productImportPreviewBtn').disabled=false;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportResetBtn').disabled=false;}
  }
+ async function commitImportBatchInChunks(batchId,onProgress){
+  let result=null,attempt=0;
+  while(attempt++<10000){
+   const {data,error}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
+   if(error)throw new Error('تعذر اعتماد جزء من دفعة الاستيراد: '+(error.message||error));
+   result=data||{};
+   if(result.status==='committed')return result;
+   if(result.status!=='committing')throw new Error('حالة دفعة الاستيراد غير متوقعة: '+String(result.status||'غير محددة'));
+   if(typeof onProgress==='function')onProgress(result);
+  }
+  throw new Error('تجاوز اعتماد الدفعة الحد الأقصى لعدد الأجزاء. بقيت الدفعة محفوظة ويمكن استئنافها.');
+ }
  async function commitProductImport(){
   if(!state.project||!state.productImportRowCount)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
   if(!state.productImportMapping.sku&&!state.productImportMapping.barcode)return notify('اربط عمود SKU أو الباركود.',true);
@@ -700,8 +712,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
     const rows=state.productImportRows||[];
     for(let i=0;i<rows.length;i+=1000)await stage(rows.slice(i,i+1000).map((r,j)=>normalizeProductImportRow(r,i+j)),i);
    }
-   const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
-   if(commitError)throw commitError;
+   const committed=await commitImportBatchInChunks(batchId,progress=>{$('productImportResult').textContent='اعتماد الدفعة · مقبول '+Number(progress.accepted_rows||0)+' · مرفوض '+Number(progress.rejected_rows||0)+' · متبقٍ '+Number(progress.remaining_rows||0);});
    const successMessage='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · تم حفظ النتيجة في السجل'+(parseErrors?' · صفوف متجاوزة بسبب تنسيق غير صحيح '+parseErrors:'');
    notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
    resetProductImport();$('productImportResult').textContent=successMessage;
@@ -1315,8 +1326,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
     };
     const parsed=await streamOperationImportChunks(file,stage);
     if(parsed.count!==state.operationImportRowCount)throw new Error('تغير عدد صفوف الملف بعد المعاينة. أعد المعاينة قبل الاعتماد.');
-    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
-    if(commitError)throw commitError;
+    const committed=await commitImportBatchInChunks(batchId,progress=>{$('operationImportResult').textContent='اعتماد دفعة العملية · مقبول '+Number(progress.accepted_rows||0)+' · مرفوض '+Number(progress.rejected_rows||0)+' · متبقٍ '+Number(progress.remaining_rows||0);});
     $('operationImportResult').textContent='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · صفوف متجاوزة بسبب تنسيق غير صحيح '+Number(parsed.parseErrors||0);
     notify('تم استيراد أصناف العملية عبر دفعات خادمية.');
     state.operationImportRows=[];state.operationImportRowCount=0;$('operationImportFile').value='';$('operationImportPreview').textContent='';
