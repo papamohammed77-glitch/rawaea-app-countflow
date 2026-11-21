@@ -6,17 +6,17 @@ SET LOCAL statement_timeout='180s';
 CREATE TEMP TABLE countflow_90k_result(result jsonb) ON COMMIT DROP;
 DO $countflow_90k$
 DECLARE
-  v_supervisor uuid := gen_random_uuid(); v_project uuid; v_batch uuid;
+  v_owner uuid; v_project uuid; v_batch uuid;
   v_rows jsonb; v_chunk_result jsonb; v_commit jsonb; v_offset integer;
   v_staged bigint; v_products bigint;
 BEGIN
-  INSERT INTO auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at,is_sso_user,is_anonymous)
-  VALUES(v_supervisor,'authenticated','authenticated','qa-90k-'||v_supervisor||'@countflow.invalid','',now(),
-    '{"provider":"email","providers":["email"]}','{"display_name":"QA 90K"}',now(),now(),false,false);
-  PERFORM set_config('request.jwt.claim.sub',v_supervisor::text,true);
-  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
+  SELECT id INTO v_owner FROM auth.users
+  WHERE lower(email)='owner@rawaea.com' AND email_confirmed_at IS NOT NULL;
+  IF v_owner IS NULL THEN RAISE EXCEPTION 'QA_OWNER_IDENTITY_NOT_CONFIRMED'; END IF;
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
   INSERT INTO public.count_projects(name,code,created_by)
-  VALUES('QA 90K Rollback','QA90K-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_supervisor)
+  VALUES('QA 90K Rollback','QA90K-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_owner)
   RETURNING id INTO v_project;
   v_batch := public.count_create_import_batch(v_project,NULL,'qa-90000-products.csv','csv',encode(digest('countflow-90k-qa','sha256'),'hex'));
   FOR v_offset IN 0..89000 BY 1000 LOOP
