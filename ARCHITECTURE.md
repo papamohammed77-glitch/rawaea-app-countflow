@@ -1,6 +1,6 @@
 # CountFlow — Architecture & Operating Model
 
-**Scope:** `companies/company-2/Counting/` only.  
+**Scope:** standalone repository `papamohammed77-glitch/rawaea-app-countflow`; application HTML, Core, Service Worker, Functions, SQL and tests are rooted in this repository.  
 **Backend:** Supabase project `rawaea-staging` — `hfzznsiprnwkpayskzhu`.  
 **Isolation rule:** Never connect CountFlow to SMART ERP (`fiilmooggumokxanwiyx`) or load RAWAEA's `companies/company-1/core.js`.
 
@@ -26,11 +26,11 @@ The platform owner identity is reserved as `owner@rawaea.com`. Global authority 
 
 - `counting_private.is_platform_owner()` recognizes only the authenticated Supabase Auth identity whose email is exactly `owner@rawaea.com` and whose email has been confirmed.
 - `counting_private.is_member(uuid)` and `counting_private.is_supervisor(uuid)` include this verified platform-owner check, so RLS continues to authorize access through the existing policy contracts for every CountFlow engagement.
-- The two server-side functions `counting-provision-member` and `counting-export-session` also accept the verified platform owner; ordinary users still require active supervisor membership in the target engagement.
+- The server-side functions `counting-provision-member` and `counting-export-session` require the verified platform-owner identity. JWT validation remains enabled; a supervisor membership does not grant account provisioning or export authority.
 - Public first-user sign-up was removed from the master login to prevent an arbitrary visitor from taking over initial ownership.
-- **The Auth identity itself remains uncreated** in the latest database check (zero users with `owner@rawaea.com`). The owner must be provisioned through Supabase Auth and confirm this email before the owner login and global authority can be exercised. Do not assign one of the legacy Auth users by guess and do not create a password in SQL or chat.
+- **The Auth identity is confirmed present** in the read-only Supabase check on 2026-11-21: exactly one Auth user matches `owner@rawaea.com`, and its `email_confirmed_at` is non-NULL. This is an identity-existence check, not permission to expose or recreate its password. Do not assign one of the legacy Auth users by guess.
 
-A supervisor can create a new engagement and its first operation from the supervisor app. The database creates the supervisor membership for the authenticated creator. The verified platform owner can manage all engagements, including those created by other supervisors.
+Only the verified platform owner can create a new engagement and its first operation through `count_create_engagement`. A supervisor cannot create engagements, provision accounts, or import/export; the supervisor application is limited to live monitoring and team/location assignment. The owner identity is the initial authority for every engagement.
 
 ## 3. Master dashboard and operation register
 
@@ -108,13 +108,24 @@ CountFlow field/supervisor apps still use their existing private Broadcast contr
 - Do not create persistent owner/staff identities or use legacy Auth users without a confirmed roster and explicit identity mapping.
 - Keep QA data synthetic, CountFlow-only, rollbackable and residue-checked.
 
-## 8. Historical verification status at LVE-740 (superseded by the current checkpoint below)
+## 8. Historical verification status at LVE-740 (superseded by LVE-754)
 
 - Admin JavaScript syntax: **PASS**.
 - Master UI global member/session aggregation: **implemented; browser behavior UNKNOWN**.
 - CountFlow Core and Service Worker syntax: **PASS**; build fixture publishes all nine allowlisted files and excludes private artifacts. Real offline boot remains **UNKNOWN**.
 - Realtime table publication: **CONFIRMED** for `count_members` and `count_sessions`; live event delivery: **UNKNOWN**.
 - Supabase schema/data: **unchanged by this UI update**.
-- Owner Auth account: **NOT CREATED / email not yet confirmed**.
+- Owner Auth account: **CONFIRMED PRESENT / email confirmed** in read-only check 2026-11-21.
 - Offline shell boot and safe close barrier: **OPEN / NOT IMPLEMENTED**.
 - Cloudflare deployment/domain: **NOT DEPLOYED**.
+
+
+## 9. LVE-2026-11-21-754 — verified continuation status
+
+- Repository HEAD at this checkpoint: `5dcdf76a856d78f4f6268bcc0d1c9cd2f13e2f77`. The latest admin source implements bounded CSV step parsing and XLSX ZIP/XML streaming for both the catalog importer and the operation-level importer. The legacy binary XLS parser remains limited to 8 MB and is not described as streaming.
+- Catalog reads use server-side pagination (100 rows per request) and a 30-row virtual window. Import staging uses the existing CountFlow RPC in groups of 1,000 rows; row validation/acceptance/rejection remains server-side. Original CSV record numbers are retained, including when blank or malformed records are skipped.
+- GitHub quality gate run `44941236636` passed: unit/source checks, the synthetic 90,000-row XLSX parser test, allowlisted Pages build, and Playwright test discovery. The Playwright suite itself was not run against authenticated accounts.
+- `counting-export-session` remains ACTIVE v14 with JWT enabled and deployed source digest `147a21d8389ca6f87c911352895aaa0e3ae56ef1f875cb147c3f455f0a34c788`, matching the tracked source. Its image and estimated-memory guards are implementation safeguards, not a measured 90k export/load benchmark. Pricing policy remains unapproved and `UNKNOWN`.
+- Cloudflare Pages project `rawaea-app-countflow` is configured for Production with automatic deployments enabled at `https://rawaea-app-countflow.pages.dev`. The latest production revision visible during the read-only browser check was `195bbe8`; it predates repository HEAD above. Do not claim the new HEAD is live until the Cloudflare deployment record shows the matching commit.
+- A read-only view of the production master page showed the authenticated owner identity and zero projects, products, members and sessions. A read-only Supabase query confirmed zero CountFlow projects, members, products, sessions, entries, import batches/rows, exports and expected balances; the single `owner@rawaea.com` identity is confirmed.
+- Authenticated Playwright E2E, actual file upload and import against a project, runtime workbook/image inspection, export memory profiling, Cloudflare deployment parity, offline multi-device testing and 30–300 concurrent-user load remain unverified.
