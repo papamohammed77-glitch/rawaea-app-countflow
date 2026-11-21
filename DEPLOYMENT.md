@@ -19,11 +19,11 @@
 - المصدر الصحيح: المستودع `papamohammed77-glitch/rawaea-app-countflow`، الفرع `main`.
 - Build command المعتمد في هذا الدليل: `bash scripts/build-pages.sh`.
 - Build output directory المعتمد في هذا الدليل: `dist`.
-- آخر نشر Production ظاهر في لوحة Cloudflare أثناء الفحص كان commit `195bbe8`. كان HEAD في GitHub وقت إغلاق LVE-754 هو `5dcdf76a856d78f4f6268bcc0d1c9cd2f13e2f77`؛ لذلك لا تعتبر HEAD الحالي منشوراً حتى يظهر SHA مطابقاً في سجل Cloudflare.
+- تطابق GitHub SHA مع Cloudflare Production **اجتاز Playwright فعلياً** على commit `5a86a3115b5624e30882dd497934f0e7260b6f18` في run `44943001441`: قرأ الاختبار build-info.json من Production وانتظر SHA الحالي لـ main ثم طابقهما. اجتاز كذلك فحص الهاتف RTL للتطبيقات الثلاث. أي commit أحدث من هذا يحتاج إلى run جديد ناجح قبل اعتباره منشوراً.
 - لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح الصفحات الثلاث على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
 - لا تستخدم `erp-frontend` أو `companies/company-1` أو `rawaea-erp.pages.dev` كجذر أو alias أو redirect.
 
-ينشئ `scripts/build-pages.sh` مجلد `dist` من قائمة سماح تضم صفحات HTML الأربعة وملفات Core/SW/PWA و`_headers`. لا ينسخ `database/` أو `functions/` أو `tests/` أو ملفات Markdown أو SQL أو TypeScript إلى المخرجات العامة.
+ينشئ `scripts/build-pages.sh` مجلد `dist` من قائمة سماح من عشرة ملفات: أربع صفحات HTML، ملفات Core/SW/manifest/icon الأربعة، `_headers` و`build-info.json` الذي يسجل SHA المصدر. لا ينسخ `database/` أو `functions/` أو `tests/` أو ملفات Markdown أو SQL أو TypeScript إلى المخرجات العامة.
 
 ## أصول PWA وOffline
 
@@ -37,5 +37,5 @@
 
 - ملفات الواجهة تستخدم Supabase Publishable Key فقط. لا تضف Service Role Key إلى ملفات الواجهة أو متغيرات Pages العامة.
 - Edge Functions الخاصة بـCountFlow يجب أن تبقى على مشروع `rawaea-staging`، مع JWT verification مفعّل.
-- تم إثبات وجود مشروع Pages ونطاق الإنتاج ونجاح فتح واجهة النظام الأم من جلسة المتصفح. لكن آخر commit إنتاجي ظاهر أقدم من HEAD في LVE-754؛ نشر HEAD الحالي **غير مؤكد بعد**. لا يوجد دليل على تعديل DNS أو إضافة دومين مخصص.
+- مشروع Pages ونطاق الإنتاج موجودان، ونجح اختبار Playwright لمطابقة SHA الدقيقة على commit 5a86a311 في run 44943001441. فحوصات CI تقارن أحدث main عند لحظة التشغيل وتنتظر build-info.json؛ تحقق من أحدث run قبل إعلان أي SHA أحدث منشوراً. لا يوجد دليل على تعديل DNS أو إضافة دومين مخصص.
 - بعد ظهور نشر يطابق HEAD: شغّل Playwright باستخدام حسابَي مشرف ومندوب معتمدين، ثم اختبر دورة جرد تجريبية قابلة للحذف فقط بعد إزالة قيد حوكمة اختبارات الكتابة في rawaea-staging. لا تستخدم بيانات تشغيل حقيقية ولا تنفذ ترحيلاً إلى ERP.
