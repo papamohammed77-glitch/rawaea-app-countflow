@@ -4,11 +4,11 @@
 
 **التاريخ:** 21 نوفمبر 2026  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
-**الفرع / PR:** `work/lve-761-admin-image-owner-storage-access` / [PR #1](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/1)  
+**PR #1:** [merged](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/1) إلى `main` بالـSHA `8c8a7728649d1193c58a6ecedaddccbe6845f0c9`  
 **قاعدة CountFlow:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` فقط.  
-**مصدر التغيير:** PR head `048ec59162aeb181e1368223ae9bceb36ad7c8c1`؛ 22 سياسة قراءة CountFlow + 3 سياسات صور خاصة.  
-**CI:** run `44948880262` — SUCCESS: 35/35 اختبارات Node، Deno check، Pages allowlisted build، وPlaywright 2 passed / 1 skipped (اختبار مطابقة Production SHA يُتخطى في فرع PR).  
-**Cloudflare Preview:** نشر فرع PR نجح؛ هذا ليس Production deploy. سيتم التحقق من Production SHA بعد الدمج.
+**مصدر التغيير:** PR head `048ec59162aeb181e1368223ae9bceb36ad7c8c1`؛ دمج `8c8a7728649d1193c58a6ecedaddccbe6845f0c9`؛ 22 سياسة قراءة CountFlow + 3 سياسات صور خاصة.  
+**CI على main:** run `44949186321` — SUCCESS: 35/35 اختبارات Node، Deno check، Pages allowlisted build، وPlaywright Production 3/3 مع مطابقة SHA الدقيقة.  
+**Cloudflare Production:** نشر `8c8a772` نجح، واختبار `production login shell deployment matches the latest main source commit` أثبت أن Production يطابق SHA `8c8a772`.
 
 ### الخلل الجذري
 - LVE-760 جعل بوابة Admin تقبل المالك المؤكد `owner@rawaea.com` مستقلاً عن عضوية Supervisor؛ لكن RLS في قاعدة البيانات كانت لا تزال تحجب مشاريع/منتجات/جلسات/مواقع/استيرادات/تسويات وبيانات أجهزة عن هذا المالك عند غياب عضوية المشرف.
@@ -22,7 +22,7 @@
 4. لم تتغير سياسات كتابة الجرد أو الأصناف أو التكليفات، ولا دوال Edge/Auth، ولا أدوار/عضويات المستخدمين.
 
 ### اختبارات وحدود الإثبات
-- **PASS:** 35/35 source/unit tests، Deno checks، Pages build، Playwright العام 2 passed و1 skipped في سياق PR.
+- **PASS:** 35/35 source/unit tests، Deno checks، Pages build، Playwright Production 3/3 بعد الدمج، مع SHA parity.
 - **PASS:** Migration ledger يسجل الترحيلين بالنسختين أعلاه، وسياسات RLS الفعلية تعكس Owner paths.
 - **OPEN:** دخول مالك مصادق عبر المتصفح دون عضوية Supervisor، رفع صورة حقيقي + signed URL، وتضمين صورة فعلية داخل XLSX لم تُختبر؛ لا تُدّعِ ذلك.
 - **OPEN:** Client Balance XLSX runtime/فتح Excel وقياس الذاكرة، التسعير غير المعتمد، E2E المصادق، Offline/متعدد الأجهزة والحمل.
@@ -32,8 +32,7 @@
 - الرصد بعد الترحيل: 41,000 صنف، 90,000 صف استيراد؛ صفر إدخالات عد/حضور/أجهزة/صادرات. لم يغيّر LVE-761 أياً من هذه الأعداد.
 
 ### تسليم وتنفيذ
-- PR #1 مفتوح حتى دمج هذه النسخة بعد مراجعة حالة الـCI والـbase SHA.
-- بعد الدمج: تحقق من Cloudflare Production SHA parity فقط؛ لا ترفع صورًا ولا تغيّر كلمات مرور ولا تنفذ أي DML تجريبي.
+- PR #1 مدمج، وCloudflare Production يطابق SHA الدمج. لا ترفع صورًا ولا تغيّر كلمات مرور ولا تنفذ DML تجريبيًا دون بيانات اعتماد وبيئة اختبار آمنة.
 - النطاق حصري لـCountFlow. لا تعديل على `countflow.html` أو `Countflow-supervisor.html` أو SMART ERP أو `erp-frontend`.
 
 Full prior checkpoint: LVE-760 below.
