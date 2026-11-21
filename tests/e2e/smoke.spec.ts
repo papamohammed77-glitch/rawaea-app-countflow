@@ -66,3 +66,13 @@ test.describe("CountFlow counter", () => {
     // Deliberately do not click Save: this test is read-only against CountFlow data.
   });
 });
+
+
+test("production login shell renders without an authenticated session", async ({ page }) => {
+  const origin = baseUrl || "https://rawaea-app-countflow.pages.dev";
+  await page.goto(origin + "/countflow-admin.html");
+  await expect(page.locator("#loginView")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator("#email")).toHaveValue("owner@rawaea.com");
+  await expect(page.locator("#password")).toBeVisible();
+  await expect(page.locator("#loginForm button[type=submit]")).toContainText("دخول آمن");
+});
