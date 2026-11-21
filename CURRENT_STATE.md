@@ -1,5 +1,57 @@
 # CountFlow — CURRENT_STATE
 
+
+> **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-755**  
+> **Date:** 2026-11-21  
+> **Repository:** papamohammed77-glitch/rawaea-app-countflow, main (standalone CountFlow; no changes to erp-frontend/SMART ERP).  
+> **Git HEAD before this CURRENT_STATE update:** aac58303cfc9088b11abae3e867937c177967419. The latest tested application/runtime source is commit 9f91add07fb3e49890bcf8319ba817bd002e7ee6; subsequent commits in this checkpoint are documentation/report updates. Handoff report: FINAL_EXECUTION_REPORT_LVE-755.md (created in commit aac58303cfc9088b11abae3e867937c177967419).  
+> **CI:** GitHub Actions run 44943177355 on commit 9f91add07fb3e49890bcf8319ba817bd002e7ee6 — SUCCESS. 12/12 Node source/unit tests, Deno checks for both CountFlow Edge Functions, allowlisted Pages build, Playwright discovery, exact Production build-info SHA parity and three Chromium smoke tests passed. Playwright log: latest main SHA matched build-info.json; public owner login, RTL mobile Admin/Supervisor/Counter shells: 3 passed (2.6s).  
+> **Cloudflare:** Production origin https://rawaea-app-countflow.pages.dev; exact SHA parity was proven for source commit 9f91add0... by the run above. Ten public build files only, including generated build-info.json.  
+> **Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu. Last read-only counts: 0 projects, 0 members, 0 products, 0 sessions, 0 count entries, 0 import batches/rows, 0 exports, 0 expected balances, 0 presence rows, 0 devices. Auth owner identity count 1; confirmed email count 1 (owner@rawaea.com).  
+> **Live Edge Functions:** counting-provision-member ACTIVE v7 / JWT=true; counting-export-session ACTIVE v14 / JWT=true. Export deployed source digest 147a21d8389ca6f87c911352895aaa0e3ae56ef1f875cb147c3f455f0a34c788.  
+> **Live migration state:** P1 LVE-749 remains applied; 16 CountFlow ledger entries followed P1. The normalized lookup index migration is APPLIED as live version 20261121194759 / name countflow_import_normalized_lookup_indexes. The three exact indexes are present in pg_indexes. The source filename is 20261121212500_countflow_import_normalized_lookup_indexes.sql (timestamp mismatch; do not replay). Three post-P1 ledger entries have no standalone one-to-one SQL artifact (import row-level location validation and two intermediate two-phase approval migrations); see database/migrations/README.md.  
+>
+> ### Phase 1 — P0 SECURITY: PASS
+> - Owner identity verified, owner-only server/RLS boundaries applied; do not replay LVE-749.
+> - Supervisor is monitoring/team/location assignment only; no engagement/account/import/export/catalog/session lifecycle/reconciliation/approval authority.
+> - Field entry and recount task assignment are counter-only; auditor cannot count.
+>
+> ### Phase 2 — P1 IMPORT/CATALOG: SOURCE + CI PASS
+> - Admin catalog is server-paged (100 rows per query, exact count) and DOM uses a 30-row virtual window.
+> - CSV uses Papa Parse step/pause/resume and bounded 1,000-row chunks; XLSX streams ZIP/OOXML Blob slices, validates CRC and rejects unsafe ZIP paths. Synthetic XLSX 90k-row CI parser test passes.
+> - Both catalog and operation imports use the existing create/stage/commit RPC path in 1,000-row chunks; operation importer no longer uses FileReader/full arrayBuffer/Papa complete. Original CSV source row numbers are preserved.
+> - Optional metadata (category/price/name/etc.) can be absent without aborting a whole batch; mandatory identity/base unit and invalid location conditions are rejected per row by the server.
+> - XLS binary remains limited to 8 MiB and full-read; use XLSX for large workbooks.
+> - Three normalized lookup indexes are applied and verified in live pg_indexes. Actual 5k/90k database import throughput and query-plan improvement have not been benchmarked in this checkpoint.
+>
+> ### Queue/device close barrier — SOURCE + LIVE SCHEMA VERIFIED, DEVICE E2E OPEN
+> - Counter reports a deterministic SHA-256 digest of canonical full pending payload rows (event/project/session/member/device/product/location/recount/quantity/unit/scan/note) plus row count using count_report_device_queue.
+> - Reporting occurs on queue changes, sync, device presence heartbeat, reconnect and periodic refresh. The server stores count/digest/report time/lifecycle version.
+> - Pause-first owner approval requires a paused session, latest computed reconciliation, stable entry snapshot, all imported products counted, reviewed recounts, resolved critical alerts and current-version queue acknowledgements. Completion rechecks queue barrier. Owner-only waiver needs reason and audit record.
+> - Limitation: IndexedDB is client-side; the server enforces and stores a device self-attestation (count/digest), not independently verified cryptographic proof of local queue contents.
+> - Queue barrier has not been tested with actual offline devices/browser termination/reconnect/multi-device concurrency. No real CountFlow sessions/devices currently exist.
+>
+> ### Phase 3 — P2 EXPORT: ACTIVE SOURCE, RUNTIME OPEN
+> - Edge v14 requires confirmed owner, JWT, stores private XLSX/CSV with SHA-256/signed URL.
+> - Estimated-memory guard 160 MiB; client-balance images bounded at 1 MiB each, max 500, 8 MiB total; workbook max 50 MiB; combined row guard 250k.
+> - Actual export has not been invoked from a real session; workbook/image correctness and peak-memory have not been measured. Builders use arrays/XLSX.write/zipSync in memory; the memory guard is estimated, not true streaming or benchmark evidence.
+> - Pricing policy remains UNKNOWN / not owner-approved; no FX conversion and no accounting valuation authority.
+>
+> ### Phase 4 — PUBLISH/E2E: PUBLIC + MOBILE SMOKE PASS, AUTH E2E OPEN
+> - Cloudflare Pages build uses bash scripts/build-pages.sh, output dist, ten allowlisted files and build-info.json.
+> - Run 44943177355 proved exact latest-main SHA parity against Production and opened Admin/Supervisor/Counter shells on Chromium mobile 390x844 RTL. Three unauthenticated smoke tests passed.
+> - Authenticated supervisor/counter E2E, barcode scan with assigned product/location, actual data import, export invocation and offline journey remain OPEN. The database currently has no project/member/product/site/device fixtures and no approved CI credentials.
+>
+> ### Governance and next actions
+> - Do not run SQL DML/rollback tests or deploy Edge Functions to rawaea-staging until the LVE-747 governance gate is resolved. No writes, RLS changes or Edge deployments were performed by this continuation; the post-P1 migrations/index application were parallel team actions reconciled read-only.
+> - Do not touch SMART ERP, erp-frontend, company-1, ERP inventory, sales, cash or accounting.
+> - Next: obtain approved disposable CountFlow test roster/credentials; run authenticated Supervisor/Counter and pause → queue ACK → approve → review ACK → complete E2E; only after governance release run 5k/90k DB import tests within rollback transactions; run one controlled export and inspect workbook/images/hash and measure peak memory. Keep pricing UNKNOWN until owner approval.
+> - Full handoff: FINAL_EXECUTION_REPORT_LVE-755.md.
+>
+> ---
+
+
+
 > **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-754**  
 > **Date:** 2026-11-21  
 > **Status:** P1 security remains applied and verified. Phase 2 catalog + operation import use bounded CSV/XLSX parsing and 1,000-row RPC chunks; product listing is server-paged and virtualized. Phase 3 export source/deployment safeguards are present in ACTIVE Edge Function v14; pricing remains UNKNOWN. Phase 4 paths and build are correct, Playwright tests are discoverable, and a Cloudflare Pages Production project exists with auto deployments enabled. The latest Production revision visible in the connected Cloudflare dashboard snapshot was 195bbe8, older than current Git HEAD. The public production login-shell smoke has passed against the origin, but exact Git SHA-to-Production deployment parity remains NOT VERIFIED.  
