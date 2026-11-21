@@ -648,10 +648,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   let result=null,attempt=0;
   while(attempt++<10000){
    const {data,error}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
-   if(error)throw new Error('تعذر اعتماد جزء من دفعة الاستيراد: '+(error.message||error));
+   if(error){console.warn('CountFlow import commit chunk failed',error);throw new Error('تعذر اعتماد جزء من الاستيراد حالياً. بقيت الدفعة محفوظة ويمكن استئنافها بعد التحقق من الاتصال.');}
    result=data||{};
    if(result.status==='committed')return result;
-   if(result.status!=='committing')throw new Error('حالة دفعة الاستيراد غير متوقعة: '+String(result.status||'غير محددة'));
+   if(result.status!=='committing'){console.warn('Unexpected CountFlow import commit status',result.status);throw new Error('تعذر استكمال اعتماد الاستيراد. أعد المحاولة أو راجع سجل الاستيراد.');}
    if(!Number.isInteger(Number(result.remaining_rows))||Number(result.remaining_rows)<1)throw new Error('استجابة اعتماد الدفعة لا تتضمن عدد الصفوف المتبقية بصورة صحيحة.');
    if(typeof onProgress==='function')onProgress(result);
   }
@@ -701,9 +701,9 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const stage=async(chunk,offset)=>{
     if(!chunk.length)return;
     const {data:staged,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:chunk,p_row_offset:offset});
-    if(error)throw new Error('تعذر فحص الدفعة ابتداءً من الصف '+(offset+2)+': '+error.message);
+    if(error){console.warn('CountFlow product import staging failed',error);throw new Error('تعذر فحص بيانات الملف بدءاً من الصف '+(offset+2)+'. راجع هذا الصف ثم أعد المحاولة.');}
     stagedAccepted+=Number(staged?.accepted_rows||0);stagedRejected+=Number(staged?.rejected_rows||0);processed+=chunk.length;
-    $('productImportResult').textContent='فحص الدفعة '+batchId+' · '+processed.toLocaleString('en-US')+' / '+state.productImportRowCount.toLocaleString('en-US')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+    $('productImportResult').textContent='فحص الأصناف · '+processed.toLocaleString('en-US')+' / '+state.productImportRowCount.toLocaleString('en-US')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
    };
    if(state.productImportSourceFormat==='csv'){
     await new Promise((resolve,reject)=>{
