@@ -68,6 +68,50 @@ test.describe("CountFlow counter", () => {
 });
 
 
+test("production login shell deployment matches the source commit under test", async ({ request }) => {
+  const expected = process.env.COUNTFLOW_EXPECTED_COMMIT || "";
+  test.skip(!expected, "Source commit parity is checked only in CI.");
+  const origin = baseUrl || "https://rawaea-app-countflow.pages.dev";
+  await expect.poll(async () => {
+    try {
+      const response = await request.get(origin + "/build-info.json", { timeout: 10000 });
+      if (!response.ok()) return "";
+      const info = await response.json();
+      return String(info.commit || "");
+    } catch {
+      return "";
+    }
+  }, {
+    timeout: 360000,
+    intervals: [3000, 5000, 10000, 15000],
+    message: "Cloudflare Pages Production must publish the exact Git commit under test",
+  }).toBe(expected);
+});
+
+test("production login shells render in RTL on mobile without authenticated sessions", async ({ browser }) => {
+  const origin = baseUrl || "https://rawaea-app-countflow.pages.dev";
+  const apps = [
+    { path: "/countflow-admin.html", login: "#loginView" },
+    { path: "/Countflow-supervisor.html", login: "#login" },
+    { path: "/countflow.html", login: "#login" },
+  ];
+  for (const app of apps) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(origin + app.path, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(app.login)).toBeVisible({ timeout: 20000 });
+    await expect(page.locator("#email")).toBeVisible();
+    await expect(page.locator("#password")).toBeVisible();
+    await expect(page.locator("#loginBtn")).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    const formBounds = await page.locator(app.login).boundingBox();
+    expect(formBounds?.width || 0).toBeGreaterThan(280);
+    expect(formBounds?.left ?? formBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect((formBounds?.x ?? -1) + (formBounds?.width ?? 0)).toBeLessThanOrEqual(390);
+    await context.close();
+  }
+});
+
 test("production login shell renders without an authenticated session", async ({ page }) => {
   const origin = baseUrl || "https://rawaea-app-countflow.pages.dev";
   await page.goto(origin + "/countflow-admin.html");
