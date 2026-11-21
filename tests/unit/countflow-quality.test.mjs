@@ -450,8 +450,8 @@ test("import rejection reasons are human-readable and every failed/warning row i
 
 
 test("large import commit resumes in bounded server chunks for both catalog and operation import", () => {
-  assert.match(admin, /committing:'قيد الاعتماد'/);
   const admin = read("countflow-admin.html");
+  assert.match(admin, /committing:'قيد الاعتماد'/);
   const start = admin.indexOf("async function commitImportBatchInChunks(batchId,onProgress)");
   const end = admin.indexOf("async function commitProductImport()", start);
   assert.ok(start >= 0 && end > start);
