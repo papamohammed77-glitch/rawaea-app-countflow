@@ -109,9 +109,9 @@
       <h3>الأدوار التشغيلية المعتمدة في CountFlow</h3>
       <p class="hint">الأدوار التالية هي الصلاحيات المعتمدة في CountFlow. تغيّر هذه الشاشة الدور المسند إلى عضو داخل تكليف محدد، ولا تنشئ صلاحيات إضافية غير متاحة في التطبيقات.</p>
       <div class="tablewrap"><table><thead><tr><th>الدور</th><th>نطاق الاستخدام</th><th>حدود الصلاحية</th></tr></thead><tbody>
-       <tr><td><b>مشرف الجرد</b><span class="sub">supervisor</span></td><td>المراقبة الحية وإسناد المندوبين إلى الجلسات والمواقع ضمن التكليف المرتبط بعضوية مشرف نشطة.</td><td>لا يمنح الدور إنشاء تكليفات أو حسابات، أو إدارة الكتالوج والاستيراد، أو دورة التسوية والاعتماد؛ هذه صلاحيات مالك المنصة المؤكد.</td></tr>
-       <tr><td><b>مندوب الجرد</b><span class="sub">counter</span></td><td>تطبيق العد الميداني وتسجيل نتائج المواقع المسندة.</td><td>مقيد بعضوية نشطة وإسناد الجلسة/الموقع واعتماد الجهاز وسياسات التسجيل.</td></tr>
-       <tr><td><b>مراجع / مدقق</b><span class="sub">auditor</span></td><td>دخول تطبيق CountFlow الميداني بحساب مراجع.</td><td>لا يمنح هذا الدور صلاحيات المشرف، ولا يسمح بتجاوز حدود العمل المسندة إليه.</td></tr>
+       <tr><td><b>مشرف الجرد</b></td><td>المراقبة الحية وإسناد المندوبين إلى الجلسات والمواقع ضمن التكليف المرتبط بعضوية مشرف نشطة.</td><td>لا يمنح الدور إنشاء تكليفات أو حسابات، أو إدارة الكتالوج والاستيراد، أو دورة التسوية والاعتماد؛ هذه صلاحيات مالك المنصة المؤكد.</td></tr>
+       <tr><td><b>مندوب الجرد</b></td><td>تطبيق العد الميداني وتسجيل نتائج المواقع المسندة.</td><td>مقيد بعضوية نشطة وإسناد الجلسة/الموقع واعتماد الجهاز وسياسات التسجيل.</td></tr>
+       <tr><td><b>مراجع / مدقق</b></td><td>دخول تطبيق CountFlow الميداني بحساب مراجع.</td><td>لا يمنح هذا الدور صلاحيات المشرف، ولا يسمح بتجاوز حدود العمل المسندة إليه.</td></tr>
       </tbody></table></div>
      </div>
      <div class="panel">
@@ -261,7 +261,7 @@
   $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
  }
  function clearProjectViews(){state.products=[];state.productTotal=0;state.productQuery='';state.productScrollTop=0;state.members=[];state.locations=[];state.sessions=[];state.productPage=1;state.productImportRows=[];state.productImportRowCount=0;state.productImportMapping={};state.productImportMappingId=null;if($('productImportHistory'))$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';if($('productImportDetails'))$('productImportDetails').innerHTML='';['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
- function statusPill(s){const cls=['active','ready','completed'].includes(s)?'ok':['paused','review','planned','draft'].includes(s)?'warn':['closed','archived','cancelled','removed'].includes(s)?'off':'';return '<span class="pill '+cls+'">'+esc(s)+'</span>';}
+ function statusPill(s){const key=String(s||'').toLowerCase(),labels={active:'قيد التنفيذ',ready:'جاهز',completed:'مكتمل',paused:'متوقف مؤقتاً',review:'قيد المراجعة',planned:'مخطط',draft:'مسودة',closed:'مغلق',archived:'مؤرشف',cancelled:'ملغى',removed:'موقوف',open:'مفتوح',acknowledged:'تم الاطلاع',resolved:'تم الحل',dismissed:'مستبعد',committed:'تم الاعتماد',failed:'لم يكتمل',processing:'جارٍ الفحص',staged:'قيد الفحص',pending:'بانتظار الاعتماد',assigned:'مسند',in_progress:'قيد التنفيذ',online:'متصل',idle:'غير نشط',offline:'غير متصل',revoked:'موقوف',waived:'تم التجاوز بتوثيق',critical:'حرج',high:'مرتفع',medium:'متوسط',low:'منخفض',info:'معلومات'};const cls=['active','ready','completed','committed','resolved','online'].includes(key)?'ok':['paused','review','planned','draft','pending','open','processing','staged','assigned','in_progress','idle','critical','high','medium'].includes(key)?'warn':['closed','archived','cancelled','removed','failed','dismissed','revoked','offline','low'].includes(key)?'off':'';return '<span class="pill '+cls+'">'+esc(labels[key]||'غير محدد')+'</span>';}
  function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—';}
  async function loadProjectData(){
   if(!state.project){clearProjectViews();return;}
