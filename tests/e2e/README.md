@@ -1,6 +1,6 @@
 # CountFlow browser E2E
 
-The suite is non-destructive by default. It uses existing CountFlow test accounts and checks the authenticated Supervisor and Counter workspaces. The scan test increments the draft quantity but deliberately never clicks Save, so it does not create a count entry.
+The suite is non-destructive by default. The public production-login-shell smoke opens the deployed master login without authenticating and checks the owner login UI. The authenticated Supervisor and Counter workspaces require existing CountFlow test accounts. The scan test increments the draft quantity but deliberately never clicks Save, so it does not create a count entry.
 
 ## Run from repository root
 
@@ -19,4 +19,4 @@ Set these environment variables before running:
 
 The canonical app paths are `/Countflow-supervisor.html` and `/countflow.html`. The standalone repository no longer uses `/companies/company-2/Counting/Counter*.html`.
 
-The suite has not been executed in this checkpoint because a deployed origin and roster-backed credentials were not available. Do not put passwords in source control; use environment variables or CI secrets.
+GitHub Actions run 44941845028 passed the public production-login-shell test against https://rawaea-app-countflow.pages.dev (1 passed). The authenticated supervisor/counter tests were discovered but remain unexecuted because there are no confirmed project members, assigned test location/product, or approved CI credentials. Do not put passwords in source control; use environment variables or CI secrets.
