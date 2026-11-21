@@ -327,3 +327,37 @@ test("admin UI hides raw database errors and serialized audit payloads", () => {
   assert.doesNotMatch(audit, /esc\(x\.actor_id/);
   assert.match(audit, /auditDetailsSummary\(x\.details\)/);
 });
+
+
+
+test("export preflight counts rows and enforces memory before loading large relations", () => {
+  const source = read("functions/counting-export-session/index.ts");
+  const countRows = source.indexOf("async function countRows(");
+  const clientPreflight = source.indexOf("const [lineCount,locationCount,costCount,entryCount,projectProductCount]");
+  const clientBulkReads = source.indexOf("const [lines,locations,costs,countEntries]");
+  const fullPreflight = source.indexOf("const [runs,imports,entryCount,productCount,locationCount,memberCount,alertCount,recountCount]");
+  const fullBulkReads = source.indexOf("const [entries,products,locations,members,alerts,recounts]");
+  assert.ok(countRows >= 0 && clientPreflight > countRows && clientBulkReads > clientPreflight);
+  assert.ok(fullPreflight > clientBulkReads && fullBulkReads > fullPreflight);
+  assert.match(source.slice(clientPreflight, clientBulkReads), /countRows\(admin,/);
+  assert.match(source.slice(clientPreflight, clientBulkReads), /EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance_preflight/);
+  assert.match(source.slice(fullPreflight, fullBulkReads), /countRows\(admin,/);
+  assert.match(source.slice(fullPreflight, fullBulkReads), /EXPORT_COMBINED_ROW_LIMIT:250000/);
+  assert.match(source.slice(fullPreflight, fullBulkReads), /EXPORT_MEMORY_BUDGET_EXCEEDED:full_preflight/);
+});
+
+test("Client Balance product images are streamed with a strict per-image byte ceiling", () => {
+  const source = read("functions/counting-export-session/index.ts");
+  const start = source.indexOf("const imageByProduct=new Map");
+  const end = source.indexOf("const clientRows:any[][]", start);
+  assert.ok(start >= 0 && end > start, "Client Balance image stage must exist");
+  const imageStage = source.slice(start, end);
+  assert.match(source, /async function readResponseBounded\(response: Response, maxBytes: number\)/);
+  assert.match(imageStage, /createSignedUrl\(reference,60\)/);
+  assert.match(imageStage, /fetch\(signedData\.signedUrl,\{redirect:"error"\}\)/);
+  assert.match(imageStage, /content-length/);
+  assert.match(imageStage, /readResponseBounded\(imageResponse,1024\*1024\)/);
+  assert.doesNotMatch(imageStage, /storage\.from\("counting-product-images"\)\.download\(reference\)/);
+  assert.match(imageStage, /MAX_CLIENT_BALANCE_IMAGE_BYTES/);
+  assert.match(imageStage, /embeddedImages\.length>=500/);
+});
