@@ -247,7 +247,7 @@ test("operation imports share bounded CSV/XLSX streaming and server-side 1,000-r
   const operationImport = admin.slice(start, end);
   assert.match(operationImport, /async function streamOperationImportChunks\(file,onChunk\)/);
   assert.match(operationImport, /streamXlsxProductRows\(file,async row=>/);
-  assert.match(operationImport, /Papa\.parse\(file,\{header:true,skipEmptyLines:'greedy'/);
+  assert.match(operationImport, /Papa\.parse\(file,\{header:true,skipEmptyLines:false/);
   assert.match(operationImport, /pending\.length>=1000/);
   assert.match(operationImport, /streamOperationImportChunks\(file,stage\)/);
   assert.match(operationImport, /count_stage_import_rows/);
@@ -272,7 +272,7 @@ test("operation import preserves per-row partial failure semantics for optional 
 test("operation import row rejections retain original CSV source row numbers", () => {
   const admin = read("countflow-admin.html");
   const start = admin.indexOf("async function streamOperationImportChunks(file,onChunk)");
-  const end = admin.indexOf("$('operationImportFile').addEventListener('change')", start);
+  const end = admin.indexOf("$('operationImportFile').addEventListener('change',()=>{", start);
   assert.ok(start >= 0 && end > start);
   const csvStream = admin.slice(start, end);
   assert.match(csvStream, /sourceRowNumber=2/);
