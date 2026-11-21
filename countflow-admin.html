@@ -591,7 +591,7 @@
   const header=state.productImportMapping[key];
   return header&&Object.prototype.hasOwnProperty.call(row,header)?row[header]:'';
  }
- function normalizeProductImportRow(row,index){
+ function normalizeProductImportRow(row,index,sourceRowNumber=null){
   let units=productImportValue(row,'units');
   if(typeof units==='string'){
    const raw=units.trim();
@@ -601,7 +601,7 @@
   }
   if(!Array.isArray(units))units=[];
   const value=key=>String(productImportValue(row,key)??'').trim();
-  return {_row_number:Number(row.__countflowRowNumber||index+2),_source_row:row,sku:value('sku')||null,barcode:value('barcode')||null,name:value('name')||null,category:value('category')||null,base_unit:value('base_unit'),units,expected_qty:value('expected_qty'),location_code:value('location_code'),image_url:value('image_url')||null,purchase_unit_cost:value('purchase_unit_cost')||null,currency_code:value('currency_code').toUpperCase()||null,purchase_unit:value('purchase_unit')||null,unit_factor_to_base:value('unit_factor_to_base')||null,cost_source_type:value('cost_source_type')||null,cost_source_reference:value('cost_source_reference')||null,cost_source_date:value('cost_source_date')||null};
+  return {_row_number:Number(sourceRowNumber||row.__countflowRowNumber||index+2),_source_row:row,sku:value('sku')||null,barcode:value('barcode')||null,name:value('name')||null,category:value('category')||null,base_unit:value('base_unit'),units,expected_qty:value('expected_qty'),location_code:value('location_code'),image_url:value('image_url')||null,purchase_unit_cost:value('purchase_unit_cost')||null,currency_code:value('currency_code').toUpperCase()||null,purchase_unit:value('purchase_unit')||null,unit_factor_to_base:value('unit_factor_to_base')||null,cost_source_type:value('cost_source_type')||null,cost_source_reference:value('cost_source_reference')||null,cost_source_date:value('cost_source_date')||null};
  }
  function renderProductImportPreview(){
   const headers=Object.keys(state.productImportRows[0]||{}),rows=state.productImportRows.slice(0,8);
@@ -651,13 +651,14 @@
    };
    if(state.productImportSourceFormat==='csv'){
     await new Promise((resolve,reject)=>{
-     let pending=[],rowIndex=0,chain=Promise.resolve(),settled=false;
+     let pending=[],rowIndex=0,sourceRowNumber=2,chain=Promise.resolve(),settled=false;
      const failParse=err=>{if(settled)return;settled=true;reject(err);};
-     Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+     Papa.parse(file,{header:true,skipEmptyLines:false,dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
       step:(r,parser)=>{
+       const currentSourceRow=sourceRowNumber++;
        if(r.errors?.length){parseErrors+=r.errors.length;return;}
        const row=r.data||{};if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
-       pending.push(normalizeProductImportRow(row,rowIndex));rowIndex++;
+       pending.push(normalizeProductImportRow(row,rowIndex,currentSourceRow));rowIndex++;
        if(pending.length>=1000){
         parser.pause();const chunk=pending;pending=[];
         chain=chain.then(()=>stage(chunk,rowIndex-chunk.length)).then(()=>parser.resume()).catch(err=>{parser.abort();failParse(err);});
