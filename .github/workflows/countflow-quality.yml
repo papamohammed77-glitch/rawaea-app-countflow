@@ -22,3 +22,8 @@ jobs:
         run: node --test tests/unit/countflow-quality.test.mjs
       - name: Validate allowlisted Cloudflare Pages build
         run: bash scripts/build-pages.sh
+      - name: Validate Playwright test discovery without credentials or browser launch
+        working-directory: tests/e2e
+        run: |
+          npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+          npm run test:e2e -- --list
