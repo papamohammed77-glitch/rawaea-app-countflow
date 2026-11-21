@@ -400,3 +400,11 @@ test("Counter UI translates role and hides device queue identifiers from the mem
   assert.doesNotMatch(counter, /esc\(x\.product_id/);
   assert.match(counter, /friendlyErrorMessage\(x\.sync_error\)/);
 });
+
+test("operation importer does not throw when a staging RPC succeeds and keeps completion text valid", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /if\(error\)\{console\.warn\('Operation import staging failed',error\);throw new Error\(/);
+  assert.doesNotMatch(admin, /if\(error\)console\.warn\('Operation import staging failed',error\);throw new Error/);
+  assert.match(admin, /تم حفظ النتيجة في السجل'\+\(parseErrors\?/);
+  assert.doesNotMatch(admin, /تم حفظ النتيجة في السجل\+\(parseErrors\?/);
+});
