@@ -361,3 +361,9 @@ test("Client Balance product images are streamed with a strict per-image byte ce
   assert.match(imageStage, /MAX_CLIENT_BALANCE_IMAGE_BYTES/);
   assert.match(imageStage, /embeddedImages\.length>=500/);
 });
+
+test("Counter evidence upload failure branch remains valid and reports a safe warning", () => {
+  const counter = read("countflow.html");
+  assert.match(counter, /if\(uploadError\)\{console\.warn\('Counter evidence upload failed',uploadError\);evidenceWarning='تم تسجيل العد، لكن تعذر إرفاق الصورة حالياً\.';\}else\{/);
+  assert.doesNotMatch(counter, /if\(uploadError\)console\.warn\([^;]+;evidenceWarning=[^;]+;else\{/);
+});
