@@ -7,6 +7,15 @@ OUT_DIR="$SCRIPT_DIR/dist"
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 
+# Stamp the exact source revision into the published artifact so production
+# deployment parity can be verified independently from dashboard state.
+BUILD_SHA="${CF_PAGES_COMMIT_SHA:-${GITHUB_SHA:-$(git -C "$SCRIPT_DIR" rev-parse HEAD)}}"
+if [[ ! "$BUILD_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+  echo "Unable to resolve a valid 40-character CountFlow build commit SHA" >&2
+  exit 1
+fi
+printf '{"application":"CountFlow","commit":"%s"}\n' "$BUILD_SHA" > "$OUT_DIR/build-info.json"
+
 # Publish only browser-facing CountFlow pages and Pages headers.
 # Deliberately exclude database/, functions/, tests/, docs, and source artifacts.
 cp "$SCRIPT_DIR/index.html" \
@@ -20,7 +29,7 @@ cp "$SCRIPT_DIR/index.html" \
    "$SCRIPT_DIR/_headers" \
    "$OUT_DIR/"
 
-for file in index.html countflow-admin.html countflow.html Countflow-supervisor.html countflow-core.js countflow-sw.js manifest.webmanifest countflow-icon.svg _headers; do
+for file in index.html countflow-admin.html countflow.html Countflow-supervisor.html countflow-core.js countflow-sw.js manifest.webmanifest countflow-icon.svg _headers build-info.json; do
   test -s "$OUT_DIR/$file"
 done
 
