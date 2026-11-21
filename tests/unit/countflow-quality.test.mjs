@@ -492,3 +492,40 @@ test("resumable import SQL migration bounds each commit transaction and finalize
   assert.match(sql, /v_initial_status=''committing'' THEN ''committing'' ELSE ''failed'' END/);
   assert.match(sql, /COMMENT ON FUNCTION counting_private\.count_commit_import_batch_impl/);
 });
+
+
+test("large import progress and errors do not expose internal batch identifiers or raw RPC messages", () => {
+  const admin = read("countflow-admin.html");
+  const commitStart = admin.indexOf("async function commitImportBatchInChunks(batchId,onProgress)");
+  const commitEnd = admin.indexOf("async function resumeImportBatchFromHistory", commitStart);
+  const commitHelper = admin.slice(commitStart, commitEnd);
+  assert.match(commitHelper, /console\.warn\('CountFlow import commit chunk failed',error\)/);
+  assert.match(commitHelper, /تعذر اعتماد جزء من الاستيراد حالياً/);
+  assert.doesNotMatch(commitHelper, /error\.message/);
+  assert.doesNotMatch(commitHelper, /String\(result\.status/);
+
+  const stageStart = admin.indexOf("const stage=async(chunk,offset)=>");
+  const stageEnd = admin.indexOf("if(state.productImportSourceFormat==='csv')", stageStart);
+  const catalogStage = admin.slice(stageStart, stageEnd);
+  assert.match(catalogStage, /console\.warn\('CountFlow product import staging failed',error\)/);
+  assert.match(catalogStage, /تعذر فحص بيانات الملف بدءاً من الصف/);
+  assert.doesNotMatch(catalogStage, /error\.message/);
+  assert.doesNotMatch(catalogStage, /فحص الدفعة '\+batchId/);
+
+  assert.match(admin, /metadata\?\.import_surface==='countflow-admin'/);
+  assert.match(admin, /data-resume-product-import/);
+  assert.match(admin, /data-resume-operation-import/);
+  assert.match(admin, /تعذر استكمال اعتماد الاستيراد/);
+});
+
+test("an import already committed is not reported as failed when only a follow-up view refresh fails", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("async function resumeImportBatchFromHistory");
+  const end = admin.indexOf("async function commitProductImport()", start);
+  const resume = admin.slice(start, end);
+  assert.match(resume, /committed\?\.status!=='committed'/);
+  assert.match(resume, /اكتمل استكمال دفعة الاستيراد/);
+  assert.match(resume, /catch\(refreshError\)/);
+  assert.match(resume, /اكتمل اعتماد الدفعة لكن تعذر تحديث العرض/);
+  assert.ok(resume.indexOf("اكتمل استكمال دفعة الاستيراد") < resume.indexOf("catch(refreshError)"));
+});
