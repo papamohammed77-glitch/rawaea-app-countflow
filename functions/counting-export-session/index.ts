@@ -592,6 +592,7 @@ Deno.serve(async (req: Request) => {
         })),
         pricing_policy:"UNKNOWN",
         pricing_basis:{status:"NOT_OWNER_APPROVED",base_unit_cost:"purchase_unit_cost / unit_factor_to_base",value:"complete_counted_base_quantity * derived_base_unit_cost",currency_handling:"Separate totals by stored currency; no FX conversion",accounting_valuation:false},
+        estimated_peak_bytes:estimatedPeakBytes,
       };
       const {error:updateError}=await admin.from("count_exports").update({
         status:"ready",storage_path:storagePath,row_count:products.length,file_size_bytes:bytes.byteLength,
@@ -613,7 +614,8 @@ Deno.serve(async (req: Request) => {
         signed_url:signed.signedUrl,row_count:products.length,file_size_bytes:bytes.byteLength,
         sha256,expires_at:expiresAt,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,
         count_events:countEntries.length,products_fully_counted:fullyCountedProducts,products_with_incomplete_cost:unpricedProducts,
-        pricing_policy:"UNKNOWN"
+        pricing_policy:"UNKNOWN",
+        pricing_basis:{status:"NOT_OWNER_APPROVED",base_unit_cost:"purchase_unit_cost / unit_factor_to_base",value:"complete_counted_base_quantity * derived_base_unit_cost",currency_handling:"Separate totals by stored currency; no FX conversion",accounting_valuation:false}
       });
     }
 
@@ -836,7 +838,7 @@ Deno.serve(async (req: Request) => {
     const { error: updateError } = await admin.from("count_exports").update({
       status:"ready",storage_path:storagePath,row_count:entries.length,file_size_bytes:bytes.byteLength,
       sha256,completed_at:new Date().toISOString(),expires_at:expiresAt,
-      metadata:{engine:"counting-export-session-v1",format,entry_rows:entries.length,
+      metadata:{engine:"counting-export-session-v1",format,estimated_memory_bytes:estimatedFullExportBytes,entry_rows:entries.length,
         reconciliation_rows:lines.length,products:products.length,locations:locations.length,
         alerts:alerts.length,recounts:recounts.length,imports:imports.length,import_error_rows:importErrors.length,
         evidence_images:sessionImages.length,presence_rows:presence.length,audit_rows:auditRows.length,
