@@ -300,11 +300,11 @@ test("device queue barrier digest includes canonical count payload, not identifi
   assert.ok(start >= 0 && end > start);
   const reporter = counter.slice(start, end);
   for (const key of ["client_event_id", "project_id", "session_id", "member_id", "device_id", "product_id", "location_id", "recount_task_id", "quantity", "unit", "scan_code", "note"]) {
-    assert.match(reporter, new RegExp(key.replace(/[.*+?^\u0024{}()|[\\]\\\\]/g, "\\\\$&")));
+    assert.ok(reporter.includes(key), "queue digest must include " + key);
   }
-  assert.match(reporter, /\\.sort\\(\\(a,b\\)=>a\\.client_event_id\\.localeCompare\\(b\\.client_event_id\\)\\)/);
-  assert.match(reporter, /JSON\\.stringify\\(canonicalQueue\\)/);
-  assert.match(reporter, /count_report_device_queue/);
-  assert.match(reporter, /p_pending_count:rows\\.length,p_queue_digest:digest/);
-  assert.doesNotMatch(reporter, /eventIds\\.join/);
+  assert.ok(reporter.includes(".sort((a,b)=>a.client_event_id.localeCompare(b.client_event_id))"));
+  assert.ok(reporter.includes("JSON.stringify(canonicalQueue)"));
+  assert.ok(reporter.includes("count_report_device_queue"));
+  assert.ok(reporter.includes("p_pending_count:rows.length,p_queue_digest:digest"));
+  assert.ok(!reporter.includes("eventIds.join"));
 });
