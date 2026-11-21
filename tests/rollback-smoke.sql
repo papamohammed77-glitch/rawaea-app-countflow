@@ -24,6 +24,7 @@ DECLARE
   v_member uuid;
   v_auditor_member uuid;
   v_device text := 'qa-device-' || gen_random_uuid()::text;
+  v_device2 text := 'qa-device-' || gen_random_uuid()::text;
   v_event uuid := gen_random_uuid();
   v_entry public.count_entries;
   v_retry public.count_entries;
@@ -127,13 +128,22 @@ BEGIN
   THEN RAISE EXCEPTION 'QA_FAIL_IMPORT_COMMIT_BASELINE:%',v_commit; END IF;
 
   INSERT INTO public.count_devices(project_id,member_id,device_id,device_label,platform,app_version,status)
-  VALUES(v_project,v_member,v_device,'QA Device','test','qa','active');
+  VALUES
+    (v_project,v_member,v_device,'QA Device 1','test','qa','active'),
+    (v_project,v_member,v_device2,'QA Device 2','test','qa','active');
 
   INSERT INTO public.count_assignments(session_id,member_id,location_id,status)
   VALUES(v_session,v_member,v_loc1,'assigned');
 
   PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
+
+  v_result:=public.count_touch_presence(v_session,v_device,'QA Device 1','test','qa','online',v_loc1);
+  IF v_result->>'ok'<>'true' THEN RAISE EXCEPTION 'QA_FAIL_DEVICE_1_PRESENCE:%',v_result; END IF;
+  v_result:=public.count_touch_presence(v_session,v_device2,'QA Device 2','test','qa','online',v_loc1);
+  IF v_result->>'ok'<>'true' THEN RAISE EXCEPTION 'QA_FAIL_DEVICE_2_PRESENCE:%',v_result; END IF;
+  PERFORM public.count_report_device_queue(v_session,v_device,0,NULL);
+  PERFORM public.count_report_device_queue(v_session,v_device2,0,NULL);
 
   v_entry := public.count_record_entry(v_session,v_product,v_loc1,8,'قطعة',v_event,'QA-BARCODE',v_device,'first count');
   v_retry := public.count_record_entry(v_session,v_product,v_loc1,8,'قطعة',v_event,'QA-BARCODE',v_device,'retry');
@@ -173,8 +183,52 @@ BEGIN
   IF v_result->>'status'<>'reviewed' THEN RAISE EXCEPTION 'QA_FAIL_RECOUNT_REVIEW'; END IF;
 
   v_run := public.count_reconcile_session(v_session);
+
+  -- A client-reported offline queue must block reconciliation approval.
+  PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM public.count_report_device_queue(v_session,v_device,1,repeat('a',64));
+  PERFORM public.count_report_device_queue(v_session,v_device2,2,repeat('b',64));
+
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+  BEGIN
+    PERFORM public.count_approve_reconciliation(v_run);
+    RAISE EXCEPTION 'QA_FAIL_APPROVAL_WITH_PENDING_DEVICE_QUEUES';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_APPROVAL_WITH_PENDING_DEVICE_QUEUES' THEN RAISE; END IF;
+    IF SQLERRM<>'SESSION_HAS_UNACKNOWLEDGED_DEVICE_QUEUES:2' THEN RAISE; END IF;
+  END;
+
+  -- An owner waiver is explicit, audited, and preserves the outstanding queue count/digest.
+  PERFORM public.count_waive_device_queue(v_session,v_member,v_device2,'QA Device 2','Device is irrecoverable; owner accepted the unsynced events loss.');
+  BEGIN
+    PERFORM public.count_approve_reconciliation(v_run);
+    RAISE EXCEPTION 'QA_FAIL_APPROVAL_WITH_UNACKNOWLEDGED_DEVICE_1';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_APPROVAL_WITH_UNACKNOWLEDGED_DEVICE_1' THEN RAISE; END IF;
+    IF SQLERRM<>'SESSION_HAS_UNACKNOWLEDGED_DEVICE_QUEUES:1' THEN RAISE; END IF;
+  END;
+
+  -- The first device synchronizes its pending event; no database count is created by this queue acknowledgement.
+  PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM public.count_report_device_queue(v_session,v_device,0,NULL);
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+
   v_result := public.count_approve_reconciliation(v_run);
   IF v_result->>'status'<>'approved' THEN RAISE EXCEPTION 'QA_FAIL_RECONCILIATION_APPROVAL'; END IF;
+
+  -- Approval moves the session to review and increments its queue-barrier version.
+  PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM public.count_report_device_queue(v_session,v_device,0,NULL);
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+  IF NOT EXISTS(SELECT 1 FROM public.count_presence WHERE session_id=v_session AND device_id=v_device2 AND pending_queue_count=2 AND pending_queue_digest=repeat('b',64) AND queue_resolution='waived') THEN
+    RAISE EXCEPTION 'QA_FAIL_WAIVED_QUEUE_EVIDENCE_NOT_PRESERVED';
+  END IF;
   BEGIN
     PERFORM public.count_generate_recount_tasks(v_run,v_member,0);
     RAISE EXCEPTION 'QA_FAIL_APPROVED_RUN_GENERATED_RECOUNT';
@@ -216,6 +270,9 @@ BEGIN
     'recount_creation_and_entry',true,
     'recount_review',true,
     'reconciliation_approval_and_freeze',true,
+    'device_queue_barrier_blocks_pending_queues',true,
+    'owner_queue_waiver_is_audited_and_retained',true,
+    'review_lifecycle_version_acknowledged',true,
     'anon_rpc_denied',true,
     'append_only_ledgers',true,
     'project_id',v_project,
