@@ -57,12 +57,10 @@ async function loadAll(){
  await loadAssignments();await loadLive();await loadPresence();await loadAlerts();await subscribe();
 }
 async function loadMembers(){
- let rows=[];
- try{rows=await fetchAllRows('count_members','*',[{op:'eq',key:'project_id',value:project.id}]);}
- catch(error){$('membersList').textContent='تعذر تحميل الأعضاء: '+error.message;return}
- rows.sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')));
- $('activeMembers').textContent=rows.filter(x=>x.status==='active').length;
- $('membersList').innerHTML=rows.map(x=>'<div class="row" style="padding:10px 0;border-bottom:1px solid #e2e9ed"><div class="grow"><b>'+esc(x.display_name)+'</b><br><small class="muted">'+esc(x.username)+' · '+esc(x.role)+'</small></div><span class="pill">'+esc(x.status)+'</span></div>').join('')||'لا يوجد أعضاء مرتبطون بهذا التكليف.';
+ const {data:rows,error}=await sb.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',project.id).order('created_at',{ascending:true}).limit(500);
+ if(error){$('membersList').textContent='تعذر تحميل الأعضاء: '+error.message;return}
+ $('activeMembers').textContent=(rows||[]).filter(x=>x.status==='active').length;
+ $('membersList').innerHTML=(rows||[]).map(x=>'<div class="row" style="padding:10px 0;border-bottom:1px solid #e2e9ed"><div class="grow"><b>'+esc(x.display_name)+'</b><br><small class="muted">'+esc(x.username)+' · '+esc(x.role)+'</small></div><span class="pill">'+esc(x.status)+'</span></div>').join('')||'لا يوجد أعضاء مرتبطون بهذا التكليف.';
 }
 async function loadLocations(){
  try{locationRows=await fetchAllRows('count_locations','id,code,name,location_type,parent_id,sort_order',[{op:'eq',key:'project_id',value:project.id}]);}
@@ -73,10 +71,13 @@ async function loadAssignments(){
  if(!session){$('assignmentList').textContent='اختر عملية جرد من سجل الجلسات أولاً.';return}
  let rows=[],ms=[];
  try{
-  [rows,ms]=await Promise.all([
-   fetchAllRows('count_assignments','id,member_id,location_id,status,assigned_at',[{op:'eq',key:'session_id',value:session.id}]),
-   fetchAllRows('count_members','id,display_name,username,role,status',[{op:'eq',key:'project_id',value:project.id}])
+  const [assignmentResult,memberResult]=await Promise.all([
+   sb.from('count_assignments').select('id,member_id,location_id,status,assigned_at').eq('session_id',session.id).order('assigned_at',{ascending:false}).limit(2000),
+   sb.from('count_members').select('id,display_name,username,role,status').eq('project_id',project.id).limit(500)
   ]);
+  if(assignmentResult.error)throw assignmentResult.error;
+  if(memberResult.error)throw memberResult.error;
+  rows=assignmentResult.data||[];ms=memberResult.data||[];
   rows.sort((x,y)=>String(y.assigned_at||'').localeCompare(String(x.assigned_at||'')));
  }catch(e){$('assignmentList').textContent='تعذر تحميل إسنادات العملية: '+e.message;return}
  const mm=Object.fromEntries(ms.map(x=>[x.id,x])),ll=Object.fromEntries(locationRows.map(x=>[x.id,x.name]));
@@ -98,10 +99,9 @@ async function selectSession(sessionId){
  await subscribe();
 }
 async function loadSessions(){
- let rows=[];
- try{rows=await fetchAllRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',[{op:'eq',key:'project_id',value:project.id}]);}
- catch(e){toast('تعذر تحميل جلسات المتابعة: '+e.message);return}
- rows.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+ const {data,error}=await sb.from('count_sessions').select('id,project_id,name,status,created_at,started_at,closed_at').eq('project_id',project.id).order('created_at',{ascending:false}).limit(500);
+ if(error){toast('تعذر تحميل جلسات المتابعة: '+error.message);return}
+ const rows=data||[];
  sessionRows=rows;
  session=rows.find(x=>x.id===session?.id)||rows.find(x=>['active','paused','review'].includes(x.status))||rows[0]||null;
  $('monitorSessionSelect').innerHTML=rows.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' · '+esc(x.status)+'</option>').join('')||'<option value="">لا توجد جلسات</option>';
@@ -136,21 +136,40 @@ async function loadPresence(){
  const deviceRows=(devices.data||[]).map(d=>'<div class="row" style="padding:8px;border-bottom:1px solid #eee"><div class="grow"><b>'+esc(names[d.member_id]||'عضو')+' · '+esc(d.device_label||'جهاز ويب')+'</b><br><small class="muted">'+esc(d.platform||'')+' · '+esc(d.app_version||'')+' · '+esc(String(d.device_id||'').slice(0,12))+' · '+(d.last_seen_at?new Date(d.last_seen_at).toLocaleString('ar-EG'):'—')+'</small></div><span class="pill">'+(d.status==='active'?'نشط':d.status==='pending'?'بانتظار الاعتماد':'مبطل')+'</span></div>').join('');
  $('teamPulse').innerHTML='<b>حضور الفريق</b>'+(people||'<p class="muted">لا يوجد فريق.</p>')+'<div style="margin-top:12px"><b>الأجهزة المسجلة — عرض فقط</b>'+(deviceRows||'<p class="muted">لا توجد أجهزة مسجلة.</p>')+'</div>';
 }
-let refreshTimer=null,sessionRefreshTimer=null;function handleBroadcast(msg){
+let refreshTimer=null,cockpitRefreshBusy=false;
+async function refreshCockpitAuthoritatively(){
+ if(!project||document.hidden||cockpitRefreshBusy)return;
+ cockpitRefreshBusy=true;
+ try{
+  const previousSessionId=session?.id||null;
+  await loadSessions();
+  if((session?.id||null)!==previousSessionId)await subscribe();
+  const tasks=[loadAssignments(),loadLive(),loadPresence(),loadAlerts(),refreshHeatmapAuthoritatively()];
+  if(!$('tab-team').classList.contains('hidden'))tasks.push(loadMembers());
+  await Promise.all(tasks);
+ }catch(e){console.warn('[CountFlow Supervisor] authoritative refresh failed:',e);toast('تعذر تحديث بيانات المتابعة كاملة؛ ستتم إعادة المحاولة في الدورة التالية.')}
+ finally{cockpitRefreshBusy=false}
+}
+function handleBroadcast(msg){
  const p=msg.payload||msg,table=p.table||p.data?.table;
- if(table==='count_entries')refreshCockpit();
- else if(table==='count_presence')loadPresence();
- else if(table==='count_alerts')loadAlerts();
- else if(table==='count_sessions'){
-  clearTimeout(sessionRefreshTimer);
-  sessionRefreshTimer=setTimeout(async()=>{const selected=session?.id;await loadSessions();if(selected&&sessionRows.some(x=>x.id===selected))session=sessionRows.find(x=>x.id===selected);await Promise.all([loadAssignments(),loadLive(),loadPresence(),loadAlerts()]);await subscribe()},250);
- }else if(table==='count_members'){loadMembers();loadPresence()}
- else if(table==='count_assignments')loadAssignments();
+ if(['count_entries','count_presence','count_alerts','count_sessions','count_members','count_assignments','count_devices'].includes(table))refreshCockpit();
  else if(table==='count_locations')loadLocations();
  else refreshCockpit();
 }
-function refreshCockpit(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>Promise.all([loadLive(),loadPresence(),loadAlerts()]),350)}async function subscribe(){if(channel){await Promise.all(channel.map(c=>sb.removeChannel(c)))}await sb.realtime.setAuth();const status=s=>{$('connection').textContent=s==='SUBSCRIBED'?'● بث خاص نشط':'● إعادة الاتصال';$('liveBadge').textContent=s==='SUBSCRIBED'?'مباشر':'غير متصل'};const projectChannel=sb.channel('countflow:project:'+project.id,{config:{private:true}}).on('broadcast',{event:'INSERT'},handleBroadcast).on('broadcast',{event:'UPDATE'},handleBroadcast).on('broadcast',{event:'DELETE'},handleBroadcast).subscribe(status);const sessionChannel=session?sb.channel('countflow:session:'+session.id,{config:{private:true}}).on('broadcast',{event:'INSERT'},handleBroadcast).on('broadcast',{event:'UPDATE'},handleBroadcast).on('broadcast',{event:'DELETE'},handleBroadcast).subscribe(status):null;channel=[projectChannel,...(sessionChannel?[sessionChannel]:[])]}
-$('loginBtn').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginError').textContent=error.message;return}await auth()};
+function refreshCockpit(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refreshCockpitAuthoritatively(),350)}
+async function subscribe(){
+ if(channel){await Promise.all(channel.map(c=>sb.removeChannel(c)))}
+ await sb.realtime.setAuth();
+ const status=s=>{
+  $('connection').textContent=s==='SUBSCRIBED'?'● قناة مشتركة · تحقق دوري':'● انقطاع القناة · تحقق دوري';
+  $('liveBadge').textContent='مزامنة دورية';
+ };
+ const projectChannel=sb.channel('countflow:project:'+project.id,{config:{private:true}})
+  .on('broadcast',{event:'INSERT'},handleBroadcast).on('broadcast',{event:'UPDATE'},handleBroadcast).on('broadcast',{event:'DELETE'},handleBroadcast).subscribe(status);
+ const sessionChannel=session?sb.channel('countflow:session:'+session.id,{config:{private:true}})
+  .on('broadcast',{event:'INSERT'},handleBroadcast).on('broadcast',{event:'UPDATE'},handleBroadcast).on('broadcast',{event:'DELETE'},handleBroadcast).subscribe(status):null;
+ channel=[projectChannel,...(sessionChannel?[sessionChannel]:[])];
+}$('loginBtn').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginError').textContent=error.message;return}await auth()};
 $('projectSelect').onchange=async()=>{project=projects.find(x=>x.id===$('projectSelect').value);await loadAll()};
 $('assignTask').onclick=async()=>{
  if(!session)return toast('اختر عملية جرد أولاً');
@@ -160,7 +179,9 @@ $('assignTask').onclick=async()=>{
  const {error}=await sb.from('count_assignments').upsert({session_id:session.id,member_id:memberId,location_id:locationId,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
  if(error)toast(error.message);else{toast('تم إسناد المستخدم إلى العملية أو تحديث نطاقه.');await loadAssignments()}
 };
-$('refreshLive').onclick=loadLive;$('refreshHeatmap').onclick=refreshHeatmapAuthoritatively;$('heatmapSearch').addEventListener('input',()=>renderHeatmap(heatmapData));$('heatmapFilter').addEventListener('change',()=>renderHeatmap(heatmapData));$('heatmapGrid').addEventListener('click',handleHeatmapClick);$('heatmapClear').onclick=()=>{heatmapLocationFilter=undefined;$('heatmapClear').classList.add('hidden');loadLive()};setInterval(()=>{if(project&&session&&!document.hidden)refreshHeatmapAuthoritatively()},10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&project&&session)refreshHeatmapAuthoritatively()});
+setInterval(()=>{if(project&&!document.hidden)refreshCockpitAuthoritatively().catch(e=>console.warn('[CountFlow Supervisor] poll failed:',e))},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&project)refreshCockpitAuthoritatively()});
+$('refreshLive').onclick=()=>refreshCockpitAuthoritatively();$('refreshHeatmap').onclick=refreshHeatmapAuthoritatively;$('heatmapSearch').addEventListener('input',()=>renderHeatmap(heatmapData));$('heatmapFilter').addEventListener('change',()=>renderHeatmap(heatmapData));$('heatmapGrid').addEventListener('click',handleHeatmapClick);$('heatmapClear').onclick=()=>{heatmapLocationFilter=undefined;$('heatmapClear').classList.add('hidden');loadLive()};setInterval(()=>{if(project&&session&&!document.hidden)refreshHeatmapAuthoritatively()},10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&project&&session)refreshHeatmapAuthoritatively()});
 async function fetchAllRows(table,columns,filters=[]){const maxRows=200000,pageSize=1000;let all=[],offset=0;while(offset<maxRows){let q=sb.from(table).select(columns);for(const f of filters){if(f.op==='eq')q=q.eq(f.key,f.value);else if(f.op==='in')q=q.in(f.key,f.value)}const {data,error}=await q.order('id',{ascending:true}).range(offset,offset+pageSize-1);if(error)throw error;const rows=data||[];all=all.concat(rows);if(rows.length<pageSize)return all;offset+=pageSize}let countQuery=sb.from(table).select('id',{count:'exact',head:true});for(const f of filters){if(f.op==='eq')countQuery=countQuery.eq(f.key,f.value);else if(f.op==='in')countQuery=countQuery.in(f.key,f.value)}const {count,error}=await countQuery;if(error)throw error;if((count||0)>maxRows)throw new Error('FETCH_LIMIT_EXCEEDED:'+table+':'+maxRows);return all}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
