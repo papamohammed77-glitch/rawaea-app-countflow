@@ -1,0 +1,191 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+import { deflateRawSync } from "node:zlib";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
+
+function inlineScripts(html) {
+  return [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+    .map((m) => m[1]).filter((s) => s.trim());
+}
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc & 1) ? (0xedb88320 ^ (crc >>> 1)) : (crc >>> 1);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function zipArchive(entries, corruptEntry = null) {
+  const localParts = [];
+  const directoryParts = [];
+  let localOffset = 0;
+  for (const [name, content] of entries) {
+    const fileName = Buffer.from(name, "utf8");
+    const data = Buffer.from(content, "utf8");
+    const compressed = deflateRawSync(data, { level: 6 });
+    const checksum = crc32(data) ^ (name === corruptEntry ? 1 : 0);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(8, 8);
+    local.writeUInt32LE(checksum, 14);
+    local.writeUInt32LE(compressed.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(fileName.length, 26);
+    local.writeUInt16LE(0, 28);
+    localParts.push(local, fileName, compressed);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(8, 10);
+    central.writeUInt32LE(checksum, 16);
+    central.writeUInt32LE(compressed.length, 20);
+    central.writeUInt32LE(data.length, 24);
+    central.writeUInt16LE(fileName.length, 28);
+    central.writeUInt16LE(0, 30);
+    central.writeUInt16LE(0, 32);
+    central.writeUInt16LE(0, 34);
+    central.writeUInt32LE(0, 38);
+    central.writeUInt32LE(localOffset, 42);
+    directoryParts.push(central, fileName);
+    localOffset += local.length + fileName.length + compressed.length;
+  }
+  const directory = Buffer.concat(directoryParts);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(directory.length, 12);
+  eocd.writeUInt32LE(localOffset, 16);
+  return Buffer.concat([...localParts, directory, eocd]);
+}
+
+function makeXlsx(rowCount, { corruptSheetCrc = false, traversalEntry = false } = {}) {
+  const shared = ["SKU", "Name", "Category", "Price", "Count Date", "General"];
+  const sharedXml = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="6" uniqueCount="6">' +
+    shared.map((v) => '<si><t>' + v + '</t></si>').join("") + '</sst>';
+  const workbook = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<workbookPr date1904="0"/><sheets><sheet name="Products" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  const rels = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+    '</Relationships>';
+  const styles = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy-mm-dd"/></numFmts>' +
+    '<cellXfs count="2"><xf numFmtId="0"/><xf numFmtId="164"/></cellXfs></styleSheet>';
+  let sheet = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' +
+    '<row r="1">' +
+    '<c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c>' +
+    '<c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c><c r="E1" t="s"><v>4</v></c></row>';
+  for (let i = 1; i <= rowCount; i++) {
+    const row = i + 1;
+    sheet += '<row r="' + row + '">' +
+      '<c r="A' + row + '" t="inlineStr"><is><t>SKU-' + String(i).padStart(6, "0") + '</t></is></c>' +
+      '<c r="B' + row + '" t="inlineStr"><is><t>Product ' + i + '</t></is></c>' +
+      (i % 7 ? '<c r="C' + row + '" t="s"><v>5</v></c>' : '') +
+      (i % 11 ? '<c r="D' + row + '"><v>' + (i / 10) + '</v></c>' : '') +
+      '<c r="E' + row + '" s="1"><v>46000</v></c></row>';
+  }
+  sheet += '</sheetData></worksheet>';
+  const entries = [
+    ["[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>'],
+    ["xl/workbook.xml", workbook],
+    ["xl/_rels/workbook.xml.rels", rels],
+    ["xl/sharedStrings.xml", sharedXml],
+    ["xl/styles.xml", styles],
+    ["xl/worksheets/sheet1.xml", sheet],
+  ];
+  if (traversalEntry) entries.push(["../outside.xml", "<x/>"]);
+  return zipArchive(entries, corruptSheetCrc ? "xl/worksheets/sheet1.xml" : null);
+}
+
+function getXlsxReader() {
+  const html = read("countflow-admin.html");
+  const scripts = inlineScripts(html);
+  const script = scripts.find((s) => s.includes("function zipRead16") && s.includes("async function streamXlsxProductRows"));
+  assert.ok(script, "CountFlow XLSX streaming implementation must exist in the admin app");
+  const start = script.indexOf("function zipRead16");
+  const end = script.indexOf("async function parseProductImportFile(file)", start);
+  assert.ok(start >= 0 && end > start, "Could not isolate the XLSX streaming helpers");
+  const source = script.slice(start, end) + "\n globalThis.__countflowStreamXlsx = streamXlsxProductRows;";
+  const context = vm.createContext({
+    Blob, DataView, DecompressionStream, Map, Set, TextDecoder, Uint8Array,
+    Date, Number, String, RegExp, Error, Math, Object,
+  });
+  vm.runInContext(source, context, { timeout: 10000 });
+  return context.__countflowStreamXlsx;
+}
+
+test("all operational application scripts pass JavaScript syntax checks", () => {
+  for (const file of ["countflow-admin.html", "Countflow-supervisor.html", "countflow.html"]) {
+    const scripts = inlineScripts(read(file));
+    assert.ok(scripts.length, file + " must contain its application script");
+    for (const [index, source] of scripts.entries()) {
+      assert.doesNotThrow(() => new vm.Script(source, { filename: file + "#script" + index }), file + " script " + index);
+    }
+  }
+  for (const file of ["countflow-core.js", "countflow-sw.js"]) {
+    assert.doesNotThrow(() => new vm.Script(read(file), { filename: file }));
+  }
+});
+
+test("XLSX reader streams a 90,000-row sheet with shared strings, inline values and dates", async () => {
+  const parse = getXlsxReader();
+  const file = new Blob([makeXlsx(90000)]);
+  let count = 0;
+  let first;
+  let seventh;
+  let eleventh;
+  let last;
+  const result = await parse(file, (row) => {
+    count++;
+    if (count === 1) first = row;
+    if (count === 7) seventh = row;
+    if (count === 11) eleventh = row;
+    if (count === 90000) last = row;
+  });
+  assert.equal(count, 90000);
+  assert.deepEqual(Array.from(result.headers), ["SKU", "Name", "Category", "Price", "Count Date"]);
+  assert.equal(first.SKU, "SKU-000001");
+  assert.equal(first.Name, "Product 1");
+  assert.equal(first.Category, "General");
+  assert.equal(first.Price, "0.1");
+  assert.equal(first["Count Date"], "2025-12-09");
+  assert.equal(first.__countflowRowNumber, 2);
+  assert.equal(Object.keys(first).includes("__countflowRowNumber"), false);
+  assert.equal(seventh.Category, "");
+  assert.equal(eleventh.Price, "");
+  assert.equal(last.SKU, "SKU-090000");
+  assert.equal(last.__countflowRowNumber, 90001);
+});
+
+test("XLSX reader rejects a corrupted worksheet CRC", async () => {
+  const parse = getXlsxReader();
+  const file = new Blob([makeXlsx(120, { corruptSheetCrc: true })]);
+  await assert.rejects(() => parse(file, () => {}), /CRC/);
+});
+
+test("XLSX reader rejects unsafe ZIP entry paths", async () => {
+  const parse = getXlsxReader();
+  const file = new Blob([makeXlsx(2, { traversalEntry: true })]);
+  await assert.rejects(() => parse(file, () => {}), /مسار داخلي غير صالح/);
+});
