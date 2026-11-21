@@ -460,7 +460,12 @@ test("large import commit resumes in bounded server chunks for both catalog and 
   assert.match(helper, /status!=='committing'/);
   assert.match(helper, /onProgress\(result\)/);
   assert.match(admin, /Number\(progress\.remaining_rows\|\|0\)/);
-  assert.equal((admin.match(/commitImportBatchInChunks\(batchId,/g) || []).length, 2);
+  assert.equal((admin.match(/commitImportBatchInChunks\\(batchId,/g) || []).length, 4);
+  assert.match(admin, /data-resume-product-import/);
+  assert.match(admin, /data-resume-operation-import/);
+  assert.match(admin, /async function resumeImportBatchFromHistory\\(batchId,scope,button\\)/);
+  assert.match(admin, /loadProductImportHistory\\(\\)/);
+  assert.match(admin, /loadOperationImportHistory\\(\\)/);
   const withoutHelper = admin.slice(0, start) + admin.slice(end);
   assert.doesNotMatch(withoutHelper, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
 });
@@ -475,4 +480,15 @@ test("session workflow device acknowledgement row uses a parse-safe template lit
   assert.match(deviceHtml, /\$\{esc\(devicePlatformLabel\(d\.platform\)\)\}/);
   assert.match(deviceHtml, /\$\{Number\(p\.pending_queue_count\|\|0\)\}/);
   assert.match(deviceHtml, /\$\{action\}\$\{waived\?/);
+});
+
+test("resumable import SQL migration bounds each commit transaction and finalizes only after remaining rows reach zero", () => {
+  const sql = read("database/migrations/20261121214000_countflow_import_commit_chunked_batches.sql");
+  assert.match(sql, /LIMIT 1000/);
+  assert.match(sql, /status=''preview'',''committing''/);
+  assert.match(sql, /row_status=''staged''/);
+  assert.match(sql, /remaining_rows/);
+  assert.match(sql, /IF v_remaining>0 THEN/);
+  assert.match(sql, /v_initial_status=''committing'' THEN ''committing'' ELSE ''failed'' END/);
+  assert.match(sql, /COMMENT ON FUNCTION counting_private\.count_commit_import_batch_impl/);
 });
