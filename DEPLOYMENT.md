@@ -5,7 +5,7 @@
 - المستودع المستقل: `papamohammed77-glitch/rawaea-app-countflow`، الفرع `main`.
 - جذر المشروع هو جذر هذا المستودع؛ لا تستخدم مسارات `companies/company-2/Counting` القديمة من `erp-frontend`.
 - Build command: `bash scripts/build-pages.sh`.
-- Build output directory: `dist`.
+- Build output directory: `dist`. The build writes `build-info.json` containing the exact 40-character source commit SHA; CI waits for the Pages Production origin to serve the expected SHA before declaring deployment parity.
 - صفحة الجذر: `index.html` وتحوّل إلى `countflow-admin.html`.
 - النظام الأم: `/countflow-admin.html`.
 - تطبيق المندوب: `/countflow.html`.
