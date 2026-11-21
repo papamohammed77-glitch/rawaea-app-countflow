@@ -19,7 +19,7 @@
 - المصدر الصحيح: المستودع `papamohammed77-glitch/rawaea-app-countflow`، الفرع `main`.
 - Build command المعتمد في هذا الدليل: `bash scripts/build-pages.sh`.
 - Build output directory المعتمد في هذا الدليل: `dist`.
-- تطابق GitHub SHA مع Cloudflare Production **اجتاز Playwright فعلياً** على commit `5a86a3115b5624e30882dd497934f0e7260b6f18` في run `44943001441`: قرأ الاختبار build-info.json من Production وانتظر SHA الحالي لـ main ثم طابقهما. اجتاز كذلك فحص الهاتف RTL للتطبيقات الثلاث. أي commit أحدث من هذا يحتاج إلى run جديد ناجح قبل اعتباره منشوراً.
+- تطابق GitHub SHA مع Cloudflare Production **اجتاز Playwright فعلياً** على commit `cf076ce362d9d964a1879feab25a8d421b4827d2` في run `44943689352`: قرأ الاختبار build-info.json من Production وانتظر SHA الحالي لـ main ثم طابقهما. اجتاز كذلك فحص الهاتف RTL للتطبيقات الثلاث. أي commit أحدث من هذا يحتاج إلى run جديد ناجح قبل اعتباره منشوراً.
 - لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح الصفحات الثلاث على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
 - لا تستخدم `erp-frontend` أو `companies/company-1` أو `rawaea-erp.pages.dev` كجذر أو alias أو redirect.
 
