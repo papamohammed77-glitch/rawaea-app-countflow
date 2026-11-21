@@ -144,9 +144,10 @@
     <section id="tab-sessions" class="section">
      <div class="headrow"><h2>دورة جلسات الجرد</h2></div>
      <div class="split">
-      <div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label>اسم الجلسة</label><input id="sessionName" required maxlength="150" placeholder="جرد نهاية الشهر - المستودع الرئيسي"></div><div class="actions"><button class="primary">إنشاء جلسة مخططة</button></div><p class="hint">تُنشأ الجلسة بحالة مخططة فقط. بدء التنفيذ والإيقاف والمراجعة والإغلاق تتم من شاشة المشرف وفق ضوابط دورة الجرد.</p></form></div>
+      <div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label>اسم الجلسة</label><input id="sessionName" required maxlength="150" placeholder="جرد نهاية الشهر - المستودع الرئيسي"></div><div class="actions"><button class="primary">إنشاء جلسة مخططة</button></div><p class="hint">تُنشأ الجلسة بحالة مخططة. بدء التنفيذ والإيقاف واحتساب التسوية واعتمادها وإغلاقها وإدارة إعادة العد والتنبيهات تتم من هذا النظام الأم بواسطة مالك CountFlow. لوحة المشرف للمراقبة والإسناد فقط.</p></form></div>
       <div class="panel"><h3>جلسات التكليف المحدد</h3><div id="sessionTable" class="tablewrap"><div class="empty">لا توجد جلسات.</div></div></div>
      </div>
+     <div class="panel hidden" id="sessionWorkflowPanel"><div id="sessionWorkflowContent"></div></div>
     </section>
     <section id="tab-operations" class="section">
      <div class="headrow"><div><h2>سجل عمليات الجرد</h2><p class="hint">سجل موحد لجميع عمليات الجرد؛ يمكن فتح أي عملية قديمة لمعاينة نتائجها وملفاتها.</p></div><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div>
@@ -228,7 +229,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
  const fail=(label,error)=>{console.error(label,error);notify(label+': '+(error?.message||error||'خطأ غير معروف'),true)};
@@ -263,6 +264,7 @@
   state.productPage=1;state.productQuery=$('productSearch').value.trim();state.productScrollTop=0;
   renderProject();
   await Promise.all([loadProductsPage(1,state.productQuery),loadAudit(),loadProductImportHistory()]);
+  if(state.workflowSessionId&&state.sessions.some(x=>x.id===state.workflowSessionId))await loadSessionWorkflow(state.workflowSessionId);
  }
  function renderProductImportSessions(){
   const select=$('productImportSession');if(!select)return;
@@ -714,7 +716,158 @@
   $('locationTable').innerHTML=state.locations.length?'<table><thead><tr><th>الموقع</th><th>النوع</th><th>الكود</th><th>الموقع الأب</th></tr></thead><tbody>'+state.locations.map(x=>{const parent=state.locations.find(p=>p.id===x.parent_id);return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.location_type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(parent?.name||'جذر')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم تُعرّف مواقع بعد.</div>';
  }
  function renderSessions(){
-  $('sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>الجلسة</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>بدء التنفيذ</th><th>الإغلاق</th></tr></thead><tbody>'+state.sessions.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.created_at)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد جلسات جرد.</div>';
+  $('sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>الجلسة</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>بدء التنفيذ</th><th>الإغلاق</th><th>تحكم المالك</th></tr></thead><tbody>'+state.sessions.map(x=>{
+   let actions='<button type="button" class="soft" data-session-action="view" data-session-id="'+x.id+'">فتح دورة الجلسة</button>';
+   if(x.status==='planned')actions='<button type="button" class="primary" data-session-action="start" data-session-id="'+x.id+'">بدء</button> '+actions;
+   else if(x.status==='active')actions='<button type="button" class="soft" data-session-action="pause" data-session-id="'+x.id+'">إيقاف مؤقت</button> <button type="button" class="soft" data-session-action="reconcile" data-session-id="'+x.id+'">احتساب التسوية</button> '+actions;
+   else if(x.status==='paused')actions='<button type="button" class="primary" data-session-action="resume" data-session-id="'+x.id+'">استئناف</button> <button type="button" class="soft" data-session-action="reconcile" data-session-id="'+x.id+'">احتساب التسوية</button> '+actions;
+   else if(x.status==='review')actions='<button type="button" class="primary" data-session-action="view" data-session-id="'+x.id+'">مراجعة الإغلاق</button>';
+   return '<tr><td>'+esc(x.name)+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.created_at)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد جلسات جرد.</div>';
+  $('sessionTable').querySelectorAll('[data-session-action]').forEach(b=>b.onclick=()=>runSessionAction(b.dataset.sessionId,b.dataset.sessionAction).catch(e=>fail('تعذر تنفيذ دورة الجلسة',e)));
+  if(state.workflowSessionId&&state.sessions.some(x=>x.id===state.workflowSessionId))renderSessionWorkflow();
+ }
+ async function loadSessionWorkflow(sessionId){
+  const session=state.sessions.find(x=>x.id===sessionId);
+  if(!session)return notify('جلسة الجرد لم تعد ضمن التكليف المحدد.',true);
+  state.workflowSessionId=sessionId;
+  $('sessionWorkflowPanel').classList.remove('hidden');
+  $('sessionWorkflowContent').innerHTML='<div class="empty">جار تحميل التسوية وإعادة العد والتنبيهات وحالة أجهزة المندوبين…</div>';
+  const [run,tasks,alerts,presence,devices]=await Promise.all([
+   db.from('count_reconciliation_runs').select('id,project_id,session_id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,created_at,computed_at,approved_at,entry_count_snapshot').eq('session_id',sessionId).order('run_number',{ascending:false}).limit(1).maybeSingle(),
+   db.from('count_recount_tasks').select('id,product_id,location_id,assigned_member_id,status,reason,first_count_quantity,second_count_quantity,variance_percent,created_at,assigned_at,started_at,completed_at,reviewed_at,notes').eq('session_id',sessionId).order('created_at',{ascending:false}).limit(500),
+   db.from('count_alerts').select('id,alert_type,severity,status,title,details,created_at,acknowledged_at,resolved_at').eq('session_id',sessionId).order('created_at',{ascending:false}).limit(500),
+   db.from('count_presence').select('id,member_id,device_id,presence_state,last_seen_at,pending_queue_count,pending_queue_digest,queue_reported_at,acknowledged_lifecycle_version,queue_resolution,queue_resolution_reason,queue_resolved_by,queue_resolved_at').eq('session_id',sessionId).order('last_seen_at',{ascending:false}).limit(500),
+   db.from('count_devices').select('member_id,device_id,device_label,platform,app_version,status,last_seen_at,revoked_at').eq('project_id',session.project_id).limit(1000)
+  ]);
+  for(const [label,res] of [['آخر تسوية',run],['مهام إعادة العد',tasks],['التنبيهات',alerts],['أجهزة الجلسة',presence],['سجل الأجهزة',devices]])if(res.error)throw new Error(label+': '+res.error.message);
+  state.workflowData={session,run:run.data||null,tasks:tasks.data||[],alerts:alerts.data||[],presence:presence.data||[],devices:devices.data||[]};
+  renderSessionWorkflow();
+ }
+ function workflowMemberName(id){const m=(state.members||[]).find(x=>x.id===id);return m?.display_name||'عضو غير موجود في القائمة الحالية';}
+ function renderSessionWorkflow(){
+  const w=state.workflowData;
+  if(!w||!state.sessions.some(x=>x.id===w.session.id)){$('sessionWorkflowPanel').classList.add('hidden');return;}
+  $('sessionWorkflowPanel').classList.remove('hidden');
+  const {session,run,tasks,alerts,presence,devices}=w;
+  const activeCounters=state.members.filter(m=>m.role==='counter'&&m.status==='active');
+  const openTasks=tasks.filter(t=>!['reviewed','cancelled'].includes(t.status));
+  const criticalAlerts=alerts.filter(a=>a.severity==='critical'&&['open','acknowledged'].includes(a.status));
+  const deviceMap=new Map(devices.map(d=>[d.member_id+'|'+d.device_id,d]));
+  const runHtml=run?'<div class="grid"><div class="stat"><small>جولة التسوية</small><b>#'+Number(run.run_number)+'</b><small>'+statusPill(run.status)+'</small></div><div class="stat"><small>مواقع دفترية</small><b>'+Number(run.expected_rows||0).toLocaleString('en-US')+'</b></div><div class="stat"><small>معدود</small><b>'+Number(run.counted_rows||0).toLocaleString('en-US')+'</b></div><div class="stat"><small>فروقات / غير معدود</small><b>'+Number(run.variance_rows||0)+' / '+Number(run.uncounted_rows||0)+'</b></div></div><p class="hint">أُنشئت '+date(run.created_at)+' · آخر احتساب '+date(run.computed_at)+' · الاعتماد '+date(run.approved_at)+'</p>':'<div class="empty">لم تُحتسب تسوية لهذه الجلسة بعد.</div>';
+  const controls=[];
+  if(session.status==='active'||session.status==='paused')controls.push('<button type="button" class="soft" data-session-action="reconcile" data-session-id="'+session.id+'">احتساب جولة تسوية جديدة</button>');
+  if(run?.status==='computed'&&session.status!=='completed'){
+   controls.push('<button type="button" class="primary" data-session-action="generate-recounts" data-session-id="'+session.id+'">إنشاء مهام إعادة العد للفروقات</button>');
+   controls.push('<button type="button" class="primary" data-session-action="approve" data-session-id="'+session.id+'">اعتماد التسوية وتجميد العد</button>');
+  }
+  if(session.status==='review'&&run?.status==='approved')controls.push('<button type="button" class="danger" data-session-action="complete" data-session-id="'+session.id+'">إغلاق الجلسة نهائياً</button>');
+  const taskHtml=tasks.length?'<div class="tablewrap"><table><thead><tr><th>الصنف / الموقع</th><th>الحالة</th><th>السبب</th><th>المندوب</th><th>الأعداد</th><th>الإجراء</th></tr></thead><tbody>'+tasks.map(t=>{
+   const assignOptions='<select id="workflowTaskAssignee-'+t.id+'"><option value="">اختر مندوباً</option>'+activeCounters.map(m=>'<option value="'+m.id+'" '+(m.id===t.assigned_member_id?'selected':'')+'>'+esc(m.display_name)+'</option>').join('')+'</select>';
+   let action='';
+   if(['pending','assigned','escalated'].includes(t.status))action=assignOptions+' <button type="button" class="soft" data-task-assign="'+t.id+'">إسناد / تغيير المندوب</button>';
+   else if(t.status==='completed')action='<button type="button" class="soft" data-task-review="'+t.id+'" data-decision="accept">قبول</button> <button type="button" class="soft" data-task-review="'+t.id+'" data-decision="repeat">إعادة</button> <button type="button" class="danger" data-task-review="'+t.id+'" data-decision="cancel">إلغاء</button>';
+   else action='<span class="hint">لا يوجد إجراء</span>';
+   const loc=state.locations.find(l=>l.id===t.location_id);
+   return '<tr><td>'+esc(t.product_id)+'<span class="sub">'+esc((loc?.code||'')+' · '+(loc?.name||'موقع غير معروف'))+'</span></td><td>'+statusPill(t.status)+'</td><td>'+esc(t.reason)+'</td><td>'+esc(workflowMemberName(t.assigned_member_id))+'</td><td>'+esc(t.first_count_quantity??'—')+' / '+esc(t.second_count_quantity??'—')+'</td><td><div class="actions">'+action+'</div></td></tr>';
+  }).join('')+'</tbody></table></div>':'<div class="empty">لا توجد مهام إعادة عد بعد.</div>';
+  const alertHtml=alerts.length?'<div class="tablewrap"><table><thead><tr><th>التنبيه</th><th>الخطورة</th><th>الحالة</th><th>التوقيت</th><th>الإجراء</th></tr></thead><tbody>'+alerts.map(a=>{
+   let action='';
+   if(a.status==='open')action='<button type="button" class="soft" data-alert-action="'+a.id+'" data-target="acknowledged">إقرار بالاطلاع</button> ';
+   if(['open','acknowledged'].includes(a.status))action+='<button type="button" class="danger" data-alert-action="'+a.id+'" data-target="resolved">حل التنبيه</button>';
+   return '<tr><td>'+esc(a.title)+'<span class="sub">'+esc(a.alert_type)+' · '+esc(JSON.stringify(a.details||{}).slice(0,160))+'</span></td><td>'+statusPill(a.severity)+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.created_at)+'</td><td>'+action+'</td></tr>';
+  }).join('')+'</tbody></table></div>':'<div class="empty">لا توجد تنبيهات مسجلة.</div>';
+  const deviceHtml=presence.length?'<div class="tablewrap"><table><thead><tr><th>المندوب / الجهاز</th><th>الحضور</th><th>الطابور المحلي المبلغ</th><th>تأكيد دورة الجلسة</th><th>قرار المالك</th></tr></thead><tbody>'+presence.map(p=>{
+   const d=deviceMap.get(p.member_id+'|'+p.device_id)||{},ack=Number(p.pending_queue_count)===0&&Number(p.acknowledged_lifecycle_version)===Number(session.sync_barrier_version),waived=p.queue_resolution==='waived';
+   const stateLabel=waived?'تجاوز موثق':ack?'مؤكد وخالٍ':'ينتظر المزامنة / التأكيد';
+   const action=!ack&&!waived?'<button type="button" class="danger" data-device-waive="'+p.member_id+'" data-device-id="'+esc(p.device_id)+'">تجاوز موثق (قد تفقد عمليات)</button>':'';
+   return '<tr><td>'+esc(workflowMemberName(p.member_id))+'<span class="sub">'+esc(d.device_label||p.device_id)+' · '+esc(d.platform||'')+' · '+esc(d.status||'')+'</span></td><td>'+esc(p.presence_state)+'<span class="sub">'+date(p.last_seen_at)+'</span></td><td>'+Number(p.pending_queue_count||0)+' عملية<span class="sub">آخر بلاغ '+date(p.queue_reported_at)+'</span></td><td>'+statusPill(stateLabel)+'<span class="sub">الإصدار المؤكد '+Number(p.acknowledged_lifecycle_version||0)+' / الحالي '+Number(session.sync_barrier_version||0)+'</span></td><td>'+action+(waived?'<small class="sub">'+esc(p.queue_resolution_reason||'')+'</small>':'')+'</td></tr>';
+  }).join('')+'</tbody></table></div>':'<div class="empty">لا توجد أجهزة أبلغت عن حضور لهذه الجلسة. أي جهاز ظهر في عمليات العد يجب أن يقر بطابوره قبل الاعتماد والإغلاق.</div>';
+  const generateControls=run?.status==='computed'&&session.status!=='completed'?'<div class="fields"><div class="field"><label>إسناد المهام الجديدة إلى (اختياري)</label><select id="workflowGenerateAssignee"><option value="">تركها دون إسناد</option>'+activeCounters.map(m=>'<option value="'+m.id+'">'+esc(m.display_name)+'</option>').join('')+'</select></div><div class="field"><label>أقل نسبة فرق لإعادة العد (%)</label><input id="workflowMinVariance" type="number" min="0" step="0.01" value="0"></div></div>':'';
+  $('sessionWorkflowContent').innerHTML='<div class="headrow"><div><h3>إدارة دورة الجلسة: '+esc(session.name)+'</h3><p class="hint">إدارة المالك فقط · حالة الجلسة '+statusPill(session.status)+' · إصدار حاجز الأجهزة '+Number(session.sync_barrier_version||1)+'</p></div><button type="button" class="soft" id="refreshSessionWorkflow">تحديث البيانات</button></div>'+runHtml+'<div class="actions">'+controls.join(' ')+'</div>'+generateControls+'<div class="divider"></div><div class="panel"><h3>مهام إعادة العد ('+openTasks.length+' مفتوحة)</h3>'+taskHtml+'</div><div class="panel"><h3>التنبيهات ('+criticalAlerts.length+' حرجة مفتوحة / مُقَر بها)</h3>'+alertHtml+'</div><div class="panel"><h3>طوابير أجهزة المندوبين قبل اعتماد التسوية والإغلاق</h3><p class="hint">يلزم أن يرسل كل جهاز بلاغاً صفرياً يؤكد المزامنة بعد كل تغيير في دورة الجلسة. تجاوز جهاز لا يستجيب يسجل سبباً واسم المالك وعدد/بصمة العمليات التي قد تُفقد؛ لا تُحذف تلك العمليات من الجهاز.</p>'+deviceHtml+'</div>';
+  $('refreshSessionWorkflow').onclick=()=>loadSessionWorkflow(session.id).catch(e=>fail('تعذر تحديث دورة الجلسة',e));
+  $('sessionWorkflowContent').querySelectorAll('[data-session-action]').forEach(b=>b.onclick=()=>runSessionAction(b.dataset.sessionId,b.dataset.sessionAction).catch(e=>fail('تعذر تنفيذ الإجراء',e)));
+  $('sessionWorkflowContent').querySelectorAll('[data-task-assign]').forEach(b=>b.onclick=()=>assignRecountTask(b.dataset.taskAssign).catch(e=>fail('تعذر إسناد إعادة العد',e)));
+  $('sessionWorkflowContent').querySelectorAll('[data-task-review]').forEach(b=>b.onclick=()=>reviewRecountTask(b.dataset.taskReview,b.dataset.decision).catch(e=>fail('تعذر مراجعة إعادة العد',e)));
+  $('sessionWorkflowContent').querySelectorAll('[data-alert-action]').forEach(b=>b.onclick=()=>setAlertStatus(b.dataset.alertAction,b.dataset.target).catch(e=>fail('تعذر تحديث التنبيه',e)));
+  $('sessionWorkflowContent').querySelectorAll('[data-device-waive]').forEach(b=>b.onclick=()=>waiveDeviceQueue(session.id,b.dataset.deviceWaive,b.dataset.deviceId).catch(e=>fail('تعذر تسجيل تجاوز طابور الجهاز',e)));
+ }
+ async function runSessionAction(sessionId,action){
+  const s=state.sessions.find(x=>x.id===sessionId);if(!s)return notify('جلسة الجرد غير موجودة.',true);
+  if(action==='view')return loadSessionWorkflow(sessionId);
+  if(action==='start'||action==='pause'||action==='resume'||action==='complete'){
+   const target={start:'active',pause:'paused',resume:'active',complete:'completed'}[action];
+   const messages={start:'بدء الجرد سيفتح التسجيل للمندوبين المصرح لهم. متابعة؟',pause:'إيقاف الجلسة سيمنع تسجيل العد الجديد مؤقتاً ويطلب تأكيد طوابير الأجهزة. متابعة؟',resume:'استئناف الجلسة سيفتح التسجيل مجدداً ويزيد إصدار حاجز المزامنة. متابعة؟',complete:'الإغلاق نهائي ويمنع إدخال أي عد جديد. لا يمكن التراجع عنه من التطبيق. هل تأكدت من التسوية وأجهزة المندوبين؟'};
+   if(!confirm(messages[action]))return;
+   const {data,error}=await db.rpc('count_transition_session',{p_session_id:sessionId,p_target_status:target});
+   if(error)throw error;
+   notify('تم تحديث حالة الجلسة إلى '+target+'.');
+  }else if(action==='reconcile'){
+   if(!confirm('سيتم إنشاء جولة تسوية جديدة من بيانات العد الحالية دون ترحيل مخزون أو قيود محاسبية. متابعة؟'))return;
+   const {data,error}=await db.rpc('count_reconcile_session',{p_session_id:sessionId});
+   if(error)throw error;
+   notify('اكتمل احتساب جولة التسوية: '+data);
+  }else if(action==='approve'){
+   const w=state.workflowData;if(!w?.run)return notify('لا توجد جولة تسوية للاعتماد.',true);
+   if(!confirm('سيتم اعتماد آخر تسوية وتجميد العد. يشترط اكتمال المواقع ومراجعة مهام إعادة العد والتنبيهات وإقرار طوابير الأجهزة. متابعة؟'))return;
+   const {data,error}=await db.rpc('count_approve_reconciliation',{p_run_id:w.run.id});
+   if(error)throw error;
+   notify('تم اعتماد التسوية والدخول إلى مرحلة المراجعة النهائية.');
+  }else if(action==='generate-recounts'){
+   const w=state.workflowData;if(!w?.run||w.run.status!=='computed')return notify('يجب أن تكون أحدث تسوية محسوبة وغير معتمدة.',true);
+   const selected=$('workflowGenerateAssignee')?.value||null;
+   const threshold=Number($('workflowMinVariance')?.value||0);
+   if(!Number.isFinite(threshold)||threshold<0)return notify('أدخل نسبة فرق صحيحة.',true);
+   if(!confirm('إنشاء مهام إعادة العد للصفوف ذات الفروقات أو غير المعدودة؟'))return;
+   const {data,error}=await db.rpc('count_generate_recount_tasks',{p_run_id:w.run.id,p_assigned_member_id:selected,p_min_variance_percent:threshold});
+   if(error)throw error;
+   notify('تم إنشاء مهام إعادة العد: '+Number(data?.created_tasks||0));
+  }
+  await loadProjectData();
+  if(state.sessions.some(x=>x.id===sessionId))await loadSessionWorkflow(sessionId);
+  await loadGlobalOperations();
+ }
+ async function assignRecountTask(taskId){
+  const select=$('workflowTaskAssignee-'+taskId),memberId=select?.value;
+  if(!memberId)return notify('اختر مندوباً نشطاً لإسناد إعادة العد.',true);
+  const {error}=await db.rpc('count_assign_recount_task',{p_task_id:taskId,p_member_id:memberId});
+  if(error)throw error;
+  notify('تم إسناد مهمة إعادة العد إلى المندوب المحدد.');
+  await loadSessionWorkflow(state.workflowSessionId);
+ }
+ async function reviewRecountTask(taskId,decision){
+  const notes=window.prompt('اكتب سبب قرار مراجعة إعادة العد (10 أحرف على الأقل):');
+  if(notes===null)return;
+  if(notes.trim().length<10)return notify('سبب المراجعة يجب ألا يقل عن 10 أحرف.',true);
+  const labels={accept:'قبول نتيجة إعادة العد',repeat:'طلب إعادة عد جديدة',cancel:'إلغاء مهمة إعادة العد'};
+  if(!confirm('تأكيد '+labels[decision]+'؟'))return;
+  const {data,error}=await db.rpc('count_review_recount_task',{p_task_id:taskId,p_decision:decision,p_note:notes.trim()});
+  if(error)throw error;
+  notify('تم تحديث نتيجة مراجعة إعادة العد.');
+  await loadSessionWorkflow(state.workflowSessionId);
+ }
+ async function setAlertStatus(alertId,target){
+  let note=null;
+  if(target==='resolved'){
+   note=window.prompt('اكتب سبب حل التنبيه (10 أحرف على الأقل):');
+   if(note===null)return;
+   if(note.trim().length<10)return notify('سبب الحل يجب ألا يقل عن 10 أحرف.',true);
+   if(!confirm('هل تؤكد حل التنبيه؟'))return;
+  }
+  const {data,error}=await db.rpc('count_set_alert_status',{p_alert_id:alertId,p_target_status:target,p_note:note});
+  if(error)throw error;
+  notify(target==='resolved'?'تم حل التنبيه وتسجيل السبب.':'تم الإقرار بالاطلاع على التنبيه.');
+  await loadSessionWorkflow(state.workflowSessionId);
+ }
+ async function waiveDeviceQueue(sessionId,memberId,deviceId){
+  const reason=window.prompt('تجاوز طابور الجهاز قد يعني فقد عمليات عد لم تصل إلى الخادم. اكتب سبباً موثقاً (10 أحرف على الأقل):');
+  if(reason===null)return;
+  if(reason.trim().length<10)return notify('سبب التجاوز يجب ألا يقل عن 10 أحرف.',true);
+  if(!confirm('تحذير: هذا لا يستعيد العمليات المحلية ولا يحذفها. إنه يسجل قبول المالك لخطر فقدها ويتيح المتابعة. تأكيد؟'))return;
+  const {data,error}=await db.rpc('count_waive_device_queue',{p_session_id:sessionId,p_member_id:memberId,p_device_id:deviceId,p_reason:reason.trim()});
+  if(error)throw error;
+  notify('تم تسجيل التجاوز في سجل التدقيق مع إبقاء عدد وبصمة الطابور.');
+  await loadSessionWorkflow(sessionId);
  }
  async function loadGlobalRows(table,columns,projectIds,orderColumn){
   const result=[];const chunkSize=80,pageSize=500;
