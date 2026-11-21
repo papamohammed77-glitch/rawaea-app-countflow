@@ -201,7 +201,7 @@ BEGIN
   END;
 
   -- An owner waiver is explicit, audited, and preserves the outstanding queue count/digest.
-  PERFORM public.count_waive_device_queue(v_session,v_member,v_device2,'QA Device 2','Device is irrecoverable; owner accepted the unsynced events loss.');
+  PERFORM public.count_waive_device_queue(v_session,v_member,v_device2,'Device is irrecoverable; owner accepted the unsynced events loss.');
   BEGIN
     PERFORM public.count_approve_reconciliation(v_run);
     RAISE EXCEPTION 'QA_FAIL_APPROVAL_WITH_UNACKNOWLEDGED_DEVICE_1';
