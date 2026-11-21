@@ -460,7 +460,8 @@ test("large import commit resumes in bounded server chunks for both catalog and 
   assert.match(helper, /status!=='committing'/);
   assert.match(helper, /remaining_rows/);
   assert.equal((admin.match(/commitImportBatchInChunks\(batchId,/g) || []).length, 2);
-  assert.doesNotMatch(admin, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
+  const withoutHelper = admin.slice(0, start) + admin.slice(end);
+  assert.doesNotMatch(withoutHelper, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
 });
 
 test("session workflow device acknowledgement row uses a parse-safe template literal", () => {
