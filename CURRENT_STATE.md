@@ -1,5 +1,44 @@
 # CountFlow — CURRENT_STATE
 
+> **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-750**  
+> **Date:** 2026-11-21  
+> **Status:** Phase 1 P0 enforcement remains confirmed at LVE-749. Phase 2 source improvements committed; CSV streaming and product pagination are implemented with static syntax PASS. XLSX parsing, runtime import, 90k load, deployment, and Phase 3 export remain OPEN/NOT VERIFIED.  
+> **Repository:** `papamohammed77-glitch/rawaea-app-countflow` (standalone CountFlow repository; not `erp-frontend`).  
+> **Application paths:** root-level `countflow-admin.html`, `Countflow-supervisor.html`, `countflow.html`.  
+> **Supabase boundary:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` only. SMART ERP / `fiilmooggumokxanwiyx` and legacy RAWAEA ERP remain untouched.  
+> **Phase 2 commits:** `942a90ce7f8ef77e84a23040196e5a5524150b28`, `df2eb38043e953e9936ddf69d4e4633ac5b105de`, `95304280f05095e812bc95f7ca6e6e2c01b6cb22`.  
+> **Admin source blob:** `4263b0a87f2ba570921ef2302f9cbe9f73128b96`.  
+>
+> ### Phase 2 — SOURCE IMPLEMENTED / STATIC PASS
+> - Product catalog no longer loads all project products into client state. It uses server-side exact-count filtering and 100-row pagination; current page DOM is bounded to a 30-row virtual window.
+> - CSV preview uses Papa Parse `step`, stores only headers/sample rows, and re-reads the file for commit using sequential 1,000-row staging RPC chunks.
+> - CSV file fingerprint is calculated from 1 MiB chunks using `sha256-chain-v1`; no single full-file ArrayBuffer is created for the checksum.
+> - Missing optional fields are allowed to reach server validation as NULL/empty; malformed units no longer abort all rows in client normalization.
+> - Full inline admin JavaScript syntax parse PASS (81,134 characters).
+>
+> ### Phase 2 — OPEN / LIMITATIONS
+> - XLS/XLSX still uses SheetJS `XLSX.read(file.arrayBuffer())`: server staging is chunked, but browser workbook parsing is not streaming. Do not claim complete XLSX memory safety.
+> - No authenticated file-upload E2E, DB import regression, 90,000-row test, Cloudflare deployment, or published-origin verification was run.
+> - No new database writes or schema/RLS/Edge changes were made in LVE-750.
+>
+> ### Phase 3 — OPEN
+> - Export Edge Function image streaming and memory behavior.
+> - Explicit pricing policy and export pricing enforcement.
+> - Correct standalone deployment file paths in DEPLOYMENT.md / CURRENT_STATE.md and Playwright paths.
+> - Authenticated browser E2E, actual XLSX open/validation, and export verification.
+>
+> ### Phase 1 — LVE-749 remains authoritative
+> - Owner-only project/engagement creation and admin write/RPC gates; Supervisor restricted to monitoring/team assignment; counter-only field capture; auditor cannot count.
+> - Do not replay the P1 migration or undo those boundaries.
+>
+> ### Mandatory continuation / collaboration
+> - Start from the current main HEAD and read the newest commit before editing. The current report is `FINAL_EXECUTION_REPORT_LVE-750.md`.
+> - If another assistant has an uncommitted/in-progress change, inspect and integrate it; never overwrite blindly.
+> - First close the XLSX streaming limitation without adding an unapproved Edge Function or crossing into SMART ERP. Then run static checks and only permitted rollback-only tests after resolving the LVE-747 test/deployment governance hold.
+> - Preserve truthful status labels. No claims of 90k, browser E2E, deployment or export PASS without direct evidence.
+>
+> ---
+>
 > **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-749**  
 > **Date:** 2026-11-21  
 > **Status:** Phase 1 P0 security and role enforcement applied to `rawaea-staging`; matching source changes are committed here.  
