@@ -696,7 +696,7 @@
    }
    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
    if(commitError)throw commitError;
-   const successMessage='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · رقم الدفعة '+batchId+(parseErrors?' · أخطاء تحليل تم تجاوزها '+parseErrors:'');
+   const successMessage='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · تم حفظ النتيجة في السجل+(parseErrors?' · أخطاء تحليل تم تجاوزها '+parseErrors:'');
    notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
    resetProductImport();$('productImportResult').textContent=successMessage;
    try{if(state.project?.id===projectId)await loadProjectData();}catch(reloadError){fail('تم اعتماد الاستيراد لكن تعذر تحديث عرض الكتالوج',reloadError);await loadProductImportHistory();}
@@ -1188,7 +1188,23 @@
    $('operationImportPreview').textContent='';$('operationImportResult').textContent='';
    $('operationCommitImport').disabled=true;
   });
-  $('operationPreviewImport').addEventListener('click',async()=>{
+  function operationImportSampleSummary(row){
+  const value=aliases=>String(operationValue(row,aliases)||'').trim();
+  const name=value(['name','product_name','item_name','اسم الصنف']);
+  const sku=value(['sku','item_code','code','كود الصنف']);
+  const barcode=value(['barcode','bar_code','ean','upc','باركود']);
+  const unit=value(['base_unit','unit','uom','الوحدة','وحدة القياس']);
+  const quantity=value(['expected_qty','expected_quantity','book_qty','الكمية الدفترية','الرصيد الدفتري']);
+  const location=value(['location_code','location','bin','shelf','الموقع','كود الموقع']);
+  const parts=['الصنف: '+(name||'اسم غير متاح')];
+  if(sku)parts.push('الكود: '+sku);
+  if(barcode)parts.push('الباركود: '+barcode);
+  if(unit)parts.push('الوحدة: '+unit);
+  if(quantity)parts.push('الرصيد المرجعي: '+quantity);
+  if(location)parts.push('الموقع: '+location);
+  return parts.join(' · ');
+ }
+ $('operationPreviewImport').addEventListener('click',async()=>{
    const file=$('operationImportFile').files[0];if(!file)return notify('اختر ملف CSV أو Excel أولاً.',true);
    const button=$('operationPreviewImport');button.disabled=true;
    try{
@@ -1200,12 +1216,12 @@
     if(!headers.some(h=>identifierAliases.includes(String(h).trim().toLowerCase())))throw new Error('يلزم وجود عمود SKU أو باركود؛ تُرفض الصفوف التي لا تحتوي معرفاً على حدة دون إيقاف الدفعة.');
     state.operationImportRows=rows.slice(0,20);state.operationImportRowCount=parsed.count;
     const ext=(file.name.split('.').pop()||'').toLowerCase();state.operationImportFormat=['xlsx','xls'].includes(ext)?'xlsx':'csv';
-    $('operationImportPreview').textContent='تمت معاينة '+parsed.count.toLocaleString('ar-EG')+' صفاً على دفعات دون تحميلها كلها. عينة: '+JSON.stringify(state.operationImportRows[0]||{}).slice(0,450)+(parsed.parseErrors?' · أخطاء تحليل متجاوزة '+parsed.parseErrors:'');
+    $('operationImportPreview').textContent='تمت معاينة '+parsed.count.toLocaleString('ar-EG')+' صفاً. '+operationImportSampleSummary(state.operationImportRows[0]||{})+(parsed.parseErrors?' · صفوف متجاوزة بسبب تنسيق غير صحيح '+parsed.parseErrors:'');
     $('operationImportResult').textContent='سيعاد تحليل الملف أثناء الاعتماد وإرسال كل 1,000 صف إلى فحص الخادم؛ الصفوف الناقصة أو ذات البيانات غير الصحيحة تسجل كمرفوضة ولا توقف بقية الدفعة.';
     $('operationCommitImport').disabled=false;
    }catch(e){
     state.operationImportRows=[];state.operationImportRowCount=0;
-    $('operationImportPreview').textContent='تعذر تحليل الملف: '+(e.message||String(e));
+    console.warn('Operation import preview failed',e);$('operationImportPreview').textContent='تعذر قراءة الملف. تحقق من صيغة الأعمدة والملف ثم أعد المحاولة.';
     $('operationCommitImport').disabled=true;
    }finally{button.disabled=false;}
   });
@@ -1225,16 +1241,16 @@
      if(!items.length)return;
      const normalized=items.map(item=>normalizeOperationImportRow(item.row,item.rowNumber));
      const {data,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:normalized,p_row_offset:processed});
-     if(error)throw new Error('فشل فحص الدفعة ابتداءً من الصف '+(normalized[0]?._row_number||processed+2)+': '+error.message);
+     if(error)console.warn('Operation import staging failed',error);throw new Error('تعذر فحص الصفوف ابتداءً من الصف '+(normalized[0]?._row_number||processed+2)+'. راجع بيانات هذا الصف ثم أعد المحاولة.');
      processed+=normalized.length;
      stagedAccepted+=Number(data?.accepted_rows||0);stagedRejected+=Number(data?.rejected_rows||0);
-     $('operationImportResult').textContent='فحص الدفعة '+batchId+' · '+processed.toLocaleString('ar-EG')+' / '+state.operationImportRowCount.toLocaleString('ar-EG')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+     $('operationImportResult').textContent='فحص الاستيراد · '+processed.toLocaleString('ar-EG')+' / '+state.operationImportRowCount.toLocaleString('ar-EG')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
     };
     const parsed=await streamOperationImportChunks(file,stage);
     if(parsed.count!==state.operationImportRowCount)throw new Error('تغير عدد صفوف الملف بعد المعاينة. أعد المعاينة قبل الاعتماد.');
     const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
     if(commitError)throw commitError;
-    $('operationImportResult').textContent='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أخطاء تحليل متجاوزة '+Number(parsed.parseErrors||0)+' · الدفعة '+batchId;
+    $('operationImportResult').textContent='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · صفوف متجاوزة بسبب تنسيق غير صحيح '+Number(parsed.parseErrors||0);
     notify('تم استيراد أصناف العملية عبر دفعات خادمية.');
     state.operationImportRows=[];state.operationImportRowCount=0;$('operationImportFile').value='';$('operationImportPreview').textContent='';
     await loadOperationImportHistory();await loadProjectData();await loadOperationMetrics();
