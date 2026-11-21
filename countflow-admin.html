@@ -453,7 +453,7 @@
    else{try{units=JSON.parse(raw);if(!Array.isArray(units))throw new Error('صيغة الوحدات يجب أن تكون مصفوفة JSON.');}
     catch(e){units=raw.split('|').map(v=>v.trim()).filter(Boolean);}}
   }
-  if(!Array.isArray(units))throw new Error('صيغة الوحدات غير صحيحة في الصف '+(index+2)+'.');
+  if(!Array.isArray(units))units=[];
   const value=key=>String(productImportValue(row,key)??'').trim();
   return {_row_number:index+2,_source_row:row,sku:value('sku')||null,barcode:value('barcode')||null,name:value('name')||null,category:value('category')||null,base_unit:value('base_unit'),units,expected_qty:value('expected_qty'),location_code:value('location_code'),image_url:value('image_url')||null,purchase_unit_cost:value('purchase_unit_cost')||null,currency_code:value('currency_code').toUpperCase()||null,purchase_unit:value('purchase_unit')||null,unit_factor_to_base:value('unit_factor_to_base')||null,cost_source_type:value('cost_source_type')||null,cost_source_reference:value('cost_source_reference')||null,cost_source_date:value('cost_source_date')||null};
  }
@@ -481,53 +481,62 @@
   finally{$('productImportPreviewBtn').disabled=false;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportResetBtn').disabled=false;}
  }
  async function commitProductImport(){
-  if(!state.project||!state.productImportRows.length)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
+  if(!state.project||!state.productImportRowCount)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
   if(!state.productImportMapping.sku&&!state.productImportMapping.barcode)return notify('اربط عمود SKU أو الباركود.',true);
   if(!state.productImportMapping.base_unit)return notify('اربط عمود الوحدة الأساسية.',true);
-  let normalized;
-  try{normalized=state.productImportRows.map((r,i)=>normalizeProductImportRow(r,i));}
-  catch(err){return fail('تعذر تجهيز بيانات الاستيراد',err);}
-  const expectedRows=normalized.filter(r=>r.expected_qty!=='');
-  const locationRows=normalized.filter(r=>r.location_code!=='');
-  const costRows=normalized.filter(r=>[r.purchase_unit_cost,r.currency_code,r.purchase_unit,r.unit_factor_to_base,r.cost_source_type,r.cost_source_reference,r.cost_source_date].some(v=>v!==null&&v!==''));
-  const projectId=state.project.id;
-  const sessionId=$('productImportSession').value||null;
-  const session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
-  if(locationRows.length&&!sessionId)return notify('اختر جلسة جرد عند ربط الأصناف بمواقع؛ وإلا استورد الكتالوج فقط.',true);
-  if(expectedRows.length){
-   if(!sessionId)return notify('استيراد الكميات الدفترية يتطلب جلسة جرد محددة.',true);
-   if(!state.productImportMapping.location_code)return notify('اربط عمود كود الموقع؛ قاعدة CountFlow لا تنشئ رصيداً مرجعياً بلا موقع.',true);
-   const missingLocation=expectedRows.find(r=>!r.location_code);
-   if(missingLocation)return notify('الصف '+missingLocation._row_number+' يحتوي كمية دفترية دون كود موقع. أكمل الموقع أو أزل الكمية من هذا الصف.',true);
-  }
-  if(costRows.length&&!sessionId)return notify('بيانات تكلفة الشراء تُحفظ كلقطة مرتبطة بجلسة؛ اختر جلسة أو أزل أعمدة التكلفة من الملف.',true);
+  const projectId=state.project.id,sessionId=$('productImportSession').value||null,session=sessionId?state.sessions.find(s=>s.id===sessionId):null;
   if(sessionId&&!session)return notify('جلسة الربط لم تعد ضمن قائمة الجلسات المتاحة. حدّث البيانات.',true);
   if(session&&!['planned','active','paused','review'].includes(session.status))return notify('لا يمكن ربط الاستيراد بهذه الجلسة بسبب حالتها الحالية.',true);
   const file=$('productImportFile').files[0];if(!file)return notify('أعد اختيار ملف الاستيراد.',true);
   const btn=$('productImportCommitBtn');btn.disabled=true;const oldText=btn.textContent;btn.textContent='جار تجهيز الدفعة…';$('projectPicker').disabled=true;$('productImportFile').disabled=true;$('productImportSession').disabled=true;$('productImportPreviewBtn').disabled=true;$('productImportResetBtn').disabled=true;
   try{
-   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),checksum=[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+   const checksum=await hashFileInChunks(file);
    const {data:batchId,error:createError}=await db.rpc('count_create_import_batch',{p_project_id:projectId,p_session_id:sessionId,p_source_name:file.name,p_source_format:state.productImportSourceFormat,p_source_checksum:checksum});
    if(createError)throw createError;
-   const {error:mappingError}=await db.from('count_import_batches').update({mapping_id:state.productImportMappingId,metadata:{column_mapping:state.productImportMapping,headers:Object.keys(state.productImportRows[0]||{}),import_surface:'countflow-admin'}}).eq('id',batchId).eq('project_id',projectId);
+   const {error:mappingError}=await db.from('count_import_batches').update({mapping_id:state.productImportMappingId,metadata:{column_mapping:state.productImportMapping,headers:state.productImportHeaders,import_surface:'countflow-admin',checksum_algorithm:'sha256-chain-v1'}}).eq('id',batchId).eq('project_id',projectId);
    if(mappingError)throw mappingError;
-   let stagedAccepted=0,stagedRejected=0;
-   for(let i=0;i<normalized.length;i+=1000){
-    const {data:staged,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:normalized.slice(i,i+1000),p_row_offset:i});
-    if(error)throw new Error('تعذر فحص الدفعة ابتداءً من الصف '+(i+2)+': '+error.message);
-    stagedAccepted+=Number(staged?.accepted_rows||0);stagedRejected+=Number(staged?.rejected_rows||0);
-    $('productImportResult').textContent='فحص آمن للدفعة '+batchId+' · '+Math.min(i+1000,normalized.length).toLocaleString('en-US')+' / '+normalized.length.toLocaleString('en-US')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+   let stagedAccepted=0,stagedRejected=0,processed=0,parseErrors=0;
+   const stage=async(chunk,offset)=>{
+    if(!chunk.length)return;
+    const {data:staged,error}=await db.rpc('count_stage_import_rows',{p_batch_id:batchId,p_rows:chunk,p_row_offset:offset});
+    if(error)throw new Error('تعذر فحص الدفعة ابتداءً من الصف '+(offset+2)+': '+error.message);
+    stagedAccepted+=Number(staged?.accepted_rows||0);stagedRejected+=Number(staged?.rejected_rows||0);processed+=chunk.length;
+    $('productImportResult').textContent='فحص الدفعة '+batchId+' · '+processed.toLocaleString('en-US')+' / '+state.productImportRowCount.toLocaleString('en-US')+' صف · مقبول '+stagedAccepted+' · مرفوض '+stagedRejected;
+   };
+   if(state.productImportSourceFormat==='csv'){
+    await new Promise((resolve,reject)=>{
+     let pending=[],rowIndex=0,chain=Promise.resolve(),settled=false;
+     const failParse=err=>{if(settled)return;settled=true;reject(err);};
+     Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+      step:(r,parser)=>{
+       if(r.errors?.length){parseErrors+=r.errors.length;return;}
+       const row=r.data||{};if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
+       pending.push(normalizeProductImportRow(row,rowIndex));rowIndex++;
+       if(pending.length>=1000){
+        parser.pause();const chunk=pending;pending=[];
+        chain=chain.then(()=>stage(chunk,rowIndex-chunk.length)).then(()=>parser.resume()).catch(err=>{parser.abort();failParse(err);});
+       }
+      },
+      complete:async()=>{
+       if(settled)return;
+       try{await chain;await stage(pending,rowIndex-pending.length);if(!rowIndex)throw new Error('لم يتم العثور على صفوف بيانات صالحة.');settled=true;resolve();}
+       catch(err){failParse(err);}
+      },error:failParse});
+    });
+   }else{
+    const rows=state.productImportRows||[];
+    for(let i=0;i<rows.length;i+=1000)await stage(rows.slice(i,i+1000).map((r,j)=>normalizeProductImportRow(r,i+j)),i);
    }
    const {data:committed,error:commitError}=await db.rpc('count_commit_import_batch',{p_batch_id:batchId});
    if(commitError)throw commitError;
-   const successMessage='اكتمل الاستيراد · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · رقم الدفعة '+batchId;
+   const successMessage='اكتمل الاستيراد · صفوف معالجة '+processed+' · مقبول '+Number(committed?.accepted_rows??stagedAccepted)+' · مرفوض '+Number(committed?.rejected_rows??stagedRejected)+' · أرصدة مرجعية '+Number(committed?.expected_balance_rows||0)+' · رقم الدفعة '+batchId+(parseErrors?' · أخطاء تحليل تم تجاوزها '+parseErrors:'');
    notify('اكتمل استيراد الأصناف من خلال مسار CountFlow الآمن.');
    resetProductImport();$('productImportResult').textContent=successMessage;
    try{if(state.project?.id===projectId)await loadProjectData();}catch(reloadError){fail('تم اعتماد الاستيراد لكن تعذر تحديث عرض الكتالوج',reloadError);await loadProductImportHistory();}
   }catch(err){
    $('productImportResult').textContent='لم يكتمل اعتماد الدفعة. بقي سجلها متاحاً للمراجعة؛ لم يتم تجاوز فحص الخادم. '+(err.message||String(err));
    fail('فشل استيراد الأصناف',err);await loadProductImportHistory();
-  }finally{btn.disabled=!state.productImportRows.length;btn.textContent=oldText;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportPreviewBtn').disabled=false;$('productImportResetBtn').disabled=false;}
+  }finally{btn.disabled=!state.productImportRowCount;btn.textContent=oldText;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportPreviewBtn').disabled=false;$('productImportResetBtn').disabled=false;}
  }
  async function loadProductImportHistory(){
   $('productImportDetails').innerHTML='';
