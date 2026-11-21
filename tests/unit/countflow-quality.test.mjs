@@ -460,12 +460,12 @@ test("large import commit resumes in bounded server chunks for both catalog and 
   assert.match(helper, /status!=='committing'/);
   assert.match(helper, /onProgress\(result\)/);
   assert.match(admin, /Number\(progress\.remaining_rows\|\|0\)/);
-  assert.equal((admin.match(/commitImportBatchInChunks\\(batchId,/g) || []).length, 4);
+  assert.equal((admin.match(/commitImportBatchInChunks\(batchId,/g) || []).length, 4);
   assert.match(admin, /data-resume-product-import/);
   assert.match(admin, /data-resume-operation-import/);
-  assert.match(admin, /async function resumeImportBatchFromHistory\\(batchId,scope,button\\)/);
-  assert.match(admin, /loadProductImportHistory\\(\\)/);
-  assert.match(admin, /loadOperationImportHistory\\(\\)/);
+  assert.ok(admin.includes('async function resumeImportBatchFromHistory(batchId,scope,button)'));
+  assert.ok(admin.includes('loadProductImportHistory()'));
+  assert.ok(admin.includes('loadOperationImportHistory()'));
   const withoutHelper = admin.slice(0, start) + admin.slice(end);
   assert.doesNotMatch(withoutHelper, /db\.rpc\('count_commit_import_batch',\{p_batch_id:batchId\}\)/);
 });
