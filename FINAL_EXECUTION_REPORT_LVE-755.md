@@ -141,3 +141,12 @@ counting-export-session:
 أُغلقت فجوات streaming للاستيراد، وتحديث مصدرية طابور الأجهزة، وحاجز الإغلاق، والتوافق الإنتاجي، مع مرور 12 اختباراً آلياً وثلاثة اختبارات Chromium على Production.  
 الفهارس الثلاثة normalized lookup مطبقة فعلياً في Supabase، كما طوبق سجل 16 ترحيلاً بعد P1؛ لم تُعد تطبيق أي Migration في هذه النقطة.  
 التصدير الفعلي، E2E المصادق، Offline متعدد الأجهزة، وقياس حمل 30–300 مستخدم ما زالت مراحل مفتوحة ولا يجوز وصف المنصة بأنها مكتملة تشغيلياً.
+
+
+## ملحق نهائي — تطابق نشر نقطة التوثيق LVE-755
+
+- GitHub Actions run: 44943689352 — SUCCESS.
+- Git SHA checked by the production parity test: cf076ce362d9d964a1879feab25a8d421b4827d2.
+- The test fetched the latest main SHA at runtime, waited for Production build-info.json, and verified an exact match.
+- The same run passed the 12 source/unit checks, both Deno Edge Function type-checks, the ten-file Pages build and three Playwright Chromium production smoke tests (owner login, SHA parity, three RTL mobile shells).
+- No authenticated Supervisor/Counter E2E, export invocation, DB import test, offline-device run or concurrency load test was included.
