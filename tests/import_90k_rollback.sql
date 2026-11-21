@@ -15,6 +15,7 @@ BEGIN
   IF v_owner IS NULL THEN RAISE EXCEPTION 'QA_OWNER_IDENTITY_NOT_CONFIRMED'; END IF;
   PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM set_config('role','authenticated',true);
   INSERT INTO public.count_projects(name,code,created_by)
   VALUES('QA 90K Rollback','QA90K-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_owner)
   RETURNING id INTO v_project;
@@ -34,6 +35,7 @@ BEGIN
   SELECT count(*) INTO v_products FROM public.count_products WHERE project_id=v_project;
   IF v_commit->>'status'<>'committed' OR (v_commit->>'accepted_rows')::bigint<>90000 OR v_staged<>90000 OR v_products<>90000
   THEN RAISE EXCEPTION 'QA_90K_IMPORT_ASSERTION_FAILED: %, staged %, products %',v_commit,v_staged,v_products; END IF;
+  PERFORM set_config('role','none',true);
   INSERT INTO pg_temp.countflow_90k_result(result)
   VALUES(jsonb_build_object('status','PASS','rows_submitted',90000,'rows_staged',v_staged,
     'rows_accepted',(v_commit->>'accepted_rows')::bigint,'products_committed',v_products,
