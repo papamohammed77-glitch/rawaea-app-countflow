@@ -128,3 +128,55 @@ Applied in `rawaea-staging` as `countflow_p1_owner_only_admin_and_counter_only`;
 - A non-owner denial probe ran within a transaction ending in `ROLLBACK`; no project, member or session rows were created.
 
 Historical paragraphs below retain their original audit dates; earlier file counts are superseded by the 2026-11-21 Git tree count above.
+
+## 2026-11-21 — LVE-755 queue-barrier and finality migration reconciliation
+
+A further **read-only** reconciliation against the live migration ledger and CountFlow schema on `rawaea-staging` found 15 applied ledger entries after the P1 migration `20261121180246 countflow_p1_owner_only_admin_and_counter_only`. This addendum is an inventory only; it does not authorize replay.
+
+### Live applied entries after P1
+
+| Live ledger version | Live migration name | Tracked source / status |
+|---|---|---|
+| `20261121181642` | `countflow_import_row_level_location_validation` | No one-to-one SQL file found in current Git tree; recover exact SQL from ledger archive before any replay |
+| `20261121184957` | `countflow_recount_generation_computed_counter_only` | Source `20261121195000_countflow_recount_generation_computed_counter_only.sql` (filename timestamp differs) |
+| `20261121185757` | `countflow_session_device_queue_barrier` | Source `20261121202000_countflow_session_device_queue_barrier.sql` |
+| `20261121185842` | `countflow_owner_helper_signature_fix` | Source `20261121201500_countflow_owner_helper_signature_fix.sql` |
+| `20261121190030` | `countflow_queue_waiver_owner_helper_fix` | Source `20261121202500_countflow_queue_waiver_owner_helper_fix.sql` |
+| `20261121190130` | `countflow_owner_alert_resolution` | Source `20261121203000_countflow_owner_alert_resolution.sql` |
+| `20261121190239` | `countflow_device_queue_missing_presence_guard` | Source `20261121204000_countflow_device_queue_missing_presence_guard.sql` |
+| `20261121190329` | `countflow_alert_status_rpc_null_and_idempotency` | Source `20261121203500_countflow_alert_status_rpc_null_and_idempotency.sql` |
+| `20261121190455` | `countflow_approval_requires_paused_session` | Source `20261121204500_countflow_approval_requires_paused_session.sql` |
+| `20261121190711` | `countflow_device_queue_waiver_audit_key_fix` | Source `20261121204500_countflow_device_queue_waiver_audit_key_fix.sql` |
+| `20261121190914` | `countflow_queue_waiver_reject_clear_device` | Source `20261121205000_countflow_queue_waiver_reject_clear_device.sql` |
+| `20261121191421` | `countflow_approval_rpc_security_definer_fix` | Source `20261121211000_countflow_approval_rpc_security_definer_fix.sql` |
+| `20261121191944` | `countflow_two_phase_approval_queue_barrier` | No standalone source file found; historical/intermediate experimental ledger entry; do not reconstruct from memory |
+| `20261121192051` | `countflow_two_phase_approval_security_definer` | No standalone source file found; historical/intermediate experimental ledger entry; do not reconstruct from memory |
+| `20261121192512` | `countflow_restore_pause_first_queue_approval` | Source `20261121212000_countflow_restore_pause_first_queue_approval.sql`; final source contract is pause-first |
+
+### Verified live behavior — read only
+
+- The current `count_report_device_queue(uuid,text,integer,text)` RPC is SECURITY DEFINER, has an empty `search_path`, is executable by authenticated but not anon, and accepts only an active Counter membership plus its approved active device. It records pending queue count/digest and the current lifecycle version.
+- The current `count_waive_device_queue(uuid,uuid,text,text)` RPC is SECURITY DEFINER, empty `search_path`, authenticated EXECUTE / anon denied, and checks the confirmed platform owner identity inside the body. It requires a documented reason and preserves count/digest details in the audit log.
+- `count_approve_reconciliation(uuid)` is SECURITY DEFINER only so it can call the server-private queue assertion; it has an empty `search_path`, authenticated EXECUTE / anon denied, explicit owner gate, and requires a latest computed run with a paused session. It checks unchanged count snapshot, counted imported products, reviewed recounts, resolved critical alerts and device queue acknowledgements before approval.
+- `count_generate_recount_tasks` requires a computed (not approved) reconciliation and assigns only to an active `counter`, never an `auditor`.
+- `count_presence` RLS remains self-scoped for insert/update to the active authenticated member; read is limited to supervisor/owner scope or the row owner.
+- The application `countflow.html` calls `count_report_device_queue` after queue changes/synchronization, after device presence heartbeat, on reconnect, and periodically. The owner-only system master renders each device queue and exposes the documented waiver action. Queue reporting is a device self-attestation: the server stores the reported digest and blocks finality until the device reports zero at the current lifecycle version or the owner records an explicit waiver; it cannot independently read browser IndexedDB.
+- The current lifecycle trigger contains additive `queue_barrier_action`, `queue_barrier_run_id` and `queue_barrier_requested_at` columns from the experimental two-phase migrations. The final public approval RPC was restored to the pause-first contract by `countflow_restore_pause_first_queue_approval`; these columns remain additive historical schema. No destructive cleanup was attempted.
+
+### Import lookup index proposal — NOT APPLIED
+
+Tracked source `20261121212500_countflow_import_normalized_lookup_indexes.sql` proposes:
+- normalized per-batch SKU + location expression index;
+- normalized per-batch barcode + location expression index;
+- project + location-code lookup index.
+
+A read-only `pg_indexes` check found none of these three exact index names in the live catalog. The source is therefore **pending/unapplied**. It must not be reported as a live performance improvement, and it must not be applied without a reviewed migration Change Set and a plan for index build/lock impact.
+
+### Current tracked SQL source inventory
+
+- Git tree at LVE-755 contains **54** `.sql` migration files.
+- The latest live CountFlow/Counting ledger inventory includes the original 68 entries at the LVE-749 audit plus the P1 and 15 post-P1 entries above. The repository is still not a clean-install/replayable baseline.
+- No SQL test in `tests/` was executed during LVE-755. The 5k and 90k rollback scripts are source artifacts only; their existence is not proof of database/RPC performance.
+- All current CountFlow business tables queried in the same read-only check remained at zero rows; the one confirmed `owner@rawaea.com` Auth identity remains present.
+
+Do not replay, rename, delete, or reconstruct any of these migration entries based on filenames alone. Treat the live ledger, tracked SQL artifacts and current schema as separate evidence sets.
