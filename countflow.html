@@ -71,7 +71,7 @@ async function reportDeviceQueue(){
    }
    if(data?.session_status)session.status=data.session_status;
    $('sessionStatus').textContent=session.status==='active'?'جلسة نشطة':session.status==='paused'?'الجلسة متوقفة مؤقتاً':session.status==='review'?'قيد المراجعة':'غير نشطة';
-   $('saveBtn').disabled=session.status!=='active'||member.status!=='active';
+   $('saveBtn').disabled=session.status!=='active'||member.status!=='active'||!deviceReady;
    const ack=$('queueBarrierState');
    if(ack)ack.textContent='تأكيد الخادم: '+Number(data?.pending_queue_count||0)+' عملية غير متزامنة · إصدار الدورة '+Number(data?.lifecycle_version||0);
    latest=data;
