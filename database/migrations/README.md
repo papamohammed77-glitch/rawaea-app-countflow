@@ -189,3 +189,32 @@ The migration is therefore **APPLIED / source present / catalog definitions veri
 - All current CountFlow business tables queried in the same read-only check remained at zero rows; the one confirmed `owner@rawaea.com` Auth identity remains present.
 
 Do not replay, rename, delete, or reconstruct any of these migration entries based on filenames alone. Treat the live ledger, tracked SQL artifacts and current schema as separate evidence sets.
+
+### Resumable large-import commit — APPLIED / read-only contract verified 2026-11-21
+
+Tracked SQL sources:
+- `20261121213000_countflow_import_commit_duplicate_lookup_indexes.sql`
+- `20261121214000_countflow_import_commit_chunked_batches.sql`
+
+Live Supabase migration ledger:
+- `20261121200720` — `countflow_import_commit_duplicate_lookup_indexes`
+- `20261121201407` — `countflow_import_commit_chunked_batches`
+
+**Important:** Both live ledger versions differ from the timestamp prefixes of the tracked filenames. This is an existing source/ledger mapping, not a reason to rename or replay either file. Read-only queries on 2026-11-21 confirmed both ledger names, both duplicate-lookup indexes, and the live chunked function behavior. No migration was applied or re-applied by the LVE-757 continuation.
+
+The active commit contract observed read-only:
+- `public.count_commit_import_batch(uuid)` is a SQL wrapper with empty `search_path`; its EXECUTE ACL includes `authenticated`, `service_role` and `postgres`, not `anon`.
+- `counting_private.count_commit_import_batch_impl(uuid)` is `SECURITY DEFINER`, checks the confirmed platform owner identity, and only accepts batches in `preview` or `committing` (with `committed` returning an idempotent success).
+- At most 1,000 staged rows are selected with `ORDER BY row_number,id LIMIT 1000 FOR UPDATE` per RPC invocation.
+- If staged rows remain, the function persists cumulative accepted/rejected counts and returns `status=committing` plus `remaining_rows`. It finalizes expected balances, cost snapshots, batch completion and audit only when no staged rows remain.
+- A failed later chunk keeps an initially `committing` batch resumable; a failure in the first transition from `preview` leaves the batch failed.
+
+The Admin UI now calls the same commit RPC sequentially from both catalog and operation imports. The history views expose **استكمال الاعتماد** for batches still in `committing`; a resumed request continues from the staged rows without uploading or parsing the original file again. The UI does not display raw batch IDs or RPC errors.
+
+### 5k/90k rollback script limitation
+
+- `tests/import_5k_rollback.sql` and `tests/import_90k_rollback.sql` now loop over the commit RPC until the server reports `committed`, with a bounded maximum of 100 additional calls and final row/product assertions.
+- Each script still has one outer `BEGIN` and a final `ROLLBACK`. Repeated function invocations in this harness occur inside that single database transaction; therefore these scripts can test chunk selection, row-state transitions and final results, but **cannot prove independent HTTP transaction durability, recovery after a real network interruption, or production 90k throughput**.
+- Neither script was executed in the LVE-757 continuation. The LVE-747 governance hold still blocks new database write tests until explicitly reconciled. Do not remove `ROLLBACK` or convert either script to a persistent seed.
+
+Do not replay either import migration, rename files to force version matching, or infer live state from filenames. The Supabase ledger and read-only live function/index catalog are the authority for current applied state.
