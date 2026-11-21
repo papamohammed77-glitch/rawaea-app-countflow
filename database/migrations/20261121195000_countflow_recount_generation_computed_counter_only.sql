@@ -29,8 +29,8 @@ BEGIN
     RAISE EXCEPTION 'COUNT_RECOUNT_GENERATION_ASSIGNEE_GUARD_NOT_FOUND';
   END IF;
 
-  IF position(''approved'' IN v_updated) > 0
-     OR position(''auditor'' IN v_updated) > 0 THEN
+  IF position('approved' IN v_updated) > 0
+     OR position('auditor' IN v_updated) > 0 THEN
     RAISE EXCEPTION 'COUNT_RECOUNT_GENERATION_UNSAFE_ROLE_OR_STATUS_REMAINS';
   END IF;
 
