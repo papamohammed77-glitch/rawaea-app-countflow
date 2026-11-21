@@ -8,7 +8,7 @@ DO $countflow_90k$
 DECLARE
   v_owner uuid; v_project uuid; v_batch uuid;
   v_rows jsonb; v_chunk_result jsonb; v_commit jsonb; v_offset integer;
-  v_staged bigint; v_products bigint;
+  v_staged bigint; v_products bigint; v_commit_attempt integer := 0;
 BEGIN
   SELECT id INTO v_owner FROM auth.users
   WHERE lower(email)='owner@rawaea.com' AND email_confirmed_at IS NOT NULL;
@@ -31,6 +31,13 @@ BEGIN
     v_chunk_result := public.count_stage_import_rows(v_batch,v_rows,v_offset);
   END LOOP;
   v_commit := public.count_commit_import_batch(v_batch);
+  WHILE v_commit->>'status'='committing' LOOP
+    v_commit_attempt:=v_commit_attempt+1;
+    IF v_commit_attempt>100 THEN
+      RAISE EXCEPTION 'QA_90K_IMPORT_COMMIT_CHUNK_LIMIT:%',v_commit;
+    END IF;
+    v_commit:=public.count_commit_import_batch(v_batch);
+  END LOOP;
   SELECT count(*) INTO v_staged FROM public.count_import_rows WHERE batch_id=v_batch;
   SELECT count(*) INTO v_products FROM public.count_products WHERE project_id=v_project;
   IF v_commit->>'status'<>'committed' OR (v_commit->>'accepted_rows')::bigint<>90000 OR v_staged<>90000 OR v_products<>90000
