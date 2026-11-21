@@ -8,7 +8,7 @@
 > قاعدة البيانات المستخدمة هي مشروع Supabase المستقل `rawaea-staging` (`hfzznsiprnwkpayskzhu`). جميع بيانات التشغيل الجديدة محصورة في جداول `count_*` ومخازن `counting-*`. لا تنفذ التطبيقات أي ترحيل للمخزون أو النقدية أو الحسابات أو قيود ERP.
 
 
-> **الحالة الحية LVE-2026-11-21-754:** المالك `owner@rawaea.com` موجود وبريده مؤكد، ولا توجد بعد ملفات تكليف أو أعضاء أو أصناف أو جلسات أو عمليات عد دائمة. اجتاز GitHub Actions الاختبارات المصدرية وتدفق XLSX الاصطناعي 90,000 صف وبناء `dist` واكتشاف اختبارات Playwright. مشروع Cloudflare Pages الإنتاجي موجود ويستخدم النشر التلقائي؛ آخر إصدار ظاهر أثناء التدقيق كان عند commit `195bbe8`، أقدم من HEAD `5dcdf76a`، لذلك لا يُدّعى أن HEAD الحالي منشور بعد.
+> **الحالة الحية LVE-2026-11-21-755:** قاعدة CountFlow التشغيلية ما زالت خالية من التكليفات والأعضاء والأصناف والجلسات والعدود والدفعات والصادرات، وهوية المالك `owner@rawaea.com` واحدة وبريدها مؤكد. تدفق CSV/XLSX المتدرج والاستيراد داخل تفاصيل العملية، التصفح الخادمي والافتراضي للكتالوج، حاجز طوابير الأجهزة، ومزامنة المشرف الاحتياطية موجودة في المصدر؛ CI اجتاز 10+ اختبارات مصدرية، وفحص Deno لوظيفتي Edge، واختبار 90k XLSX اصطناعي، وبناء Pages وPlaywright production/mobile smoke ومطابقة SHA. التصدير الفعلي، E2E المصادق، offline multi-device، وقياس 90k DB/مئات المستخدمين ما زالت غير مثبتة؛ وسياسة التسعير UNKNOWN.
 
 ## التطبيقات
 
@@ -40,12 +40,13 @@
 - استيراد الأصناف من CSV/XLSX مع معاينة وربط أعمدة وحفظ الدفعات ونتيجة كل صف؛ XLSX يقرأ تدريجياً من OOXML، وملفات XLS الثنائية محدودة بـ8MB.
 - ربط الكميات الدفترية بجلسة وموقع؛ الكتالوج وحده لا ينشئ رصيداً دفترّياً.
 - إدارة جلسات الجرد ودورة التسوية والتنبيهات ومهام إعادة العد ومراجعتها واعتمادها، ثم تصدير النتائج الخادمي.
+- شاشة دورة الجلسة تعرض إقرار طابور كل جهاز. بعد الإيقاف المؤقت يلزم بلاغ صفري من كل جهاز عند إصدار lifecycle الحالي؛ لا يكتمل الاعتماد أو الإغلاق قبل الإقرار، ويستطيع المالك فقط تسجيل تجاوز مسبب ومؤرشف مع الاحتفاظ بعدد وبصمة الطابور.
 
 ### تطبيق المشرف
 - مراقبة العمليات والتقدم والتغطية والحضور والأجهزة والأدلة والتنبيهات.
 - عرض أعضاء التكليف وحالاتهم، وإسناد المندوبين إلى الجلسات والمواقع أو إزالة الإسناد.
 - لا ينشئ التكليفات أو حسابات Auth، ولا يعيد تعيين كلمات المرور، ولا يدير الكتالوج والمواقع، ولا يستورد أو يصدر، ولا ينفذ دورة الجلسة أو التسوية أو الاعتماد؛ هذه صلاحيات النظام الأم للمالك فقط.
-- وصول Realtime وزمن التأخير عبر أجهزة متعددة لم يثبتا بعد؛ تحتفظ اللوحة بالتحديث الاحتياطي والمصالحة الدورية.
+- لا يزال وصول Broadcast وزمن تأخيره عبر عدة أجهزة غير مثبتين تحت الحمل؛ لذلك توجد مصالحة خادمية احتياطية كل 30 ثانية للـcockpit، مع تحديث مستقل لخريطة المواقع كل 10 ثوانٍ.
 
 ## بنية Supabase
 
@@ -168,11 +169,11 @@
 
 ### لم يُختبر بعد — لا تعتبره معتمداً للإنتاج واسع النطاق
 
-- مسارات Playwright صُححت إلى صفحات الجذر `Countflow-supervisor.html` و`countflow.html`، واجتاز CI اكتشاف الاختبارات دون تشغيل متصفح. عنوان الإنتاج `https://rawaea-app-countflow.pages.dev` معروف وتظهر صفحة النظام الأم في المتصفح؛ لكن E2E المصادق للمشرف/المندوب لم يُشغّل لعدم وجود بيانات اعتماد/روستر أعضاء. لم يُنفذ تصدير فعلي ببيانات جلسة.
-- اختبار استيراد 90,000 صنف محفوظ في tests/import_90k_rollback.sql أُعيد تشغيله في 19 نوفمبر داخل BEGIN/ROLLBACK ونجح: 90,000 صف staged/accepted و90,000 صنف داخل المعاملة، دون أي بيانات باقية. لم يُختبر تصدير 90,000 سجل أو قياس حمل بمئات المستخدمين؛ حدود التصدير الخادمي 150 ألف صف لكل مجموعة و250 ألف صف مجمع ما زالت غير مختبرة.
+- مسارات Playwright صحيحة في جذر المستودع. آخر بوابة CI شغّلت مطابقة SHA الدقيقة لـ`build-info.json` على Production، وفتحت صفحات الإدارة/المشرف/المندوب الثلاث على Chromium بعرض هاتف 390×844 وRTL؛ اجتازت ثلاثة اختبارات smoke. اختبارات الدخول المصادق للمشرف والمندوب ومسح الباركود بقيت غير منفذة لعدم وجود أعضاء/تكليفات/أصناف/مواقع اختبار أو أسرار CI معتمدة. لم يُنفذ تصدير حقيقي من جلسة.
+- اختبار XLSX الاصطناعي داخل CI يجتاز تحليل 90,000 صف وتدقيق CRC وبنية ZIP؛ وهذا ليس اختبار 90,000 إدخال إلى Supabase. يوجد `tests/import_5k_rollback.sql` و`tests/import_90k_rollback.sql` كمصدري اختبار SQL، لكن لم يُعَد تشغيلهما في LVE-755 بسبب بوابة حوكمة اختبارات الكتابة. التصدير 90k، ذاكرة الذروة، والتحميل المتزامن 30–300 مستخدم لم تُقَس.
 - لم يُختبر Broadcast end-to-end عبر اتصالات WebSocket متزامنة تحت الحمل.
 - لم تُختبر كاميرات أجهزة Android فعلية متعددة أو قارئات باركود مختلفة.
-- لم تُختبر رحلة Offline حقيقية تتضمن إغلاق المتصفح وإعادة فتحه واستعادة الطابور.
+- حاجز الطابور صار server-enforced مع بلاغ جهاز ذاتيّ يضم العدد وبصمة SHA-256 لحمولة العمليات، ومراجعة/تجاوز موثق من المالك. لكنه لم يُختبر بعد على أجهزة فعلية عبر قطع الشبكة وإغلاق المتصفح وإعادة فتحه واستعادة الطابور والمزامنة متعددة الأجهزة.
 - لم يُختبر رفع وتنزيل صور الأدلة والملفات الموقعة من جلسات مستخدمين فعلية.
 - لم يُنشأ بعد حساب مشرف بشري أو حسابات أعضاء حقيقية؛ لا توجد قائمة بريد/أسماء مستخدمين مؤكدة. لا يجوز إسناد أدوار إلى 1,868 مستخدماً قديماً في Auth أو إنشاء حسابات بأسماء وهمية.
 - فحص JavaScript النحوي للـ inline scripts في التطبيقين نجح عبر parser/compile check، مع عدم وجود معرّفات DOM مفقودة أو مكررة في المراجعة الساكنة؛ لكنه لا يغني عن اختبار المتصفح الفعلي.
@@ -291,5 +292,5 @@ The exact recorded SQL for all 60 `counting_*` and `countflow_*` migration-ledge
 - [countflow-core.js](./countflow-core.js) — isolated Supabase client factory, connectivity hooks, Postgres Changes invalidation/reconciliation helper, and CountFlow Service Worker registration.
 - [countflow-sw.js](./countflow-sw.js) — CountFlow-only offline app-shell/static-asset worker. Supabase Auth/API/Storage/Edge Function requests remain network-only and are never cached.
 - [manifest.webmanifest](./manifest.webmanifest) and [countflow-icon.svg](./countflow-icon.svg) — independent CountFlow PWA identity.
-- The Pages build allowlist includes these four runtime assets. The offline shell is implemented, but real offline boot/restart/reconnect has not yet been verified in a browser. The existing IndexedDB queue close-barrier gap remains open; see ARCHITECTURE.md.
+- The Pages build allowlist publishes ten files: four HTML entry points, four Core/PWA runtime assets, `_headers`, and the generated `build-info.json` commit marker. The CountFlow service worker caches only approved shell/static assets. The IndexedDB queue now reports a canonical payload digest to the server barrier, but offline boot/restart/reconnect and multi-device replay remain unverified; see `ARCHITECTURE.md`.
 
