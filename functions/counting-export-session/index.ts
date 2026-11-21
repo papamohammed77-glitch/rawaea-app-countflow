@@ -63,6 +63,26 @@ async function fetchAll(
   return rows;
 }
 
+async function countRows(
+  admin: any,
+  table: string,
+  filters: Array<[string, string, unknown]>,
+  maxRows: number,
+) {
+  let query = admin.from(table).select("id", { count: "exact", head: true });
+  for (const [column, operator, value] of filters) {
+    if (operator === "eq") query = query.eq(column, value);
+    else if (operator === "in") query = query.in(column, value);
+    else if (operator === "filter_eq") query = query.filter(column, "eq", value);
+  }
+  const { count, error } = await query;
+  if (error) throw new Error(`COUNT_${table}: ${error.message}`);
+  const total = Number(count ?? 0);
+  if (!Number.isSafeInteger(total) || total < 0) throw new Error(`COUNT_INVALID_${table}`);
+  if (total > maxRows) throw new Error(`EXPORT_LIMIT_${table}:${maxRows}`);
+  return total;
+}
+
 function csvCell(value: unknown) {
   const s = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
   return '"' + s.replace(/"/g, '""') + '"';
@@ -102,6 +122,41 @@ async function readBlobBounded(blob: Blob, maxBytes: number): Promise<Uint8Array
   const result = new Uint8Array(total);
   let offset = 0;
   for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.byteLength; }
+  return result;
+}
+
+async function readResponseBounded(response: Response, maxBytes: number): Promise<Uint8Array> {
+  if (!response.ok) throw new Error(`IMAGE_FETCH_FAILED:${response.status}`);
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) {
+    await response.body?.cancel();
+    throw new Error("IMAGE_EXCEEDS_BOUNDED_READ");
+  }
+  if (!response.body) throw new Error("IMAGE_RESPONSE_BODY_MISSING");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("IMAGE_EXCEEDS_BOUNDED_READ");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
   return result;
 }
 
@@ -301,16 +356,37 @@ Deno.serve(async (req: Request) => {
       const {data:engagement,error:engagementError}=await admin.from("count_projects")
         .select("id,name,code").eq("id",session.project_id).maybeSingle();
       if(engagementError||!engagement)throw new Error("CLIENT_BALANCE_ENGAGEMENT_NOT_FOUND");
-      const [lines, locations, importBatches, costs, countEntries] = await Promise.all([
+      // Read only the small batch header set first. Exact row counts and accepted-count
+      // upper bounds let us reject oversized reports before allocating large data arrays.
+      const importBatches = await fetchAll(admin,"count_import_batches",
+        "id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,completed_at,error_report",
+        [["session_id","eq",sessionId]],50000);
+      const committedRowsUpperBound = importBatches
+        .filter((b:any)=>b.status==="committed")
+        .reduce((sum:number,b:any)=>sum+Math.max(0,Number(b.accepted_count)||0),0);
+      if(committedRowsUpperBound>MAX_PRODUCTS)throw new Error("CLIENT_BALANCE_PRODUCT_LIMIT:"+MAX_PRODUCTS);
+
+      const [lineCount,locationCount,costCount,entryCount,projectProductCount] = await Promise.all([
+        countRows(admin,"count_reconciliation_lines",[["run_id","eq",latestRun.id]],MAX_LINES),
+        countRows(admin,"count_locations",[["project_id","eq",session.project_id]],MAX_LOCATIONS),
+        countRows(admin,"count_session_product_costs",[["session_id","eq",sessionId]],MAX_PRODUCTS),
+        countRows(admin,"count_entries",[["session_id","eq",sessionId]],MAX_ENTRIES),
+        countRows(admin,"count_products",[["project_id","eq",session.project_id]],MAX_PRODUCTS),
+      ]);
+      const productUpperBound=Math.min(projectProductCount,lineCount+committedRowsUpperBound+costCount+entryCount);
+      const preflightPeakBytes=productUpperBound*1500+entryCount*320+lineCount*420+
+        committedRowsUpperBound*240+locationCount*300+40*1024*1024;
+      if(preflightPeakBytes>MAX_EXPORT_ESTIMATED_MEMORY){
+        throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance_preflight:estimated_bytes="+preflightPeakBytes);
+      }
+
+      const [lines,locations,costs,countEntries] = await Promise.all([
         fetchAll(admin,"count_reconciliation_lines",
           "id,run_id,product_id,location_id,product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,result_status,computed_at",
           [["run_id","eq",latestRun.id]],MAX_LINES),
         fetchAll(admin,"count_locations",
           "id,code,name,location_type,parent_id,sort_order",
           [["project_id","eq",session.project_id]],MAX_LOCATIONS),
-        fetchAll(admin,"count_import_batches",
-          "id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,completed_at,error_report",
-          [["session_id","eq",sessionId]],50000),
         fetchAll(admin,"count_session_product_costs",
           "id,product_id,purchase_unit_cost,currency_code,purchase_unit,unit_factor_to_base,source_type,source_reference,source_date,warning_codes,source_batch_id,updated_at",
           [["session_id","eq",sessionId]],MAX_PRODUCTS),
@@ -333,7 +409,8 @@ Deno.serve(async (req: Request) => {
       for(const cost of costs)productIds.add(cost.product_id);
       for(const entry of countEntries)productIds.add(entry.product_id);
       if(productIds.size>MAX_PRODUCTS)throw new Error("CLIENT_BALANCE_PRODUCT_LIMIT:"+MAX_PRODUCTS);
-      const estimatedPeakBytes=productIds.size*1500+countEntries.length*320+lines.length*420+committedImportRows.length*240+locations.length*300+32*1024*1024;
+      const estimatedPeakBytes=productIds.size*1500+countEntries.length*320+lines.length*420+
+        committedImportRows.length*240+locations.length*300+40*1024*1024;
       if(estimatedPeakBytes>MAX_EXPORT_ESTIMATED_MEMORY)throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance:estimated_bytes="+estimatedPeakBytes);
 
       const productIdArray=[...productIds];
@@ -387,14 +464,42 @@ Deno.serve(async (req: Request) => {
         }
         if(embeddedImages.length>=500){imageByProduct.set(product.id,{status:"تجاوز حد تضمين الصور",reference});continue;}
         try{
-          const {data:blob,error}=await admin.storage.from("counting-product-images").download(reference);
-          if(error||!blob){imageByProduct.set(product.id,{status:"تعذر تحميل الصورة",reference});continue;}
-          if(blob.size>1024*1024){imageByProduct.set(product.id,{status:"حجم الصورة أكبر من 1MB",reference});continue;}
-          const mime=String(blob.type||"").toLowerCase();
+          const {data:signedData,error:signedError}=await admin.storage
+            .from("counting-product-images").createSignedUrl(reference,60);
+          if(signedError||!signedData?.signedUrl){
+            imageByProduct.set(product.id,{status:"تعذر إنشاء رابط تنزيل آمن",reference});
+            continue;
+          }
+          const imageResponse=await fetch(signedData.signedUrl,{redirect:"error"});
+          if(!imageResponse.ok){
+            imageByProduct.set(product.id,{status:"تعذر تحميل الصورة",reference});
+            continue;
+          }
+          const mime=String(imageResponse.headers.get("content-type")||"").split(";")[0].trim().toLowerCase();
           const extension=mime==="image/png"?"png":mime==="image/jpeg"?"jpg":"";
-          if(!extension){imageByProduct.set(product.id,{status:"صيغة غير مدعومة للتضمين (PNG/JPEG فقط)",reference});continue;}
-          if(embeddedBytes+blob.size>MAX_CLIENT_BALANCE_IMAGE_BYTES||estimatedPeakBytes+(embeddedBytes+blob.size)*2>MAX_EXPORT_ESTIMATED_MEMORY){imageByProduct.set(product.id,{status:"تجاوز ميزانية الذاكرة/حجم الصور",reference});continue;}
-          const bytes=await readBlobBounded(blob,1024*1024);
+          if(!extension){
+            await imageResponse.body?.cancel();
+            imageByProduct.set(product.id,{status:"صيغة غير مدعومة للتضمين (PNG/JPEG فقط)",reference});
+            continue;
+          }
+          const declaredBytes=Number(imageResponse.headers.get("content-length")||0);
+          if(declaredBytes>1024*1024){
+            await imageResponse.body?.cancel();
+            imageByProduct.set(product.id,{status:"حجم الصورة أكبر من 1MB",reference});
+            continue;
+          }
+          if(embeddedBytes+declaredBytes>MAX_CLIENT_BALANCE_IMAGE_BYTES||
+             estimatedPeakBytes+(embeddedBytes+declaredBytes)*2>MAX_EXPORT_ESTIMATED_MEMORY){
+            await imageResponse.body?.cancel();
+            imageByProduct.set(product.id,{status:"تجاوز ميزانية الذاكرة/حجم الصور",reference});
+            continue;
+          }
+          const bytes=await readResponseBounded(imageResponse,1024*1024);
+          if(embeddedBytes+bytes.byteLength>MAX_CLIENT_BALANCE_IMAGE_BYTES||
+             estimatedPeakBytes+(embeddedBytes+bytes.byteLength)*2>MAX_EXPORT_ESTIMATED_MEMORY){
+            imageByProduct.set(product.id,{status:"تجاوز ميزانية الذاكرة/حجم الصور",reference});
+            continue;
+          }
           embeddedBytes+=bytes.byteLength;
           imageByProduct.set(product.id,{status:"مضمنة داخل Excel",extension,bytes,reference});
         }catch(_){imageByProduct.set(product.id,{status:"تعذر تحميل الصورة",reference});}
