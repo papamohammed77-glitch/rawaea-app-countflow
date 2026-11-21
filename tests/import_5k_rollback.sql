@@ -41,6 +41,6 @@ BEGIN
     'rows_accepted',(v_commit->>'accepted_rows')::bigint,'products_committed',v_products,
     'batch_chunks',5,'rollback_only',true));
 END
-$countflow_90k$;
+$countflow_5k$;
 SELECT result FROM pg_temp.countflow_5k_result;
 ROLLBACK;
