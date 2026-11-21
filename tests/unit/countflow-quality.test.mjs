@@ -238,3 +238,33 @@ test("Owner Master has workflow controls while Supervisor remains monitor and as
   assert.match(supervisor, /data-tab="team"/);
   assert.doesNotMatch(supervisor, /count_create_import_batch|count_commit_import_batch|count_set_alert_status|count_transition_session|count_approve_reconciliation/);
 });
+
+test("operation imports share bounded CSV/XLSX streaming and server-side 1,000-row batches", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("function operationValue(row,aliases)");
+  const end = admin.indexOf("async function loadOperationExportHistory()", start);
+  assert.ok(start >= 0 && end > start, "Operation import block must exist");
+  const operationImport = admin.slice(start, end);
+  assert.match(operationImport, /async function streamOperationImportChunks\(file,onChunk\)/);
+  assert.match(operationImport, /streamXlsxProductRows\(file,async row=>/);
+  assert.match(operationImport, /Papa\.parse\(file,\{header:true,skipEmptyLines:'greedy'/);
+  assert.match(operationImport, /pending\.length>=1000/);
+  assert.match(operationImport, /streamOperationImportChunks\(file,stage\)/);
+  assert.match(operationImport, /count_stage_import_rows/);
+  assert.match(operationImport, /parsed\.count!==state\.operationImportRowCount/);
+  assert.doesNotMatch(operationImport, /FileReader|arrayBuffer\(\)|complete:\s*r\s*=>\s*resolve\(r\.data/);
+});
+
+test("operation import preserves per-row partial failure semantics for optional and malformed values", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("function normalizeOperationImportRow(row,rowNumber)");
+  const end = admin.indexOf("async function streamOperationImportChunks", start);
+  assert.ok(start >= 0 && end > start);
+  const normalizer = admin.slice(start, end);
+  assert.match(normalizer, /catch\(_\)\{units=\[\];\}/);
+  assert.match(normalizer, /if\(!Array\.isArray\(units\)\)units=\[\]/);
+  assert.match(normalizer, /category:value\(\['category','group','الفئة','التصنيف'\]\)\|\|null/);
+  assert.match(normalizer, /base_unit:value\(\['base_unit','unit','uom','الوحدة','وحدة القياس'\]\)\|\|null/);
+  assert.match(normalizer, /sku:value\(\['sku','item_code','code','كود الصنف'\]\)\|\|null/);
+  assert.match(normalizer, /barcode:value\(\['barcode','bar_code','ean','upc','باركود'\]\)\|\|null/);
+});
