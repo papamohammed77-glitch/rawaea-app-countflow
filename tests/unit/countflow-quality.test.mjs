@@ -597,3 +597,68 @@ test("Client Balance workbook image anchors and right-to-left layout reference t
   assert.match(source, /images_embedded:embeddedCount/);
   assert.match(source, /images_not_embedded:notEmbeddedCount/);
 });
+
+
+test("Admin bootstrap requires the confirmed platform owner, not a supervisor membership", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /function isPlatformOwner\(user\)/);
+  assert.match(admin, /toLowerCase\(\)==='owner@rawaea\.com'&&Boolean\(user\?\.email_confirmed_at\)/);
+  const start = admin.indexOf("async function bootstrap()");
+  const end = admin.indexOf("\n }", start);
+  assert.ok(start >= 0 && end > start);
+  const bootstrap = admin.slice(start, end);
+  assert.match(bootstrap, /db\.auth\.getUser\(\)/);
+  assert.match(bootstrap, /if\(!isPlatformOwner\(state\.user\)\)/);
+  assert.match(bootstrap, /db\.auth\.signOut\(\)/);
+  assert.doesNotMatch(bootstrap, /role==='supervisor'|status==='active'/);
+});
+
+test("Admin operations keep the institution name and engagement code visible", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("function renderGlobalOperations()");
+  const end = admin.indexOf("function stopGlobalRealtime()", start);
+  assert.ok(start >= 0 && end > start);
+  const render = admin.slice(start, end);
+  assert.match(render, /\['client','الجهة المتعاقدة'\]/);
+  assert.match(render, /\['code','رقم التكليف'\]/);
+  assert.match(render, /p\.name\|\|'—'/);
+  assert.match(render, /p\.code\|\|'—'/);
+  assert.match(admin, /state\.project\.name\+' · '\+state\.project\.code/);
+});
+
+test("Admin private product images use project-scoped storage, signed reads and bounded upload", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /createSignedUrls\(paths,3600\)/);
+  assert.match(admin, /storage\.from\('counting-product-images'\)\.upload\(path,file/);
+  assert.match(admin, /projectId\+'\/products\/'\+crypto\.randomUUID\(\)/);
+  assert.match(admin, /file\.size>5\*1024\*1024/);
+  assert.match(admin, /'image\/jpeg':'jpg','image\/png':'png','image\/webp':'webp'/);
+  assert.match(admin, /function productImageDisplayUrl\(product\)/);
+  assert.match(admin, /class="product-thumb"/);
+  assert.match(admin, /data-product-image/);
+  assert.match(admin, /productImagePreview/);
+  assert.match(admin, /row\.image_url=imageRef/);
+  assert.doesNotMatch(admin, /createPublicUrl\(/);
+});
+
+test("Admin product UoM editor validates and persists conversion factors", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /function renderProductUnitEditor\(units=\[\]\)/);
+  assert.match(admin, /function readProductUnits\(baseUnit\)/);
+  assert.match(admin, /factor_to_base:factor/);
+  assert.match(admin, /factor<=0\|\|factor>1000000000/);
+  assert.match(admin, /const units=readProductUnits\(baseUnit\)/);
+  assert.match(admin, /base_unit:baseUnit,units,expected_qty:/);
+  assert.doesNotMatch(admin, /insert\(\{\.\.\.row,units:\[\],is_active:true\}\)/);
+});
+
+test("Admin user management exposes audited password reset without self-reset", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /data-member-reset-password/);
+  assert.match(admin, /action:'reset_password'/);
+  assert.match(admin, /new_password:password/);
+  assert.match(admin, /password\.length<10/);
+  assert.match(admin, /password!==confirmation/);
+  assert.match(admin, /member\.user_id===state\.user\?\.id/);
+  assert.match(admin, /audit_warning/);
+});
