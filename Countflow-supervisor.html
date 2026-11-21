@@ -144,7 +144,7 @@ async function refreshCockpitAuthoritatively(){
   const previousSessionId=session?.id||null;
   await loadSessions();
   if((session?.id||null)!==previousSessionId)await subscribe();
-  const tasks=[loadAssignments(),loadLive(),loadPresence(),loadAlerts(),refreshHeatmapAuthoritatively()];
+  const tasks=[loadAssignments(),loadLive(),loadPresence(),loadAlerts()];
   if(!$('tab-team').classList.contains('hidden'))tasks.push(loadMembers());
   await Promise.all(tasks);
  }catch(e){console.warn('[CountFlow Supervisor] authoritative refresh failed:',e);toast('تعذر تحديث بيانات المتابعة كاملة؛ ستتم إعادة المحاولة في الدورة التالية.')}
