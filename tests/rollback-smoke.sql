@@ -184,6 +184,17 @@ BEGIN
 
   v_run := public.count_reconcile_session(v_session);
 
+  -- Approval while active is forbidden: pause first, which advances lifecycle version.
+  BEGIN
+    PERFORM public.count_approve_reconciliation(v_run);
+    RAISE EXCEPTION 'QA_FAIL_APPROVAL_WHILE_SESSION_ACTIVE';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_APPROVAL_WHILE_SESSION_ACTIVE' THEN RAISE; END IF;
+    IF SQLERRM<>'SESSION_MUST_BE_PAUSED_BEFORE_APPROVAL' THEN RAISE; END IF;
+  END;
+  v_result := public.count_transition_session(v_session,'paused');
+  IF v_result->>'status'<>'paused' THEN RAISE EXCEPTION 'QA_FAIL_SESSION_PAUSE_BEFORE_APPROVAL'; END IF;
+
   -- A client-reported offline queue must block reconciliation approval.
   PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_counter,'role','authenticated','aud','authenticated')::text,true);
