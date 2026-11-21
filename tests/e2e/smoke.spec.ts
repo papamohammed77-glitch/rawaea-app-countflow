@@ -68,7 +68,8 @@ test.describe("CountFlow counter", () => {
 });
 
 
-test("production login shell deployment matches the source commit under test", async ({ request }) => {
+test("production login shell deployment matches the latest main source commit", async ({ request }) => {
+  test.setTimeout(210000);
   const expected = process.env.COUNTFLOW_EXPECTED_COMMIT || "";
   test.skip(!expected, "Source commit parity is checked only in CI.");
   const origin = baseUrl || "https://rawaea-app-countflow.pages.dev";
@@ -82,7 +83,7 @@ test("production login shell deployment matches the source commit under test", a
       return "";
     }
   }, {
-    timeout: 360000,
+    timeout: 180000,
     intervals: [3000, 5000, 10000, 15000],
     message: "Cloudflare Pages Production must publish the exact Git commit under test",
   }).toBe(expected);
