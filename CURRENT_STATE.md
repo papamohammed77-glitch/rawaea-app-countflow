@@ -5,7 +5,9 @@
 
 **التاريخ:** 21 نوفمبر 2026  
 **النطاق:** `countflow-admin.html` فقط من تطبيقات التشغيل؛ لا تعديل على `countflow.html` أو `Countflow-supervisor.html` أو ملفات ERP.  
-**Git HEAD المثبت:** `1c8a88737917acbfab3fee594b5165cb39ffe738`  
+**Runtime commit الذي اجتاز CI وProduction parity:** `1c8a88737917acbfab3fee594b5165cb39ffe738`  
+**تحديثات التوثيق بعد اختبار التطبيق:** `e1a46fef6b8d2ee6aa22795b55f89224813f3f49` و`fb6d9900ceeeccfd486f42bc11edd6f962b15c4d`؛ لا تغيّر ملفات التشغيل.  
+**التقرير الموجز:** `FINAL_EXECUTION_REPORT_LVE-760.md`  
 **ملف النظام الأم:** `countflow-admin.html` — blob `99228cc9f1a8d88961a5d57cebb5b05411973ce3`  
 **اختبارات المصدر:** `tests/unit/countflow-quality.test.mjs` — blob `358656f3df581baab88c8a3c1691a3dbe9164498`  
 **GitHub Actions:** run `44947684298` — SUCCESS: 33/33 Node tests, Deno checks لوظيفتي Edge، Pages allowlisted build، 3/3 Playwright Production smoke، وتطابق `build-info.json` مع SHA آخر `main`.  
