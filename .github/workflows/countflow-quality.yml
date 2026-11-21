@@ -26,6 +26,7 @@ jobs:
         working-directory: tests/e2e
         env:
           COUNTFLOW_BASE_URL: https://rawaea-app-countflow.pages.dev
+          COUNTFLOW_EXPECTED_COMMIT: ${{ github.sha }}
         run: |
           npm install --ignore-scripts --no-package-lock --no-audit --no-fund
           npm run test:e2e -- --list
