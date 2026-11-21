@@ -10,8 +10,21 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 
 function inlineScripts(html) {
-  return [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
-    .map((m) => m[1]).filter((s) => s.trim());
+  const scripts = [];
+  let cursor = 0;
+  const lower = html.toLowerCase();
+  while (cursor < html.length) {
+    const start = lower.indexOf("<script", cursor);
+    if (start < 0) break;
+    const openEnd = html.indexOf(">", start);
+    if (openEnd < 0) break;
+    const closeStart = lower.indexOf("</script>", openEnd + 1);
+    if (closeStart < 0) break;
+    const source = html.slice(openEnd + 1, closeStart);
+    if (source.trim()) scripts.push(source);
+    cursor = closeStart + 9;
+  }
+  return scripts;
 }
 
 function crc32(bytes) {
