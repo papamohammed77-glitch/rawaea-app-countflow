@@ -2,7 +2,7 @@
 
 Live project: Supabase rawaea-staging (hfzznsiprnwkpayskzhu). Scope is CountFlow objects only.
 
-## SQL artifacts currently tracked in Git (17)
+## Selected SQL migration sources documented here (18 entries; 41 SQL files tracked at LVE-749)
 
 1. 20261119190750_countflow_revoke_unsafe_anon_and_ddl_privileges.sql
 2. 20261119191119_countflow_reconciliation_approved_recount_override_v1.sql
@@ -21,13 +21,14 @@ Live project: Supabase rawaea-staging (hfzznsiprnwkpayskzhu). Scope is CountFlow
 15. 20261120170000_countflow_platform_owner_verified_email.sql
 16. 20261120171000_countflow_license_settings_unbounded_emails.sql
 17. 20261120200000_countflow_atomic_engagement_and_operation_create.sql
+18. 20261121145000_countflow_p1_owner_only_admin_and_counter_only.sql
 
 ## Live migration ledger reconciliation — 2026-11-19
 
 Read-only comparison of the Supabase migration ledger against the current Git folder found:
 
 - Latest read-only ledger query (2026-11-20): **56** applied `countflow_*` entries and **12** earlier `counting_*` entries, **68 combined CountFlow/Counting migration entries**.
-- **17** SQL migration files are tracked in this repository.
+- **41** SQL migration files are tracked in the repository tree as of 2026-11-21; the 18 entries above are a selected, non-exhaustive subset.
 - The three new migration names are present in the live ledger. The connector generated live version timestamps `20261119232523`, `20261119232615`, and `20261120004422` for the named owner, license-settings and atomic-engagement migrations respectively; do not infer ledger version from the filename.
 - **51** applied CountFlow/Counting ledger entries have no standalone one-to-one SQL source in the current Git folder. The previously recorded 7-foundation/60-total figure in the 2026-11-19 archive is retained as historical evidence but is superseded by this latest catalog query, which identifies 12 `counting_*` and 56 `countflow_*` names.
 - The current folder is therefore NOT a complete replayable migration history or a clean-install baseline.
@@ -114,3 +115,16 @@ The following CountFlow-only migrations were applied and their source files comm
 - `20261120200000_countflow_atomic_engagement_and_operation_create.sql`: SECURITY INVOKER RPC to atomically create the contracting-party engagement workspace and its first named count operation.
 
 The latest function/ACL verification confirmed authenticated EXECUTE=true and anon EXECUTE=false for `public.count_create_engagement(text,text,text)`. No test engagement or Auth identity was created. These migrations do not touch ERP objects.
+
+
+## 2026-11-21 — LVE-749 P1 owner-only administration and counter-only capture
+
+Applied in `rawaea-staging` as `countflow_p1_owner_only_admin_and_counter_only`; source: `20261121145000_countflow_p1_owner_only_admin_and_counter_only.sql`.
+
+- Verified project and engagement creation plus project bootstrap require the confirmed `owner@rawaea.com` platform identity.
+- CountFlow Admin write policies previously allowing supervisors now require `counting_private.is_platform_owner()`; assignment, self-presence, audit and device workflow policies remain separately scoped.
+- Product import RPCs and reconciliation/session lifecycle RPCs are owner-only.
+- Direct entry INSERT, primary/recount RPCs and recount assignment require active `counter`; `auditor` cannot record counts.
+- A non-owner denial probe ran within a transaction ending in `ROLLBACK`; no project, member or session rows were created.
+
+Historical paragraphs below retain their original audit dates; earlier file counts are superseded by the 2026-11-21 Git tree count above.

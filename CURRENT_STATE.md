@@ -1,5 +1,41 @@
 # CountFlow — CURRENT_STATE
 
+> **LATEST AUTHORITATIVE CHECKPOINT — LVE-2026-11-21-749**  
+> **Date:** 2026-11-21  
+> **Status:** Phase 1 P0 security and role enforcement applied to `rawaea-staging`; matching source changes are committed here.  
+> **Repository:** `papamohammed77-glitch/rawaea-app-countflow` (standalone CountFlow repository; not `erp-frontend`).  
+> **Application paths:** root-level `countflow-admin.html`, `Countflow-supervisor.html`, `countflow.html`.  
+> **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` only. SMART ERP / `fiilmooggumokxanwiyx` and the RAWAEA ERP repository remain untouched.  
+> **Base Git commit:** `6c2af162e06a7873d7d67e44d24ef94604710dc8`.  
+>
+> ### Phase 1 — CONFIRMED
+> - Migration `countflow_p1_owner_only_admin_and_counter_only` is applied. Project/engagement creation and project bootstrap require the confirmed `owner@rawaea.com` identity.
+> - Admin table write policies plus import, session-lifecycle and reconciliation RPCs require the platform owner. Team assignment and scoped participation/monitoring remain separate.
+> - Supervisor app has only two tabs: live monitoring and team assignment. Project/account creation/reset, import/export, catalog/location maintenance, session lifecycle, alert-rule mutation and reconciliation controls are removed. Member/device/presence details are read-only.
+> - Counter login admits only `counter` memberships. Direct entry INSERT and primary/recount RPCs reject `auditor`.
+> - `counting-provision-member` is ACTIVE v7 and `counting-export-session` is ACTIVE v13; both require JWT and enforce owner-only execution.
+>
+> ### Verification — PASS
+> - Migration applied successfully.
+> - Rollback-only authorization probe rejected a synthetic non-owner at `count_create_engagement`; confirmed owner identity was recognized; transaction ended with `ROLLBACK`.
+> - Read-only catalog verification returned no Supervisor write policies on Admin-owned CountFlow tables. Assignment, presence, audit and device workflows remain separate.
+> - CountFlow row counts remain zero for projects, members, sessions, products and entries.
+> - Reduced Supervisor inline JS parses; only `live`/ `team` tabs remain and no Admin mutation paths remain; Counter role filter no longer includes auditor.
+>
+> ### Still OPEN
+> - Phase 2: streaming XLSX/CSV import, row-level partial failures, server-side product pagination and virtualized rendering.
+> - Phase 3: export memory/image handling and explicit pricing policy, standalone deployment paths, Playwright fixes and browser QA.
+> - Cloudflare deployment, authenticated browser E2E and 90,000-row stress tests have not been verified.
+>
+> ### Governance / successor instructions
+> - The explicit 2026-11-21 mandate overrides historical LVE-747 hold only for CountFlow P1. It does not authorize SMART ERP or legacy ERP changes.
+> - Resume from LVE-749; inspect current HEAD/live contracts before modifying. Do not replay the archived migration history.
+> - Admin powers remain server-enforced; only `counter` may submit counted quantities; `auditor` is a non-capture role.
+> - Do not report Cloudflare deployment, browser QA or 90k performance as passed without direct evidence.
+>
+> ---
+>
+
 **Last Verified Event:** `LVE-2026-11-20-746-CountFlow-Execution-Handoff`  
 **Date:** 2026-11-20  
 **Repository:** `papamohammed77-glitch/erp-frontend`  

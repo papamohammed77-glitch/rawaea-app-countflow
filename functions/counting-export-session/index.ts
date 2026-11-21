@@ -248,13 +248,7 @@ Deno.serve(async (req: Request) => {
     const isPlatformOwner =
       String(user.email || "").trim().toLowerCase() === "owner@rawaea.com" &&
       Boolean(user.email_confirmed_at);
-    if (!isPlatformOwner) {
-      const { data: member, error: memberError } = await admin.from("count_members")
-        .select("id,role,status")
-        .eq("project_id", session.project_id).eq("user_id", user.id)
-        .eq("role", "supervisor").eq("status", "active").maybeSingle();
-      if (memberError || !member) return json({ error: "SUPERVISOR_ACCESS_REQUIRED" }, 403);
-    }
+    if (!isPlatformOwner) return json({ error: "PLATFORM_OWNER_REQUIRED" }, 403);
 
     const { data: exportRow, error: createError } = await admin.from("count_exports").insert({
       project_id: session.project_id,
