@@ -637,7 +637,7 @@ test("Admin private product images use project-scoped storage, signed reads and 
   assert.match(admin, /class="product-thumb"/);
   assert.match(admin, /data-product-image/);
   assert.match(admin, /productImagePreview/);
-  assert.match(admin, /row\.image_url=imageRef/);
+  assert.match(admin, /image_url:imageRef/);
   assert.doesNotMatch(admin, /createPublicUrl\(/);
 });
 
