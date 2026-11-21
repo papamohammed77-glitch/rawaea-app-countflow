@@ -3,10 +3,12 @@
 ## LVE-2026-11-21-759 — أحدث نقطة تسليم موثقة
 
 **التاريخ:** 21 نوفمبر 2026  
-**HEAD التطبيق الذي اجتاز CI وProduction parity:** `d90584874d5078040c7ae42db4327c30086004b8`  
-**GitHub Actions:** run `44946245444` — SUCCESS  
+**SHA مصدر التطبيق الذي اجتاز اختبارات الوظائف:** `d90584874d5078040c7ae42db4327c30086004b8`  
+**أحدث HEAD للمستودع/الوثائق الذي اجتاز CI وProduction parity:** `88eea115830ba7b0c302e215d288c78eb8690f10`  
+**GitHub Actions:** run `44946476315` — SUCCESS (28/28 tests, Deno, Pages build, 3/3 Playwright; exact production build-info SHA parity).  
+**تثبيت الوظائف:** run `44946245444` — SUCCESS  
 **التقرير:** `FINAL_EXECUTION_REPORT_LVE-759.md`  
-**Cloudflare:** Production/main يعرض commit `d905848`، وطابقه اختبار Playwright من run نفسه.
+**Cloudflare:** Production/main يعرض build مطابقًا لـ`88eea115`; Playwright run `44946476315` قرأ `build-info.json` وطابق أحدث `main`.
 
 ### ما تم إثباته
 - **P0 PASS — Source/CI:** فصل صلاحيات المالك والمشرف والمندوب، تنقية رسائل الخطأ والـaudit/import details من المصطلحات التقنية والـIDs الخام، وتوحيد مظهر Cairo/RTL.
@@ -20,9 +22,9 @@
 - البيئة المحددة صراحة في دستور المالك الحالي: `rawaea-staging` هي ملعب CountFlow الوحيد. هذا يحسم اختيار نطاق CountFlow السابق؛ لا يجيز أي تغيير في SMART ERP أو أرصدة/قيود ERP الحقيقية.
 - جداول CountFlow وعددها 23: RLS enabled في 23/23، disabled في 0.
 - تكليف QA واحد `QA 90K Import Verification`، عضو واحد بدور Supervisor نشط، وجلسة Planned واحدة.
-- دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 27,000 committed/accepted، صفر rejected، و63,000 staged؛ كتالوج المشروع يحوي 27,000 صنف في لحظة الرصد.
+- دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 30,000 committed/accepted، صفر rejected، و60,000 staged؛ كتالوج المشروع يحوي 30,000 صنف في لحظة الرصد.
 - لا توجد عمليات عد أو أرصدة متوقعة أو حضور/أجهزة أو مهام إعادة عد أو تسويات أو تنبيهات أو صادرات. Audit log به 6 أحداث.
-- هذه دفعة QA متزامنة بدأها مالك المهمة/مساعد آخر. **27,000 تقدم جزئي وليس نجاح 90K. لا تتدخل في الدفعة ولا تستأنفها/توقفها/تحذفها ولا تنشئ نسخة ثانية.** أعد القراءة قبل تحديث الحالة.
+- هذه دفعة QA متزامنة بدأها مالك المهمة/مساعد آخر. **30,000 تقدم جزئي وليس نجاح 90K. لا تتدخل في الدفعة ولا تستأنفها/توقفها/تحذفها ولا تنشئ نسخة ثانية.** أعد القراءة قبل تحديث الحالة.
 
 ### تقييم المراحل
 | المرحلة | الحالة الحالية | الحد الذي لم يثبت |
