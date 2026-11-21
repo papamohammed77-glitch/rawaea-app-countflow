@@ -37,9 +37,17 @@ jobs:
         working-directory: tests/e2e
         env:
           COUNTFLOW_BASE_URL: https://rawaea-app-countflow.pages.dev
-          COUNTFLOW_EXPECTED_COMMIT: ${{ github.ref == 'refs/heads/main' && github.sha || '' }}
         run: |
           npm install --ignore-scripts --no-package-lock --no-audit --no-fund
           npm run test:e2e -- --list
           npx playwright install --with-deps chromium
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            LATEST_MAIN_SHA="$(git ls-remote origin refs/heads/main | awk 'NR==1 {print $1}')"
+            if [[ ! "$LATEST_MAIN_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Unable to resolve latest main SHA for Pages parity check" >&2
+              exit 1
+            fi
+            export COUNTFLOW_EXPECTED_COMMIT="$LATEST_MAIN_SHA"
+            echo "Verifying Pages Production against latest main: $LATEST_MAIN_SHA"
+          fi
           npm run test:e2e -- --grep "production login shell"
