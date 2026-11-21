@@ -4,7 +4,7 @@
 **التاريخ:** 21 نوفمبر 2026  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
 **فرع التنفيذ:** `main`  
-**آخر HEAD عند تحرير التقرير:** `fab1e2e4cc6683de91ddf7e6c201f46505ca22e7`  
+**آخر HEAD عند تحديث التقرير:** `22d89d2266ba2095913a40c2ea6052e955a54214` (وتبعته تحديثات حالة وتقرير فقط).  
 **مشروع Supabase:** `rawaea-staging` — `hfzznsiprnwkpayskzhu`  
 **حدود العزل:** لم يتغير `erp-frontend` أو SMART ERP أو مخزون/حسابات/مبيعات/خزينة ERP.
 
@@ -142,3 +142,25 @@ Playwright:
 **3-line delivery:** أغلقت تدفق الاستيراد المتدفق للكتالوج والعملية مع أرقام صفوف أصلية واختبارات رجوع ناجحة.  
 **Export source v14 وPages build وPlaywright discovery صحيحة؛ أحدث Production deployment parity وE2E المصادق والتصدير الفعلي ما زالت مفتوحة.**  
 **قاعدة CountFlow ما زالت صفرية، وهوية المالك مؤكدة، ولم تُجر أي كتابة بيانات أو ترحيل في هذه النقطة.**
+
+
+## 9. ملحق التحقق النهائي — تحديث E2E العام
+
+بعد إعداد LVE-754، أضيف اختبار Playwright لا يحتاج إلى بيانات اعتماد:
+
+- الملف: `tests/e2e/smoke.spec.ts`، الاختبار `production login shell renders without an authenticated session`.
+- الوجهة: `https://rawaea-app-countflow.pages.dev/countflow-admin.html`.
+- التحقق: ظهور شاشة الدخول، عنوان المالك الافتراضي، حقل كلمة المرور، وزر «دخول آمن».
+- CI: تشغيل `44941845028` على commit `b2a7d919658a7ff644981c1c424ff1dbe44f6967` — **SUCCESS**.
+- سجل Playwright: `1 passed (3.2s)`; Chromium was launched. كما نجحت خطوات الاختبارات العشرة وبناء Pages واكتشاف كامل الاختبارات في نفس بوابة CI.
+- ملف تعليمات E2E: `tests/e2e/README.md` حدّث ليشرح اختبار الدخول العام ومتطلبات الاختبارات المصادق عليها.
+
+هذا إثبات أن الواجهة العامة تعرض شاشة الدخول على نطاق الإنتاج، لكنه لا يثبت أن آخر commit من GitHub هو المنشور في Cloudflare؛ آخر SHA في بطاقة Production التي أمكن قراءتها كان `195bbe8`، وهو أقدم من HEAD في وقت ذلك الفحص. كما لا يثبت مصادقة المشرف/المندوب أو دورة الجرد؛ الاختبارات الثلاثة المصادق عليها ما زالت غير منفذة.
+
+### الحالة بعد الملحق
+
+- **PASS:** Public Production login-shell Playwright smoke.
+- **PASS:** Ten source/unit regression checks, streamed synthetic XLSX 90k, CRC/path safety and Pages allowlist build.
+- **OPEN:** Authenticated Supervisor/Counter E2E, actual database import, server export invocation/workbook validation, export peak-memory/load, exact Cloudflare SHA parity, offline/multi-device E2E and concurrent-user performance.
+- **UNKNOWN:** Owner-approved pricing policy. No pricing/accounting authorization is inferred from implementation.
+
