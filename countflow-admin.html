@@ -737,7 +737,7 @@
    db.from('count_reconciliation_runs').select('id,project_id,session_id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,created_at,computed_at,approved_at,entry_count_snapshot').eq('session_id',sessionId).order('run_number',{ascending:false}).limit(1).maybeSingle(),
    db.from('count_recount_tasks').select('id,product_id,location_id,assigned_member_id,status,reason,first_count_quantity,second_count_quantity,variance_percent,created_at,assigned_at,started_at,completed_at,reviewed_at,notes').eq('session_id',sessionId).order('created_at',{ascending:false}).limit(500),
    db.from('count_alerts').select('id,alert_type,severity,status,title,details,created_at,acknowledged_at,resolved_at').eq('session_id',sessionId).order('created_at',{ascending:false}).limit(500),
-   db.from('count_presence').select('id,member_id,device_id,presence_state,last_seen_at,pending_queue_count,pending_queue_digest,queue_reported_at,acknowledged_lifecycle_version,queue_resolution,queue_resolution_reason,queue_resolved_by,queue_resolved_at').eq('session_id',sessionId).order('last_seen_at',{ascending:false}).limit(500),
+   db.from('count_presence').select('member_id,device_id,presence_state,last_seen_at,pending_queue_count,pending_queue_digest,queue_reported_at,acknowledged_lifecycle_version,queue_resolution,queue_resolution_reason,queue_resolved_by,queue_resolved_at').eq('session_id',sessionId).order('last_seen_at',{ascending:false}).limit(500),
    db.from('count_devices').select('member_id,device_id,device_label,platform,app_version,status,last_seen_at,revoked_at').eq('project_id',session.project_id).limit(1000)
   ]);
   for(const [label,res] of [['آخر تسوية',run],['مهام إعادة العد',tasks],['التنبيهات',alerts],['أجهزة الجلسة',presence],['سجل الأجهزة',devices]])if(res.error)throw new Error(label+': '+res.error.message);
@@ -756,11 +756,12 @@
   const deviceMap=new Map(devices.map(d=>[d.member_id+'|'+d.device_id,d]));
   const runHtml=run?'<div class="grid"><div class="stat"><small>جولة التسوية</small><b>#'+Number(run.run_number)+'</b><small>'+statusPill(run.status)+'</small></div><div class="stat"><small>مواقع دفترية</small><b>'+Number(run.expected_rows||0).toLocaleString('en-US')+'</b></div><div class="stat"><small>معدود</small><b>'+Number(run.counted_rows||0).toLocaleString('en-US')+'</b></div><div class="stat"><small>فروقات / غير معدود</small><b>'+Number(run.variance_rows||0)+' / '+Number(run.uncounted_rows||0)+'</b></div></div><p class="hint">أُنشئت '+date(run.created_at)+' · آخر احتساب '+date(run.computed_at)+' · الاعتماد '+date(run.approved_at)+'</p>':'<div class="empty">لم تُحتسب تسوية لهذه الجلسة بعد.</div>';
   const controls=[];
+  if(session.status==='active')controls.push('<button type="button" class="soft" data-session-action="pause" data-session-id="'+session.id+'">إيقاف الجلسة مؤقتاً قبل الاعتماد</button>');
+  else if(session.status==='paused')controls.push('<button type="button" class="soft" data-session-action="resume" data-session-id="'+session.id+'">استئناف الجلسة</button>');
   if(session.status==='active'||session.status==='paused')controls.push('<button type="button" class="soft" data-session-action="reconcile" data-session-id="'+session.id+'">احتساب جولة تسوية جديدة</button>');
-  if(run?.status==='computed'&&session.status!=='completed'){
-   controls.push('<button type="button" class="primary" data-session-action="generate-recounts" data-session-id="'+session.id+'">إنشاء مهام إعادة العد للفروقات</button>');
-   controls.push('<button type="button" class="primary" data-session-action="approve" data-session-id="'+session.id+'">اعتماد التسوية وتجميد العد</button>');
-  }
+  if(run?.status==='computed'&&session.status!=='completed')controls.push('<button type="button" class="primary" data-session-action="generate-recounts" data-session-id="'+session.id+'">إنشاء مهام إعادة العد للفروقات</button>');
+  if(run?.status==='computed'&&session.status==='paused')controls.push('<button type="button" class="primary" data-session-action="approve" data-session-id="'+session.id+'">اعتماد التسوية وتجميد العد بعد إقرار الأجهزة</button>');
+  else if(run?.status==='computed'&&session.status==='active')controls.push('<span class="hint">يجب إيقاف الجلسة مؤقتاً أولاً، ثم إقرار طوابير كل أجهزة المندوبين قبل اعتماد التسوية.</span>');
   if(session.status==='review'&&run?.status==='approved')controls.push('<button type="button" class="danger" data-session-action="complete" data-session-id="'+session.id+'">إغلاق الجلسة نهائياً</button>');
   const taskHtml=tasks.length?'<div class="tablewrap"><table><thead><tr><th>الصنف / الموقع</th><th>الحالة</th><th>السبب</th><th>المندوب</th><th>الأعداد</th><th>الإجراء</th></tr></thead><tbody>'+tasks.map(t=>{
    const assignOptions='<select id="workflowTaskAssignee-'+t.id+'"><option value="">اختر مندوباً</option>'+activeCounters.map(m=>'<option value="'+m.id+'" '+(m.id===t.assigned_member_id?'selected':'')+'>'+esc(m.display_name)+'</option>').join('')+'</select>';
