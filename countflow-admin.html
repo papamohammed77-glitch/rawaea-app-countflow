@@ -193,7 +193,7 @@
         <input id="operationImportFile" type="file" accept=".csv,.xlsx,.xls,text/csv">
         <div class="actions"><button id="operationPreviewImport" type="button" class="soft">معاينة الملف</button><button id="operationCommitImport" type="button" class="primary" disabled>اعتماد الاستيراد</button></div>
         <div id="operationImportPreview" class="hint" style="margin-top:10px"></div><div id="operationImportResult" class="hint"></div>
-        <div id="operationImportHistory" class="tablewrap" style="margin-top:12px"></div>
+        <div id="operationImportHistory" class="tablewrap" style="margin-top:12px"></div><div id="operationImportDetails" style="margin-top:10px"></div>
        </div>
       </div>
       <div class="panel"><h3>ملفات التصدير السابقة</h3><div id="operationExportHistory" class="tablewrap"><div class="empty">لا توجد ملفات تصدير بعد.</div></div></div>
@@ -1175,7 +1175,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
   if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.';return;}
-  $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
+  $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th><th>التفاصيل</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td><td><button type="button" class="soft" data-operation-import-detail="'+x.id+'">تفاصيل النتائج</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
+  $('operationImportHistory').querySelectorAll('[data-operation-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.operationImportDetail,'operationImportDetails'));
  }
  function operationValue(row,aliases){const keys=Object.keys(row||{});for(const alias of aliases){const key=keys.find(k=>String(k).trim().toLowerCase()===alias.toLowerCase());if(key!==undefined)return row[key];}return '';}
   function normalizeOperationImportRow(row,rowNumber){
