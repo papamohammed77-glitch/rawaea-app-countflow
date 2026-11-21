@@ -447,3 +447,15 @@ test("import rejection reasons are human-readable and every failed/warning row i
   assert.match(admin, /showProductImportDetails\(b\.dataset\.operationImportDetail,'operationImportDetails'\)/);
   assert.match(admin, /لا توجد سجلات في هذه الفئة/);
 });
+
+test("session workflow device acknowledgement row uses a parse-safe template literal", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("const deviceHtml=presence.length?");
+  const end = admin.indexOf("const generateControls=", start);
+  assert.ok(start >= 0 && end > start);
+  const deviceHtml = admin.slice(start, end);
+  assert.match(deviceHtml, /return \`<tr><td>\$\{esc\(workflowMemberName\(p\.member_id\)\)\}/);
+  assert.match(deviceHtml, /\$\{esc\(devicePlatformLabel\(d\.platform\)\)\}/);
+  assert.match(deviceHtml, /\$\{Number\(p\.pending_queue_count\|\|0\)\}/);
+  assert.match(deviceHtml, /\$\{action\}\$\{waived\?/);
+});
