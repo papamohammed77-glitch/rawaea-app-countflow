@@ -60,8 +60,21 @@ async function reportDeviceQueue(){
   while(queueReportRequested){
    queueReportRequested=false;
    const rows=(await queueAll()).filter(x=>x.project_id===project.id&&x.member_id===member.id&&x.device_id===deviceId&&x.session_id===session.id);
-   const eventIds=rows.map(x=>String(x.client_event_id)).sort();
-   const digest=eventIds.length?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(eventIds.join('\n')))),v=>v.toString(16).padStart(2,'0')).join(''):null;
+   const canonicalQueue=rows.map(x=>({
+    client_event_id:String(x.client_event_id||''),
+    project_id:String(x.project_id||''),
+    session_id:String(x.session_id||''),
+    member_id:String(x.member_id||''),
+    device_id:String(x.device_id||''),
+    product_id:String(x.product_id||''),
+    location_id:String(x.location_id||''),
+    recount_task_id:String(x.recount_task_id||''),
+    quantity:String(x.quantity??''),
+    unit:String(x.unit??''),
+    scan_code:String(x.scan_code||''),
+    note:String(x.note||'')
+   })).sort((a,b)=>a.client_event_id.localeCompare(b.client_event_id));
+   const digest=canonicalQueue.length?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(canonicalQueue)))),v=>v.toString(16).padStart(2,'0')).join(''):null;
    const {data,error}=await sb.rpc('count_report_device_queue',{p_session_id:session.id,p_device_id:deviceId,p_pending_count:rows.length,p_queue_digest:digest});
    if(error){
     $('assignmentHint').textContent='تعذر تأكيد حالة طابور هذا الجهاز مع الخادم؛ لن تُعتمد الجلسة حتى يعود التأكيد. '+error.message;
