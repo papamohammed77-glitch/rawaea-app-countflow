@@ -197,7 +197,8 @@ BEGIN
 
   v_run := public.count_reconcile_session(v_session);
 
-  -- Approval while active is forbidden: pause first, which advances lifecycle version.
+  -- Exercise the public approval RPC as an authenticated caller, not as the SQL owner.
+  PERFORM set_config('role','authenticated',true);
   BEGIN
     PERFORM public.count_approve_reconciliation(v_run);
     RAISE EXCEPTION 'QA_FAIL_APPROVAL_WHILE_SESSION_ACTIVE';
@@ -205,6 +206,7 @@ BEGIN
     IF SQLERRM='QA_FAIL_APPROVAL_WHILE_SESSION_ACTIVE' THEN RAISE; END IF;
     IF SQLERRM<>'SESSION_NOT_READY_FOR_APPROVAL' THEN RAISE; END IF;
   END;
+  PERFORM set_config('role','none',true);
   v_result := public.count_transition_session(v_session,'paused');
   IF v_result->>'status'<>'paused' THEN RAISE EXCEPTION 'QA_FAIL_SESSION_PAUSE_BEFORE_APPROVAL'; END IF;
 
@@ -216,6 +218,15 @@ BEGIN
 
   PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
+  -- The internal queue assertion is intentionally not directly executable by authenticated.
+  -- The SECURITY DEFINER approval RPC must still call it safely after its owner check.
+  PERFORM set_config('role','authenticated',true);
+  BEGIN
+    PERFORM counting_private.assert_session_device_queues_clear(v_session);
+    RAISE EXCEPTION 'QA_FAIL_AUTHENTICATED_CALLED_PRIVATE_QUEUE_GUARD';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
   BEGIN
     PERFORM public.count_approve_reconciliation(v_run);
     RAISE EXCEPTION 'QA_FAIL_APPROVAL_WITH_PENDING_DEVICE_QUEUES';
@@ -223,9 +234,11 @@ BEGIN
     IF SQLERRM='QA_FAIL_APPROVAL_WITH_PENDING_DEVICE_QUEUES' THEN RAISE; END IF;
     IF SQLERRM<>'SESSION_HAS_UNACKNOWLEDGED_DEVICE_QUEUES:2' THEN RAISE; END IF;
   END;
+  PERFORM set_config('role','none',true);
 
   -- An owner waiver is explicit, audited, and preserves the outstanding queue count/digest.
   PERFORM public.count_waive_device_queue(v_session,v_member,v_device2,'Device is irrecoverable; owner accepted the unsynced events loss.');
+  PERFORM set_config('role','authenticated',true);
   BEGIN
     PERFORM public.count_approve_reconciliation(v_run);
     RAISE EXCEPTION 'QA_FAIL_APPROVAL_WITH_UNACKNOWLEDGED_DEVICE_1';
@@ -233,6 +246,7 @@ BEGIN
     IF SQLERRM='QA_FAIL_APPROVAL_WITH_UNACKNOWLEDGED_DEVICE_1' THEN RAISE; END IF;
     IF SQLERRM<>'SESSION_HAS_UNACKNOWLEDGED_DEVICE_QUEUES:1' THEN RAISE; END IF;
   END;
+  PERFORM set_config('role','none',true);
 
   -- The first device synchronizes its pending event; no database count is created by this queue acknowledgement.
   PERFORM set_config('request.jwt.claim.sub',v_counter::text,true);
@@ -241,7 +255,9 @@ BEGIN
   PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
 
+  PERFORM set_config('role','authenticated',true);
   v_result := public.count_approve_reconciliation(v_run);
+  PERFORM set_config('role','none',true);
   IF v_result->>'status'<>'approved' THEN RAISE EXCEPTION 'QA_FAIL_RECONCILIATION_APPROVAL'; END IF;
 
   -- Approval moves the session to review and increments its queue-barrier version.
@@ -294,6 +310,8 @@ BEGIN
     'recount_creation_and_entry',true,
     'recount_review',true,
     'reconciliation_approval_and_freeze',true,
+    'approval_rpc_runs_as_authenticated_owner',true,
+    'private_queue_assertion_remains_unavailable_to_authenticated',true,
     'device_queue_barrier_blocks_pending_queues',true,
     'owner_queue_waiver_is_audited_and_retained',true,
     'review_lifecycle_version_acknowledged',true,
