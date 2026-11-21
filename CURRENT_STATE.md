@@ -1,5 +1,48 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-21-759 — أحدث نقطة تسليم موثقة
+
+**التاريخ:** 21 نوفمبر 2026  
+**HEAD التطبيق الذي اجتاز CI وProduction parity:** `d90584874d5078040c7ae42db4327c30086004b8`  
+**GitHub Actions:** run `44946245444` — SUCCESS  
+**التقرير:** `FINAL_EXECUTION_REPORT_LVE-759.md`  
+**Cloudflare:** Production/main يعرض commit `d905848`، وطابقه اختبار Playwright من run نفسه.
+
+### ما تم إثباته
+- **P0 PASS — Source/CI:** فصل صلاحيات المالك والمشرف والمندوب، تنقية رسائل الخطأ والـaudit/import details من المصطلحات التقنية والـIDs الخام، وتوحيد مظهر Cairo/RTL.
+- **P1 PASS — Source/CI:** CSV وXLSX streaming، Parser test صناعي 90,000 صف، pagination 100/virtual window 30، أرقام صف المصدر، أسباب رفض عربية، paging 500 صف لنتائج الاستيراد، واستيراد الكتالوج والعملية عبر RPCs.
+- اعتماد الدفعات أصبح resumable: حتى 1,000 صف في RPC، وحالة `committing` مع `remaining_rows`، وزر استكمال من سجل الدفعات. migration الحية `countflow_import_commit_chunked_batches` عند version `20261121201407`.
+- **P2 SOURCE CHECKS PASS:** اختبارات تحويل سعر الصندوق إلى سعر الوحدة الأساسية، حساب الإجمالي، والتقريب؛ وفحوصات مواضع الصور وعلاقات OOXML في مصنف Client Balance. لم يُشغّل exporter فعليًا ولم يُفتح XLSX ناتج.
+- **P3 PASS:** 28/28 Node tests، Deno type-check لوظيفتي Edge، Pages allowlist build، و3/3 Playwright Production smoke على Chromium؛ اختُبر build-info SHA parity مع main وصفحات الهاتف RTL.
+- Edge الحية: `counting-provision-member` v7/JWT=true، و`counting-export-session` v14/JWT=true. لم يُنشر تحديث Edge في LVE-759.
+
+### حالة Supabase الحية — Read-only snapshot عند 2026-11-21 20:27:06 UTC
+- البيئة المحددة صراحة في دستور المالك الحالي: `rawaea-staging` هي ملعب CountFlow الوحيد. هذا يحسم اختيار نطاق CountFlow السابق؛ لا يجيز أي تغيير في SMART ERP أو أرصدة/قيود ERP الحقيقية.
+- جداول CountFlow وعددها 23: RLS enabled في 23/23، disabled في 0.
+- تكليف QA واحد `QA 90K Import Verification`، عضو واحد بدور Supervisor نشط، وجلسة Planned واحدة.
+- دفعة `qa-90000-products.csv`، ID `f799c5c1-b766-4712-b74f-c0bb19836ddc`: status `committing`، 90,000 صف مصدر، 27,000 committed/accepted، صفر rejected، و63,000 staged؛ كتالوج المشروع يحوي 27,000 صنف في لحظة الرصد.
+- لا توجد عمليات عد أو أرصدة متوقعة أو حضور/أجهزة أو مهام إعادة عد أو تسويات أو تنبيهات أو صادرات. Audit log به 6 أحداث.
+- هذه دفعة QA متزامنة بدأها مالك المهمة/مساعد آخر. **27,000 تقدم جزئي وليس نجاح 90K. لا تتدخل في الدفعة ولا تستأنفها/توقفها/تحذفها ولا تنشئ نسخة ثانية.** أعد القراءة قبل تحديث الحالة.
+
+### تقييم المراحل
+| المرحلة | الحالة الحالية | الحد الذي لم يثبت |
+|---|---|---|
+| P0 — Security/role boundaries/UI | PASS — Source/CI | Authenticated E2E لحساب مشرف/مندوب فعلي |
+| P1 — Import/virtualization/partial failures | PASS — Source/CI | انتهاء دفعة DB QA ذات 90K؛ زمن throughput حقيقي |
+| P2 — Final export/cost/images/memory | SOURCE CHECKS PASS / RUNTIME OPEN | توليد XLSX فعلي وفتحه والتحقق من الصور وقياس peak memory؛ تسعير معتمد |
+| P3 — Cloudflare/Playwright | PASS — Public production smoke | Authenticated workflow، offline restart/multi-device، barcode/Android، load 30–300 |
+
+### الحوكمة والتوجيه
+- دستور المالك الحالي حدد `rawaea-staging` صراحة باعتبارها بيئة CountFlow الوحيدة؛ لا تربط هذا التطبيق بمشروع SMART ERP.
+- لا ترحيل مخزون أو نقدية أو محاسبة، ولا تغيير في بيانات ERP.
+- لا تُعلن 90K DB complete حتى تصبح الدفعة `committed`، وعدد المنتجات 90,000، والمتبقي staged صفرًا، ويُوثق ذلك بقراءة مستقلة.
+- لا تدّعِ أن Client Balance XLSX نجح runtime؛ اختبارات المعادلات/OOXML لا تُنتج ملف Excel وتفتحه.
+- لا تنشر Edge Functions قبل فحص الفرق ومطابقة الوظيفة الحية؛ تبقى v7/v14 كما هي.
+- ابدأ من HEAD الموضح أعلاه، واقرأ تقرير LVE-759. لا تعِد migrations/الفهارس الموجودة، ولا تلمس SMART ERP.
+
+---
+
+
 ## LVE-2026-11-21-758 — أحدث نقطة تسليم موثقة
 
 **التاريخ:** 2026-11-21  
