@@ -702,7 +702,10 @@ test("confirmed platform owner can read CountFlow Admin data independently of pr
     assert.ok(statement.includes("counting_private.is_platform_owner()"));
     assert.ok(statement.includes("counting-product-images"));
   }
-  assert.match(sql, /m\\.role='supervisor'[\\s\\S]*m\\.status='active'/);
-  assert.match(sql, /m\\.status IN \\('active','paused'\\)/);
-  assert.doesNotMatch(sql, /CREATE POLICY|DROP POLICY|INSERT INTO public\\.|UPDATE public\\.|DELETE FROM public\\.|TRUNCATE|TO anon|storage\\.buckets/);
+  assert.ok(sql.includes("m.role='supervisor'"));
+  assert.ok(sql.includes("m.status='active'"));
+  assert.ok(sql.includes("m.status IN ('active','paused')"));
+  for (const forbidden of ["CREATE POLICY","DROP POLICY","INSERT INTO public.","UPDATE public.","DELETE FROM public.","TRUNCATE","TO anon","storage.buckets"]) {
+    assert.equal(sql.includes(forbidden), false, "Forbidden policy/data-scope change: " + forbidden);
+  }
 });
