@@ -705,6 +705,10 @@ test("confirmed platform owner can read CountFlow Admin data independently of pr
   assert.ok(sql.includes("m.role='supervisor'"));
   assert.ok(sql.includes("m.status='active'"));
   assert.ok(sql.includes("m.status IN ('active','paused')"));
+  const storageFix = read("database/migrations/20261121210000_countflow_storage_owner_path_qualifier_fix.sql");
+  assert.equal((storageFix.match(/storage\\.foldername\\(objects\\.name\\)/g) || []).length, 9);
+  assert.doesNotMatch(storageFix, /storage\\.foldername\\(p\\.name\\)/);
+
   for (const forbidden of ["CREATE POLICY","DROP POLICY","INSERT INTO public.","UPDATE public.","DELETE FROM public.","TRUNCATE","TO anon","storage.buckets"]) {
     assert.equal(sql.includes(forbidden), false, "Forbidden policy/data-scope change: " + forbidden);
   }
