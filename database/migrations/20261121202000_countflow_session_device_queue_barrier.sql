@@ -121,7 +121,7 @@ BEGIN
     RAISE EXCEPTION 'ACTIVE_APPROVED_DEVICE_REQUIRED';
   END IF;
 
-  INSERT INTO public.count_presence(
+  INSERT INTO public.count_presence AS cp(
     project_id,session_id,member_id,device_id,presence_state,
     started_at,last_seen_at,pending_queue_count,pending_queue_digest,
     queue_reported_at,acknowledged_lifecycle_version
@@ -139,23 +139,31 @@ BEGIN
     queue_reported_at=now(),
     acknowledged_lifecycle_version=v_session.sync_barrier_version,
     queue_resolution=CASE
-      WHEN v_session.status='review' AND public.count_presence.queue_resolution='waived'
-        THEN public.count_presence.queue_resolution
+      WHEN v_session.status='review' AND cp.queue_resolution='waived'
+        AND cp.pending_queue_count=EXCLUDED.pending_queue_count
+        AND cp.pending_queue_digest IS NOT DISTINCT FROM EXCLUDED.pending_queue_digest
+        THEN cp.queue_resolution
       ELSE NULL
     END,
     queue_resolution_reason=CASE
-      WHEN v_session.status='review' AND public.count_presence.queue_resolution='waived'
-        THEN public.count_presence.queue_resolution_reason
+      WHEN v_session.status='review' AND cp.queue_resolution='waived'
+        AND cp.pending_queue_count=EXCLUDED.pending_queue_count
+        AND cp.pending_queue_digest IS NOT DISTINCT FROM EXCLUDED.pending_queue_digest
+        THEN cp.queue_resolution_reason
       ELSE NULL
     END,
     queue_resolved_by=CASE
-      WHEN v_session.status='review' AND public.count_presence.queue_resolution='waived'
-        THEN public.count_presence.queue_resolved_by
+      WHEN v_session.status='review' AND cp.queue_resolution='waived'
+        AND cp.pending_queue_count=EXCLUDED.pending_queue_count
+        AND cp.pending_queue_digest IS NOT DISTINCT FROM EXCLUDED.pending_queue_digest
+        THEN cp.queue_resolved_by
       ELSE NULL
     END,
     queue_resolved_at=CASE
-      WHEN v_session.status='review' AND public.count_presence.queue_resolution='waived'
-        THEN public.count_presence.queue_resolved_at
+      WHEN v_session.status='review' AND cp.queue_resolution='waived'
+        AND cp.pending_queue_count=EXCLUDED.pending_queue_count
+        AND cp.pending_queue_digest IS NOT DISTINCT FROM EXCLUDED.pending_queue_digest
+        THEN cp.queue_resolved_at
       ELSE NULL
     END
   RETURNING * INTO v_presence;
@@ -194,6 +202,7 @@ BEGIN
   IF NOT FOUND OR NOT counting_private.is_platform_owner(v_session.project_id) THEN
     RAISE EXCEPTION 'SESSION_NOT_FOUND_OR_FORBIDDEN';
   END IF;
+  IF v_session.status='completed' THEN RAISE EXCEPTION 'SESSION_ALREADY_COMPLETED'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM public.count_members m
@@ -253,14 +262,28 @@ BEGIN
   SELECT pg_get_functiondef('counting_private.guard_session_lifecycle()'::regprocedure)
   INTO v_definition;
 
-  v_updated := replace(
+  v_updated:=replace(
+    v_definition,
+    E'    IF NEW.status<>''planned'' OR NEW.started_at IS NOT NULL OR NEW.closed_at IS NOT NULL THEN\n      RAISE EXCEPTION ''SESSION_MUST_BE_CREATED_AS_PLANNED'';\n    END IF;\n    RETURN NEW;',
+    E'    IF NEW.status<>''planned'' OR NEW.started_at IS NOT NULL OR NEW.closed_at IS NOT NULL THEN\n      RAISE EXCEPTION ''SESSION_MUST_BE_CREATED_AS_PLANNED'';\n    END IF;\n    NEW.sync_barrier_version:=1;\n    RETURN NEW;'
+  );
+  IF v_updated=v_definition THEN RAISE EXCEPTION 'COUNT_SESSION_INSERT_VERSION_ANCHOR_NOT_FOUND'; END IF;
+
+  v_definition:=v_updated;
+  v_updated:=replace(
+    v_definition,
+    E'    IF NEW.started_at IS DISTINCT FROM OLD.started_at\n       OR NEW.closed_at IS DISTINCT FROM OLD.closed_at THEN\n      RAISE EXCEPTION ''SESSION_LIFECYCLE_TIMESTAMPS_ARE_SERVER_MANAGED'';\n    END IF;\n    RETURN NEW;',
+    E'    IF NEW.started_at IS DISTINCT FROM OLD.started_at\n       OR NEW.closed_at IS DISTINCT FROM OLD.closed_at THEN\n      RAISE EXCEPTION ''SESSION_LIFECYCLE_TIMESTAMPS_ARE_SERVER_MANAGED'';\n    END IF;\n    IF NEW.sync_barrier_version IS DISTINCT FROM OLD.sync_barrier_version THEN\n      RAISE EXCEPTION ''SESSION_SYNC_BARRIER_VERSION_IS_SERVER_MANAGED'';\n    END IF;\n    RETURN NEW;'
+  );
+  IF v_updated=v_definition THEN RAISE EXCEPTION 'COUNT_SESSION_SAME_STATUS_VERSION_ANCHOR_NOT_FOUND'; END IF;
+
+  v_definition:=v_updated;
+  v_updated:=replace(
     v_definition,
     E'    RETURN NEW;\n  END IF;\n\n  IF OLD.status=''planned'' AND NEW.status=''active'' THEN',
     E'    RETURN NEW;\n  END IF;\n\n  IF NEW.status<>''completed'' THEN\n    NEW.sync_barrier_version:=coalesce(OLD.sync_barrier_version,0)+1;\n  END IF;\n\n  IF OLD.status=''planned'' AND NEW.status=''active'' THEN'
   );
-  IF v_updated=v_definition THEN
-    RAISE EXCEPTION 'COUNT_SESSION_LIFECYCLE_VERSION_ANCHOR_NOT_FOUND';
-  END IF;
+  IF v_updated=v_definition THEN RAISE EXCEPTION 'COUNT_SESSION_LIFECYCLE_VERSION_ANCHOR_NOT_FOUND'; END IF;
 
   v_definition:=v_updated;
   v_updated:=replace(
@@ -268,9 +291,7 @@ BEGIN
     E'    NEW.started_at:=OLD.started_at;\n    NEW.closed_at:=now();',
     E'    PERFORM counting_private.assert_session_device_queues_clear(OLD.id);\n    NEW.started_at:=OLD.started_at;\n    NEW.closed_at:=now();'
   );
-  IF v_updated=v_definition THEN
-    RAISE EXCEPTION 'COUNT_SESSION_CLOSE_QUEUE_BARRIER_ANCHOR_NOT_FOUND';
-  END IF;
+  IF v_updated=v_definition THEN RAISE EXCEPTION 'COUNT_SESSION_CLOSE_QUEUE_BARRIER_ANCHOR_NOT_FOUND'; END IF;
 
   EXECUTE v_updated;
 END
