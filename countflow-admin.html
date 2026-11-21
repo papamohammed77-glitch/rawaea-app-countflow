@@ -657,6 +657,31 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }
   throw new Error('تجاوز اعتماد الدفعة الحد الأقصى لعدد الأجزاء. بقيت الدفعة محفوظة ويمكن استئنافها.');
  }
+ async function resumeImportBatchFromHistory(batchId,scope,button){
+  if(!batchId||!['product','operation'].includes(scope))return;
+  const original=button?.textContent||'استكمال الاعتماد';
+  if(button){button.disabled=true;button.textContent='جار استكمال الاعتماد…';}
+  try{
+   const committed=await commitImportBatchInChunks(batchId,progress=>{
+    if(button)button.textContent='متبقٍ '+Number(progress.remaining_rows||0).toLocaleString('ar-EG')+' صف';
+   });
+   if(committed?.status!=='committed')throw new Error('لم تكتمل دفعة الاستيراد بعد. يمكنك استئنافها من السجل.');
+   notify('اكتمل استكمال دفعة الاستيراد · مقبول '+Number(committed.accepted_rows||0)+' · مرفوض '+Number(committed.rejected_rows||0));
+   if(scope==='product'){
+    await loadProjectData();
+   }else{
+    await loadOperationImportHistory();
+    await loadProjectData();
+    await loadOperationMetrics();
+   }
+  }catch(error){
+   fail('تعذر استكمال دفعة الاستيراد',error);
+   if(scope==='product')await loadProductImportHistory();
+   else await loadOperationImportHistory();
+  }finally{
+   if(button&&button.isConnected){button.disabled=false;button.textContent=original;}
+  }
+ }
  async function commitProductImport(){
   if(!state.project||!state.productImportRowCount)return notify('عاين الملف واختر تكليفاً قبل الاعتماد.',true);
   if(!state.productImportMapping.sku&&!state.productImportMapping.barcode)return notify('اربط عمود SKU أو الباركود.',true);
@@ -726,10 +751,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  async function loadProductImportHistory(){
   $('productImportDetails').innerHTML='';
   if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
-  const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
+  const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id,metadata').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
   if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.';return;}
-  $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
+  $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>{
+   const canResume=b.status==='committing'&&b.metadata?.import_surface==='countflow-admin';
+   return '<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(statusName(b.status))+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><div class="actions">'+(canResume?'<button type="button" class="primary" data-resume-product-import="'+b.id+'">استكمال الاعتماد</button>':'')+'<button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div></div>';
+  }).join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
   $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
+  $('productImportHistory').querySelectorAll('[data-resume-product-import]').forEach(b=>b.onclick=()=>resumeImportBatchFromHistory(b.dataset.resumeProductImport,'product',b));
  }
  function importIssueLabel(code,kind='error'){
   const errors={
@@ -1186,10 +1215,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  async function loadOperationImportHistory(){
   const s=state.selectedSession;if(!s)return;
-  const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
+  const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,metadata').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
   if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.';return;}
-  $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th><th>التفاصيل</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td><td><button type="button" class="soft" data-operation-import-detail="'+x.id+'">تفاصيل النتائج</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
+  $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th><th>الإجراء</th></tr></thead><tbody>'+(data||[]).map(x=>{
+   const canResume=x.status==='committing'&&x.metadata?.import_surface!=='countflow-admin';
+   return '<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td><td><div class="actions">'+(canResume?'<button type="button" class="primary" data-resume-operation-import="'+x.id+'">استكمال الاعتماد</button>':'')+'<button type="button" class="soft" data-operation-import-detail="'+x.id+'">تفاصيل النتائج</button></div></td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
   $('operationImportHistory').querySelectorAll('[data-operation-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.operationImportDetail,'operationImportDetails'));
+  $('operationImportHistory').querySelectorAll('[data-resume-operation-import]').forEach(b=>b.onclick=()=>resumeImportBatchFromHistory(b.dataset.resumeOperationImport,'operation',b));
  }
  function operationValue(row,aliases){const keys=Object.keys(row||{});for(const alias of aliases){const key=keys.find(k=>String(k).trim().toLowerCase()===alias.toLowerCase());if(key!==undefined)return row[key];}return '';}
   function normalizeOperationImportRow(row,rowNumber){
