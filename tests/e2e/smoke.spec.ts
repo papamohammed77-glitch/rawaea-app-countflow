@@ -13,7 +13,7 @@ function requireEnv(...values: string[]) {
 test.describe("CountFlow supervisor", () => {
   test("authenticates and exposes project controls and logout", async ({ page }) => {
     requireEnv(baseUrl, supervisorEmail, supervisorPassword);
-    await page.goto("/companies/company-2/Counting/Counter-supervisor.html");
+    await page.goto("/Countflow-supervisor.html");
     await page.locator("#email").fill(supervisorEmail);
     await page.locator("#password").fill(supervisorPassword);
     await page.locator("#loginBtn").click();
@@ -28,7 +28,7 @@ test.describe("CountFlow supervisor", () => {
 test.describe("CountFlow counter", () => {
   test("authenticates and loads the field-counting workspace", async ({ page }) => {
     requireEnv(baseUrl, counterEmail, counterPassword);
-    await page.goto("/companies/company-2/Counting/Counter.html");
+    await page.goto("/countflow.html");
     await page.locator("#email").fill(counterEmail);
     await page.locator("#password").fill(counterPassword);
     await page.locator("#loginBtn").click();
@@ -46,7 +46,7 @@ test.describe("CountFlow counter", () => {
     const productBarcode = process.env.COUNTFLOW_TEST_PRODUCT_BARCODE || "";
     requireEnv(baseUrl, counterEmail, counterPassword, locationCode, productBarcode);
 
-    await page.goto("/companies/company-2/Counting/Counter.html");
+    await page.goto("/countflow.html");
     await page.locator("#email").fill(counterEmail);
     await page.locator("#password").fill(counterPassword);
     await page.locator("#loginBtn").click();
