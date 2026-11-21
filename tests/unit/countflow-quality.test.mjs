@@ -202,3 +202,39 @@ test("XLSX reader rejects unsafe ZIP entry paths", async () => {
   const file = new Blob([makeXlsx(2, { traversalEntry: true })]);
   await assert.rejects(() => parse(file, () => {}), /مسار داخلي غير صالح/);
 });
+
+
+test("CSV and XLSX import retain source row numbers during skipped rows", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /function normalizeProductImportRow\(row,index,sourceRowNumber=null\)/);
+  assert.match(admin, /sourceRowNumber\|\|row\.__countflowRowNumber\|\|index\+2/);
+  assert.match(admin, /const currentSourceRow=sourceRowNumber\+\+/);
+  assert.match(admin, /skipEmptyLines:false/);
+  assert.match(admin, /streamXlsxProductRows\(file,async row=>/);
+  assert.match(admin, /pending\.push\(normalizeProductImportRow\(row,rowIndex\)\)/);
+});
+
+test("Counter cannot save after membership, device or session approval is lost", () => {
+  const counter = read("countflow.html");
+  assert.match(counter, /deviceReady=false/);
+  assert.match(counter, /session\.status!=='active'\|\|member\?\.status!=='active'\|\|!deviceReady/);
+  assert.match(counter, /finally\{\$\('saveBtn'\)\.disabled=session\?\.status!=='active'\|\|member\?\.status!=='active'\|\|!deviceReady\}/);
+  assert.match(counter, /touchPresence\(document\.hidden\?'idle':'online'\);if\(ok\)await queueCount\(\)/);
+  assert.match(counter, /async function reportDeviceQueue\(\)/);
+  assert.match(counter, /count_report_device_queue/);
+});
+
+test("Owner Master has workflow controls while Supervisor remains monitor and assignment only", () => {
+  const admin = read("countflow-admin.html");
+  const supervisor = read("Countflow-supervisor.html");
+  assert.match(admin, /sessionWorkflowPanel/);
+  assert.match(admin, /count_transition_session/);
+  assert.match(admin, /count_reconcile_session/);
+  assert.match(admin, /count_approve_reconciliation/);
+  assert.match(admin, /count_generate_recount_tasks/);
+  assert.match(admin, /count_set_alert_status/);
+  assert.match(admin, /count_waive_device_queue/);
+  assert.match(supervisor, /data-tab="live"/);
+  assert.match(supervisor, /data-tab="team"/);
+  assert.doesNotMatch(supervisor, /count_create_import_batch|count_commit_import_batch|count_set_alert_status|count_transition_session|count_approve_reconciliation/);
+});
