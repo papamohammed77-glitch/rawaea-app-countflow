@@ -292,3 +292,19 @@ test("Supervisor uses server-authoritative polling when Broadcast delivery is un
   assert.match(supervisor, /limit\(500\)/);
   assert.match(supervisor, /limit\(2000\)/);
 });
+
+test("device queue barrier digest includes canonical count payload, not identifiers alone", () => {
+  const counter = read("countflow.html");
+  const start = counter.indexOf("async function reportDeviceQueue()");
+  const end = counter.indexOf("async function queueCount()", start);
+  assert.ok(start >= 0 && end > start);
+  const reporter = counter.slice(start, end);
+  for (const key of ["client_event_id", "project_id", "session_id", "member_id", "device_id", "product_id", "location_id", "recount_task_id", "quantity", "unit", "scan_code", "note"]) {
+    assert.match(reporter, new RegExp(key.replace(/[.*+?^\u0024{}()|[\\]\\\\]/g, "\\\\$&")));
+  }
+  assert.match(reporter, /\\.sort\\(\\(a,b\\)=>a\\.client_event_id\\.localeCompare\\(b\\.client_event_id\\)\\)/);
+  assert.match(reporter, /JSON\\.stringify\\(canonicalQueue\\)/);
+  assert.match(reporter, /count_report_device_queue/);
+  assert.match(reporter, /p_pending_count:rows\\.length,p_queue_digest:digest/);
+  assert.doesNotMatch(reporter, /eventIds\\.join/);
+});
