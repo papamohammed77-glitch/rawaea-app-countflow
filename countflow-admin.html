@@ -652,6 +652,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    result=data||{};
    if(result.status==='committed')return result;
    if(result.status!=='committing')throw new Error('حالة دفعة الاستيراد غير متوقعة: '+String(result.status||'غير محددة'));
+   if(!Number.isInteger(Number(result.remaining_rows))||Number(result.remaining_rows)<1)throw new Error('استجابة اعتماد الدفعة لا تتضمن عدد الصفوف المتبقية بصورة صحيحة.');
    if(typeof onProgress==='function')onProgress(result);
   }
   throw new Error('تجاوز اعتماد الدفعة الحد الأقصى لعدد الأجزاء. بقيت الدفعة محفوظة ويمكن استئنافها.');
