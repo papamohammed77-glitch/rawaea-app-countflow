@@ -153,7 +153,11 @@ test("all operational application scripts pass JavaScript syntax checks", () => 
     const scripts = inlineScripts(read(file));
     assert.ok(scripts.length, file + " must contain its application script");
     for (const [index, source] of scripts.entries()) {
-      assert.doesNotThrow(() => new vm.Script(source, { filename: file + "#script" + index }), file + " script " + index);
+      try {
+        new vm.Script(source, { filename: file + "#script" + index });
+      } catch (error) {
+        assert.fail(file + " script " + index + " syntax error: " + String(error?.stack || error));
+      }
     }
   }
   for (const file of ["countflow-core.js", "countflow-sw.js"]) {
