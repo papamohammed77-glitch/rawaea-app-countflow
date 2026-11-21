@@ -701,7 +701,7 @@
    resetProductImport();$('productImportResult').textContent=successMessage;
    try{if(state.project?.id===projectId)await loadProjectData();}catch(reloadError){fail('تم اعتماد الاستيراد لكن تعذر تحديث عرض الكتالوج',reloadError);await loadProductImportHistory();}
   }catch(err){
-   $('productImportResult').textContent='لم يكتمل اعتماد الدفعة. بقي سجلها متاحاً للمراجعة؛ لم يتم تجاوز فحص الخادم. '+(err.message||String(err));
+   $('productImportResult').textContent='لم يكتمل اعتماد الدفعة. بقي سجلها متاحاً للمراجعة؛ لم يتم تجاوز فحص الخادم. '+friendlyErrorMessage(err);
    fail('فشل استيراد الأصناف',err);await loadProductImportHistory();
   }finally{btn.disabled=!state.productImportRowCount;btn.textContent=oldText;$('projectPicker').disabled=false;$('productImportFile').disabled=false;$('productImportSession').disabled=false;$('productImportPreviewBtn').disabled=false;$('productImportResetBtn').disabled=false;}
  }
@@ -709,7 +709,7 @@
   $('productImportDetails').innerHTML='';
   if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
-  if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.;return;}
+  if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.';return;}
   $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
   $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
  }
@@ -790,7 +790,7 @@
  function auditDetailsSummary(details){
   const d=details&&typeof details==='object'?details:{},parts=[];
   if(d.reason)parts.push('السبب: '+d.reason);
-  if(d.status)parts.push('الحالة: '+statusPill(d.status));
+  if(d.status)parts.push('الحالة: '+String(d.status));
   if(d.pending_queue_count!==undefined)parts.push('عمليات معلقة: '+d.pending_queue_count);
   if(d.products!==undefined)parts.push('أصناف: '+d.products);
   if(d.count_events!==undefined)parts.push('عمليات عد: '+d.count_events);
@@ -1001,7 +1001,7 @@
  async function loadLicenseSettings(){
   const status=$('licenseEmailStatus');status.textContent='جار تحميل الإعدادات…';
   const {data,error}=await db.from('count_platform_settings').select('license_emails,updated_at').eq('id',1).maybeSingle();
-  if(error){status.textContent='تعذر تحميل إعدادات البريد المرتبطة بالتراخيص.;return;}
+  if(error){status.textContent='تعذر تحميل إعدادات البريد المرتبطة بالتراخيص.';return;}
   $('licenseEmails').value=(data?.license_emails||['owner@rawaea.com']).join('\n');
   status.textContent=data?.updated_at?'آخر تحديث: '+date(data.updated_at):'لم تُحفظ إعدادات بعد.';
  }
@@ -1019,7 +1019,7 @@
    if(result.error)throw result.error;
    $('licenseEmailStatus').textContent='تم حفظ '+unique.length+' عنوان بريد دون حد أقصى محدد.';
    notify('تم حفظ إعدادات البريد المرتبطة بالتراخيص.');
-  }catch(e){$('licenseEmailStatus').textContent='تعذر حفظ إعدادات البريد. راجع البيانات وحاول مرة أخرى.;}
+  }catch(e){$('licenseEmailStatus').textContent='تعذر حفظ إعدادات البريد. راجع البيانات وحاول مرة أخرى.';}
   finally{b.disabled=false;}
  }
  $('saveLicenseEmails').addEventListener('click',saveLicenseSettings);
@@ -1087,7 +1087,7 @@
    if(error)throw error;if(data?.error)throw new Error(data.message||data.error);if(!data?.ok||!data.member_id)throw new Error('استجابة إنشاء الحساب غير مكتملة.');
    const {error:assignmentError}=await db.from('count_assignments').upsert({session_id:s.id,member_id:data.member_id,location_id:null,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
    $('operationNewName').value='';$('operationNewUsername').value='';$('operationNewEmail').value='';$('operationNewPassword').value='';
-   if(assignmentError)notify('أُنشئ الحساب وعضويته، لكن تعذر إسناده إلى العملية: '+assignmentError.message,true);
+   if(assignmentError)notify('أُنشئ الحساب وعضويته، لكن تعذر إسناده إلى العملية. أعد محاولة الإسناد من شاشة الفريق.',true);
    else notify((data.account_reused?'تم ربط حساب Auth الموجود دون تغيير كلمة مروره':'تم إنشاء حساب Auth جديد')+'؛ '+(data.membership_reused?'العضوية النشطة كانت موجودة بالفعل.':'تم إنشاء عضوية التكليف.')+' تمت معالجة الإسناد للعملية.');
    await loadProjectData();await loadOperationTeam();await loadGlobalOperations();
   }catch(e){fail('تعذر إنشاء الحساب وإسناده',e);}
@@ -1109,7 +1109,7 @@
  async function loadOperationImportHistory(){
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
-  if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.;return;}
+  if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.';return;}
   $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
  }
  function operationValue(row,aliases){const keys=Object.keys(row||{});for(const alias of aliases){const key=keys.find(k=>String(k).trim().toLowerCase()===alias.toLowerCase());if(key!==undefined)return row[key];}return '';}
@@ -1238,13 +1238,13 @@
     notify('تم استيراد أصناف العملية عبر دفعات خادمية.');
     state.operationImportRows=[];state.operationImportRowCount=0;$('operationImportFile').value='';$('operationImportPreview').textContent='';
     await loadOperationImportHistory();await loadProjectData();await loadOperationMetrics();
-   }catch(e){$('operationImportResult').textContent='فشل الاستيراد: '+(e.message||String(e));fail('تعذر استيراد الأصناف',e);}
+   }catch(e){$('operationImportResult').textContent='لم يكتمل استيراد أصناف العملية. راجع حالة الدفعة وأعد المحاولة. '+friendlyErrorMessage(e);fail('تعذر استيراد الأصناف',e);}
    finally{btn.disabled=!state.operationImportRowCount;}
   });
   async function loadOperationExportHistory(){
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_exports').select('id,export_format,export_scope,status,storage_path,row_count,file_size_bytes,sha256,created_at').eq('session_id',s.id).eq('status','ready').order('created_at',{ascending:false}).limit(30);
-  if(error){$('operationExportHistory').textContent='تعذر تحميل سجل التصدير. حاول تحديث الصفحة.;return;}
+  if(error){$('operationExportHistory').textContent='تعذر تحميل سجل التصدير. حاول تحديث الصفحة.';return;}
   const paths=(data||[]).map(x=>x.storage_path).filter(Boolean);let signed={};
   if(paths.length){const {data:urls}=await db.storage.from('counting-exports').createSignedUrls(paths,600);for(const u of urls||[])signed[u.path]=u.signedUrl;}
   $('operationExportHistory').innerHTML=(data||[]).length?(data||[]).map(x=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+esc(x.export_format.toUpperCase())+' · '+esc(x.export_scope)+'</b><span class="sub">'+date(x.created_at)+' · '+Number(x.row_count||0)+' صف · '+Math.round((x.file_size_bytes||0)/1024)+' KB · بصمة التحقق '+esc(String(x.sha256||'').slice(0,16))+'…</span></div>'+(signed[x.storage_path]?'<a class="link" href="'+esc(signed[x.storage_path])+'" target="_blank" rel="noopener">تنزيل</a>':'<span class="pill">الرابط غير متاح</span>')+'</div>').join(''):'<div class="empty">لا توجد ملفات تصدير محفوظة.</div>';
@@ -1263,10 +1263,10 @@
  async function loadOperationReconciliation(){
   const s=state.selectedSession;if(!s)return;
   const {data:runs,error}=await db.from('count_reconciliation_runs').select('id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,computed_at').eq('session_id',s.id).order('run_number',{ascending:false}).limit(10);
-  if(error){$('operationReconciliation').textContent='تعذر تحميل نتائج التسوية. حاول تحديث الصفحة.;return;}
+  if(error){$('operationReconciliation').textContent='تعذر تحميل نتائج التسوية. حاول تحديث الصفحة.';return;}
   if(!(runs||[]).length){$('operationReconciliation').innerHTML='<div class="empty">لم يتم احتساب تسوية لهذه العملية بعد.</div>';return;}
   const latest=runs[0],{data:lines,error:lineError}=await db.from('count_reconciliation_lines').select('product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,result_status').eq('run_id',latest.id).order('product_sku').limit(5000);
-  if(lineError){$('operationReconciliation').textContent='تعذر تحميل تفاصيل التسوية. حاول تحديث الصفحة.;return;}
+  if(lineError){$('operationReconciliation').textContent='تعذر تحميل تفاصيل التسوية. حاول تحديث الصفحة.';return;}
   $('operationReconciliation').innerHTML='<div class="toolbar"><span class="pill">التسوية رقم '+latest.run_number+' · '+esc(latest.status)+'</span><span>متوقع '+latest.expected_rows+'</span><span>معدود '+latest.counted_rows+'</span><span>متطابق '+latest.matched_rows+'</span><span>فروقات '+latest.variance_rows+'</span><span>غير معدود '+latest.uncounted_rows+'</span></div><div class="tablewrap"><table><thead><tr><th>SKU</th><th>الصنف</th><th>الموقع</th><th>الوحدة</th><th>المتوقع</th><th>المعدود</th><th>الفرق</th><th>النتيجة</th></tr></thead><tbody>'+(lines||[]).map(x=>'<tr><td>'+esc(x.product_sku)+'</td><td>'+esc(x.product_name)+'</td><td>'+esc(x.location_path)+'</td><td>'+esc(x.unit)+'</td><td>'+x.expected_quantity+'</td><td>'+x.counted_quantity+'</td><td>'+x.variance_quantity+'</td><td>'+esc(x.result_status)+'</td></tr>').join('')+'</tbody></table></div>';
  }
  async function previewOperation(){
@@ -1290,13 +1290,13 @@
    const css='body{font-family:Arial,sans-serif;color:#172d3d;margin:24px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccd6dc;padding:7px;text-align:right;font-size:12px}th{background:#eef3f5}.meta{color:#52616b;margin:12px 0}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.stats div{border:1px solid #ccd6dc;padding:12px;min-width:120px}.stats b{display:block;font-size:20px;margin-top:5px}@media print{.print-actions{display:none}body{margin:10mm}}';
    const html='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>'+esc(s.name)+'</title><style>'+css+'</style></head><body><div class="print-actions"><button onclick="window.print()">طباعة / حفظ PDF</button></div><h1>تقرير عملية الجرد</h1><h2>'+esc(p.name)+' · '+esc(s.name)+'</h2><div class="meta">رقم التكليف: '+esc(p.code)+' · الحالة: '+esc(s.status)+' · الإنشاء: '+esc(date(s.created_at))+' · البدء: '+esc(date(s.started_at))+' · الإغلاق: '+esc(date(s.closed_at))+'</div><div class="stats"><div>عمليات العد<b>'+(ec.count||0)+'</b></div><div>الأصناف<b>'+(pc.count||0)+'</b></div><div>أعضاء العملية<b>'+memberIds.length+'</b></div><div>التغطية<b>'+(coveragePct==null?'—':coveragePct.toFixed(1)+'%')+'</b></div></div><h2>الفريق</h2><table><thead><tr><th>المستخدم</th><th>اسم المستخدم</th><th>الدور</th></tr></thead><tbody>'+(mr.data||[]).map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td></tr>').join('')+'</tbody></table><h2 style="margin-top:22px">نتائج التسوية '+(latest?'رقم '+latest.run_number+' · '+esc(latest.status):'—')+'</h2>'+(latest?'<p>متوقع '+latest.expected_rows+' · معدود '+latest.counted_rows+' · مطابق '+latest.matched_rows+' · فروقات '+latest.variance_rows+' · غير معدود '+latest.uncounted_rows+'</p>':'<p>لم يتم احتساب تسوية بعد.</p>')+(lines.length?'<table><thead><tr><th>SKU</th><th>الصنف</th><th>الموقع</th><th>الوحدة</th><th>المتوقع</th><th>المعدود</th><th>الفرق</th><th>٪</th><th>النتيجة</th></tr></thead><tbody>'+lines.map(x=>'<tr><td>'+esc(x.product_sku)+'</td><td>'+esc(x.product_name)+'</td><td>'+esc(x.location_path)+'</td><td>'+esc(x.unit)+'</td><td>'+x.expected_quantity+'</td><td>'+x.counted_quantity+'</td><td>'+x.variance_quantity+'</td><td>'+x.variance_percent+'</td><td>'+esc(x.result_status)+'</td></tr>').join('')+'</tbody></table>':'');
    win.document.open();win.document.write(html);win.document.close();
-  }catch(e){win.document.body.innerHTML='فشل تجهيز التقرير: '+esc(e.message||String(e));fail('تعذر تجهيز التقرير',e);}
+  }catch(e){console.error('Operation report preview failed',e);win.document.body.textContent='تعذر تجهيز التقرير. أعد تحميل بيانات العملية ثم حاول مرة أخرى.';fail('تعذر تجهيز التقرير',e);}
  }
 
  async function loadAudit(){
   const {data,error}=await db.from('count_audit_log').select('id,actor_id,action,entity_type,entity_id,details,created_at').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(100);
-  if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.+'</div>';return;}
-  $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">'+esc('—')+'</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>'+esc(x.actor_id||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
+  if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.</div>';return;}
+  $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">'+esc('—')+'</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>'+esc('مستخدم مخوّل')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
  }
  async function editProduct(id){
   const p=state.products.find(x=>x.id===id);if(!p)return;
