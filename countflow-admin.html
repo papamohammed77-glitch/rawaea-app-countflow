@@ -231,6 +231,7 @@
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
  const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const IMPORT_DETAIL_PAGE_SIZE=500;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
  function friendlyErrorMessage(error){
@@ -718,16 +719,75 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
   $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
  }
- async function showProductImportDetails(batchId){
+ function importIssueLabel(code,kind='error'){
+  const errors={
+   INVALID_ROW_SHAPE:'تنسيق الصف غير مفهوم',
+   MISSING_PRODUCT_IDENTIFIER:'أدخل كود الصنف أو الباركود',
+   SKU_TOO_LONG:'كود الصنف أطول من الحد المسموح',
+   BARCODE_TOO_LONG:'الباركود أطول من الحد المسموح',
+   PRODUCT_NAME_TOO_LONG:'اسم الصنف أطول من الحد المسموح',
+   MISSING_BASE_UNIT:'وحدة القياس الأساسية مطلوبة',
+   BASE_UNIT_TOO_LONG:'اسم الوحدة الأساسية طويل',
+   CATEGORY_TOO_LONG:'اسم التصنيف أطول من الحد المسموح',
+   INVALID_IMAGE_REFERENCE:'رابط أو مرجع صورة الصنف غير صالح',
+   INVALID_EXPECTED_QUANTITY:'الرصيد المرجعي ليس رقماً صالحاً',
+   NEGATIVE_EXPECTED_QUANTITY:'الرصيد المرجعي لا يقبل قيمة سالبة',
+   SESSION_REQUIRED_FOR_EXPECTED_QTY:'اختر عملية جرد عند استيراد أرصدة مرجعية',
+   LOCATION_REQUIRED_FOR_EXPECTED_QUANTITY:'حدد موقع الرصيد المرجعي',
+   UNKNOWN_LOCATION_CODE:'كود الموقع غير موجود في هذا التكليف',
+   AMBIGUOUS_LOCATION_CODE:'كود الموقع يشير إلى أكثر من موقع',
+   DUPLICATE_PRODUCT_IDENTIFIER_AT_SAME_LOCATION:'الصنف مكرر للموقع نفسه داخل الملف',
+   PRODUCT_IDENTITY_MATCHES_MULTIPLE_PRODUCTS:'الكود أو الباركود يطابق أكثر من صنف'
+  };
+  const warnings={
+   INVALID_PURCHASE_UNIT_COST:'سعر وحدة الشراء غير صالح',
+   INVALID_CURRENCY_CODE:'رمز العملة غير صالح',
+   INVALID_UNIT_FACTOR:'معامل تحويل وحدة الشراء غير صالح',
+   INVALID_COST_SOURCE_DATE:'تاريخ مصدر التكلفة غير صالح',
+   COST_DATA_INCOMPLETE:'بيانات تكلفة الشراء غير مكتملة',
+   COST_REQUIRES_OPERATION_SCOPE:'بيانات التكلفة تتطلب ربط الملف بعملية جرد'
+  };
+  const labels=kind==='warning'?warnings:errors;
+  return labels[String(code||'').toUpperCase()]||'تحتاج بيانات هذا الصف إلى مراجعة';
+ }
+ function importIssueRowsHtml(rows,key,kind){
+  return rows.map(r=>'<tr><td>'+Number(r.row_number||0)+'</td><td>'+esc(r.sku||'')+'</td><td>'+esc(r.barcode||'')+'</td><td>'+esc(r.product_name||'')+'</td><td>'+esc((r[key]||[]).map(code=>importIssueLabel(code,kind)).join('، '))+'</td></tr>').join('');
+ }
+ async function loadMoreProductImportDetails(kind){
+  if(!importDetailBatchId||!['errors','warnings'].includes(kind))return;
+  const target=$(importDetailTargetId);if(!target)return;
+  const offset=importDetailOffsets[kind],key=kind==='errors'?'error_codes':'warning_codes';
+  let query=db.from('count_import_rows').select('row_number,sku,barcode,product_name,'+key,{count:'exact'})
+   .eq('batch_id',importDetailBatchId).order('row_number').range(offset,offset+IMPORT_DETAIL_PAGE_SIZE-1);
+  query=kind==='errors'?query.eq('row_status','rejected'):query.not('warning_codes','eq','{}');
+  const {data,error,count}=await query;
+  if(error){console.warn('Import detail page load failed',error);notify('تعذر تحميل بقية النتائج. حاول مرة أخرى.',true);return;}
+  const rows=data||[];
+  const body=$(importDetailTargetId+'-'+kind);
+  if(body&&rows.length)body.insertAdjacentHTML('beforeend',importIssueRowsHtml(rows,key,kind));
+  importDetailOffsets[kind]+=rows.length;
+  const counter=$(importDetailTargetId+'-'+kind+'-count');
+  if(counter)counter.textContent=importDetailOffsets[kind]+' من '+Number(importDetailTotals[kind]||count||0);
+  const button=$(importDetailTargetId+'-'+kind+'-more');
+  if(button)button.hidden=importDetailOffsets[kind]>=Number(importDetailTotals[kind]||count||0)||rows.length===0;
+ }
+ async function showProductImportDetails(batchId,targetId='productImportDetails'){
+  importDetailBatchId=batchId;importDetailTargetId=targetId;importDetailOffsets={errors:0,warnings:0};importDetailTotals={errors:0,warnings:0};
   const [rejected,warnings]=await Promise.all([
-   db.from('count_import_rows').select('row_number,sku,barcode,product_name,error_codes').eq('batch_id',batchId).eq('row_status','rejected').order('row_number').limit(500),
-   db.from('count_import_rows').select('row_number,sku,barcode,product_name,warning_codes').eq('batch_id',batchId).not('warning_codes','eq','{}').order('row_number').limit(500)
+   db.from('count_import_rows').select('row_number,sku,barcode,product_name,error_codes',{count:'exact'}).eq('batch_id',batchId).eq('row_status','rejected').order('row_number').range(0,IMPORT_DETAIL_PAGE_SIZE-1),
+   db.from('count_import_rows').select('row_number,sku,barcode,product_name,warning_codes',{count:'exact'}).eq('batch_id',batchId).not('warning_codes','eq','{}').order('row_number').range(0,IMPORT_DETAIL_PAGE_SIZE-1)
   ]);
-  if(rejected.error||warnings.error)return fail('تعذر قراءة تفاصيل الدفعة',rejected.error||warnings.error);
+  if(rejected.error||warnings.error)return fail('تعذر قراءة تفاصيل الاستيراد',rejected.error||warnings.error);
   const errRows=rejected.data||[],warnRows=warnings.data||[];
-  const table=(rows,key,title)=>'<h4>'+title+' ('+rows.length+' من أول 500)</h4>'+(rows.length?'<div class="tablewrap"><table><thead><tr><th>الصف</th><th>كود الصنف</th><th>باركود</th><th>اسم الصنف</th><th>النتيجة</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.row_number+'</td><td>'+esc(r.sku||'')+'</td><td>'+esc(r.barcode||'')+'</td><td>'+esc(r.product_name||'')+'</td><td>'+esc((r[key]||[]).join('، '))+'</td></tr>').join('')+'</tbody></table></div>':'<p class="hint">لا توجد سجلات.</p>');
-  $('productImportDetails').innerHTML='<div class="panel"><div class="headrow"><h3>تفاصيل دفعة الاستيراد</h3><button type="button" class="soft" id="closeProductImportDetails">إغلاق التفاصيل</button></div>'+table(errRows,'error_codes','الصفوف المرفوضة')+table(warnRows,'warning_codes','تنبيهات الاستكمال')+'</div>';
-  $('closeProductImportDetails').onclick=()=>$('productImportDetails').innerHTML='';
+  importDetailOffsets.errors=errRows.length;importDetailOffsets.warnings=warnRows.length;
+  importDetailTotals.errors=Number(rejected.count||0);importDetailTotals.warnings=Number(warnings.count||0);
+  const table=(rows,key,title,kind,total)=>'<section class="panel"><div class="headrow"><h4>'+title+'</h4><span class="hint" id="'+targetId+'-'+kind+'-count">'+rows.length+' من '+total+'</span></div><div class="tablewrap"><table><thead><tr><th>الصف</th><th>كود الصنف</th><th>باركود</th><th>اسم الصنف</th><th>النتيجة</th></tr></thead><tbody id="'+targetId+'-'+kind+'">'+(rows.length?importIssueRowsHtml(rows,key,kind):'<tr><td colspan="5">لا توجد سجلات في هذه الفئة.</td></tr>')+'</tbody></table></div><button type="button" class="soft" id="'+targetId+'-'+kind+'-more" '+(rows.length>=total?'hidden':'')+'>عرض 500 نتيجة أخرى</button></section>';
+  const container=$(targetId);if(!container)return;
+  const closeId=targetId+'-close';
+  container.innerHTML='<div class="panel"><div class="headrow"><h3>تفاصيل نتائج الاستيراد</h3><button type="button" class="soft" id="'+closeId+'">إغلاق التفاصيل</button></div>'+table(errRows,'error_codes','الصفوف المرفوضة','errors',importDetailTotals.errors)+table(warnRows,'warning_codes','ملاحظات استكمال البيانات','warnings',importDetailTotals.warnings)+'</div>';
+  $(closeId).onclick=()=>{container.innerHTML='';importDetailBatchId=null;};
+  $(targetId+'-errors-more').onclick=()=>loadMoreProductImportDetails('errors');
+  $(targetId+'-warnings-more').onclick=()=>loadMoreProductImportDetails('warnings');
  }
  function renderLocations(){
   $('locationParent').innerHTML='<option value="">بدون أب (جذر)</option>'+state.locations.map(x=>'<option value="'+x.id+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
