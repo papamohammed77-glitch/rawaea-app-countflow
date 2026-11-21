@@ -2,11 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#102b3f"><link rel="manifest" href="./manifest.webmanifest"><title>CountFlow | النظام الأم</title>
+<meta name="theme-color" content="#111827">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="manifest" href="./manifest.webmanifest"><title>CountFlow | النظام الأم</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="./countflow-core.js"></script>
 <style>
-:root{--navy:#102b3f;--teal:#087e80;--mint:#e8f6f3;--ink:#172d3d;--muted:#6b7e8a;--line:#e2e9ed;--bg:#f3f6f8;--red:#b83b46;--amber:#9b6516;--green:#177b59;--shadow:0 12px 34px #102b3f12}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{border:0;border-radius:11px;padding:11px 15px;font-weight:750;cursor:pointer}.primary{background:var(--teal);color:#fff}.dark{background:var(--navy);color:#fff}.soft{background:var(--mint);color:var(--teal)}.danger{background:#fff0f0;color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}.wrap{max-width:1500px;margin:auto;padding:20px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px}.side,.panel,.stat,.auth-card{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow)}.side{padding:12px;height:max-content;position:sticky;top:14px}.nav{width:100%;text-align:right;background:transparent;color:var(--ink);margin:3px 0}.nav.active{background:var(--mint);color:var(--teal)}.content{min-width:0}.headrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 15px}.headrow h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.stat{padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;margin-top:7px;font-variant-numeric:tabular-nums}.panel{padding:17px;margin-bottom:14px;min-width:0}.panel h3{margin:0 0 13px;font-size:16px}.split{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}th{color:var(--muted);font-weight:750;background:#fafcfd}td .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.pill{display:inline-block;border-radius:99px;padding:4px 9px;background:#eef3f5;font-size:11px}.pill.ok{background:#e7f5ef;color:var(--green)}.pill.warn{background:#fff4df;color:var(--amber)}.pill.off{background:#fceced;color:var(--red)}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:9px 11px;border:1px solid var(--line);border-radius:10px;min-width:200px}.empty{padding:22px;text-align:center;color:var(--muted)}.toast{position:fixed;bottom:18px;left:18px;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;max-width:min(500px,calc(100vw - 36px));box-shadow:var(--shadow)}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(430px,100%);padding:25px}.auth-card h2{margin:0 0 5px}.auth-card p{color:var(--muted);font-size:13px;line-height:1.7}.auth-card .field{margin:13px 0}.auth-card button{width:100%;margin-top:7px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.link{color:var(--teal);text-decoration:none;font-weight:700}.section{display:none}.section.active{display:block}.statusline{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:12px}.layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow:auto;gap:5px;padding:7px}.nav{white-space:nowrap;width:auto}.top{align-items:flex-start}.brand h1{font-size:17px}.grid{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.headrow h2{font-size:18px}}
+:root{--navy:#111827;--teal:#2563eb;--mint:#eff6ff;--ink:#111827;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--red:#dc2626;--amber:#b45309;--green:#059669;--shadow:0 8px 30px rgba(15,23,42,.05)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Cairo",system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{border:0;border-radius:12px;padding:11px 15px;font-weight:750;cursor:pointer;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}button:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.primary{background:var(--teal);color:#fff}.dark{background:var(--navy);color:#fff}.soft{background:var(--mint);color:var(--teal)}.danger{background:#fff0f0;color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}.wrap{max-width:1500px;margin:auto;padding:20px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px}.side,.panel,.stat,.auth-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}.side{padding:12px;height:max-content;position:sticky;top:14px}.nav{width:100%;text-align:right;background:transparent;color:var(--ink);margin:3px 0}.nav.active{background:var(--mint);color:var(--teal)}.content{min-width:0}.headrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 15px}.headrow h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.stat{padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;margin-top:7px;font-variant-numeric:tabular-nums}.panel{padding:17px;margin-bottom:14px;min-width:0}.panel h3{margin:0 0 13px;font-size:16px}.split{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}th{color:var(--muted);font-weight:750;background:#fafcfd}td .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.pill{display:inline-block;border-radius:99px;padding:4px 9px;background:#eef3f5;font-size:11px}.pill.ok{background:#e7f5ef;color:var(--green)}.pill.warn{background:#fff4df;color:var(--amber)}.pill.off{background:#fceced;color:var(--red)}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:9px 11px;border:1px solid var(--line);border-radius:10px;min-width:200px}.empty{padding:22px;text-align:center;color:var(--muted)}.toast{position:fixed;bottom:18px;left:18px;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;max-width:min(500px,calc(100vw - 36px));box-shadow:var(--shadow)}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(430px,100%);padding:25px}.auth-card h2{margin:0 0 5px}.auth-card p{color:var(--muted);font-size:13px;line-height:1.7}.auth-card .field{margin:13px 0}.auth-card button{width:100%;margin-top:7px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.link{color:var(--teal);text-decoration:none;font-weight:700}.section{display:none}.section.active{display:block}.statusline{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:12px}.layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow:auto;gap:5px;padding:7px}.nav{white-space:nowrap;width:auto}.top{align-items:flex-start}.brand h1{font-size:17px}.grid{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.headrow h2{font-size:18px}}
 </style>
 </head>
 <body>
@@ -20,7 +21,7 @@
    <div class="field"><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required></div>
    <button class="primary" id="loginBtn" type="submit">دخول آمن</button>\n
   </form>
-  <div id="loginError" class="hint" style="color:var(--red);margin-top:10px"></div>
+  <div id="loginError" class="hint" role="alert" aria-live="assertive" style="color:var(--red);margin-top:10px"></div>
   <p class="hint">يُسمح بالدخول لحساب المالك بعد إنشاء حساب Auth وتأكيد البريد owner@rawaea.com. صلاحية المالك تُثبت من قاعدة البيانات عبر البريد المؤكد، ولا تعتمد على بيانات المتصفح.</p>
  </div>
 </section>
@@ -44,7 +45,7 @@
     <button class="nav" data-tab="audit">سجل التدقيق</button>
     <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:12px">
      <div class="field"><label for="projectPicker">جهة الجرد الحالية</label><select id="projectPicker"></select></div>
-     <p class="hint">كل تكليف جرد مستقل ببياناته وعضوياته عبر project_id وسياسات RLS؛ يمكن تسجيل الجهة نفسها في تكليف جديد دون ربطه بتكليف سابق.</p>
+     <p class="hint">كل تكليف جرد مستقل بفريقه وبياناته؛ ويمكن تنفيذ تكليف جديد للجهة نفسها دون دمج بياناته مع أي تكليف سابق.</p>
      <a class="link" href="./Countflow-supervisor.html">فتح شاشة مراقبة الجرد ←</a><br><a class="link" href="./countflow.html">فتح تطبيق مندوب الجرد ←</a>
     </div>
    </aside>
@@ -106,11 +107,11 @@
      <div class="headrow"><h2>إدارة أدوار المستخدمين</h2><span class="pill">3 أدوار معتمدة</span></div>
      <div class="panel">
       <h3>الأدوار التشغيلية المعتمدة في CountFlow</h3>
-      <p class="hint">الأدوار التالية هي القيم الفعلية المسموح بها في قاعدة البيانات وسياسات RLS. هذه الشاشة تغيّر الدور المسند إلى عضوية تكليف محدد؛ ولا تنشئ أدواراً مخصصة أو صلاحيات شكلية لا تنفذها التطبيقات.</p>
+      <p class="hint">الأدوار التالية هي الصلاحيات المعتمدة في CountFlow. تغيّر هذه الشاشة الدور المسند إلى عضو داخل تكليف محدد، ولا تنشئ صلاحيات إضافية غير متاحة في التطبيقات.</p>
       <div class="tablewrap"><table><thead><tr><th>الدور</th><th>نطاق الاستخدام</th><th>حدود الصلاحية</th></tr></thead><tbody>
        <tr><td><b>مشرف الجرد</b><span class="sub">supervisor</span></td><td>المراقبة الحية وإسناد المندوبين إلى الجلسات والمواقع ضمن التكليف المرتبط بعضوية مشرف نشطة.</td><td>لا يمنح الدور إنشاء تكليفات أو حسابات، أو إدارة الكتالوج والاستيراد، أو دورة التسوية والاعتماد؛ هذه صلاحيات مالك المنصة المؤكد.</td></tr>
        <tr><td><b>مندوب الجرد</b><span class="sub">counter</span></td><td>تطبيق العد الميداني وتسجيل نتائج المواقع المسندة.</td><td>مقيد بعضوية نشطة وإسناد الجلسة/الموقع واعتماد الجهاز وسياسات التسجيل.</td></tr>
-       <tr><td><b>مراجع / مدقق</b><span class="sub">auditor</span></td><td>دخول تطبيق CountFlow الميداني بحساب مراجع.</td><td>لا يمنحه هذا الدور وحده صلاحيات مشرف أو تجاوزاً لقواعد الإسناد وRLS.</td></tr>
+       <tr><td><b>مراجع / مدقق</b><span class="sub">auditor</span></td><td>دخول تطبيق CountFlow الميداني بحساب مراجع.</td><td>لا يمنح هذا الدور صلاحيات المشرف، ولا يسمح بتجاوز حدود العمل المسندة إليه.</td></tr>
       </tbody></table></div>
      </div>
      <div class="panel">
@@ -126,7 +127,7 @@
        <div class="field full"><label>الاسم الظاهر</label><input id="memberName" required maxlength="120"></div>
        <div class="field"><label>اسم المستخدم</label><input id="memberUsername" required maxlength="80"></div><div class="field"><label>البريد الإلكتروني (لتسجيل الدخول)</label><input id="memberEmail" type="email" required></div>
        <div class="field"><label>كلمة المرور المؤقتة (10 أحرف على الأقل)</label><input id="memberPassword" type="password" minlength="10" required></div><div class="field"><label>الدور</label><select id="memberRole"><option value="counter">مسؤول جرد / مندوب عدّ</option><option value="auditor">مراجع / مدقق</option><option value="supervisor">مشرف جرد</option></select></div>
-      </div><div class="actions"><button class="primary">إنشاء الحساب والعضوية</button></div><p class="hint">يتم الإنشاء داخل التكليف المحدد فقط عبر Edge Function المحمية بجلسة المستخدم. لا يُعرض مفتاح service_role في المتصفح.</p></form></div>
+      </div><div class="actions"><button class="primary">إنشاء الحساب والعضوية</button></div><p class="hint">يتم إنشاء الحساب داخل التكليف المحدد من خلال خدمة آمنة، ولا تظهر مفاتيح النظام الحساسة في شاشة المستخدم.</p></form></div>
       <div class="panel"><h3>مستخدمو جميع جهات الجرد</h3><div class="toolbar"><input id="memberSearch" placeholder="بحث بالاسم أو اسم المستخدم"></div><div id="memberTable" class="tablewrap"><div class="empty">لا يوجد أعضاء بعد.</div></div></div>
      </div>
     </section>
@@ -204,7 +205,7 @@
      <div class="panel">
       <h3>هوية مالك CountFlow</h3>
       <div class="field"><label>بريد حساب المالك المعتمد (ثابت لأغراض التفويض)</label><input value="owner@rawaea.com" type="email" readonly></div>
-      <p class="hint">هذا البريد هو هوية المالك الأمنية بعد تأكيده في Supabase Auth. لا تغيّره من قائمة عناوين التواصل؛ تغيير هوية الدخول إجراء منفصل يتطلب تحققاً من البريد الجديد.</p>
+      <p class="hint">هذا هو البريد المعتمد لدخول مالك CountFlow بعد تأكيده. لا تغيّره من قائمة عناوين التواصل؛ تغيير بريد الدخول يحتاج إلى تحقق مستقل من العنوان الجديد.</p>
      </div>
      <div class="panel">
       <h3>عناوين البريد المرتبطة بالتراخيص والإشعارات</h3>
@@ -221,7 +222,7 @@
   </div>
  </div>
 </div>
-<div id="toast" class="toast hidden" role="status"></div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <script>
 (()=> {
  'use strict';
@@ -232,7 +233,18 @@
  const state={user:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
- const fail=(label,error)=>{console.error(label,error);notify(label+': '+(error?.message||error||'خطأ غير معروف'),true)};
+ function friendlyErrorMessage(error){
+  const raw=String(error?.message||error||'');
+  if(/invalid login credentials|invalid credentials/i.test(raw))return 'بيانات الدخول غير صحيحة. راجع البريد وكلمة المرور ثم أعد المحاولة.';
+  if(/SESSION_HAS_UNACKNOWLEDGED_DEVICE_QUEUES/i.test(raw))return 'لم تكتمل مزامنة جميع أجهزة العد بعد. اطلب من أصحاب الأجهزة فتح التطبيق ومزامنة العمليات المعلقة.';
+  if(/SESSION_HAS_UNCOUNTED_POSITIONS|UNCOUNTED_POSITIONS_REMAINING/i.test(raw))return 'لا يمكن اعتماد الجرد قبل استكمال عد جميع المواقع المطلوبة.';
+  if(/RECOUNT_REVIEW_REQUIRED|SESSION_HAS_OPEN_RECOUNT_TASKS/i.test(raw))return 'ما زالت هناك مهام إعادة عد تحتاج إلى مراجعة.';
+  if(/CRITICAL_ALERTS_UNRESOLVED|SESSION_HAS_UNRESOLVED_CRITICAL_ALERTS/i.test(raw))return 'توجد تنبيهات حرجة لم تُحل بعد.';
+  if(/UNKNOWN_LOCATION_CODE/i.test(raw))return 'تعذر التعرف على أحد المواقع في الملف. راجع كود الموقع في الصف المحدد.';
+  if(/NETWORK|FETCH|TIMEOUT|Failed to fetch|503|502/i.test(raw))return 'تعذر الاتصال بالخدمة حالياً. تحقق من الاتصال ثم أعد المحاولة.';
+  return 'تعذر إتمام العملية. راجع البيانات وحاول مرة أخرى.';
+ }
+ const fail=(label,error)=>{console.error(label,error);notify(label+': '+friendlyErrorMessage(error),true)};
  const setBusy=(form,busy)=>{const b=form.querySelector('button[type="submit"],button:not([type])');if(b){b.disabled=busy;b.dataset.oldText??=b.textContent;b.textContent=busy?'جار التنفيذ…':b.dataset.oldText}};
  function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('identity').textContent=state.user?.email||'حساب CountFlow'; }
  function showLogin(message=''){ $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('loginError').textContent=message; }
@@ -365,7 +377,7 @@
   {key:'name',label:'اسم الصنف',aliases:['name','item_name','product_name','اسم الصنف','الصنف','الاسم']},
   {key:'category',label:'الفئة / التصنيف',aliases:['category','group','الفئة','التصنيف']},
   {key:'base_unit',label:'الوحدة الأساسية (مطلوبة للصنف الجديد)',aliases:['base_unit','unit','uom','الوحدة','وحدة القياس']},
-  {key:'units',label:'الوحدات والتحويلات (JSON)',aliases:['units','unit_options','الوحدات']},
+  {key:'units',label:'الوحدات والتحويلات',aliases:['units','unit_options','الوحدات']},
   {key:'expected_qty',label:'الكمية الدفترية المرجعية (تتطلب جلسة)',aliases:['expected_qty','expected_quantity','book_qty','الكمية الدفترية','الرصيد الدفتري']},
   {key:'location_code',label:'كود الموقع (يتطلب جلسة)',aliases:['location_code','location','bin','shelf','الموقع','كود الموقع']},
   {key:'image_url',label:'رابط الصورة HTTPS',aliases:['image_url','image','photo','رابط الصورة']},
@@ -697,7 +709,7 @@
   $('productImportDetails').innerHTML='';
   if(!state.project){$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';return;}
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
-  if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
+  if(error){$('productImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.;return;}
   $('productImportHistory').innerHTML='<b>سجل دفعات الاستيراد لهذا التكليف</b>'+(data||[]).map(b=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>'+esc(b.source_name)+'</b><span class="sub">'+date(b.created_at)+' · '+esc(b.source_format)+' · '+esc(b.status)+' · إجمالي '+Number(b.row_count||0)+' · مقبول '+Number(b.accepted_count||0)+' · مرفوض '+Number(b.rejected_count||0)+' · أرصدة مرجعية '+Number(b.error_report?.expected_balance_rows||0)+' · تحذيرات '+Number(b.error_report?.warning_count||0)+'</span></div><button type="button" class="soft" data-product-import-detail="'+b.id+'">تفاصيل النتائج</button></div>').join('')||'<p class="hint">لا توجد دفعات استيراد سابقة لهذا التكليف.</p>';
   $('productImportHistory').querySelectorAll('[data-product-import-detail]').forEach(b=>b.onclick=()=>showProductImportDetails(b.dataset.productImportDetail));
  }
@@ -745,6 +757,50 @@
   state.workflowData={session,run:run.data||null,tasks:tasks.data||[],alerts:alerts.data||[],presence:presence.data||[],devices:devices.data||[]};
   renderSessionWorkflow();
  }
+ function alertDetailsSummary(alert){
+  const d=alert?.details&&typeof alert.details==='object'?alert.details:{};
+  const parts=[];
+  const product=d.product_name||d.item_name;
+  const location=d.location_name||d.location_code;
+  if(product)parts.push('الصنف: '+product);
+  if(location)parts.push('الموقع: '+location);
+  if(d.quantity!==undefined)parts.push('الكمية: '+d.quantity);
+  if(d.threshold!==undefined)parts.push('الحد: '+d.threshold);
+  if(d.pending_queue_count!==undefined)parts.push('عمليات تنتظر المزامنة: '+d.pending_queue_count);
+  if(d.reason)parts.push('السبب: '+d.reason);
+  return parts.join(' · ')||'تفاصيل التنبيه محفوظة في سجل الأحداث.';
+ }
+ function auditActionLabel(action){
+  const labels={
+   'device.queue_waived':'توثيق تجاوز مزامنة جهاز',
+   'session.device_queue_barrier_requested':'بدء التحقق من مزامنة الأجهزة',
+   'session.device_queue_barrier_cancelled':'إلغاء التحقق من مزامنة الأجهزة',
+   'reconciliation.approved':'اعتماد التسوية',
+   'export.client_balance.ready':'تجهيز ملف الرصيد النهائي',
+   'export.ready':'تجهيز ملف نتائج الجرد',
+   'alert.acknowledged':'الإقرار بالاطلاع على تنبيه',
+   'alert.resolved':'حل تنبيه'
+  };
+  return labels[action]||'حدث تشغيلي مسجل';
+ }
+ function auditEntityLabel(type){
+  const labels={count_session:'جلسة جرد',count_device_queue:'جهاز',reconciliation_run:'تسوية',count_export:'ملف تصدير',count_alert:'تنبيه',count_member:'عضو',count_product:'صنف'};
+  return labels[type]||'سجل';
+ }
+ function auditDetailsSummary(details){
+  const d=details&&typeof details==='object'?details:{},parts=[];
+  if(d.reason)parts.push('السبب: '+d.reason);
+  if(d.status)parts.push('الحالة: '+statusPill(d.status));
+  if(d.pending_queue_count!==undefined)parts.push('عمليات معلقة: '+d.pending_queue_count);
+  if(d.products!==undefined)parts.push('أصناف: '+d.products);
+  if(d.count_events!==undefined)parts.push('عمليات عد: '+d.count_events);
+  if(d.images_embedded!==undefined)parts.push('صور مضمنة: '+d.images_embedded);
+  if(d.images_not_embedded!==undefined)parts.push('صور لم تُضمّن: '+d.images_not_embedded);
+  if(d.rows!==undefined)parts.push('صفوف: '+d.rows);
+  if(d.accepted_rows!==undefined)parts.push('مقبول: '+d.accepted_rows);
+  if(d.rejected_rows!==undefined)parts.push('مرفوض: '+d.rejected_rows);
+  return parts.join(' · ')||'تم حفظ تفاصيل الحدث في سجل التدقيق.';
+ }
  function workflowMemberName(id){const m=(state.members||[]).find(x=>x.id===id);return m?.display_name||'عضو غير موجود في القائمة الحالية';}
  function renderSessionWorkflow(){
   const w=state.workflowData;
@@ -777,7 +833,7 @@
    let action='';
    if(a.status==='open')action='<button type="button" class="soft" data-alert-action="'+a.id+'" data-target="acknowledged">إقرار بالاطلاع</button> ';
    if(['open','acknowledged'].includes(a.status))action+='<button type="button" class="danger" data-alert-action="'+a.id+'" data-target="resolved">حل التنبيه</button>';
-   return '<tr><td>'+esc(a.title)+'<span class="sub">'+esc(a.alert_type)+' · '+esc(JSON.stringify(a.details||{}).slice(0,160))+'</span></td><td>'+statusPill(a.severity)+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.created_at)+'</td><td>'+action+'</td></tr>';
+   return '<tr><td>'+esc(a.title)+'<span class="sub">'+esc(a.alert_type)+' · '+esc(alertDetailsSummary(a))+'</span></td><td>'+statusPill(a.severity)+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.created_at)+'</td><td>'+action+'</td></tr>';
   }).join('')+'</tbody></table></div>':'<div class="empty">لا توجد تنبيهات مسجلة.</div>';
   const deviceHtml=presence.length?'<div class="tablewrap"><table><thead><tr><th>المندوب / الجهاز</th><th>الحضور</th><th>الطابور المحلي المبلغ</th><th>تأكيد دورة الجلسة</th><th>قرار المالك</th></tr></thead><tbody>'+presence.map(p=>{
    const d=deviceMap.get(p.member_id+'|'+p.device_id)||{},ack=Number(p.pending_queue_count)===0&&Number(p.acknowledged_lifecycle_version)===Number(session.sync_barrier_version),waived=p.queue_resolution==='waived';
@@ -945,7 +1001,7 @@
  async function loadLicenseSettings(){
   const status=$('licenseEmailStatus');status.textContent='جار تحميل الإعدادات…';
   const {data,error}=await db.from('count_platform_settings').select('license_emails,updated_at').eq('id',1).maybeSingle();
-  if(error){status.textContent='تعذر تحميل إعدادات التراخيص: '+error.message;return;}
+  if(error){status.textContent='تعذر تحميل إعدادات البريد المرتبطة بالتراخيص.;return;}
   $('licenseEmails').value=(data?.license_emails||['owner@rawaea.com']).join('\n');
   status.textContent=data?.updated_at?'آخر تحديث: '+date(data.updated_at):'لم تُحفظ إعدادات بعد.';
  }
@@ -963,7 +1019,7 @@
    if(result.error)throw result.error;
    $('licenseEmailStatus').textContent='تم حفظ '+unique.length+' عنوان بريد دون حد أقصى محدد.';
    notify('تم حفظ إعدادات البريد المرتبطة بالتراخيص.');
-  }catch(e){$('licenseEmailStatus').textContent='تعذر الحفظ: '+(e.message||String(e));}
+  }catch(e){$('licenseEmailStatus').textContent='تعذر حفظ إعدادات البريد. راجع البيانات وحاول مرة أخرى.;}
   finally{b.disabled=false;}
  }
  $('saveLicenseEmails').addEventListener('click',saveLicenseSettings);
@@ -1053,7 +1109,7 @@
  async function loadOperationImportHistory(){
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
-  if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد: '+error.message;return;}
+  if(error){$('operationImportHistory').textContent='تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.;return;}
   $('operationImportHistory').innerHTML=(data||[]).length?'<table><thead><tr><th>الملف</th><th>الحالة</th><th>صفوف</th><th>مقبول</th><th>مرفوض</th><th>التاريخ</th></tr></thead><tbody>'+(data||[]).map(x=>'<tr><td>'+esc(x.source_name)+'</td><td>'+statusPill(x.status)+'</td><td>'+x.row_count+'</td><td>'+x.accepted_count+'</td><td>'+x.rejected_count+'</td><td>'+date(x.created_at)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد دفعات استيراد لهذه العملية.</div>';
  }
  function operationValue(row,aliases){const keys=Object.keys(row||{});for(const alias of aliases){const key=keys.find(k=>String(k).trim().toLowerCase()===alias.toLowerCase());if(key!==undefined)return row[key];}return '';}
@@ -1188,10 +1244,10 @@
   async function loadOperationExportHistory(){
   const s=state.selectedSession;if(!s)return;
   const {data,error}=await db.from('count_exports').select('id,export_format,export_scope,status,storage_path,row_count,file_size_bytes,sha256,created_at').eq('session_id',s.id).eq('status','ready').order('created_at',{ascending:false}).limit(30);
-  if(error){$('operationExportHistory').textContent='تعذر تحميل سجل التصدير: '+error.message;return;}
+  if(error){$('operationExportHistory').textContent='تعذر تحميل سجل التصدير. حاول تحديث الصفحة.;return;}
   const paths=(data||[]).map(x=>x.storage_path).filter(Boolean);let signed={};
   if(paths.length){const {data:urls}=await db.storage.from('counting-exports').createSignedUrls(paths,600);for(const u of urls||[])signed[u.path]=u.signedUrl;}
-  $('operationExportHistory').innerHTML=(data||[]).length?(data||[]).map(x=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+esc(x.export_format.toUpperCase())+' · '+esc(x.export_scope)+'</b><span class="sub">'+date(x.created_at)+' · '+Number(x.row_count||0)+' صف · '+Math.round((x.file_size_bytes||0)/1024)+' KB · SHA-256 '+esc(String(x.sha256||'').slice(0,16))+'…</span></div>'+(signed[x.storage_path]?'<a class="link" href="'+esc(signed[x.storage_path])+'" target="_blank" rel="noopener">تنزيل</a>':'<span class="pill">الرابط غير متاح</span>')+'</div>').join(''):'<div class="empty">لا توجد ملفات تصدير محفوظة.</div>';
+  $('operationExportHistory').innerHTML=(data||[]).length?(data||[]).map(x=>'<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+esc(x.export_format.toUpperCase())+' · '+esc(x.export_scope)+'</b><span class="sub">'+date(x.created_at)+' · '+Number(x.row_count||0)+' صف · '+Math.round((x.file_size_bytes||0)/1024)+' KB · بصمة التحقق '+esc(String(x.sha256||'').slice(0,16))+'…</span></div>'+(signed[x.storage_path]?'<a class="link" href="'+esc(signed[x.storage_path])+'" target="_blank" rel="noopener">تنزيل</a>':'<span class="pill">الرابط غير متاح</span>')+'</div>').join(''):'<div class="empty">لا توجد ملفات تصدير محفوظة.</div>';
  }
  async function downloadOperationExport(format,scope='full'){
   const s=state.selectedSession;if(!s)return notify('اختر عملية جرد أولاً.',true);
@@ -1207,10 +1263,10 @@
  async function loadOperationReconciliation(){
   const s=state.selectedSession;if(!s)return;
   const {data:runs,error}=await db.from('count_reconciliation_runs').select('id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,computed_at').eq('session_id',s.id).order('run_number',{ascending:false}).limit(10);
-  if(error){$('operationReconciliation').textContent='تعذر تحميل التسويات: '+error.message;return;}
+  if(error){$('operationReconciliation').textContent='تعذر تحميل نتائج التسوية. حاول تحديث الصفحة.;return;}
   if(!(runs||[]).length){$('operationReconciliation').innerHTML='<div class="empty">لم يتم احتساب تسوية لهذه العملية بعد.</div>';return;}
   const latest=runs[0],{data:lines,error:lineError}=await db.from('count_reconciliation_lines').select('product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,result_status').eq('run_id',latest.id).order('product_sku').limit(5000);
-  if(lineError){$('operationReconciliation').textContent='تعذر تحميل تفاصيل التسوية: '+lineError.message;return;}
+  if(lineError){$('operationReconciliation').textContent='تعذر تحميل تفاصيل التسوية. حاول تحديث الصفحة.;return;}
   $('operationReconciliation').innerHTML='<div class="toolbar"><span class="pill">التسوية رقم '+latest.run_number+' · '+esc(latest.status)+'</span><span>متوقع '+latest.expected_rows+'</span><span>معدود '+latest.counted_rows+'</span><span>متطابق '+latest.matched_rows+'</span><span>فروقات '+latest.variance_rows+'</span><span>غير معدود '+latest.uncounted_rows+'</span></div><div class="tablewrap"><table><thead><tr><th>SKU</th><th>الصنف</th><th>الموقع</th><th>الوحدة</th><th>المتوقع</th><th>المعدود</th><th>الفرق</th><th>النتيجة</th></tr></thead><tbody>'+(lines||[]).map(x=>'<tr><td>'+esc(x.product_sku)+'</td><td>'+esc(x.product_name)+'</td><td>'+esc(x.location_path)+'</td><td>'+esc(x.unit)+'</td><td>'+x.expected_quantity+'</td><td>'+x.counted_quantity+'</td><td>'+x.variance_quantity+'</td><td>'+esc(x.result_status)+'</td></tr>').join('')+'</tbody></table></div>';
  }
  async function previewOperation(){
@@ -1239,8 +1295,8 @@
 
  async function loadAudit(){
   const {data,error}=await db.from('count_audit_log').select('id,actor_id,action,entity_type,entity_id,details,created_at').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(100);
-  if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل التدقيق: '+esc(error.message)+'</div>';return;}
-  $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.entity_type)+'<span class="sub">'+esc(x.entity_id||'')+'</span></td><td>'+esc(JSON.stringify(x.details||{}).slice(0,180))+'</td><td>'+esc(x.actor_id||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
+  if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.+'</div>';return;}
+  $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">'+esc('—')+'</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>'+esc(x.actor_id||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
  }
  async function editProduct(id){
   const p=state.products.find(x=>x.id===id);if(!p)return;
@@ -1252,7 +1308,7 @@
   const {error}=await db.from('count_products').update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('project_id',state.project.id);
   if(error)return fail('تعذر تحديث حالة الصنف',error);notify(p.is_active?'تم إيقاف الصنف':'تم تفعيل الصنف');await loadProjectData();
  }
- $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);$('loginError').textContent='';try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;state.user=data.user;await bootstrap();}catch(err){showLogin(err.message||'فشل تسجيل الدخول');}finally{setBusy(f,false);}});
+ $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);$('loginError').textContent='';try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;state.user=data.user;await bootstrap();}catch(err){console.error('Admin sign-in failed',err);showLogin(friendlyErrorMessage(err));}finally{setBusy(f,false);}});
  async function bootstrap(){
   if(!state.user){const {data:{user},error}=await db.auth.getUser();if(error)throw error;state.user=user;}
   if(!state.user){showLogin();return;}
@@ -1315,7 +1371,7 @@
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
  db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){stopGlobalRealtime();state.user=null;state.project=null;showLogin();}});
- db.auth.getSession().then(({data})=>{if(data.session)bootstrap().catch(e=>{console.error(e);showLogin(e.message||'تعذر تحميل حساب الإدارة');});});
+ db.auth.getSession().then(({data})=>{if(data.session)bootstrap().catch(e=>{console.error(e);showLogin(friendlyErrorMessage(e));});});
 })();
 </script>
 </body></html>
