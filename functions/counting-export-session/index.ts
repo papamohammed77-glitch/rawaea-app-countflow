@@ -724,78 +724,111 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const [entries, products, locations, members, runs, alerts, recounts, imports] = await Promise.all([
-      fetchAll(admin, "count_entries",
-        "id,session_id,project_id,product_id,location_id,member_id,quantity,unit,unit_factor_to_base,base_quantity,scan_code,counted_at,device_id,count_round,revision,recount_task_id,client_event_id,note",
-        [["session_id","eq",sessionId]], MAX_ENTRIES),
-      fetchAll(admin, "count_products",
-        "id,sku,barcode,name,category,base_unit,is_active",
-        [["project_id","eq",session.project_id]], MAX_PRODUCTS),
-      fetchAll(admin, "count_locations",
-        "id,code,name,location_type,parent_id,sort_order",
-        [["project_id","eq",session.project_id]], MAX_LOCATIONS),
-      fetchAll(admin, "count_members",
-        "id,user_id,display_name,username,role,status,last_seen_at",
-        [["project_id","eq",session.project_id]], 10000),
+    // Count the large relations before allocating their result arrays. The batch/run
+    // headers are bounded metadata and are loaded first so dependent row counts can be scoped.
+    const [runs,imports,entryCount,productCount,locationCount,memberCount,alertCount,recountCount] = await Promise.all([
       fetchAll(admin, "count_reconciliation_runs",
         "id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,entry_count_snapshot,created_at,computed_at,approved_at",
         [["session_id","eq",sessionId]], 10000),
-      fetchAll(admin, "count_alerts",
-        "id,entry_id,rule_id,alert_type,severity,status,title,details,created_at,acknowledged_at,resolved_at",
-        [["session_id","eq",sessionId]], 50000),
-      fetchAll(admin, "count_recount_tasks",
-        "id,product_id,location_id,assigned_member_id,status,reason,first_count_quantity,second_count_quantity,variance_percent,created_at,assigned_at,started_at,completed_at,reviewed_at,notes",
-        [["session_id","eq",sessionId]], 50000),
       fetchAll(admin, "count_import_batches",
         "id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,completed_at,error_report",
         [["session_id","eq",sessionId]], 50000),
+      countRows(admin,"count_entries",[["session_id","eq",sessionId]],MAX_ENTRIES),
+      countRows(admin,"count_products",[["project_id","eq",session.project_id]],MAX_PRODUCTS),
+      countRows(admin,"count_locations",[["project_id","eq",session.project_id]],MAX_LOCATIONS),
+      countRows(admin,"count_members",[["project_id","eq",session.project_id]],10000),
+      countRows(admin,"count_alerts",[["session_id","eq",sessionId]],50000),
+      countRows(admin,"count_recount_tasks",[["session_id","eq",sessionId]],50000),
     ]);
-
     const latestRun = [...runs].sort((a,b) => Number(b.run_number)-Number(a.run_number))[0] || null;
-    const lines = latestRun
-      ? await fetchAll(admin, "count_reconciliation_lines",
-          "id,run_id,product_id,location_id,product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,counted_events,counter_count,result_status,computed_at",
-          [["run_id","eq",latestRun.id]], MAX_LINES)
-      : [];
-
+    const lineCount = latestRun
+      ? await countRows(admin,"count_reconciliation_lines",[["run_id","eq",latestRun.id]],MAX_LINES)
+      : 0;
     const importBatchIds = imports.map((b:any) => b.id);
-    const [importErrors, images, presence, devices, auditByDetails, auditBySession] = await Promise.all([
-      importBatchIds.length
-        ? fetchAll(admin, "count_import_rows",
-            "id,batch_id,row_number,raw_row,sku,barcode,product_name,location_code,row_status,error_codes,error_detail,processed_at",
-            [["batch_id","in",importBatchIds],["row_status","eq","rejected"]], 100000)
-        : Promise.resolve([]),
-      fetchAll(admin, "count_entry_images",
-        "id,project_id,entry_id,storage_path,mime_type,size_bytes,caption,uploaded_by,created_at",
-        [["project_id","eq",session.project_id]], 50000),
-      fetchAll(admin, "count_presence",
-        "project_id,session_id,member_id,device_id,presence_state,current_location_id,started_at,last_seen_at",
-        [["session_id","eq",sessionId]], 10000, "last_seen_at"),
-      fetchAll(admin, "count_devices",
-        "id,project_id,member_id,device_id,device_label,platform,app_version,status,first_seen_at,last_seen_at,revoked_at",
-        [["project_id","eq",session.project_id]], 10000),
-      fetchAll(admin, "count_audit_log",
-        "id,project_id,actor_id,action,entity_type,entity_id,details,created_at",
-        [["project_id","eq",session.project_id],["details->>session_id","filter_eq",sessionId]], 100000),
-      fetchAll(admin, "count_audit_log",
-        "id,project_id,actor_id,action,entity_type,entity_id,details,created_at",
-        [["project_id","eq",session.project_id],["entity_id","eq",sessionId]], 1000),
+    let importErrorCount=0;
+    for(let offset=0;offset<importBatchIds.length;offset+=500){
+      const chunk=importBatchIds.slice(offset,offset+500);
+      importErrorCount+=await countRows(admin,"count_import_rows",
+        [["batch_id","in",chunk],["row_status","eq","rejected"]],100000-importErrorCount);
+      if(importErrorCount>100000)throw new Error("EXPORT_LIMIT_count_import_rows:100000");
+    }
+    const [imageCount,presenceCount,deviceCount,auditDetailsCount,auditSessionCount]=await Promise.all([
+      countRows(admin,"count_entry_images",[["project_id","eq",session.project_id]],50000),
+      countRows(admin,"count_presence",[["session_id","eq",sessionId]],10000),
+      countRows(admin,"count_devices",[["project_id","eq",session.project_id]],10000),
+      countRows(admin,"count_audit_log",[["project_id","eq",session.project_id],["details->>session_id","filter_eq",sessionId]],100000),
+      countRows(admin,"count_audit_log",[["project_id","eq",session.project_id],["entity_id","eq",sessionId]],1000),
     ]);
-    const auditMap = new Map();
-    for (const row of [...auditByDetails,...auditBySession]) auditMap.set(row.id,row);
-    const auditRows = [...auditMap.values()];
-    const entryIds = new Set(entries.map((e:any)=>e.id));
-    const sessionImages = images.filter((img:any)=>entryIds.has(img.entry_id));
-    const sessionDeviceIds = new Set([
+    const combinedRowsUpperBound=entryCount+lineCount+importErrorCount+imageCount;
+    if(combinedRowsUpperBound>250000)throw new Error("EXPORT_COMBINED_ROW_LIMIT:250000");
+    const estimatedFullExportBytes=entryCount*450+lineCount*400+productCount*1200+
+      locationCount*300+importErrorCount*300+imageCount*220+memberCount*200+
+      alertCount*240+recountCount*260+presenceCount*180+deviceCount*180+
+      Math.min(200000,auditDetailsCount+auditSessionCount)*220+40*1024*1024;
+    if(estimatedFullExportBytes>MAX_EXPORT_ESTIMATED_MEMORY){
+      throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:full_preflight:estimated_bytes="+estimatedFullExportBytes);
+    }
+
+    const [entries,products,locations,members,alerts,recounts] = await Promise.all([
+      fetchAll(admin,"count_entries",
+        "id,session_id,project_id,product_id,location_id,member_id,quantity,unit,unit_factor_to_base,base_quantity,scan_code,counted_at,device_id,count_round,revision,recount_task_id,client_event_id,note",
+        [["session_id","eq",sessionId]],MAX_ENTRIES),
+      fetchAll(admin,"count_products",
+        "id,sku,barcode,name,category,base_unit,is_active",
+        [["project_id","eq",session.project_id]],MAX_PRODUCTS),
+      fetchAll(admin,"count_locations",
+        "id,code,name,location_type,parent_id,sort_order",
+        [["project_id","eq",session.project_id]],MAX_LOCATIONS),
+      fetchAll(admin,"count_members",
+        "id,user_id,display_name,username,role,status,last_seen_at",
+        [["project_id","eq",session.project_id]],10000),
+      fetchAll(admin,"count_alerts",
+        "id,entry_id,rule_id,alert_type,severity,status,title,details,created_at,acknowledged_at,resolved_at",
+        [["session_id","eq",sessionId]],50000),
+      fetchAll(admin,"count_recount_tasks",
+        "id,product_id,location_id,assigned_member_id,status,reason,first_count_quantity,second_count_quantity,variance_percent,created_at,assigned_at,started_at,completed_at,reviewed_at,notes",
+        [["session_id","eq",sessionId]],50000),
+    ]);
+
+    const lines = latestRun
+      ? await fetchAll(admin,"count_reconciliation_lines",
+          "id,run_id,product_id,location_id,product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,counted_events,counter_count,result_status,computed_at",
+          [["run_id","eq",latestRun.id]],MAX_LINES)
+      : [];
+    const [importErrors,images,presence,devices,auditByDetails,auditBySession]=await Promise.all([
+      importBatchIds.length
+        ? fetchAll(admin,"count_import_rows",
+            "id,batch_id,row_number,raw_row,sku,barcode,product_name,location_code,row_status,error_codes,error_detail,processed_at",
+            [["batch_id","in",importBatchIds],["row_status","eq","rejected"]],100000)
+        : Promise.resolve([]),
+      fetchAll(admin,"count_entry_images",
+        "id,project_id,entry_id,storage_path,mime_type,size_bytes,caption,uploaded_by,created_at",
+        [["project_id","eq",session.project_id]],50000),
+      fetchAll(admin,"count_presence",
+        "project_id,session_id,member_id,device_id,presence_state,current_location_id,started_at,last_seen_at",
+        [["session_id","eq",sessionId]],10000,"last_seen_at"),
+      fetchAll(admin,"count_devices",
+        "id,project_id,member_id,device_id,device_label,platform,app_version,status,first_seen_at,last_seen_at,revoked_at",
+        [["project_id","eq",session.project_id]],10000),
+      fetchAll(admin,"count_audit_log",
+        "id,project_id,actor_id,action,entity_type,entity_id,details,created_at",
+        [["project_id","eq",session.project_id],["details->>session_id","filter_eq",sessionId]],100000),
+      fetchAll(admin,"count_audit_log",
+        "id,project_id,actor_id,action,entity_type,entity_id,details,created_at",
+        [["project_id","eq",session.project_id],["entity_id","eq",sessionId]],1000),
+    ]);
+    const auditMap=new Map();
+    for(const row of [...auditByDetails,...auditBySession])auditMap.set(row.id,row);
+    const auditRows=[...auditMap.values()];
+    const entryIds=new Set(entries.map((e:any)=>e.id));
+    const sessionImages=images.filter((img:any)=>entryIds.has(img.entry_id));
+    const sessionDeviceIds=new Set([
       ...presence.map((p:any)=>p.device_id),
       ...entries.map((e:any)=>e.device_id).filter(Boolean),
     ]);
-    const sessionDevices = devices.filter((d:any)=>sessionDeviceIds.has(d.device_id));
-    const combinedRows = entries.length + lines.length + importErrors.length + sessionImages.length;
-    if (combinedRows > 250000) throw new Error("EXPORT_COMBINED_ROW_LIMIT:250000");
-    const estimatedFullExportBytes=entries.length*450+lines.length*400+products.length*1200+locations.length*300+importErrors.length*300+32*1024*1024;
-    if(estimatedFullExportBytes>MAX_EXPORT_ESTIMATED_MEMORY)throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:full:estimated_bytes="+estimatedFullExportBytes);
-
+    const sessionDevices=devices.filter((d:any)=>sessionDeviceIds.has(d.device_id));
+    const combinedRows=entries.length+lines.length+importErrors.length+sessionImages.length;
+    if(combinedRows>250000)throw new Error("EXPORT_COMBINED_ROW_LIMIT:250000");
     const productMap = new Map(products.map((p:any) => [p.id,p]));
     const locationMap = new Map(locations.map((l:any) => [l.id,l]));
     const memberMap = new Map(members.map((m:any) => [m.id,m]));
