@@ -76,22 +76,22 @@ CountFlow now has its own `countflow-core.js` and `countflow-sw.js`, configured 
 
 **Confirmed current behavior:** `countflow.html` stores count operations in native IndexedDB (`countflow-offline-v1`) with `client_event_id` as the key. Online replay uses `count_record_entry` or `count_record_recount_entry`, both designed around idempotent operation IDs.
 
-**Known gaps that remain open:**
+**Current verified behavior and remaining gaps:**
 
-- A CountFlow-only Service Worker and manifest have now been added. The worker precaches the three app shells, the core, manifest, icon and the three approved CDN runtime libraries; it uses network-first HTML with cached fallback, caches static assets, and never caches Supabase Auth/REST/Storage/Edge Function responses. This is **implemented but not browser-verified**; first-install offline boot and CDN cache success remain UNKNOWN.
-- Queue replay requires the currently loaded session to be `active`; it does not transmit into a paused/review/completed session. Pending rows for other sessions remain visible as held local work, not reassigned or deleted.
-- Retry is scoped to the exact current project, member, device, and active session. This is source-verified; browser behavior is not yet E2E-verified.
-- There is no per-device server acknowledgement barrier preventing a supervisor from closing a session while an offline device still has unacknowledged local entries.
-- Browser-termination recovery, real-device offline boot, and authenticated multi-device synchronization remain unverified.
+- The CountFlow-only Service Worker precaches the app shells, Core, manifest, icon and approved CDN libraries; it uses network-first HTML with cached fallback, caches only static dependencies, and never caches Supabase Auth/REST/Storage/Edge responses. Build artifacts are restricted to the public allowlist. Real offline boot, browser restart and reconnect remain unverified.
+- IndexedDB rows retain project/session/member/device identity and immutable client_event_id. Counter queue reports now send a deterministic SHA-256 digest of canonical payload fields (event/project/session/member/device/product/location/recount/quantity/unit/scan/note) plus pending row count to count_report_device_queue after queue changes, sync, presence heartbeat, reconnect and periodic refresh.
+- The server stores pending_queue_count, pending_queue_digest, queue_reported_at and acknowledged_lifecycle_version. Lifecycle transitions advance sync_barrier_version; the current owner-only pause-first count_approve_reconciliation requires a paused session, latest computed reconciliation, unchanged entry snapshot, all imported products counted, reviewed recounts, resolved critical alerts and every device queue acknowledged at the current version. Final completion rechecks the device queue barrier in the lifecycle trigger.
+- A queue that cannot be flushed is not silently deleted. The owner Admin view lists member/device, last presence, reported queue count, report timestamp and lifecycle acknowledgement. Only the verified owner can record a reasoned count_waive_device_queue action; the audit log preserves the count/digest and the UI warns that local operations may be lost.
+- Integrity limitation: queue contents live in browser IndexedDB. The server enforces the reporting protocol and records the device's self-attested count/digest; it cannot independently inspect the browser's local database. Treat this as an audited device acknowledgement, not cryptographic proof that no local payload was omitted.
+- Queue replay remains limited to an active session and uses idempotent count RPCs. Pending rows for paused/review sessions remain held locally until the session is resumed or the owner records an audited waiver. Retry remains scoped to exact project/member/device/current session.
+- Supervisor cockpit has authoritative 30-second polling and a separate 10-second heatmap refresh fallback in addition to Broadcast invalidation.
 
-**Required safe implementation sequence:**
+**Remaining verification:**
 
-1. **DONE — implementation:** Add a CountFlow-only Service Worker and manifest. Cache only the approved app shell/static dependencies; never cache Auth responses, Supabase API payloads, signed URLs or business records. Browser verification is still required.
-2. Preserve IndexedDB operations with project/session/member/device identity, immutable event ID and payload hash.
-3. **OPEN:** Implement a server-authoritative close barrier so a session cannot be finalized while a registered device has unacknowledged operations, unless the owner records an audited device revocation/recovery path. The current client queue does not yet publish a trustworthy empty-queue acknowledgement for every device.
-4. Replay acknowledged queue items through idempotent RPCs without allowing a closed-session write to bypass the state machine.
-5. **DONE — source:** Retry errors only for the exact signed-in project/member/device/current active session; retain unrelated and held queue entries.
-6. Add authenticated browser E2E tests for first online boot, offline reload, offline entry, browser termination/restart, reconnect, duplicate replay, multi-device concurrency and close-barrier enforcement.
+1. OPEN: Real device offline boot, browser-termination recovery, offline entry, reconnect, duplicate replay and multi-device concurrency E2E.
+2. OPEN: Authenticated Playwright tests for actual supervisor/counter credentials, membership and location assignments. No persistent member/project/product roster exists yet.
+3. OPEN: Test the pause → queue acknowledgement → approval → review acknowledgement → completion path using approved disposable CountFlow fixtures after the governance gate is resolved.
+4. Do not post inventory, cash or accounting transactions during these tests; CountFlow remains a counting/reconciliation service only.
 
 ## 6. Realtime contract
 
@@ -112,7 +112,7 @@ CountFlow field/supervisor apps still use their existing private Broadcast contr
 
 - Admin JavaScript syntax: **PASS**.
 - Master UI global member/session aggregation: **implemented; browser behavior UNKNOWN**.
-- CountFlow Core and Service Worker syntax: **PASS**; build fixture publishes all nine allowlisted files and excludes private artifacts. Real offline boot remains **UNKNOWN**.
+- CountFlow Core and Service Worker syntax: **PASS**; build fixture publishes ten allowlisted files (four HTML entry points, four runtime/PWA assets, headers and build-info commit marker) and excludes private artifacts. Real offline boot remains **UNKNOWN**.
 - Realtime table publication: **CONFIRMED** for `count_members` and `count_sessions`; live event delivery: **UNKNOWN**.
 - Supabase schema/data: **unchanged by this UI update**.
 - Owner Auth account: **CONFIRMED PRESENT / email confirmed** in read-only check 2026-11-21.
@@ -129,3 +129,13 @@ CountFlow field/supervisor apps still use their existing private Broadcast contr
 - Cloudflare Pages project `rawaea-app-countflow` is configured for Production with automatic deployments enabled at `https://rawaea-app-countflow.pages.dev`. The latest production revision visible during the read-only browser check was `195bbe8`; it predates repository HEAD above. Do not claim the new HEAD is live until the Cloudflare deployment record shows the matching commit.
 - A read-only view of the production master page showed the authenticated owner identity and zero projects, products, members and sessions. A read-only Supabase query confirmed zero CountFlow projects, members, products, sessions, entries, import batches/rows, exports and expected balances; the single `owner@rawaea.com` identity is confirmed.
 - Authenticated Playwright E2E, actual file upload and import against a project, runtime workbook/image inspection, export memory profiling, Cloudflare deployment parity, offline multi-device testing and 30–300 concurrent-user load remain unverified.
+
+## 10. LVE-2026-11-21-755 — current security, queue and verification state
+
+- The P1 owner-only/Counter-only boundary remains applied. Owner membership, device queue waiver, alert resolution, reconciliation approval and session lifecycle authority stay server-enforced. The Supervisor UI is monitoring/team assignment only, with a 30-second authoritative polling fallback.
+- Fifteen CountFlow ledger entries were applied after the P1 migration by parallel project work. Their exact mapping, tracked source files, missing intermediate artifacts and current-schema observations are recorded in database/migrations/README.md. The queue barrier sources include a pause-first approval finality path; two intermediate two-phase migration ledger entries have no standalone source and must not be reconstructed/replayed.
+- Live read-only SQL verification confirms authenticated-only queue/approval/waiver RPC ACLs, owner gate in privileged RPC bodies, search_path = empty, and self-scoped count_presence RLS. No CountFlow project/member/product/session/count/import/export/expected-balance rows existed at the LVE-755 read.
+- The proposed 20261121212500_countflow_import_normalized_lookup_indexes.sql is NOT APPLIED; the three named indexes were absent in the live catalog. Do not treat this source file as a live performance optimization.
+- The production Pages origin was verified by Playwright against exact main commit 5a86a3115b5624e30882dd497934f0e7260b6f18 on CI run 44943001441. Deno type-check, source/unit tests, Pages allowlist build, production commit parity and three Chromium smoke tests (owner login shell, exact SHA parity, three RTL mobile shells) passed. Authenticated supervisor/counter E2E, actual DB import, workbook/image export inspection, measured peak memory, real offline multi-device journeys and concurrency load remain OPEN.
+- The streamed synthetic XLSX parser handles 90,000 generated rows in CI; this is not proof of a 90,000-row RPC import or 30–300 concurrent-user capacity. The SQL rollback load tests are source artifacts and were not executed in this checkpoint.
+- Edge Functions remain counting-provision-member v7 and counting-export-session v14 with JWT verification enabled. Pricing policy remains UNKNOWN and is not an approved accounting valuation basis.
