@@ -55,7 +55,7 @@ async function loadProjects(){
 }
 async function loadAll(){
  if(!project)return;
- $('projectTitle').textContent=project.name;$('projectCode').textContent=project.code+' · '+project.status;
+ $('projectTitle').textContent=project.name;$('projectCode').textContent=project.code+' · '+statusLabel(project.status);
  await Promise.all([loadMembers(),loadLocations(),loadProducts(),loadSessions()]);
  const team=await fetchAllRows('count_members','id,display_name',[{op:'eq',key:'project_id',value:project.id},{op:'eq',key:'role',value:'counter'},{op:'eq',key:'status',value:'active'}]);
  $('assignMember').innerHTML='<option value="">اختر مندوباً</option>'+team.map(x=>'<option value="'+x.id+'">'+esc(x.display_name)+'</option>').join('');
@@ -88,7 +88,7 @@ async function loadAssignments(){
  }catch(e){console.warn('Supervisor assignments load failed',e);$('assignmentList').textContent='تعذر تحميل توزيع الفريق. حاول تحديث القائمة.';return}
  const mm=Object.fromEntries(ms.map(x=>[x.id,x])),ll=Object.fromEntries(locationRows.map(x=>[x.id,x.name]));
  const canEdit=['planned','active','paused','review'].includes(session.status);
- $('assignmentList').innerHTML=rows.map(x=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+esc(mm[x.member_id]?.display_name||'مندوب')+'</b><br><small class="muted">'+esc(mm[x.member_id]?.username||'')+' · '+esc(ll[x.location_id]||'كل المواقع')+' · '+esc(x.status)+'</small></div>'+(canEdit?'<button class="danger" data-remove-assignment="'+x.member_id+'">إخراج من العملية</button>':'<span class="pill">سجل تاريخي</span>')+'</div>').join('')||'لا توجد إسنادات لهذه العملية.';
+ $('assignmentList').innerHTML=rows.map(x=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+esc(mm[x.member_id]?.display_name||'مندوب')+'</b><br><small class="muted">'+esc(mm[x.member_id]?.username||'')+' · '+esc(ll[x.location_id]||'كل المواقع')+' · '+esc(statusLabel(x.status))+'</small></div>'+(canEdit?'<button class="danger" data-remove-assignment="'+x.member_id+'">إخراج من العملية</button>':'<span class="pill">سجل تاريخي</span>')+'</div>').join('')||'لا توجد إسنادات لهذه العملية.';
  document.querySelectorAll('[data-remove-assignment]').forEach(b=>b.onclick=async()=>{
   if(!session||!['planned','active','paused','review'].includes(session.status))return toast('لا يمكن تعديل فريق عملية مكتملة أو ملغاة.');
   if(!confirm('إخراج هذا المستخدم من عملية الجرد فقط؟ سيبقى حسابه وعضويته وعمليات العد السابقة محفوظة.'))return;
@@ -110,7 +110,7 @@ async function loadSessions(){
  const rows=data||[];
  sessionRows=rows;
  session=rows.find(x=>x.id===session?.id)||rows.find(x=>['active','paused','review'].includes(x.status))||rows[0]||null;
- $('monitorSessionSelect').innerHTML=rows.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' · '+esc(x.status)+'</option>').join('')||'<option value="">لا توجد جلسات</option>';
+ $('monitorSessionSelect').innerHTML=rows.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' · '+esc(statusLabel(x.status))+'</option>').join('')||'<option value="">لا توجد جلسات</option>';
  $('monitorSessionSelect').value=session?.id||'';
  if(session&&!$('monitorSessionSelect').dataset.bound){
   $('monitorSessionSelect').addEventListener('change',e=>selectSession(e.target.value));
