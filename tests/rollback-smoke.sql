@@ -1,14 +1,16 @@
--- CountFlow rollback-only integration smoke test.
--- Run with a privileged SQL connection on rawaea-staging.
--- All fixtures (including synthetic auth.users) are rolled back. Never remove ROLLBACK.
+-- CountFlow rollback-only integration smoke test against the current owner-only P1 contract.
+-- Uses the existing confirmed platform owner; only synthetic supervisor/counter/auditor users are inserted.
+-- All Auth/CountFlow fixtures are inside this transaction. Never remove the final ROLLBACK.
 BEGIN;
 
 CREATE TEMP TABLE countflow_qa_result(result jsonb) ON COMMIT DROP;
 
 DO $countflow_qa$
 DECLARE
+  v_owner uuid;
   v_supervisor uuid := gen_random_uuid();
   v_counter uuid := gen_random_uuid();
+  v_auditor uuid := gen_random_uuid();
   v_project uuid;
   v_session uuid;
   v_product uuid;
@@ -20,6 +22,7 @@ DECLARE
   v_loc1 uuid;
   v_loc2 uuid;
   v_member uuid;
+  v_auditor_member uuid;
   v_device text := 'qa-device-' || gen_random_uuid()::text;
   v_event uuid := gen_random_uuid();
   v_entry public.count_entries;
@@ -28,26 +31,49 @@ DECLARE
   v_task uuid;
   v_result jsonb;
 BEGIN
+  SELECT id INTO v_owner FROM auth.users
+  WHERE lower(email)='owner@rawaea.com' AND email_confirmed_at IS NOT NULL;
+  IF v_owner IS NULL THEN RAISE EXCEPTION 'QA_OWNER_IDENTITY_NOT_CONFIRMED'; END IF;
+
   INSERT INTO auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at,is_sso_user,is_anonymous)
   VALUES
     (v_supervisor,'authenticated','authenticated','qa-supervisor-'||v_supervisor||'@countflow.invalid','',now(),'{"provider":"email","providers":["email"]}','{"display_name":"QA Supervisor"}',now(),now(),false,false),
-    (v_counter,'authenticated','authenticated','qa-counter-'||v_counter||'@countflow.invalid','',now(),'{"provider":"email","providers":["email"]}','{"display_name":"QA Counter"}',now(),now(),false,false);
+    (v_counter,'authenticated','authenticated','qa-counter-'||v_counter||'@countflow.invalid','',now(),'{"provider":"email","providers":["email"]}','{"display_name":"QA Counter"}',now(),now(),false,false),
+    (v_auditor,'authenticated','authenticated','qa-auditor-'||v_auditor||'@countflow.invalid','',now(),'{"provider":"email","providers":["email"]}','{"display_name":"QA Auditor"}',now(),now(),false,false);
 
-  PERFORM set_config('request.jwt.claim.sub',v_supervisor::text,true);
-  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
 
   INSERT INTO public.count_projects(name,code,created_by)
-  VALUES('QA Rollback Project','QA-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_supervisor)
+  VALUES('QA Rollback Project','QA-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_owner)
   RETURNING id INTO v_project;
 
-  SELECT id INTO v_member FROM public.count_members WHERE project_id=v_project AND user_id=v_supervisor;
+  SELECT id INTO v_member FROM public.count_members WHERE project_id=v_project AND user_id=v_owner;
   IF v_member IS NULL OR NOT counting_private.is_supervisor(v_project) THEN
     RAISE EXCEPTION 'QA_FAIL_OWNER_BOOTSTRAP';
   END IF;
 
   INSERT INTO public.count_members(project_id,user_id,display_name,username,role,status)
+  VALUES(v_project,v_supervisor,'QA Supervisor','qa-supervisor-'||substr(v_supervisor::text,1,8),'supervisor','active');
+  INSERT INTO public.count_members(project_id,user_id,display_name,username,role,status)
   VALUES(v_project,v_counter,'QA Counter','qa-counter-'||substr(v_counter::text,1,8),'counter','active')
   RETURNING id INTO v_member;
+  INSERT INTO public.count_members(project_id,user_id,display_name,username,role,status)
+  VALUES(v_project,v_auditor,'QA Auditor','qa-auditor-'||substr(v_auditor::text,1,8),'auditor','active')
+  RETURNING id INTO v_auditor_member;
+
+  -- A valid supervisor account must still be denied owner-only engagement creation.
+  PERFORM set_config('request.jwt.claim.sub',v_supervisor::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
+  BEGIN
+    PERFORM public.count_create_engagement('QA Denied Client','QA-DENIED','QA Denied Operation');
+    RAISE EXCEPTION 'QA_FAIL_SUPERVISOR_CREATED_ENGAGEMENT';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_SUPERVISOR_CREATED_ENGAGEMENT' THEN RAISE; END IF;
+    IF SQLERRM<>'PLATFORM_OWNER_REQUIRED' THEN RAISE; END IF;
+  END;
+  PERFORM set_config('request.jwt.claim.sub',v_owner::text,true);
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
 
   INSERT INTO public.count_locations(project_id,location_type,code,name)
   VALUES(v_project,'shelf','QA-S1','QA Shelf 1') RETURNING id INTO v_loc1;
@@ -61,7 +87,7 @@ BEGIN
   RETURNING id INTO v_product;
 
   INSERT INTO public.count_sessions(project_id,name,status,created_by)
-  VALUES(v_project,'QA Rollback Session','planned',v_supervisor) RETURNING id INTO v_session;
+  VALUES(v_project,'QA Rollback Session','planned',v_owner) RETURNING id INTO v_session;
 
   -- Direct DML may not jump from planned to completed.
   BEGIN
@@ -125,6 +151,13 @@ BEGIN
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_supervisor,'role','authenticated','aud','authenticated')::text,true);
 
   v_run := public.count_reconcile_session(v_session);
+  BEGIN
+    PERFORM public.count_generate_recount_tasks(v_run,v_auditor_member,0);
+    RAISE EXCEPTION 'QA_FAIL_AUDITOR_ASSIGNED_RECOUNT';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_AUDITOR_ASSIGNED_RECOUNT' THEN RAISE; END IF;
+    IF SQLERRM<>'INVALID_RECOUNT_ASSIGNEE' THEN RAISE; END IF;
+  END;
   PERFORM public.count_generate_recount_tasks(v_run,v_member,0);
   SELECT id INTO v_task FROM public.count_recount_tasks WHERE session_id=v_session LIMIT 1;
   IF v_task IS NULL THEN RAISE EXCEPTION 'QA_FAIL_RECOUNT_TASK_NOT_CREATED'; END IF;
@@ -142,6 +175,13 @@ BEGIN
   v_run := public.count_reconcile_session(v_session);
   v_result := public.count_approve_reconciliation(v_run);
   IF v_result->>'status'<>'approved' THEN RAISE EXCEPTION 'QA_FAIL_RECONCILIATION_APPROVAL'; END IF;
+  BEGIN
+    PERFORM public.count_generate_recount_tasks(v_run,v_member,0);
+    RAISE EXCEPTION 'QA_FAIL_APPROVED_RUN_GENERATED_RECOUNT';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='QA_FAIL_APPROVED_RUN_GENERATED_RECOUNT' THEN RAISE; END IF;
+    IF SQLERRM<>'RECONCILIATION_NOT_COMPUTED' THEN RAISE; END IF;
+  END;
   v_result := public.count_transition_session(v_session,'completed');
   IF v_result->>'status'<>'completed' THEN RAISE EXCEPTION 'QA_FAIL_SESSION_CLOSE_AFTER_APPROVAL'; END IF;
 
@@ -168,6 +208,9 @@ BEGIN
   VALUES(jsonb_build_object(
     'status','PASS',
     'owner_bootstrap',true,
+    'supervisor_engagement_denied',true,
+    'auditor_recount_assignee_denied',true,
+    'approved_run_recount_generation_denied',true,
     'entry_idempotency',true,
     'assignment_scope_rejection',true,
     'recount_creation_and_entry',true,
