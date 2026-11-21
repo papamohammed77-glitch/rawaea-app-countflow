@@ -308,3 +308,22 @@ test("device queue barrier digest includes canonical count payload, not identifi
   assert.ok(reporter.includes("p_pending_count:rows.length,p_queue_digest:digest"));
   assert.ok(!reporter.includes("eventIds.join"));
 });
+
+test("admin UI hides raw database errors and serialized audit payloads", () => {
+  const admin = read("countflow-admin.html");
+  for (const label of [
+    "تعذر تحميل سجل الاستيراد. حاول تحديث الصفحة.",
+    "تعذر تحميل إعدادات البريد المرتبطة بالتراخيص.",
+    "تعذر تحميل سجل التصدير. حاول تحديث الصفحة.",
+    "تعذر تحميل نتائج التسوية. حاول تحديث الصفحة.",
+    "تعذر تحميل سجل الأحداث. حاول تحديث الصفحة."
+  ]) assert.ok(admin.includes(label));
+  assert.match(admin, /function friendlyErrorMessage\(error\)/);
+  const auditStart = admin.indexOf("async function loadAudit()");
+  const auditEnd = admin.indexOf("async function editProduct", auditStart);
+  assert.ok(auditStart >= 0 && auditEnd > auditStart);
+  const audit = admin.slice(auditStart, auditEnd);
+  assert.doesNotMatch(audit, /JSON\.stringify\(x\.details/);
+  assert.doesNotMatch(audit, /esc\(x\.actor_id/);
+  assert.match(audit, /auditDetailsSummary\(x\.details\)/);
+});
