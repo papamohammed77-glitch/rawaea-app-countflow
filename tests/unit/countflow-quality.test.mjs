@@ -713,3 +713,44 @@ test("confirmed platform owner can read CountFlow Admin data independently of pr
     assert.equal(sql.includes(forbidden), false, "Forbidden policy/data-scope change: " + forbidden);
   }
 });
+
+
+test("Counter gamification reads server-derived points, progress and achievements only", () => {
+  const counter = read("countflow.html");
+  const migration = read("database/migrations/20261123173951_countflow_gamification_snapshot_v1.sql");
+  for (const id of [
+    "gamificationPoints","gamificationProgressFill","gamificationProgressText",
+    "gamificationLeaderboard","gamificationBadges","gamificationMemberProgressFill"
+  ]) {
+    assert.ok(counter.includes('id="' + id + '"'), "Missing gamification UI element: " + id);
+  }
+  assert.match(counter, /data-tab="achievements"/);
+  assert.match(counter, /sb\.rpc\('count_get_gamification_snapshot'/);
+  assert.match(counter, /async function refreshGamification\(options=\{\}\)/);
+  assert.match(counter, /await refreshGamification\(\{quiet:true\}\)/);
+  assert.match(counter, /setInterval\(\(\)=>\{if\(!document\.hidden\)refreshGamification\(\{quiet:true\}\)\},20000\)/);
+  assert.match(counter, /if\(!navigator\.onLine\)\{\$\('gamificationStatus'\)/);
+  assert.doesNotMatch(counter, /function updateGamification\(/);
+  assert.doesNotMatch(counter, /currentPoints\s*\+=\s*10/);
+  assert.doesNotMatch(migration, /ALTER TABLE\s+(?:public\.)?count_members\s+ADD COLUMN\s+(?:IF NOT EXISTS\s+)?points/i);
+});
+
+test("Gamification scoring is server-authoritative, idempotent and Counter-only", () => {
+  const migration = read("database/migrations/20261123173951_countflow_gamification_snapshot_v1.sql");
+  assert.match(migration, /counting_private\.count_gamification_snapshot/);
+  assert.match(migration, /SECURITY DEFINER\s+SET search_path TO ''/);
+  assert.match(migration, /public\.count_get_gamification_snapshot[\s\S]*?SECURITY INVOKER/);
+  assert.match(migration, /auth\.uid\(\)/);
+  assert.match(migration, /m\.role = 'counter'/);
+  assert.match(migration, /m\.status = 'active'/);
+  assert.match(migration, /SELECT DISTINCT e\.member_id, e\.product_id, e\.location_id/);
+  assert.match(migration, /e\.recount_task_id IS NULL/);
+  assert.match(migration, /e\.count_round = 1/);
+  assert.match(migration, /e\.revision = 1/);
+  assert.match(migration, /public\.count_expected_balances/);
+  assert.match(migration, /public\.count_assignments/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION counting_private\.count_gamification_snapshot\(uuid\) FROM PUBLIC/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.count_get_gamification_snapshot\(uuid\) FROM anon/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.count_get_gamification_snapshot\(uuid\) TO authenticated/);
+  assert.doesNotMatch(migration, /GRANT EXECUTE ON FUNCTION public\.count_get_gamification_snapshot\(uuid\) TO anon/);
+});
