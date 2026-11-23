@@ -24,7 +24,9 @@
 - المسار الصحيح للمشروع/مجلد المنتجات مقبول لمرحلة staging؛ wrong folder/traversal/cross-project مرفوضة.
 - مرجع صورة غير موجودة مرفوض عند التحقق النهائي؛ HTTP وFTP وuserinfo والروابط الموقعة المؤقتة مرفوضة؛ HTTPS خارجي صالح مقبول.
 - الدلو ظل خاصًا؛ 0 Storage objects؛ 41,000 منتج؛ 0 منتجات بصور؛ trigger حاضر. لم تتغير صفوف المنتجات.
-- GitHub CI #203 / run ID 45240309793 على commit ea8553583258b6bab6b8d6da1d1f15524cd757ef: SUCCESS. Node 41/41 PASS، Deno type-check PASS، Pages build PASS، Playwright 2 PASS و1 SKIPPED (شرط مطابقة SHA لـmain لا ينطبق على PR branch).
+- GitHub CI #203 / run ID 45240309793 على commit `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
+- GitHub CI #204 / run ID 45240926256 على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
+- GitHub CI #208 / run ID 45254320320 على commit `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة على رأس الفرع: Node 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS؛ Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة SHA لـmain متخطى على فرع PR). هذه ليست اختبارات رفع صورة مصادق.
 
 ## 4. العقبات
 
@@ -45,6 +47,8 @@
 
 - branch: `work/lve-764-product-image-urls`.
 - PR #5: https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/5 — Draft / Open / Not merged.
+- standards/report copy: `Reports/FINAL_EXECUTION_REPORT_LVE-764.md` (verified byte-for-byte equal to root report).
+- current verified CI head before this documentation refresh: `57260b7872db2acf941f2d595b82969a5b2dbc6c`.
 - application commit: `b09b0920d519ead01787011e604a100a5083c649`.
 - migration-source/documentation commit: `ea8553583258b6bab6b8d6da1d1f15524cd757ef`.
 - `CURRENT_STATE.md` محدث. هذا التقرير هو سجل التسليم لهذه المرحلة.

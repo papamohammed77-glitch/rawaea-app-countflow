@@ -51,9 +51,10 @@
 - Client Balance XLSX لا يزال يضمّن bytes الصور داخل المصنف وفق حدوده الحالية؛ مسار التحميل مقيد الآن إلى مجلد منتجات المشروع.
 
 ### التحقق
-- CI #203 / 45240309793 على SHA ea8553583258b6bab6b8d6da1d1f15524cd757ef: SUCCESS.
-- Node: 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS.
-- Playwright: 2 PASS / 1 SKIPPED؛ المتخطى هو اختبار مطابقة SHA المنشور بـ main لأنه PR branch. ليست هذه اختبارات رفع صورة مصادق.
+- CI #203 / 45240309793 على SHA `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
+- CI #204 / 45240926256 على SHA `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
+- CI #208 / 45254320320 على SHA `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة فرع تشمل 41/41 Node PASS، Deno type-check PASS، Cloudflare Pages build PASS، وPlaywright 2 PASS / 1 SKIPPED لاختبار مطابقة نشر Production مع main على فرع PR.
+- هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
 - تحقق Supabase الحي: المسار الصحيح للـstage مقبول؛ wrong folder/traversal/cross-project/HTTP/FTP/userinfo/signed URL المؤقت مرفوض؛ missing object مرفوض عند commit. الدلو ما زال private، عدد الملفات 0، المنتجات 41,000، المنتجات ذات الصور 0، trigger موجود.
 
 ### بوابة الإغلاق المفتوحة
