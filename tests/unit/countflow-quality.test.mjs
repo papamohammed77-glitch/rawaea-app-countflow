@@ -846,7 +846,7 @@ test("LVE-765 camera MVP is below the barcode, previews the original capture and
 });
 
 test("LVE-765 shelf photo schema keeps the bucket public but requires active counter/session/location authorization for upload", () => {
-  const migration = read("database/migrations/20261123211000_countflow_shelf_image_camera_mvp_v1.sql");
+  const migration = read("database/migrations/20261123211241_countflow_shelf_image_camera_mvp_v1.sql");
   assert.match(migration, /\x27shelf-images\x27,\s*\x27shelf-images\x27,\s*true,\s*10485760/);
   assert.match(migration, /allowed_mime_types/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.count_shelf_images/);
