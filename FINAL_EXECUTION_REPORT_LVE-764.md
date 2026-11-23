@@ -33,6 +33,7 @@
 - GitHub CI #213 / run ID `45256146718` على commit `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node tests، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED.
 - GitHub CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node tests (0 failed)، Deno type-check PASS، Cloudflare Pages build PASS، Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة production SHA مع main متخطى على فرع PR).
 - GitHub CI #215 / run ID `45261684859` على commit `0a683652c639dbaca8d4cc8cb13301bb83a95e0b`: SUCCESS؛ commit توثيقي سابق لتحديث دليل الرفع النهائي.
+- GitHub CI #216 / run ID `45263648027` على commit `5cf597e0eb2e1e5a1805e2fd07ef1d915eeee72d`: SUCCESS؛ اختبارات الشفرة والوثائق اجتازت البوابة، مع بقاء العرض داخل التطبيقين وتصدير XLSX اختبارات E2E مستقلة ومفتوحة.
 
 ## 4. العقبات
 
@@ -159,7 +160,9 @@
 
 ## 11. التحقق النهائي والتسليم
 
-- CI #204 / run ID `45240926256` على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS؛ 41/41 Node PASS، Deno PASS، Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity test skipped on PR branch).
+- CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS؛ 41/41 Node PASS، Deno PASS، Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity test skipped on PR branch).
+- CI #215 / run ID `45261684859`: SUCCESS.
+- CI #216 / run ID `45263648027` على commit `5cf597e0eb2e1e5a1805e2fd07ef1d915eeee72d`: SUCCESS.
 - لا merge ولا نشر؛ خطوات Storage/DB/الرابط الموقّع PASS، وخطوتا Admin/Counter وXLSX لا تزالان OPEN. نقطة الرفع المؤقتة معطلة (v3, verify_jwt=true, HTTP 410)، ولا توجد سياسات anon مؤقتة أو امتداد HTTP متبقٍ.
 - تم تثبيت هذه المعايير في `CURRENT_STATE.md` ونسخة التقرير في `Reports/FINAL_EXECUTION_REPORT_LVE-764.md`.
 - توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations أو يرفع صورة ثانية؛ يستخدم كائن `lve764-test-image.jpg` والصنف QA90K-000421 الحاليين، يكمل التحقق المرئي في Admin وCounter، ثم ينفذ Client Balance XLSX بمستخدم owner مؤكد وجلسة لها تسوية approved ويفحص `xl/media`. لا يدمج قبل PASS لهذه الخطوات.

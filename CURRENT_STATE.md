@@ -66,9 +66,12 @@
 - CI #204 / 45240926256 على SHA `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
 - CI #208 / 45254320320 على SHA `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة فرع تشمل 41/41 Node PASS، Deno type-check PASS، Cloudflare Pages build PASS، وPlaywright 2 PASS / 1 SKIPPED لاختبار مطابقة نشر Production مع main على فرع PR.
 - CI #210 / 45254617954 على SHA `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED.
-- CI #211 / 45255276526 على SHA `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. أحدث تحقق مكتمل قبل هذا التحديث.
+- CI #211 / 45255276526 على SHA `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED.
 - CI #212 / 45255695241 على SHA `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. شمل ذلك آخر `CURRENT_STATE.md` ونسختي التقرير.
 - CI #213 / 45256146718 على SHA `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. التحقق يشمل تقرير التسليم وملف الحالة ونسخة Reports.
+- CI #214 / 45256686296 على SHA `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node، Deno type-check، Pages build، Playwright 2 PASS / 1 SKIPPED.
+- CI #215 / 45261684859 على SHA `0a683652c639dbaca8d4cc8cb13301bb83a95e0b`: SUCCESS.
+- CI #216 / 45263648027 على SHA `5cf597e0eb2e1e5a1805e2fd07ef1d915eeee72d`: SUCCESS. كانت هذه بوابات CI للشفرة والوثائق، وليست بديلًا لاختبارات Admin/Counter/XLSX التشغيلية المفتوحة.
 - هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
 - تحقق Supabase الحي بعد الاختبار: Storage logs توثق upload POST 200 (role=service_role، 2,283 bytes)، authenticated GET 200، signed GET 200 (image/jpeg، 2,283 bytes)، ثم حذف ملف المحاولة السابقة عبر Storage API 200. فحوص SHA-256 داخل الرفع المؤقت شرطت تطابق المصدر/التخزين/Signed GET قبل تحديث الصنف والتنظيف؛ حذف الملف السابق يؤكد اجتياز تلك الحواجز البرمجية. UPDATE للصنف عبر Supabase client نجح، والقيمة الدائمة هي object key. الدلو private، object count=1، image_url count=1. أزيلت جميع سياسات LVE-764 المؤقتة وإضافة HTTP (صفر متبقٍ)، وأُغلقت نقطة الرفع المؤقتة (v3 verify_jwt=true, 410).
 
