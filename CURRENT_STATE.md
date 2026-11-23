@@ -8,7 +8,9 @@
 **Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
 **فرع العمل:** work/lve-764-product-image-urls  
 **PR:** #5 — Draft / Open / Not merged  
-**Commit:** ea8553583258b6bab6b8d6da1d1f15524cd757ef.
+**Application commit:** `b09b0920d519ead01787011e604a100a5083c649`  
+**Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
+**Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
 
 ### الحالة
 ### معيار بيانات الأصناف (معيار إلزامي)
@@ -54,6 +56,8 @@
 - CI #203 / 45240309793 على SHA `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
 - CI #204 / 45240926256 على SHA `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
 - CI #208 / 45254320320 على SHA `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة فرع تشمل 41/41 Node PASS، Deno type-check PASS، Cloudflare Pages build PASS، وPlaywright 2 PASS / 1 SKIPPED لاختبار مطابقة نشر Production مع main على فرع PR.
+- CI #210 / 45254617954 على SHA `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED.
+- CI #211 / 45255276526 على SHA `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. أحدث تحقق مكتمل قبل هذا التحديث.
 - هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
 - تحقق Supabase الحي: المسار الصحيح للـstage مقبول؛ wrong folder/traversal/cross-project/HTTP/FTP/userinfo/signed URL المؤقت مرفوض؛ missing object مرفوض عند commit. الدلو ما زال private، عدد الملفات 0، المنتجات 41,000، المنتجات ذات الصور 0، trigger موجود.
 

@@ -27,6 +27,8 @@
 - GitHub CI #203 / run ID 45240309793 على commit `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
 - GitHub CI #204 / run ID 45240926256 على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
 - GitHub CI #208 / run ID 45254320320 على commit `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة على رأس الفرع: Node 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS؛ Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة SHA لـmain متخطى على فرع PR). هذه ليست اختبارات رفع صورة مصادق.
+- GitHub CI #210 / run ID `45254617954` على commit `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED.
+- GitHub CI #211 / run ID `45255276526` على commit `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED. هذه البوابة تشمل آخر إضافة لتقرير Advisor.
 
 ## 4. العقبات
 
@@ -51,6 +53,10 @@
 - current verified CI head before this documentation refresh: `57260b7872db2acf941f2d595b82969a5b2dbc6c`.
 - application commit: `b09b0920d519ead01787011e604a100a5083c649`.
 - migration-source/documentation commit: `ea8553583258b6bab6b8d6da1d1f15524cd757ef`.
+- standards + Reports copy commit: `57260b7872db2acf941f2d595b82969a5b2dbc6c`.
+- CI evidence documentation commit: `6e0fe09970ca5d6916dd0e939345e175283adbc6`.
+- explicit `Kg/Grams` standard commit: `193b8362f09c744f2827620f22e8194a2fba4ddf`.
+- Supabase Advisor handover commit: `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
 - `CURRENT_STATE.md` محدث. هذا التقرير هو سجل التسليم لهذه المرحلة.
 
 ## 7. بوابة الإغلاق — ما يزال مفتوحًا
