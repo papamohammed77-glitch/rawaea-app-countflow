@@ -19,7 +19,7 @@
 - المصدر الصحيح: المستودع `papamohammed77-glitch/rawaea-app-countflow`، الفرع `main`.
 - Build command المعتمد في هذا الدليل: `bash scripts/build-pages.sh`.
 - Build output directory المعتمد في هذا الدليل: `dist`.
-- آخر مطابقة موثقة لـCloudflare Production بعد دمج LVE-762: commit `4de6bd9bf17c70c15c0d37fb3cefb2ab3ac1ece7`، main CI run `45225616423`، واختبارات Production Playwright **3/3 PASS** شملت مطابقة SHA الدقيقة وواجهات RTL على الهاتف. بعد أي تعديل لاحق على ملفات النشر، لا تعتبره منشوراً قبل نجاح اختبار SHA جديد على أحدث `main`.
+- آخر مطابقة موثقة لـCloudflare Production بعد LVE-763: commit `f26b8b6c0e91bfe626e997e2f654cf6df2905516`، main CI run `45232321254`، واختبارات Production Playwright **3/3 PASS** شملت مطابقة SHA الدقيقة وواجهات RTL على الهاتف. شملت نسخة الويب شريط Gamification للمندوب وتبويب إنجازاتي.
 - لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح الصفحات الثلاث على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
 - لا تستخدم `erp-frontend` أو `companies/company-1` أو `rawaea-erp.pages.dev` كجذر أو alias أو redirect.
 
@@ -37,5 +37,5 @@
 
 - ملفات الواجهة تستخدم Supabase Publishable Key فقط. لا تضف Service Role Key إلى ملفات الواجهة أو متغيرات Pages العامة.
 - Edge Functions الخاصة بـCountFlow يجب أن تبقى على مشروع `rawaea-staging`، مع JWT verification مفعّل. في 2026-11-23 نُشرت `counting-export-session` بالإصدار **v15 ACTIVE** و`verify_jwt=true`؛ محتوى `index.ts` الحي يطابق حرفياً Git blob `500552796f988e56aa944fd2942c0d9e98efe34e`، وبصمة Edge runtime `8d3d8de9b2cf39351346325a5279c8b8d8c27f0b35d183639e1656f3d8ea61c4`.
-- مشروع Pages ونطاق الإنتاج موجودان. إثبات SHA بعد دمج LVE-762 هو `4de6bd9bf17c70c15c0d37fb3cefb2ab3ac1ece7` في run `45225616423`؛ هذا إثبات محدد للـSHA المذكور وليس افتراضاً بأن أي commit أحدث منشور. فحوصات CI على `main` تنتظر `build-info.json` وتطابق SHA التطبيق الفعلي. تحقق من أحدث run بعد كل دمج. لا يوجد دليل على تعديل DNS أو إضافة دومين مخصص.
+- مشروع Pages ونطاق الإنتاج موجودان. إثبات SHA بعد دمج LVE-763 هو `f26b8b6c0e91bfe626e997e2f654cf6df2905516` في run `45232321254`؛ فحص `build-info.json` طابق Cloudflare Production مع هذا الـSHA. فحوص CI على `main` تنتظر `build-info.json` وتطابق SHA التطبيق الفعلي. تحقق من أحدث run بعد كل دمج. لا يوجد دليل على تعديل DNS أو إضافة دومين مخصص.
 - بعد ظهور نشر يطابق HEAD: شغّل Playwright باستخدام حسابَي مشرف ومندوب معتمدين، ثم اختبر دورة جرد QA قابلة للتنظيف في `rawaea-staging` فقط. لا تستخدم بيانات تشغيل حقيقية ولا تنفذ ترحيلاً إلى ERP.

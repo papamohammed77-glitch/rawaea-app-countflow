@@ -6,7 +6,7 @@
 **النطاق:** `countflow.html` + migration CountFlow-only + tests/docs.  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`.  
-**فرع التنفيذ:** `work/lve-763-countflow-gamification`، مبني على main LVE-762.
+**الدمج:** PR #3 (`e34f90c077b068a4dbe8bb0cd79f52f0a10d0b71`) وPR #4 (`f26b8b6c0e91bfe626e997e2f654cf6df2905516`) مدمجان إلى `main`.
 
 ### التصميم المعتمد
 - رُفض عمود `count_members.points` المقترح لأن أعضاء الجرد لا يملكون UPDATE لعضويتهم؛ وإضافة العمود ثم زيادة النقاط من JavaScript ستفتح تلاعبًا أو تحتاج توسيع صلاحيات غير مقبول.
@@ -20,7 +20,7 @@
 - Migration `countflow_gamification_snapshot_v1` مُطبقة بالفعل؛ سجل Supabase: `20261123173951`.
 - المصدر المتتبع: `database/migrations/20261123173951_countflow_gamification_snapshot_v1.sql`.
 - الدالة الخاصة `counting_private.count_gamification_snapshot(uuid)` هي `SECURITY DEFINER` مع `search_path=''`، وتتحقق من `auth.uid()` وعضوية نشطة بدور `counter` في الجلسة.
-- أضيف حارس مشاركة مستقل `counting_private.assert_gamification_session_participation(uuid)` (ledger `20261123174943`): يتأكد أن المستخدم عضو `counter` نشط في جلسة مفتوحة/قيد المراجعة، وإذا كانت للجلسة إسنادات فلا يكفي الانتماء للمشروع؛ يجب أن يملك العضو إسنادًا نشطًا/مُسندًا في الجلسة ذاتها. الـRPC العام يستدعي الحارس قبل إرجاع الملخص.
+- أضيف حارس مشاركة مستقل `counting_private.assert_gamification_session_participation(uuid)` (ledger `20261123174943`): يتأكد أن المستخدم عضو `counter` نشط في جلسة مفتوحة/قيد المراجعة، وإذا كانت للجلسة إسنادات فلا يكفي الانتماء للمشروع؛ يجب أن يملك العضو إسنادًا نشطًا/مُسندًا في الجلسة ذاتها. الـRPC العام يستدعي الحارس قبل إرجاع الملخص. المصدر المتتبع: `database/migrations/20261123174943_countflow_gamification_session_assignment_guard_v1.sql`.
 - RPC العام `public.count_get_gamification_snapshot(uuid)` هو `SECURITY INVOKER`. تم سحب EXECUTE من PUBLIC وanon ومنح authenticated فقط للدالتين؛ فحص ACL حي أكد anon=false وauthenticated=true.
 - اختبار نداء RPC من سياق قاعدة بيانات بلا هوية أعاد `AUTH_REQUIRED`، كما ينبغي. لا تنشئ الدالة صفوفًا أو تغيّر نقاطًا دائمة أو أرصدة أعمال.
 
@@ -31,10 +31,11 @@
 - تم منع تكرار طلب snapshot للجلسة/العضو نفسيهما، وإبطال الردود القديمة عند تبديل العضوية حتى لا تعرض بيانات المشروع السابق.
 
 ### اختبارات وحدود الإثبات
-- أضيف اختباران مصدرّيان: الواجهة تستعمل RPC ولا تزيد نقاطًا محلياً؛ وعقد SQL يثبت دور Counter، الجلسة، النطاق، distinct first-count، ACL ومنع العمود القابل للتعديل.
-- فحص ACL/الدوال الحي اجتاز. فحص نداء بلا هوية رُفض بـ`AUTH_REQUIRED`.
-- حالة قاعدة CountFlow الحالية عند التنفيذ: 0 أرصدة مستهدفة، 0 إدخالات عد، 0 أعضاء Counter نشطين، 0 جلسات مفتوحة. لذلك لا توجد بيانات تسمح باختبار ترتيب/إكمال حقيقي أو تسجيل دخول ميداني E2E دون إنشاء بيانات عمل اصطناعية.
-- **OPEN حتى إغلاق CI/النشر:** اختبارات Node/Deno/Pages وPlaywright للنسخة الجديدة، ثم التحقق من SHA على Cloudflare Production بعد الدمج. لا يُدّعى نجاح E2E مصادق أو سلوك leaderboard ببيانات فعلية قبل وجود جلسة ومشاركين وأرصدة QA مصرح بها.
+- أضيفت ثلاثة اختبارات مصدرية للميزة: RPC فقط دون زيادة محلية، حساب نقاط first-count الفريدة، وحارس منع العضو غير المسند من طلب لوحة جلسة ذات إسنادات.
+- فحص ACL/الدوال الحي اجتاز: anon EXECUTE=false وauthenticated EXECUTE=true للدوال العامة والخاصة؛ نداء بلا هوية رُفض بـ`AUTH_REQUIRED` بعد تشغيل حارس المشاركة.
+- **PASS — CI main #200 / run `45232321254`** على التطبيق SHA `f26b8b6c0e91bfe626e997e2f654cf6df2905516`: 38/38 اختبار Node، Deno type-check، Pages allowlisted build، وProduction Playwright 3/3؛ اختبار `build-info.json` طابق Cloudflare Production مع SHA `f26b8b6`.
+- حالة قاعدة CountFlow الحالية عند التنفيذ: 0 أرصدة مستهدفة، 0 إدخالات عد، 0 أعضاء Counter نشطين، 0 جلسات مفتوحة. لذلك لا توجد بيانات تسمح باختبار ترتيب/إكمال حقيقي أو تسجيل دخول ميداني E2E دون إنشاء بيانات عمل اصطناعية؛ لا يُدّعى اختبار authenticated leaderboard ببيانات حقيقية.
+- لم تُمس تطبيقات النظام الأم أو المشرف في LVE-763؛ نطاق الواجهة المضاف حصريًا هو `countflow.html`. لم تُنشأ سجلات أعمال أو حسابات أو جلسات أو أصناف أو عمليات عد، ولم تُمس دفعة QA ذات 90,000 صف.
 - لم يُستخدم مشروع SMART ERP، ولم تُنشأ سجلات أعمال أو حسابات أو جلسات أو أصناف أو عمليات عد. دفعة QA ذات 90,000 صف لم تُلمس.
 
 ---
