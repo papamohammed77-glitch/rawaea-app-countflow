@@ -107,4 +107,13 @@
 - لا merge ولا نشر؛ بوابة E2E ما زالت مفتوحة.
 - تم تثبيت هذه المعايير في `CURRENT_STATE.md` ونسخة التقرير في `Reports/FINAL_EXECUTION_REPORT_LVE-764.md`.
 - توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations؛ يجهز مشروع/جلسة/إسناد QA معزولًا، ينفذ رفع صورة أصلية مصادقًا عليه، يثبت ظهورها في Admin وCounter، يصدّر XLSX ويتحقق من `xl/media`، ثم فقط يغلق التقرير وينقل PR للمراجعة والدمج.
+## 12. نتائج Supabase Advisor — ملاحظات أمان خارج نطاق LVE-764
 
+تم إجراء فحص Security وPerformance Advisor بعد ترحيلات الصور:
+- جداول CountFlow العامة الـ23 ذات البادئة `count_*` جميعها RLS مفعّل ولديها سياسة واحدة على الأقل؛ لا يوجد جدول CountFlow ضمن نتائج `rls_disabled_in_public`.
+- دالتا التحقق من مرجع الصورة والـTrigger في `counting_private` لا تسمحان بتنفيذ anon أو authenticated؛ هذا هو الحد المقصود لدوال التحقق الداخلية.
+- على مستوى المشروع كاملًا، ظهر 65 finding لجدول public بلا RLS، و5 دوال SECURITY DEFINER عامة يمكن لـanon تنفيذها، و14 دالة SECURITY DEFINER قابلة لـauthenticated. قائمة anon المعروضة تتضمن دوال legacy مثل `fn_audit_trigger`, `fn_delivery_relation_guard`, `post_inventory_adjustment_atomic`, `receive_purchase_atomic`, `save_sales_invoice_atomic`؛ لا تخص مسار الصور.
+- ضمن دوال authenticated توجد خمس CountFlow RPCs قائمة: `count_approve_reconciliation`, `count_cancel_session_queue_barrier`, `count_report_device_queue`, `count_set_alert_status`, `count_waive_device_queue` (anon EXECUTE=false, authenticated EXECUTE=true). هي خارج تعديل LVE-764 ولم أغيّرها أو أزعم مراجعة داخلية شاملة لمنطقها. يلزم تدقيق منفصل لسياسات التفويض قبل تشغيل عملاء خارجيين.
+- ظهر تحذير Auth لحماية كلمات المرور المسرّبة، و64 index غير مستخدم ومؤشر مكرر واحد على جدول ERP `erp_operation_registry`. لم تُجرَ أي تغييرات عليها في هذه المهمة.
+
+هذه النتائج لا تغيّر نتيجة اختبارات الصور؛ لكنها مخاطر/مهام منفصلة يجب ألا تُخفى أو تُعالَج عشوائيًا داخل PR الصور، خصوصًا أن المشروع يحتوي جداول legacy غير مرتبطة بكتالوج CountFlow.

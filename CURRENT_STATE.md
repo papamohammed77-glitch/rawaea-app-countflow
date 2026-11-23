@@ -57,6 +57,11 @@
 - هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
 - تحقق Supabase الحي: المسار الصحيح للـstage مقبول؛ wrong folder/traversal/cross-project/HTTP/FTP/userinfo/signed URL المؤقت مرفوض؛ missing object مرفوض عند commit. الدلو ما زال private، عدد الملفات 0، المنتجات 41,000، المنتجات ذات الصور 0، trigger موجود.
 
+### نتائج Supabase Advisor ذات الصلة (فحص قراءة فقط)
+- جميع جداول CountFlow الـ23 ذات البادئة `count_*` في schema `public` لديها RLS مفعّل وسياسة واحدة على الأقل؛ لا يوجد بينها جدول أبلغ Advisor عن تعطيل RLS له.
+- Validator الصور الخاص `counting_private.is_valid_product_image_reference` ودالة Trigger `counting_private.enforce_count_product_image_reference` لا تمنحان EXECUTE لـanon أو authenticated.
+- فحص المشروع بأكمله أظهر تحذيرات/أخطاء قائمة خارج مسار الصور: 65 جدولًا عامًا بلا RLS (لا تشمل جداول `count_*`)، و5 دوال SECURITY DEFINER عامة قابلة لـanon (أسماء legacy غير CountFlow)، و14 دالة SECURITY DEFINER قابلة لـauthenticated، منها خمس RPCs تشغيلية CountFlow قديمة. هذه لم تُعدّل ضمن LVE-764 وتحتاج مراجعة أمان مستقلة قبل إتاحة المشروع لعملاء خارجيين.
+- Advisor أظهر أيضًا تحذير حماية كلمات المرور المسرّبة و64 index غير مستخدم ومؤشرًا مكررًا واحدًا على `erp_operation_registry`. لم تُجرَ تغييرات عليها لأنها خارج نطاق LVE-764 وتتطلب مراجعة منفصلة.
 ### بوابة الإغلاق المفتوحة
 - لم يتم رفع ملف صورة فعلي؛ Browser connector للقراءة فقط ولا توجد أداة Storage upload في بيئة التنفيذ.
 - لم يثبت بعد عرض صورة مرفوعة في Admin وCounter، ولا تضمين صورة فعلية في Client Balance XLSX.
