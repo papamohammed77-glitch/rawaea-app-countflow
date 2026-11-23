@@ -43,7 +43,7 @@
 - آخر CI موثق قبل هذا التحديث: run `44949186321` على تطبيق main SHA `8c8a7728649d1193c58a6ecedaddccbe6845f0c9` — **35/35 Node tests PASS**، Deno type-check PASS، allowlisted Pages build PASS، وProduction Playwright **3/3 PASS** مع SHA parity.
 - اختبارات المصدر تغطي preflight memory/count guard، stream image reader، حد 500/8MiB/1MiB، سياسات التسعير UNKNOWN، streaming XLSX import وsupervisor role boundary.
 - **NOT RUN / UNKNOWN:** تصدير XLSX فعلي مصادق، فتح المصنف في Excel/LibreOffice، اختبار ذاكرة ذروة فعلي، رفع/تضمين صورة حقيقية، owner sign-in E2E دون عضوية Supervisor، وتدفق Offline على أجهزة حقيقية.
-- تحديثات التوثيق هذه لا تغير ملفات صفحات الويب. ينتظر فرع التوثيق فحوص CI/الدمج؛ لا يُدّعى تطابق Pages مع commit توثيقي جديد قبل run ناجح.
+- PR #2 مدمج إلى `main` بالـSHA `4de6bd9bf17c70c15c0d37fb3cefb2ab3ac1ece7`. تشغيل `main` رقم 194 / run `45225616423` اكتمل SUCCESS: 35/35 اختبارات Node، Deno type-check، Pages build، وPlaywright Production 3/3؛ فحص `build-info.json` طابق Cloudflare Production مع SHA `4de6bd9bf17c70c15c0d37fb3cefb2ab3ac1ece7`. أي commit توثيقي لاحق يحتاج CI parity جديدًا قبل إعلان نشره.
 
 ### 5. Safety and mandatory continuation
 
