@@ -1,5 +1,58 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-23-762 — P0/P1 revalidation + Export Edge v15 source parity
+
+**التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow` فقط.  
+**قاعدة CountFlow:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` فقط.  
+**Git main baseline قبل تحديث هذا السجل:** `d72f67afc5deba27eea5c027ede469a4c5d15161`.  
+**نطاق التغيير:** نشر إصدار جديد من وظيفة التصدير الحالية، وتحديث توثيق النشر/الحالة؛ لم تتغير صفحات التشغيل أو SQL أو بيانات CountFlow.
+
+### 1. Phase 1 — P0 security & role enforcement: VERIFIED ALREADY, NO DUPLICATE MIGRATION
+
+- القراءة الحية لـRLS أكدت أن `count_projects` INSERT يشترط `created_by = auth.uid()` و`counting_private.is_platform_owner()`.
+- `public.count_create_engagement(text,text,text)` حاليًا **SECURITY INVOKER**، ويتحقق أولاً من `counting_private.is_platform_owner()` قبل إنشاء التكليف وأول عملية؛ `anon EXECUTE=false` و`authenticated EXECUTE=true`.
+- `counting_private.is_platform_owner()` يربط `auth.uid()` بمستخدم Supabase Auth ذي البريد المؤكد `owner@rawaea.com`؛ لا يعتمد على user_metadata أو بريد يرسله العميل.
+- سياسة `count_entries` INSERT تشترط عضوية `counter` نشطة للمشروع نفسه، جلسة active، جهازًا معتمدًا، ونطاق الموقع. لذلك auditor لا يستطيع العد عبر RLS.
+- سياسات الإدخال/التحديث/الحذف على `count_members`, `count_sessions`, `count_import_batches`, `count_import_rows`, `count_recount_tasks` owner-only؛ أما كتابة المشرف فتقتصر على `count_assignments` وفق نطاقه.
+- `Countflow-supervisor.html` يحتوي تبويبي المراقبة اللحظية والفريق فقط؛ عمليات الكتابة فيه إسناد/إخراج عضو من العملية عبر `count_assignments`. لا توجد واجهات أو نداءات إنشاء تكليف/حساب/استيراد/كتالوج أو صلاحيات Admin.
+- `countflow.html` يحمّل العضويات النشطة بدور `counter` فقط، ويستخدم RPCs العد وإعادة العد؛ حارس RLS يؤكد قيد الدور على الخادم.
+- **القرار:** لم أكرر ترحيل P0/LVE-749 أو أعدل سياسات RLS لأن القيود الحية المطلوبة موجودة. لا تغيير على Schema/ACL/roles أو بيانات التشغيل في هذه المرحلة.
+
+### 2. Phase 2 — Import & products virtualization: EXISTING IMPLEMENTATION RECONFIRMED
+
+- `countflow-admin.html` الحالي يتضمن CSV عبر Papa Parse `step` مع pause/resume، وقارئ XLSX تدفقي على Blob chunks؛ لا يعتمد على `arrayBuffer()` للملف الكامل أو `Papa.parse(file)` غير التدفقية.
+- استيراد العمليات يقسم البيانات إلى دفعات خادمية 1,000 صف؛ الحقول الاختيارية/المفقودة والأخطاء الجزئية تُعالج على مستوى الصف وتظهر كتحذيرات/رفض دون إيقاف الدفعة كلها وفق قواعد تعريف الصنف ونطاق العملية.
+- عرض المنتجات مرقم خادميًا 100 صف مع نافذة DOM افتراضية 30 عنصرًا؛ لا يحمل 200,000 صف إلى DOM.
+- الاختبار الموجود `tests/unit/countflow-quality.test.mjs` يتضمن قراءة XLSX مصطنع من 90,000 صف، واختبارات CRC ومسارات ZIP الآمنة، وخصائص partial failure وsupervisor role boundary.
+- هذه الأعمال سابقة ومثبتة في LVE-759 وما بعده؛ لم أعد كتابة الملف أو أكرر دفعة QA الحية.
+
+### 3. Phase 3 — Export Edge Function: LIVE SOURCE UPDATED
+
+- قبل الإصلاح كان `counting-export-session` نشطًا بالإصدار v14، ومحتواه لا يطابق مصدر Git: كان يستخدم `Storage.download()` للصور ويقرأ علاقات كبيرة قبل اكتمال preflight counts.
+- نُشر المصدر الحالي المطابق لـGit بالإصدار **v15 ACTIVE** على المشروع `hfzznsiprnwkpayskzhu`، مع `verify_jwt=true` دون تغييره إلى public/anon.
+- التحقق بعد النشر: `get_edge_function` أكد v15/ACTIVE/JWT=true؛ `index.ts` الحي = مصدر Git **byte-for-byte**، كلاهما 66,266 حرفًا؛ Git blob `500552796f988e56aa944fd2942c0d9e98efe34e`، Edge SHA-256 `8d3d8de9b2cf39351346325a5279c8b8d8c27f0b35d183639e1656f3d8ea61c4`.
+- المصدر يسبق التحميل الكبير بـexact row counts وحدود للعلاقات، ويرفض ما يتجاوز ميزانية الذاكرة التقديرية 160 MiB أو حدود الصفوف بـ413؛ يقرأ صورة المنتج عبر signed URL وResponse stream مع سقف 1 MiB للصورة، إجمالي 8 MiB، وبحد أقصى 500 صورة؛ الصور الخارجية أو غير الصالحة/غير المدعومة تُسجل كفجوات ولا تُجلب تلقائيًا.
+- مصنف Client Balance يظل محدودًا بـ50 MiB؛ ويعلن metadata صراحة `pricing_policy: "UNKNOWN"`، مع اشتقاق تكلفة وحدة الأساس من سعر الشراء ومعامل التحويل فقط، دون تحويل عملات أو وصف القيمة كتقييم محاسبي أو قيد.
+- **حد تقني يجب عدم إخفائه:** الصور تُقرأ عبر stream وبحدود صارمة، لكن بناء XLSX النهائي ما زال يستخدم `zipSync`/مصفوفة bytes في الذاكرة؛ هذه نسخة bounded/preflight وليست streaming ZIP output end-to-end. لا تدّعِ أن ذروة الذاكرة قِيست فعليًا أو أن ملفًا حقيقيًا فُتح في Excel.
+- لم أشغّل Edge Export حقيقيًا؛ فهو ينشئ صف `count_exports`، ويرفع ملفًا إلى Storage، ويكتب سجل تدقيق. لم أقم بإحداث هذه الكتابات دون حساب owner مصادق وبيانات اختبار مخصصة آمنة.
+
+### 4. Tests and evidence
+
+- آخر CI موثق قبل هذا التحديث: run `44949186321` على تطبيق main SHA `8c8a7728649d1193c58a6ecedaddccbe6845f0c9` — **35/35 Node tests PASS**، Deno type-check PASS، allowlisted Pages build PASS، وProduction Playwright **3/3 PASS** مع SHA parity.
+- اختبارات المصدر تغطي preflight memory/count guard، stream image reader، حد 500/8MiB/1MiB، سياسات التسعير UNKNOWN، streaming XLSX import وsupervisor role boundary.
+- **NOT RUN / UNKNOWN:** تصدير XLSX فعلي مصادق، فتح المصنف في Excel/LibreOffice، اختبار ذاكرة ذروة فعلي، رفع/تضمين صورة حقيقية، owner sign-in E2E دون عضوية Supervisor، وتدفق Offline على أجهزة حقيقية.
+- تحديثات التوثيق هذه لا تغير ملفات صفحات الويب. ينتظر فرع التوثيق فحوص CI/الدمج؛ لا يُدّعى تطابق Pages مع commit توثيقي جديد قبل run ناجح.
+
+### 5. Safety and mandatory continuation
+
+- دفعة `qa-90000-products.csv` بالمعرف `f799c5c1-b766-4712-b74f-c0bb19836ddc` تظل كما هي: 90,000 إجماليًا، 41,000 committed، 49,000 staged. **ممنوع استئنافها أو إيقافها أو تعديلها أو حذفها أو إعادة اعتمادها.**
+- لم يحدث DML تجريبي أو إنشاء حسابات/مشروعات/جلسات/منتجات، ولم تُرفع صور أو ملفات تصدير، ولم تتغير أي أرصدة أو بيانات أعمال.
+- لم أستخدم مشروع SMART ERP `fiilmooggumokxanwiyx` أو مستودع `erp-frontend` أو ملفات `company-1/main.html` أو `core.js`؛ الفصل بين CountFlow وRAWAEA محفوظ.
+- المساعد التالي يبدأ من LVE-762 ومن Git main الحالي؛ لا يعيد P0 migration ولا يعيد كتابة Import streaming/virtualization. الخطوة التشغيلية التالية فقط: تحقق من CI/merge وتطابق Pages SHA، ثم خطط لاختبار تصدير مصادق في مجموعة CountFlow اصطناعية مخصصة لا تتداخل مع دفعة QA القائمة. لا تختبر على دفعة 90K ولا تدّعِ نجاح XLSX/الذاكرة قبل قياسهما فعليًا.
+
+---
+
 ## LVE-2026-11-21-761 — Owner RLS parity + private image Storage
 
 **التاريخ:** 21 نوفمبر 2026  
