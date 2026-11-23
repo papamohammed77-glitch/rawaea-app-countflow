@@ -14,6 +14,7 @@
 - `public.count_create_engagement(text,text,text)` حاليًا **SECURITY INVOKER**، ويتحقق أولاً من `counting_private.is_platform_owner()` قبل إنشاء التكليف وأول عملية؛ `anon EXECUTE=false` و`authenticated EXECUTE=true`.
 - `counting_private.is_platform_owner()` يربط `auth.uid()` بمستخدم Supabase Auth ذي البريد المؤكد `owner@rawaea.com`؛ لا يعتمد على user_metadata أو بريد يرسله العميل.
 - سياسة `count_entries` INSERT تشترط عضوية `counter` نشطة للمشروع نفسه، جلسة active، جهازًا معتمدًا، ونطاق الموقع. لذلك auditor لا يستطيع العد عبر RLS.
+- `public.count_record_entry(...)` SECURITY INVOKER ويتحقق من دور `counter` وحالة العضوية والجلسة والجهاز؛ و`public.count_record_recount_entry(...)` يستدعي `counting_private.record_recount_entry(...)` SECURITY DEFINER، والتي تتحقق صراحة من `auth.uid()` و`role='counter'` النشط وتطابق `assigned_member_id` وحالة المهمة والجلسة والجهاز قبل الإدخال. لا يوجد مسار إعادة عد للمراجع.
 - سياسات الإدخال/التحديث/الحذف على `count_members`, `count_sessions`, `count_import_batches`, `count_import_rows`, `count_recount_tasks` owner-only؛ أما كتابة المشرف فتقتصر على `count_assignments` وفق نطاقه.
 - `Countflow-supervisor.html` يحتوي تبويبي المراقبة اللحظية والفريق فقط؛ عمليات الكتابة فيه إسناد/إخراج عضو من العملية عبر `count_assignments`. لا توجد واجهات أو نداءات إنشاء تكليف/حساب/استيراد/كتالوج أو صلاحيات Admin.
 - `countflow.html` يحمّل العضويات النشطة بدور `counter` فقط، ويستخدم RPCs العد وإعادة العد؛ حارس RLS يؤكد قيد الدور على الخادم.
