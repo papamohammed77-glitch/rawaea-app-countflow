@@ -5,7 +5,7 @@
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
 **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`  
 **الفرع:** `work/lve-765-camera-mvp`  
-**الحالة:** Implemented on branch; automated/static validation pending; authenticated phone-camera E2E pending because no active CountFlow session exists in the current QA project.
+**الحالة:** Implemented on branch; CI PASS; authenticated phone-camera E2E remains OPEN because no active CountFlow session exists in the current QA project.
 
 ### ما تم بناؤه
 - تمت إضافة قسم كاميرا مستقل مباشرة أسفل حقل الباركود في `countflow.html`؛ لا يتداخل مع كاميرا مسح الباركود الموجودة.
@@ -24,7 +24,7 @@
 
 ### البوابات
 - **CONFIRMED:** Bucket public config والحد وأنواع MIME وسياسة الرفع والحذف المحدود وTrigger مطابقة وجود الملف/MIME/الحجم وجدول المراجعة وRLS عبر فحص SQL حي.
-- **OPEN:** CI واختبارات المصدر على الفرع.
+- **PASS:** CI #220 / run ID `45269123826` على commit `69d95b3bc955e4766c06247a83d2bf8b9483260f` نجح: 43/43 Node tests، Deno type-check PASS، Cloudflare Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity غير مناسب لفرع PR).
 - **OPEN:** التقاط فعلي من هاتف أو جهاز camera-enabled، Storage upload بواسطة مستخدم Counter مصرح، تسجيل صف review، فتح public URL، ومراجعة الصلاحية لعضو غير مسند.
 
 ### توجيه الاستكمال
