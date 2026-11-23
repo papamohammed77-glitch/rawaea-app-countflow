@@ -1,5 +1,46 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
+
+**التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
+**المستودع:** papamohammed77-glitch/rawaea-app-countflow  
+**Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu  
+**Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
+**فرع العمل:** work/lve-764-product-image-urls  
+**PR:** #5 — Draft / Open / Not merged  
+**Commit:** ea8553583258b6bab6b8d6da1d1f15524cd757ef.
+
+### الحالة
+- image_url موجود مسبقًا كـ nullable text؛ لا تضف عمودًا جديدًا.
+- توجد 41,000 سجلات منتجات، ولا يوجد أي image_url حاليًا. دلو counting-product-images خاص (public=false) وخالٍ من الملفات. لم تتم تعبئة بيانات أو إنشاء placeholders.
+- migration 20261123182553 (countflow_product_image_reference_hardening_v1) وmigration 20261123182644 (countflow_reject_ephemeral_product_image_urls_v1) مطبقتان بالفعل.
+- Storage policies حصرت قراءة/رفع/تحديث الصور في نمط <project UUID>/products/<single filename> مع الحفاظ على أدوار المالك/المشرف/العضوية.
+- validator server-side وtrigger على count_products يمنعان المراجع غير الصالحة، traversal، المسارات خارج products، والملفات غير الموجودة/غير JPEG-PNG/أكبر من 1 MiB. مرحلة stage تتحقق من شكل المسار؛ مرحلة commit تتحقق من وجود الملف.
+- signed URLs المؤقتة ممنوعة داخل image_url. المرجع الدائم هو object key، ثم يُوقّع عند العرض.
+- Admin كان يملك أصلًا thumbnail ورفع/معاينة؛ تم تضييق المراجع والتحقق من HTTPS وإعطاء الملف المختار أولوية على أي URL قديم.
+- Counter يستخدم resolver موحدًا للبحث العادي وإعادة العد، signed read من الدلو الخاص فقط، fallback، وحماية من ردود async قديمة.
+- Client Balance XLSX لا يزال يضمّن bytes الصور داخل المصنف وفق حدوده الحالية؛ مسار التحميل مقيد الآن إلى مجلد منتجات المشروع.
+
+### التحقق
+- CI #203 / 45240309793 على SHA ea8553583258b6bab6b8d6da1d1f15524cd757ef: SUCCESS.
+- Node: 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS.
+- Playwright: 2 PASS / 1 SKIPPED؛ المتخطى هو اختبار مطابقة SHA المنشور بـ main لأنه PR branch. ليست هذه اختبارات رفع صورة مصادق.
+- تحقق Supabase الحي: المسار الصحيح للـstage مقبول؛ wrong folder/traversal/cross-project/HTTP/FTP/userinfo/signed URL المؤقت مرفوض؛ missing object مرفوض عند commit. الدلو ما زال private، عدد الملفات 0، المنتجات 41,000، المنتجات ذات الصور 0، trigger موجود.
+
+### بوابة الإغلاق المفتوحة
+- لم يتم رفع ملف صورة فعلي؛ Browser connector للقراءة فقط ولا توجد أداة Storage upload في بيئة التنفيذ.
+- لم يثبت بعد عرض صورة مرفوعة في Admin وCounter، ولا تضمين صورة فعلية في Client Balance XLSX.
+- لا تُدمج أو تنشر PR #5 قبل تنفيذ E2E بجلسة owner مصادق عليها على مشروع/منتج QA مستقل عن دفعة QA 90K: رفع JPEG/PNG ≤1 MiB إلى <project>/products/<uuid>, التحقق من image_url كـobject key، ثم Admin thumbnail، Counter lookup + recount، وتصدير XLSX والتحقق من وجود الصورة في xl/media.
+- لا تُدرج/تحدّث storage.objects مباشرة؛ استخدم Storage API فقط. لا تمس أصنافًا قائمة أو دفعة QA 90K أو بيانات جرد/مال.
+
+### تعليمات المساعد التالي
+1. استكمل من LVE-764 وPR #5 والفرع أعلاه؛ لا تبدأ من LVE-763.
+2. الترحيلان مطبقان بالفعل على rawaea-staging؛ لا تعِد تطبيقهما.
+3. أكمل فقط تجربة Storage المصادقة والعرض والتصدير في QA معزول. لا تولد روابط وهمية لـ41 ألف صنف.
+4. حدّث CURRENT_STATE والتقرير بنتيجة الاختبار الحقيقية، ثم انقل PR من Draft للمراجعة بعد اكتمالها. لا تدمج/تنشر قبل gate pass.
+5. لا تنتقل للمهمة التالية قبل إثبات upload → Admin → Counter normal/recount → XLSX.
+
+---
 ## LVE-2026-11-23-763 — Gamification server-backed for Counter
 
 **التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
