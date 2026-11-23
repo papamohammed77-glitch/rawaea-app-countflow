@@ -16,14 +16,14 @@
 - بعد Storage upload، يسجل صفاً في `public.count_shelf_images`. عند فشل التسجيل يحاول حذف كائن Storage لعدم ترك صورة يتيمة.
 
 ### Supabase
-- Migration `20261123211000_countflow_shelf_image_camera_mvp_v1` مُطبقة على `rawaea-staging`.
+- Migration `20261123211241_countflow_shelf_image_camera_mvp_v1` ومهاجرة سلامة الملف `20261123211841_countflow_shelf_image_integrity_and_cleanup_v1` مطبقتان على `rawaea-staging`.
 - Bucket `shelf-images` تم إنشاؤه `public=true`، حد الملف 10 MiB، والأنواع JPEG/PNG/WebP.
 - تنبيه وصول: أي شخص لديه رابط الكائن يستطيع قراءة الصورة؛ أما الرفع فمحصور بسياسة INSERT لمستخدم authenticated بدور counter وعضوية نشطة وجلسة نشطة وموقع المشروع/الإسناد.
-- `count_shelf_images` مفعل عليه RLS؛ INSERT لصاحب العضوية في الجلسة والموقع النشطين، وSELECT لمالك المنصة/مشرف المشروع/أعضاء المشروع النشطين أو الموقوفين مؤقتاً. لا توجد صلاحيات client UPDATE/DELETE.
+- `count_shelf_images` مفعل عليه RLS؛ INSERT لصاحب العضوية في الجلسة والموقع النشطين، وSELECT لمالك المنصة/مشرف المشروع/أعضاء المشروع النشطين أو الموقوفين مؤقتاً. لا توجد صلاحيات client UPDATE/DELETE. Trigger إضافي يقبل التسجيل فقط إذا كان كائن Storage موجوداً ومطابقاً تماماً في MIME والحجم. سياسة DELETE تقتصر على الصورة المرفوعة من العضو نفسه إذا لم تُسجل بعد؛ الصور المسجلة لا يمكن حذفها من العميل.
 - لا يوجد في المشروع الحالي أي `active` session (`QA 90K Product Catalogue` ما زالت `planned`)؛ لذلك لم أغيّر حالة الجلسة أو أُنشئ تكليفات/بيانات تشغيلية فقط لاختبار الكاميرا.
 
 ### البوابات
-- **CONFIRMED:** Bucket public config والحد وأنواع MIME وسياسة الرفع وجدول المراجعة وRLS عبر فحص SQL حي.
+- **CONFIRMED:** Bucket public config والحد وأنواع MIME وسياسة الرفع والحذف المحدود وTrigger مطابقة وجود الملف/MIME/الحجم وجدول المراجعة وRLS عبر فحص SQL حي.
 - **OPEN:** CI واختبارات المصدر على الفرع.
 - **OPEN:** التقاط فعلي من هاتف أو جهاز camera-enabled، Storage upload بواسطة مستخدم Counter مصرح، تسجيل صف review، فتح public URL، ومراجعة الصلاحية لعضو غير مسند.
 

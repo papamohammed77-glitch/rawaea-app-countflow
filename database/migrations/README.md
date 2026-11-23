@@ -249,10 +249,11 @@ Read-only live verification:
 Open end-to-end gate: authenticated image upload, Admin thumbnail, Counter thumbnail and Client Balance XLSX embedded-image verification. The available browser connector is read-only and there is no Storage upload API action in the current tool set. Do not insert into storage.objects directly. Keep this phase open and do not merge/deploy until those E2E checks pass.
 ## 2026-11-23 — Shelf Camera MVP (LVE-765)
 
-Live migration: `20261123211000` — `countflow_shelf_image_camera_mvp_v1`.
+Live migrations: `20261123211241` — `countflow_shelf_image_camera_mvp_v1`; `20261123211841` — `countflow_shelf_image_integrity_and_cleanup_v1`.
 
 - Creates public `shelf-images` bucket with a 10 MiB limit and JPEG/PNG/WebP allowlist. Public means anyone holding an object URL can retrieve that image; bucket listing and write operations remain separately controlled.
 - `shelf_images_counter_upload` allows Storage INSERT only for an authenticated active Counter member, active session, project-owned location, and the member's assigned location when the session has assignments.
+- A BEFORE INSERT trigger checks that each review-register row points to an existing object whose stored MIME and size match. A narrow DELETE policy permits rollback only for a member's own unregistered upload; registered images cannot be deleted by the client.
 - `public.count_shelf_images` is the review register. It stores project/session/member/location, immutable object key, MIME, byte size, authenticated uploader and creation time. RLS limits insert to the current active Counter context and read to platform owners, project supervisors and active/paused project members. No client UPDATE/DELETE grants are issued.
 - `countflow.html` camera capture uploads the original browser `File` without canvas, compression or resize; object keys include project/session/member/location. The app removes the Storage object if the review-register insert fails.
 - Runtime image capture/upload requires an active session and a selected assigned location; no active session existed in `rawaea-staging` during implementation, so phone-camera upload is not claimed as E2E PASS.

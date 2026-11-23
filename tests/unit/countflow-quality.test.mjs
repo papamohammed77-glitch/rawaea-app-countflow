@@ -833,7 +833,7 @@ test("LVE-765 camera MVP is below the barcode, previews the original capture and
   assert.ok(barcode >= 0 && camera > barcode && locations > camera, "camera block must sit below barcode and above location navigation");
   assert.match(html, /id="shelf-image-input" accept="image\/\*" capture="environment"/);
   assert.match(html, /function shelfCameraContext\(\)/);
-  assert.match(html, /session\?\.status!==\x27active\x27/);
+  assert.match(html, /session\.status!==\x27active\x27/);
   assert.match(html, /SHELF_IMAGE_MAX_BYTES=10\*1024\*1024/);
   assert.match(html, /SHELF_IMAGE_EXTENSIONS=Object\.freeze\(\{\x27image\/jpeg\x27:\x27jpg\x27,\x27image\/png\x27:\x27png\x27,\x27image\/webp\x27:\x27webp\x27\}\)/);
   assert.match(html, /URL\.createObjectURL\(file\)/);
@@ -857,4 +857,13 @@ test("LVE-765 shelf photo schema keeps the bucket public but requires active cou
   assert.match(migration, /member_has_location_assignment/);
   assert.match(migration, /CREATE POLICY shelf_images_counter_upload/);
   assert.doesNotMatch(migration, /INSERT\s+INTO\s+storage\.objects/i);
+  const integrity = read("database/migrations/20261123211841_countflow_shelf_image_integrity_and_cleanup_v1.sql");
+  assert.match(integrity, /enforce_count_shelf_image_storage_reference/);
+  assert.match(integrity, /SHELF_IMAGE_STORAGE_OBJECT_MISSING/);
+  assert.match(integrity, /SHELF_IMAGE_STORAGE_MIME_MISMATCH/);
+  assert.match(integrity, /SHELF_IMAGE_STORAGE_SIZE_MISMATCH/);
+  assert.match(integrity, /CREATE TRIGGER count_shelf_images_storage_guard/);
+  assert.match(integrity, /CREATE POLICY shelf_images_counter_delete_unregistered_own/);
+  assert.match(integrity, /NOT EXISTS \([\s\S]*?count_shelf_images[\s\S]*?storage_path=objects\.name/);
+  assert.doesNotMatch(integrity, /INSERT\s+INTO\s+storage\.objects/i);
 });
