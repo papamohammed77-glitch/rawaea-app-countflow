@@ -20,6 +20,7 @@
 - Migration `countflow_gamification_snapshot_v1` مُطبقة بالفعل؛ سجل Supabase: `20261123173951`.
 - المصدر المتتبع: `database/migrations/20261123173951_countflow_gamification_snapshot_v1.sql`.
 - الدالة الخاصة `counting_private.count_gamification_snapshot(uuid)` هي `SECURITY DEFINER` مع `search_path=''`، وتتحقق من `auth.uid()` وعضوية نشطة بدور `counter` في الجلسة.
+- أضيف حارس مشاركة مستقل `counting_private.assert_gamification_session_participation(uuid)` (ledger `20261123174943`): يتأكد أن المستخدم عضو `counter` نشط في جلسة مفتوحة/قيد المراجعة، وإذا كانت للجلسة إسنادات فلا يكفي الانتماء للمشروع؛ يجب أن يملك العضو إسنادًا نشطًا/مُسندًا في الجلسة ذاتها. الـRPC العام يستدعي الحارس قبل إرجاع الملخص.
 - RPC العام `public.count_get_gamification_snapshot(uuid)` هو `SECURITY INVOKER`. تم سحب EXECUTE من PUBLIC وanon ومنح authenticated فقط للدالتين؛ فحص ACL حي أكد anon=false وauthenticated=true.
 - اختبار نداء RPC من سياق قاعدة بيانات بلا هوية أعاد `AUTH_REQUIRED`، كما ينبغي. لا تنشئ الدالة صفوفًا أو تغيّر نقاطًا دائمة أو أرصدة أعمال.
 
