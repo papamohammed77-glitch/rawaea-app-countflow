@@ -14,12 +14,12 @@
 
 ### آخر تنفيذ فعلي لـLVE-764 — 23 نوفمبر 2026 (3/5 PASS، E2E ما زال مفتوحًا)
 
-- **PASS — Storage upload:** رُفع JPEG فعلي إلى `counting-product-images` عبر Storage REST API؛ `HTTP 200`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، وحجم Storage `1,107 bytes`، MIME `image/jpeg`.
+- **PASS — Storage upload:** رُفع JPEG فعلي 96×72 إلى `counting-product-images` باستخدام Supabase Storage API من Edge Function مؤقتة، مع `service_role` محفوظ في بيئة الخادم؛ سجل Storage: POST `HTTP 200`، طلب `2,283 bytes`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، Version `7b65f830-7ab0-4535-865e-d266f4e3a1b8`، MIME `image/jpeg`.
 - **PASS — Product link/trigger:** الصنف `QA 90K Product 421` (`005d0a73-1d11-4833-80f2-1f4ab18ba705`، SKU `QA90K-000421`) يحفظ الآن object key الدائم `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ UPDATE/RETURNING نجح، أي إن Trigger قبل المرجع بعد وجود الملف ونوعه وحجمه.
-- **PASS — Signed URL/GET:** أُنشئ Signed URL بمدة `3600s` من Storage REST؛ تنزيله أعاد `HTTP 200` و`image/jpeg`، `1,107 bytes`، وJPEG magic `ffd8ff`.
+- **PASS — Signed URL/GET:** أُنشئ Signed URL بمدة `3600s`؛ سجل Storage أثبت GET `HTTP 200`، `image/jpeg`، `2,283 bytes`، مع انتهاء بعد ساعة. تنزيل المصنف المؤقت تحقق من SHA-256 بين بايتات المصدر/Storage/Signed GET قبل اكتمال تحديث المنتج وتنظيف الملف السابق.
 - **OPEN — Admin/Counter display:** لم يُنفذ بحث تفاعلي أو تحقق بصري في Admin أو Counter؛ اتصال Browser المتاح يقرأ الصفحة فقط ولا يتيح النقر أو إدخال بيانات أو لقطات شاشة.
 - **OPEN — Client Balance XLSX:** لم يُنفذ التصدير الفعلي ولم تُفحص `xl/media`. وظيفة التصدير تشترط Bearer token صالحًا لمستخدم Auth مؤكد بالبريد `owner@rawaea.com`، وتفرض وجود تسوية `approved`. الاستدعاء باستخدام anon أعاد `401 INVALID_USER_TOKEN`؛ الجلسة الحالية `QA 90K Product Catalogue` لا تزال `planned` ولا توجد إسنادات أو تسوية معتمدة.
-- **حالة الأمان بعد الاختبار:** الدلو ما زال `private`؛ سياسات anon المؤقتة التي سُمحت لكائن الاختبار المحدد أزيلت، وإضافة Postgres `http` المؤقتة أزيلت، والتحقق الحي أكد صفر سياسات مؤقتة متبقية. لا توجد كتابة مباشرة في `storage.objects`؛ تم الرفع عبر Storage REST.
+- **حالة الأمان بعد الاختبار:** الدلو ما زال `private`؛ سياسات anon المؤقتة أزيلت، وإضافة Postgres `http` أزيلت، والتحقق الحي أكد صفر سياسات مؤقتة وصفر إضافة HTTP. نقطة `lve764-image-ingest-once` المؤقتة رُقّيت إلى v3 مع `verify_jwt=true` واستجابة 410 غير تشغيلية؛ لا تبقى نقطة رفع عامة قابلة للاستخدام. لا توجد كتابة مباشرة في `storage.objects`؛ تم الرفع عبر Storage API.
 - **القرار:** لا تغلق LVE-764 ولا تدمج PR #5 حتى إكمال Admin thumbnail وCounter lookup/recount وXLSX media inspection. لا تُعد رفع نفس الكائن ولا تغيّر صنفًا آخر؛ أكمل على الصنف/الكائن المحددين أعلاه.
 ### الحالة
 ### معيار بيانات الأصناف (معيار إلزامي)
@@ -70,7 +70,7 @@
 - CI #212 / 45255695241 على SHA `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. شمل ذلك آخر `CURRENT_STATE.md` ونسختي التقرير.
 - CI #213 / 45256146718 على SHA `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. التحقق يشمل تقرير التسليم وملف الحالة ونسخة Reports.
 - هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
-- تحقق Supabase الحي بعد الاختبار: رُفع كائن JPEG واحد عبر Storage REST؛ UPDATE لصنف واحد بالمسار الكامل للمشروع/products نجح بعد Trigger؛ إنشاء Signed URL لمدة 3600 ثانية وGET أعادا HTTP 200 وimage/jpeg. الدلو private، object count=1، image_url count=1، Trigger موجود. أزيلت سياسات anon المؤقتة وإضافة HTTP المؤقتة؛ عدد السياسات المؤقتة المتبقية=0.
+- تحقق Supabase الحي بعد الاختبار: Storage logs توثق upload POST 200 (role=service_role، 2,283 bytes)، authenticated GET 200، signed GET 200 (image/jpeg، 2,283 bytes)، ثم حذف ملف المحاولة السابقة عبر Storage API 200. فحوص SHA-256 داخل الرفع المؤقت شرطت تطابق المصدر/التخزين/Signed GET قبل تحديث الصنف والتنظيف؛ حذف الملف السابق يؤكد اجتياز تلك الحواجز البرمجية. UPDATE للصنف عبر Supabase client نجح، والقيمة الدائمة هي object key. الدلو private، object count=1، image_url count=1. أزيلت جميع سياسات LVE-764 المؤقتة وإضافة HTTP (صفر متبقٍ)، وأُغلقت نقطة الرفع المؤقتة (v3 verify_jwt=true, 410).
 
 ### نتائج Supabase Advisor ذات الصلة (فحص قراءة فقط)
 - جميع جداول CountFlow الـ23 ذات البادئة `count_*` في schema `public` لديها RLS مفعّل وسياسة واحدة على الأقل؛ لا يوجد بينها جدول أبلغ Advisor عن تعطيل RLS له.
@@ -81,7 +81,7 @@
 
 - **PASS (1):** رفع JPEG فعلي عبر Storage REST إلى `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ HTTP 200.
 - **PASS (2):** ربط الصورة بالصنف `005d0a73-1d11-4833-80f2-1f4ab18ba705` / `QA90K-000421`، وتأكيد قبول Trigger للـobject key الدائم.
-- **PASS (3):** Signed URL لمدة 3600 ثانية؛ GET HTTP 200، Content-Type image/jpeg، والحجم 1,107 bytes وJPEG magic ffd8ff.
+- **PASS (3):** Signed URL لمدة 3600 ثانية؛ GET HTTP 200، Content-Type image/jpeg، والحجم 2,283 bytes وJPEG magic ffd8ff.
 - **OPEN (4):** لم يتم التحقق تفاعليًا من thumbnail في Admin وCounter أو البحث العادي/إعادة العد؛ Browser read-only.
 - **OPEN (5):** لم يتم تصدير Client Balance XLSX ولم يتم فحص وجود الصورة داخل `xl/media`. استدعاء Edge Function دون جلسة مستخدم حقيقية أعاد 401 INVALID_USER_TOKEN؛ الوظيفة تتطلب مالك المنصة المؤكد وجولة تسوية approved.
 - لا تُدمج أو تنشر PR #5 قبل نجاح الخطوتين 4 و5. الدلو خاص، والسياسات المؤقتة وإضافة HTTP أزيلتا، ولا توجد صلاحية anon مؤقتة متبقية.

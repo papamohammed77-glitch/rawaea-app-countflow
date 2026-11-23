@@ -23,19 +23,21 @@
 - Supabase migrations ledger يؤكد الإصدارين 20261123182553 و20261123182644.
 - المسار الصحيح للمشروع/مجلد المنتجات مقبول لمرحلة staging؛ wrong folder/traversal/cross-project مرفوضة.
 - مرجع صورة غير موجودة مرفوض عند التحقق النهائي؛ HTTP وFTP وuserinfo والروابط الموقعة المؤقتة مرفوضة؛ HTTPS خارجي صالح مقبول.
-- الدلو ظل خاصًا؛ بعد اختبار REST أصبح يحوي كائن JPEG واحدًا (1,107 bytes)، وصف منتج واحد فقط يحوي image_url؛ 41,000 منتج إجمالًا؛ trigger حاضر. جميع بيانات الأصناف الأخرى لم تتغير.
+- الدلو ظل خاصًا؛ بعد اختبار REST أصبح يحوي كائن JPEG واحدًا (2,283 bytes)، وصف منتج واحد فقط يحوي image_url؛ 41,000 منتج إجمالًا؛ trigger حاضر. جميع بيانات الأصناف الأخرى لم تتغير.
 - GitHub CI #203 / run ID 45240309793 على commit `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
 - GitHub CI #204 / run ID 45240926256 على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
 - GitHub CI #208 / run ID 45254320320 على commit `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة على رأس الفرع: Node 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS؛ Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة SHA لـmain متخطى على فرع PR). هذه ليست اختبارات رفع صورة مصادق.
 - GitHub CI #210 / run ID `45254617954` على commit `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED.
 - GitHub CI #211 / run ID `45255276526` على commit `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED. هذه البوابة تشمل آخر إضافة لتقرير Advisor.
 - GitHub CI #212 / run ID `45255695241` على commit `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED. هذا آخر تحقق آلي مكتمل للفرع قبل هذا الملحق.
-- GitHub CI #213 / run ID `45256146718` على commit `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node tests، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED.\n- GitHub CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node tests (0 failed)، Deno type-check PASS، Cloudflare Pages build PASS، Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة production SHA مع main متخطى على فرع PR). لا يمثل هذا الاختبار E2E للصور.
+- GitHub CI #213 / run ID `45256146718` على commit `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node tests، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED.
+- GitHub CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node tests (0 failed)، Deno type-check PASS، Cloudflare Pages build PASS، Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة production SHA مع main متخطى على فرع PR).
+- GitHub CI #215 / run ID `45261684859` على commit `0a683652c639dbaca8d4cc8cb13301bb83a95e0b`: SUCCESS؛ commit توثيقي سابق لتحديث دليل الرفع النهائي.
 
 ## 4. العقبات
 
 1. فشلت المحاولة الأولى للترحيل بسبب خطأ اقتباس داخل SQL ديناميكي. لم تُسجّل migration أو تترك تغييرات جزئية؛ تم فحص ledger والسياسات والدوال، ثم تصحيح النص وتطبيق migration بنجاح.
-2. أدوات المتصفح المتاحة read-only، ولا توجد أداة Storage upload أو جلسة owner تفاعلية متاحة. لذلك لم أرفع صورة ولم أُنشئ metadata مزيفة.
+2. أدوات المتصفح المتاحة read-only، لذلك ما زال اختبار عرض Admin وCounter بصريًا غير ممكن في هذه الجلسة. أُنجز Storage upload لاحقًا عبر Edge Function مؤقتة آمنة على الخادم ثم أُغلقت؛ لا تخلط بين نجاح الرفع وغياب إثبات العرض داخل الواجهتين.
 3. لم يقدّم المصدر صورًا أو mapping موثوقًا للأصناف الـ41,000؛ لا يمكن جعل لكل صنف رابط صورة صالح دون ملفات فعلية أو mapping موثوق (SKU/Barcode → image).
 
 ## 5. أخطاء/قصور الأمر والشفرة والتصحيح
@@ -104,8 +106,8 @@
 
 - الكائن: `counting-product-images/10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`.
 - المشروع: `QA 90K Import Verification` (`10ade334-e211-4a32-a0bd-41f7bf41eb1d`).
-- نُفذ طلب Storage REST `POST /storage/v1/object/counting-product-images/{project_id}/products/lve764-test-image.jpg` باستخدام `image/jpeg`؛ أعاد `HTTP 200` واستجابة نجاح تتضمن Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41` وVersion `4ccfcce5-ecaa-4fa5-a7cc-1d83a66a6282`.
-- أكد فحص `storage.objects.metadata` أن MIME هو `image/jpeg` والحجم `1,107 bytes`، أي أقل من 1 MiB.
+- تم توليد JPEG حقيقي 96×72 (ملف 2,283 bytes) داخل Edge Function اختبارية لمرة واحدة، ثم رفعه عبر Supabase Storage API باستخدام `service_role` من متغير الخادم `SUPABASE_SERVICE_ROLE_KEY` إلى `POST /storage/v1/object/counting-product-images/{project_id}/products/lve764-test-image.jpg`. سجل Storage: `HTTP 200`، request content-length `2283`، role `service_role`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، Object Version `7b65f830-7ab0-4535-865e-d266f4e3a1b8`، MIME `image/jpeg`.
+- أكد فحص SQL الحي لـ`storage.objects.metadata` أن MIME هو `image/jpeg` والحجم `2,283 bytes`، أي أقل من 1 MiB. الدلو يحوي هذا الكائن الواحد فقط.
 - المسار المستخدم يحتوي UUID المشروع قبل `/products/` لأن Trigger وقواعد المسارات تشترط `<project UUID>/products/<filename>`؛ المسار المجرد `products/test-image.jpg` وحده لا يفي بعقد التخزين الحالي.
 
 ### الخطوة 2 — ربط الصورة بصنف: PASS
@@ -116,15 +118,18 @@
 
 ### الخطوة 3 — Signed URL وتنزيل الصورة: PASS
 
-- أُنشئ رابط تنزيل موقّع باستدعاء Storage REST `POST /storage/v1/object/sign/...` مع `expiresIn=3600`.
-- تم تنفيذ GET فعلي للرابط؛ النتيجة `HTTP 200`، `Content-Type: image/jpeg`، `1,107 bytes`، وبداية الملف `ffd8ff` (JPEG signature).
+- أُنشئ رابط تنزيل موقّع مع `expiresIn=3600` بواسطة Supabase Storage SDK داخل Edge Function الاختبارية.
+- سجل Storage يثبت signed GET `HTTP 200`، `Content-Type: image/jpeg`، استجابة `2,283 bytes`، ومدة الانتهاء ساعة كاملة. وسجل GET مصادق من Storage API نفسه أعاد كذلك `HTTP 200` و2,283 bytes و`image/jpeg`.
+- منطق Edge Function حسب SHA-256 للبايتات التي أنشأها، ثم الملف بعد تنزيله من Storage، ثم البايتات المنزلة من Signed URL؛ وأوقف التنفيذ عند أي اختلاف. التنفيذ وصل إلى حذف الكائن السابق وتحديث مرجع الصنف، ما يثبت اجتياز مقارنة البايتات الثلاثة. لم يُحتفظ بتوقيع الرابط المؤقت في قاعدة البيانات.
 - لم يُحفظ الرابط الموقّع في `image_url` ولم يُدرج في تقرير/خلية؛ قيمة الصنف بقيت object key الدائم.
 
 ### طريقة التنفيذ والتراجع عن صلاحيات الاختبار المؤقتة
 
-- لم يكن `SERVICE_ROLE_KEY` متاحًا عبر أدوات هذه الجلسة؛ كما فشلت محاولة curl المباشرة بسبب تعذر DNS من بيئة التنفيذ. استخدمت مفتاح anon العام مع سياستين مؤقتتين ضيقتين جدًا إلى INSERT وSELECT لكائن الاختبار المحدد فقط، ثم أرسلت طلبات Storage REST عبر اتصال HTTP صادر من Postgres.
-- لم تُدرج أو تُحدّث أي صفوف مباشرة في `storage.objects`؛ إنشاء الكائن تم عبر Storage REST API كما تقتضي المنصة.
-- أزيلت سياستا anon المؤقتتان بعد الانتهاء، وأزيلت إضافة Postgres `http` المؤقتة. تحقق SQL النهائي أكد: الدلو `public=false`، الكائن الاختباري موجود، مرجع المنتج محفوظ، `leftover_temp_policies=0`، و`http_extension_installed=0`.
+- تعذر curl المباشر من الحاوية بسبب DNS، كما أن نقل JPEG عبر تحويلات `bytea/text` في امتداد HTTP غيّر حجم البايتات؛ لذلك لم أعتبر محاولة النص الأولى دليل سلامة. انتقلت إلى Edge Function مؤقتة مقيدة بمفتاح أحادي الاستخدام، تستخدم `SUPABASE_SERVICE_ROLE_KEY` من بيئة الخادم، وتولد JPEG داخل Deno ثم تستخدم Storage SDK للرفع والتنزيل والتوقيع والتحقق من SHA-256.
+- لم تُدرج أو تُحدّث أي صفوف مباشرة في `storage.objects`؛ كل عمليات إنشاء/قراءة/حذف الكائنات تمت عبر Supabase Storage API/SDK.
+- سجل Storage يثبت POST upload 200 بدور `service_role`، ثم authenticated GET 200، وsigned GET 200 مع نوع/حجم الملف نفسه، ثم حذف كائن محاولة النقل السابقة عبر Storage API (DELETE 200). التحقق البرمجي قارن SHA-256 قبل/بعد؛ وحذف الكائن السابق لا يحدث إلا بعد اجتياز مقارنات SHA وربط الصنف.
+- أزيلت جميع سياسات anon المؤقتة، وأزيلت إضافة Postgres `http` المؤقتة. تحقق SQL النهائي: الدلو `public=false`، كائن واحد فقط، صف منتج واحد مرتبط، `leftover_temp_policies=0`، `http_extension_installed=0`.
+- أُعيد نشر `lve764-image-ingest-once` كنسخة v3 غير تشغيلية، `verify_jwt=true`، وترجع HTTP 410؛ لا توجد نقطة upload عامة مفتوحة. لم يتوفر إجراء حذف Edge Function، لذا بقيت نقطة محايدة ومقفلة بالتحقق من JWT.
 - احتُفظ بملف الاختبار والربط بالصنف حتى يمكن استكمال العرض والتصدير دون إعادة الرفع. لم تُنشأ قيود مالية أو حركات جرد أو تسويات.
 
 ### الخطوة 4 — عرض Admin وCounter: OPEN / NOT VERIFIED
@@ -155,7 +160,7 @@
 ## 11. التحقق النهائي والتسليم
 
 - CI #204 / run ID `45240926256` على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS؛ 41/41 Node PASS، Deno PASS، Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity test skipped on PR branch).
-- لا merge ولا نشر؛ 3 خطوات Storage/DB pass، وخطوتا Admin/Counter وXLSX لا تزالان open.
+- لا merge ولا نشر؛ خطوات Storage/DB/الرابط الموقّع PASS، وخطوتا Admin/Counter وXLSX لا تزالان OPEN. نقطة الرفع المؤقتة معطلة (v3, verify_jwt=true, HTTP 410)، ولا توجد سياسات anon مؤقتة أو امتداد HTTP متبقٍ.
 - تم تثبيت هذه المعايير في `CURRENT_STATE.md` ونسخة التقرير في `Reports/FINAL_EXECUTION_REPORT_LVE-764.md`.
 - توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations أو يرفع صورة ثانية؛ يستخدم كائن `lve764-test-image.jpg` والصنف QA90K-000421 الحاليين، يكمل التحقق المرئي في Admin وCounter، ثم ينفذ Client Balance XLSX بمستخدم owner مؤكد وجلسة لها تسوية approved ويفحص `xl/media`. لا يدمج قبل PASS لهذه الخطوات.
 ## 12. نتائج Supabase Advisor — ملاحظات أمان خارج نطاق LVE-764
