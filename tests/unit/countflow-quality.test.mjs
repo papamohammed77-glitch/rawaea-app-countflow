@@ -358,6 +358,9 @@ test("Client Balance product images are streamed with a strict per-image byte ce
   const imageStage = source.slice(start, end);
   assert.match(source, /async function readResponseBounded\(response: Response, maxBytes: number\)/);
   assert.match(imageStage, /createSignedUrl\(reference,60\)/);
+  assert.match(imageStage, /const imagePrefix=session\.project_id\+"\/products\/"/);
+  assert.match(imageStage, /const imageFilename=reference\.startsWith\(imagePrefix\)\?reference\.slice\(imagePrefix\.length\):""/);
+  assert.doesNotMatch(imageStage, /reference\.startsWith\(session\.project_id\+"\/"\)/);
   assert.match(imageStage, /fetch\(signedData\.signedUrl,\{redirect:"error"\}\)/);
   assert.match(imageStage, /content-length/);
   assert.match(imageStage, /readResponseBounded\(imageResponse,1024\*1024\)/);
@@ -635,7 +638,10 @@ test("Admin private product images use project-scoped storage, signed reads and 
   assert.match(admin, /file\.size>MAX_PRODUCT_IMAGE_BYTES/);
   assert.match(admin, /'image\/jpeg':'jpg','image\/png':'png'/);
   assert.doesNotMatch(admin, /'image\/webp':'webp'/);
+  assert.match(admin, /function isProjectProductImagePath\(reference,projectId\)/);
+  assert.match(admin, /function safeExternalProductImageUrl\(reference\)/);
   assert.match(admin, /function productImageDisplayUrl\(product\)/);
+  assert.match(admin, /isProjectProductImagePath\(path,projectId\)/);
   assert.match(admin, /class="product-image-link" href=/);
   assert.match(admin, /target="_blank" rel="noopener noreferrer"/);
   assert.match(admin, /class="product-thumb"/);
@@ -769,4 +775,52 @@ test("Gamification snapshot rejects counters who are not assigned to an explicit
   assert.match(guard, /public\.count_get_gamification_snapshot[\s\S]*?SECURITY INVOKER/);
   assert.match(guard, /REVOKE ALL ON FUNCTION counting_private\.assert_gamification_session_participation\(uuid\) FROM anon/);
   assert.match(guard, /GRANT EXECUTE ON FUNCTION counting_private\.assert_gamification_session_participation\(uuid\) TO authenticated/);
+});
+test("Product image reference helpers allow only stable HTTPS URLs or a single same-project products object", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("function isProjectProductImagePath(reference,projectId)");
+  const urlStart = admin.indexOf("function safeExternalProductImageUrl(reference)", start);
+  const loadStart = admin.indexOf("async function loadProductImageUrls", urlStart);
+  assert.ok(start >= 0 && urlStart > start && loadStart > urlStart);
+  const isPath = vm.runInNewContext("(" + admin.slice(start,urlStart).trim() + ")");
+  const externalUrl = vm.runInNewContext("(" + admin.slice(urlStart,loadStart).trim() + ")", { URL });
+  const projectId = "10ade334-e211-4a32-a0bd-41f7bf41eb1d";
+  assert.equal(isPath(projectId + "/products/550e8400-e29b-41d4-a716-446655440000.png", projectId), true);
+  assert.equal(isPath(projectId + "/products/nested/image.png", projectId), false);
+  assert.equal(isPath(projectId + "/evidence/image.png", projectId), false);
+  assert.equal(isPath("00000000-0000-0000-0000-000000000000/products/image.png", projectId), false);
+  assert.equal(isPath(projectId + "/products/../image.png", projectId), false);
+  assert.equal(isPath(projectId + "/products/%2e%2e.png", projectId), false);
+  assert.equal(externalUrl("https://cdn.example.com/products/item.png"), "https://cdn.example.com/products/item.png");
+  assert.equal(externalUrl("http://cdn.example.com/products/item.png"), "");
+  assert.equal(externalUrl("https://user:password@cdn.example.com/item.png"), "");
+  assert.equal(externalUrl("https://project.supabase.co/storage/v1/object/sign/counting-product-images/path.png?token=temporary"), "");
+});
+
+test("Counter resolves product images through one scoped helper for both scan and recount with a safe fallback", () => {
+  const counter = read("countflow.html");
+  assert.match(counter, /async function resolveProductImageUrl\(reference,projectId\)/);
+  assert.match(counter, /async function showProductImage\(reference,productId,projectId\)/);
+  assert.match(counter, /await showProductImage\(product\.image_url,product\.id,project\.id\)/);
+  assert.match(counter, /await showProductImage\(item\.image_url,item\.id,project\.id\)/);
+  assert.match(counter, /image\.onerror=\(\)=>\{image\.onerror=null;image\.src=PRODUCT_IMAGE_FALLBACK\}/);
+  assert.match(counter, /project\?\.id!==projectId\|\|product\?\.id!==productId/);
+  assert.equal((counter.match(/createSignedUrl\(reference,3600\)/g) || []).length, 1);
+  assert.doesNotMatch(counter, /storage\.from\('counting-product-images'\)\.createSignedUrl\(item\.image_url/);
+});
+
+test("Database image hardening keeps private Storage and rejects cross-project, missing and unsupported references", () => {
+  const migration = read("database/migrations/20261123182553_countflow_product_image_reference_hardening_v1.sql");
+  const ephemeral = read("database/migrations/20261123182644_countflow_reject_ephemeral_product_image_urls_v1.sql");
+  assert.match(migration, /CREATE OR REPLACE FUNCTION counting_private\.is_valid_product_image_reference/);
+  assert.match(migration, /cardinality\(storage\.foldername\(name\)\)=2/);
+  assert.match(migration, /\(storage\.foldername\(name\)\)\[2\]='products'/);
+  assert.match(migration, /CREATE TRIGGER count_products_product_image_reference_guard/);
+  assert.match(migration, /is_valid_product_image_reference\(v_batch\.project_id,v_image_url,false\)/);
+  assert.match(migration, /is_valid_product_image_reference\(v_batch\.project_id,v_image_url,true\)/);
+  assert.match(migration, /metadata->>'mimetype'/);
+  assert.match(migration, /BETWEEN 1 AND 1048576/);
+  assert.match(ephemeral, /storage\/v1\/object\/sign/);
+  assert.doesNotMatch(migration, /UPDATE\s+storage\.objects/i);
+  assert.doesNotMatch(migration, /ALTER\s+TABLE\s+public\.count_products\s+ADD\s+COLUMN\s+image_url/i);
 });

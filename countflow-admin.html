@@ -345,10 +345,25 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   state.products=data||[];state.productTotal=count||0;state.productPage=Math.max(1,page);state.productQuery=query||'';state.productScrollTop=0;
   renderProducts();
  }
+ function isProjectProductImagePath(reference,projectId){
+  const value=String(reference??''),prefix=String(projectId||'')+'/products/';
+  if(!projectId||!value.startsWith(prefix))return false;
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value.slice(prefix.length));
+ }
+ function safeExternalProductImageUrl(reference){
+  const value=String(reference??'').trim();
+  try{
+   const url=new URL(value);
+   if(url.protocol!=='https:'||!url.hostname||url.username||url.password||/[\\\s]/.test(value)
+      ||/\/storage\/v1\/object\/sign\//i.test(url.pathname)||url.searchParams.has('token')||url.searchParams.has('expiresIn'))return '';
+   return url.href;
+  }catch(_){return ''}
+ }
  async function loadProductImageUrls(rows,projectId,token){
   const paths=[...new Set((rows||[]).map(p=>String(p.image_url||'').trim()).filter(path=>
-   path&&path.startsWith(projectId+'/')&&!path.includes('..')&&!path.includes('\\')&&!path.includes('?')
+   isProjectProductImagePath(path,projectId)
   ))];
+
   if(!paths.length)return;
   const {data,error}=await db.storage.from('counting-product-images').createSignedUrls(paths,3600);
   if(error){console.warn('Product image signing failed',error);return;}
@@ -357,11 +372,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  function productImageDisplayUrl(product){
   const reference=String(product?.image_url||'').trim();
-  if(/^https:\/\//i.test(reference))return reference;
+  const externalUrl=safeExternalProductImageUrl(reference);
+  if(externalUrl)return externalUrl;
   const projectId=state.project?.id||'';
-  if(!projectId||!reference.startsWith(projectId+'/')||reference.includes('..')||reference.includes('\\')||reference.includes('?'))return '';
+  if(!isProjectProductImagePath(reference,projectId))return '';
   return state.productImageUrls.get(projectId+'|'+reference)||'';
  }
+
  function renderProducts(){
   const rows=state.products||[],pageSize=100,totalPages=Math.max(1,Math.ceil(state.productTotal/pageSize)),windowSize=30,rowHeight=76;
   state.productPage=Math.min(Math.max(1,state.productPage),totalPages);
@@ -1540,7 +1557,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   const p=state.products.find(x=>x.id===id);if(!p)return;
   resetProductImagePreview();$('productId').value=p.id;$('sku').value=p.sku;$('barcode').value=p.barcode||'';$('productName').value=p.name||'';$('category').value=p.category||'';$('baseUnit').value=p.base_unit;$('expectedQty').value=p.expected_qty??'';
   state.editingProductImageRef=p.image_url||null;state.productImageCleared=false;
-  $('imageUrl').value=/^https:\/\//i.test(String(p.image_url||''))?p.image_url:'';
+  $('imageUrl').value=safeExternalProductImageUrl(p.image_url);
   const displayUrl=productImageDisplayUrl(p);if(displayUrl)showProductImagePreview(displayUrl,'الصورة الحالية للصنف','هذه الصورة محفوظة في مساحة CountFlow الخاصة. عند الاستبدال أو إزالة الربط يبقى الملف القديم في التخزين ولا يُحذف تلقائياً.');
   renderProductUnitEditor(p.units||[]);$('productFormTitle').textContent='تعديل الصنف';activateTab('products');window.scrollTo({top:0,behavior:'smooth'});
  }
@@ -1583,10 +1600,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   if(!baseUnit)throw new Error('وحدة القياس الأساسية مطلوبة قبل إتاحة الصنف للعد.');
   const units=readProductUnits(baseUnit),file=$('productImageFile').files[0]||null;
   let imageRef=file?null:($('imageUrl').value.trim()|| (state.productImageCleared?null:state.editingProductImageRef||null));
-  if($('imageUrl').value.trim()){
-   let url;try{url=new URL($('imageUrl').value.trim());}catch(_){throw new Error('رابط الصورة الخارجية غير صالح.');}
-   if(url.protocol!=='https:')throw new Error('رابط الصورة الخارجية يجب أن يستخدم HTTPS.');
+  const externalImageInput=$('imageUrl').value.trim();
+  if(externalImageInput&&!file){
+   const externalImageUrl=safeExternalProductImageUrl(externalImageInput);
+   if(!externalImageUrl)throw new Error('رابط الصورة الخارجية غير صالح أو مؤقت؛ استخدم HTTPS دائماً أو ارفع الصورة إلى مساحة CountFlow الخاصة.');
+   imageRef=externalImageUrl;
   }
+
   const projectId=state.project.id;
   if(file)imageRef=await uploadProductImage(file,projectId);
   const row={project_id:projectId,sku,barcode,name,category:$('category').value.trim()||null,base_unit:baseUnit,units,expected_qty:$('expectedQty').value===''?null:Number($('expectedQty').value),image_url:imageRef,updated_at:new Date().toISOString()};
@@ -1612,9 +1632,11 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  });
  $('imageUrl').addEventListener('change',()=>{
   const value=$('imageUrl').value.trim();if(!value)return;
-  try{const url=new URL(value);if(url.protocol!=='https:')throw new Error('https');showProductImagePreview(url.href,'صورة من رابط خارجي','سيتم حفظ الرابط فقط؛ يُفضّل رفع الصور المهمة إلى مساحة CountFlow الخاصة.');}
-  catch(_){notify('رابط الصورة الخارجية يجب أن يكون HTTPS صالحاً.',true);}
+  const url=safeExternalProductImageUrl(value);
+  if(!url){notify('أدخل رابط HTTPS دائماً صالحاً، وليس رابطاً موقّتاً أو يحتوي بيانات اعتماد.',true);return;}
+  showProductImagePreview(url,'صورة من رابط خارجي','سيتم حفظ الرابط فقط؛ يُفضّل رفع الصور المهمة إلى مساحة CountFlow الخاصة.');
  });
+
  $('clearProductImage').textContent='إزالة ربط الصورة';
  $('clearProductImage').addEventListener('click',()=>{
   if(state.productImagePreviewObjectUrl){URL.revokeObjectURL(state.productImagePreviewObjectUrl);state.productImagePreviewObjectUrl=null;}

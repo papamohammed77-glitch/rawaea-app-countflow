@@ -228,4 +228,22 @@ Do not replay either import migration, rename files to force version matching, o
 - Post-apply verification identified an unqualified `name` reference resolving to `count_projects.name` inside a nested storage policy subquery. This was corrected by follow-up migration `20261121210000_countflow_storage_owner_path_qualifier_fix.sql`, ledger version `20261121205720`, explicitly using `storage.foldername(objects.name)`.
 - Verified read-only: 22/22 owner-aware public read policies; all three image policies owner-aware and using `objects.name`; no bad `p.name` path reference; bucket remains private (`public=false`).
 - No business data DML, Auth user changes, images uploaded/deleted, stock/finance/accounting changes, or field-app changes.
+## 2026-11-23 — Product image reference hardening (LVE-764)
 
+Live Supabase ledger entries:
+- Version 20261123182553 — countflow_product_image_reference_hardening_v1
+- Version 20261123182644 — countflow_reject_ephemeral_product_image_urls_v1
+
+Tracked SQL sources:
+- 20261123182553_countflow_product_image_reference_hardening_v1.sql
+- 20261123182644_countflow_reject_ephemeral_product_image_urls_v1.sql
+
+public.count_products.image_url already existed as nullable text; no duplicate column or data backfill was required. The counting-product-images bucket remains private. Its policies now allow only <project UUID>/products/<single filename> while preserving owner/supervisor/member role gates. The server validator accepts safe HTTPS references or same-project private product keys, rejects signed/temporary URLs, traversal and cross-folder references, and verifies committed Storage objects are JPEG/PNG and at most 1 MiB. Import staging validates path shape; import commit checks object existence. A trigger protects direct product writes and imports.
+
+Read-only live verification:
+- Valid project/products path accepted for staging; missing object rejected for commit.
+- Wrong folder, traversal, HTTP/FTP, userinfo URLs and temporary signed Storage URLs rejected.
+- Bucket remains public=false; zero Storage objects; zero products changed.
+- No Storage metadata tables were written; file operations must use Storage API.
+
+Open end-to-end gate: authenticated image upload, Admin thumbnail, Counter thumbnail and Client Balance XLSX embedded-image verification. The available browser connector is read-only and there is no Storage upload API action in the current tool set. Do not insert into storage.objects directly. Keep this phase open and do not merge/deploy until those E2E checks pass.

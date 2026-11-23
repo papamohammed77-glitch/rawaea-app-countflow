@@ -1,5 +1,102 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
+
+**التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
+**المستودع:** papamohammed77-glitch/rawaea-app-countflow  
+**Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu  
+**Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
+**فرع العمل:** work/lve-764-product-image-urls  
+**PR:** #5 — Draft / Open / Not merged  
+**Application commit:** `b09b0920d519ead01787011e604a100a5083c649`  
+**Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
+**Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
+
+### آخر تنفيذ فعلي لـLVE-764 — 23 نوفمبر 2026 (3/5 PASS، E2E ما زال مفتوحًا)
+
+- **PASS — Storage upload:** رُفع JPEG فعلي 96×72 إلى `counting-product-images` باستخدام Supabase Storage API من Edge Function مؤقتة، مع `service_role` محفوظ في بيئة الخادم؛ سجل Storage: POST `HTTP 200`، طلب `2,283 bytes`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، Version `7b65f830-7ab0-4535-865e-d266f4e3a1b8`، MIME `image/jpeg`.
+- **PASS — Product link/trigger:** الصنف `QA 90K Product 421` (`005d0a73-1d11-4833-80f2-1f4ab18ba705`، SKU `QA90K-000421`) يحفظ الآن object key الدائم `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ UPDATE/RETURNING نجح، أي إن Trigger قبل المرجع بعد وجود الملف ونوعه وحجمه.
+- **PASS — Signed URL/GET:** أُنشئ Signed URL بمدة `3600s`؛ سجل Storage أثبت GET `HTTP 200`، `image/jpeg`، `2,283 bytes`، مع انتهاء بعد ساعة. تنزيل المصنف المؤقت تحقق من SHA-256 بين بايتات المصدر/Storage/Signed GET قبل اكتمال تحديث المنتج وتنظيف الملف السابق.
+- **OPEN — Admin/Counter display:** لم يُنفذ بحث تفاعلي أو تحقق بصري في Admin أو Counter؛ اتصال Browser المتاح يقرأ الصفحة فقط ولا يتيح النقر أو إدخال بيانات أو لقطات شاشة.
+- **OPEN — Client Balance XLSX:** لم يُنفذ التصدير الفعلي ولم تُفحص `xl/media`. وظيفة التصدير تشترط Bearer token صالحًا لمستخدم Auth مؤكد بالبريد `owner@rawaea.com`، وتفرض وجود تسوية `approved`. الاستدعاء باستخدام anon أعاد `401 INVALID_USER_TOKEN`؛ الجلسة الحالية `QA 90K Product Catalogue` لا تزال `planned` ولا توجد إسنادات أو تسوية معتمدة.
+- **حالة الأمان بعد الاختبار:** الدلو ما زال `private`؛ سياسات anon المؤقتة أزيلت، وإضافة Postgres `http` أزيلت، والتحقق الحي أكد صفر سياسات مؤقتة وصفر إضافة HTTP. نقطة `lve764-image-ingest-once` المؤقتة رُقّيت إلى v3 مع `verify_jwt=true` واستجابة 410 غير تشغيلية؛ لا تبقى نقطة رفع عامة قابلة للاستخدام. لا توجد كتابة مباشرة في `storage.objects`؛ تم الرفع عبر Storage API.
+- **القرار:** لا تغلق LVE-764 ولا تدمج PR #5 حتى إكمال Admin thumbnail وCounter lookup/recount وXLSX media inspection. لا تُعد رفع نفس الكائن ولا تغيّر صنفًا آخر؛ أكمل على الصنف/الكائن المحددين أعلاه.
+### الحالة
+### معيار بيانات الأصناف (معيار إلزامي)
+
+**1) الأصناف العالمية (Global Items)**
+- يُستخدم الباركود الدولي EAN/UPC بوصفه مُعرّف المسح الأساسي للصنف العالمي، ويكون العد بالمسح الضوئي متى توفر الباركود.
+- يُخزن الباركود كنص `TEXT` لا كرقم؛ يجب الحفاظ على الأصفار في بداية القيمة وعدم تحويله إلى صيغة علمية أو إزالة أرقامه.
+- لا يُستبدل الباركود العالمي بـSKU الداخلي؛ لكل منهما حقل ووظيفة مستقلة.
+
+**2) الأصناف المنتجة داخل المنشأة (In-house Items)**
+- تشمل أمثلة ذلك المخبوزات واللحوم (Bakery / Meat).
+- تُدار الكمية بالوزن باستخدام `Kg/Grams` (كيلوجرام/جرام)، مع تحديد وحدة أساس واحدة واضحة لكل صنف.
+- يكون التعرف على الصنف عبر باركود داخلي عند توفره؛ وإلا فيُستخدم اختيار/إدخال يدوي واضح للصنف قبل إدخال الوزن، دون تسجيل كمية على صنف غير محدد.
+
+**3) وحدات القياس والتحويل (UoM)**
+- لكل صنف `base_unit` واحدة، وتُسجل الوحدات البديلة في `count_products.units` كعوامل تحويل إلى وحدة الأساس (`name`, `factor_to_base`).
+- مثال إلزامي: إذا كانت وحدة الأساس `piece` فإن `Box = 12 pieces` وتُحفظ قيمة `factor_to_base = 12`.
+- مثال الوزن: إذا كانت وحدة الأساس `kg` فإن `gram = 0.001 kg`؛ وإذا كانت وحدة الأساس `g` فإن `kg = 1000 g`.
+- أي معادلة شراء/بيع/تكلفة أو إجمالي مالي يجب أن توحّد الكميات إلى وحدة الأساس قبل الجمع أو المقارنة. إذا كان سعر الشراء لوحدة `Box` ذات عامل 12، فإن تكلفة القطعة الأساسية = سعر الصندوق ÷ 12، وإجمالي السطر = عدد الصناديق × سعر الصندوق (أو الكمية الأساسية × تكلفة الوحدة الأساسية)، مع منع تطبيق عامل التحويل مرتين.
+- يجب أن تبقى قيم الباركود نصية، والكميات ومعاملات التحويل أرقامًا عشرية دقيقة مناسبة للوزن؛ لا تستخدم التقريب المبكر الذي يغير الإجمالي.
+- المخطط وواجهة Admin الحاليان يدعمان `base_unit` و`units` وعامل التحويل، كما أن استيراد الكتالوج يتعرف على `purchase_unit`, `purchase_unit_cost`, `unit_factor_to_base`. توثيق هذا المعيار لا يُعد بحد ذاته إثباتًا لاختبار كل مسارات احتساب التكلفة؛ يجب أن تُختبر الصيغ المالية عند تفعيلها أو ربطها بتقارير مالية.
+
+**4) صور الأصناف (Item Images)**
+- الصورة مطلوبة لكل صنف في الكتالوج التشغيلي؛ لا تُستخدم صور placeholder ولا روابط مولدة لإخفاء غياب الصورة.
+- يُخزن في `image_url` مرجع دائم (Storage object key) على النمط `<project UUID>/products/<filename>`، وليس رابطًا موقعًا مؤقتًا أو رابطًا عامًا.
+- Supabase Storage يحتفظ بالملف الأصلي؛ يرفع Admin كائن `File` مباشرةً إلى Storage API دون Canvas أو إعادة تحجيم أو ضغط أو تحويل للصورة. لا تُطبق transformations عند الرفع أو الحفظ؛ بذلك لا يحدث فقد في البكسلات/الدقة أو تغيير في bytes الملف الأصلي.
+- حد التطبيق الحالي للصورة هو JPEG أو PNG وبحجم أكبر من صفر وحتى 1 MiB، لتمكين تضمينها في Excel. لا يعني هذا ضغط الملف؛ تُحفظ البايتات الأصلية كما هي ضمن حد القبول.
+- تُنشأ Signed URLs قصيرة العمر وقت العرض فقط في Admin وCounter، وعند جلب الملف داخل عملية تصدير XLSX. لا يُكتب Signed URL في `image_url` ولا يُخزن في خلايا Excel؛ ملف Excel يأخذ bytes الصورة المضمنة عند التصدير.
+
+**حالة البيانات بعد اختبار LVE-764:** 41,000 صنف؛ صنف واحد فقط لديه `image_url` (fixture الاختبار `QA90K-000421`)؛ وكائن واحد داخل `counting-product-images`. بقية الكتالوج لا تزال بلا صور؛ معيار «كل الأصناف مصورة» لم يتحقق على مستوى الكتالوج.
+
+- image_url موجود مسبقًا كـ nullable text؛ لا تضف عمودًا جديدًا.
+- توجد 41,000 سجلات منتجات؛ يوجد image_url واحد فقط لصنف الاختبار QA90K-000421، وكائن واحد داخل الدلو الخاص (public=false). لم تتم تعبئة بيانات الأصناف الأخرى أو إنشاء placeholders.
+- migration 20261123182553 (countflow_product_image_reference_hardening_v1) وmigration 20261123182644 (countflow_reject_ephemeral_product_image_urls_v1) مطبقتان بالفعل.
+- Storage policies حصرت قراءة/رفع/تحديث الصور في نمط <project UUID>/products/<single filename> مع الحفاظ على أدوار المالك/المشرف/العضوية.
+- validator server-side وtrigger على count_products يمنعان المراجع غير الصالحة، traversal، المسارات خارج products، والملفات غير الموجودة/غير JPEG-PNG/أكبر من 1 MiB. مرحلة stage تتحقق من شكل المسار؛ مرحلة commit تتحقق من وجود الملف.
+- signed URLs المؤقتة ممنوعة داخل image_url. المرجع الدائم هو object key، ثم يُوقّع عند العرض.
+- Admin كان يملك أصلًا thumbnail ورفع/معاينة؛ تم تضييق المراجع والتحقق من HTTPS وإعطاء الملف المختار أولوية على أي URL قديم.
+- Counter يستخدم resolver موحدًا للبحث العادي وإعادة العد، signed read من الدلو الخاص فقط، fallback، وحماية من ردود async قديمة.
+- Client Balance XLSX لا يزال يضمّن bytes الصور داخل المصنف وفق حدوده الحالية؛ مسار التحميل مقيد الآن إلى مجلد منتجات المشروع.
+
+### التحقق
+- CI #203 / 45240309793 على SHA `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
+- CI #204 / 45240926256 على SHA `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
+- CI #208 / 45254320320 على SHA `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة فرع تشمل 41/41 Node PASS، Deno type-check PASS، Cloudflare Pages build PASS، وPlaywright 2 PASS / 1 SKIPPED لاختبار مطابقة نشر Production مع main على فرع PR.
+- CI #210 / 45254617954 على SHA `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED.
+- CI #211 / 45255276526 على SHA `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED.
+- CI #212 / 45255695241 على SHA `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. شمل ذلك آخر `CURRENT_STATE.md` ونسختي التقرير.
+- CI #213 / 45256146718 على SHA `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. التحقق يشمل تقرير التسليم وملف الحالة ونسخة Reports.
+- CI #214 / 45256686296 على SHA `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node، Deno type-check، Pages build، Playwright 2 PASS / 1 SKIPPED.
+- CI #215 / 45261684859 على SHA `0a683652c639dbaca8d4cc8cb13301bb83a95e0b`: SUCCESS.
+- CI #216 / 45263648027 على SHA `5cf597e0eb2e1e5a1805e2fd07ef1d915eeee72d`: SUCCESS. كانت هذه بوابات CI للشفرة والوثائق، وليست بديلًا لاختبارات Admin/Counter/XLSX التشغيلية المفتوحة.
+- هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
+- تحقق Supabase الحي بعد الاختبار: Storage logs توثق upload POST 200 (role=service_role، 2,283 bytes)، authenticated GET 200، signed GET 200 (image/jpeg، 2,283 bytes)، ثم حذف ملف المحاولة السابقة عبر Storage API 200. فحوص SHA-256 داخل الرفع المؤقت شرطت تطابق المصدر/التخزين/Signed GET قبل تحديث الصنف والتنظيف؛ حذف الملف السابق يؤكد اجتياز تلك الحواجز البرمجية. UPDATE للصنف عبر Supabase client نجح، والقيمة الدائمة هي object key. الدلو private، object count=1، image_url count=1. أزيلت جميع سياسات LVE-764 المؤقتة وإضافة HTTP (صفر متبقٍ)، وأُغلقت نقطة الرفع المؤقتة (v3 verify_jwt=true, 410).
+
+### نتائج Supabase Advisor ذات الصلة (فحص قراءة فقط)
+- جميع جداول CountFlow الـ23 ذات البادئة `count_*` في schema `public` لديها RLS مفعّل وسياسة واحدة على الأقل؛ لا يوجد بينها جدول أبلغ Advisor عن تعطيل RLS له.
+- Validator الصور الخاص `counting_private.is_valid_product_image_reference` ودالة Trigger `counting_private.enforce_count_product_image_reference` لا تمنحان EXECUTE لـanon أو authenticated.
+- فحص المشروع بأكمله أظهر تحذيرات/أخطاء قائمة خارج مسار الصور: 65 جدولًا عامًا بلا RLS (لا تشمل جداول `count_*`)، و5 دوال SECURITY DEFINER عامة قابلة لـanon (أسماء legacy غير CountFlow)، و14 دالة SECURITY DEFINER قابلة لـauthenticated، منها خمس RPCs تشغيلية CountFlow قديمة. هذه لم تُعدّل ضمن LVE-764 وتحتاج مراجعة أمان مستقلة قبل إتاحة المشروع لعملاء خارجيين.
+- Advisor أظهر أيضًا تحذير حماية كلمات المرور المسرّبة و64 index غير مستخدم ومؤشرًا مكررًا واحدًا على `erp_operation_registry`. لم تُجرَ تغييرات عليها لأنها خارج نطاق LVE-764 وتتطلب مراجعة منفصلة.
+### بوابة الإغلاق المفتوحة
+
+- **PASS (1):** رفع JPEG فعلي عبر Storage REST إلى `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ HTTP 200.
+- **PASS (2):** ربط الصورة بالصنف `005d0a73-1d11-4833-80f2-1f4ab18ba705` / `QA90K-000421`، وتأكيد قبول Trigger للـobject key الدائم.
+- **PASS (3):** Signed URL لمدة 3600 ثانية؛ GET HTTP 200، Content-Type image/jpeg، والحجم 2,283 bytes وJPEG magic ffd8ff.
+- **OPEN (4):** لم يتم التحقق تفاعليًا من thumbnail في Admin وCounter أو البحث العادي/إعادة العد؛ Browser read-only.
+- **OPEN (5):** لم يتم تصدير Client Balance XLSX ولم يتم فحص وجود الصورة داخل `xl/media`. استدعاء Edge Function دون جلسة مستخدم حقيقية أعاد 401 INVALID_USER_TOKEN؛ الوظيفة تتطلب مالك المنصة المؤكد وجولة تسوية approved.
+- لا تُدمج أو تنشر PR #5 قبل نجاح الخطوتين 4 و5. الدلو خاص، والسياسات المؤقتة وإضافة HTTP أزيلتا، ولا توجد صلاحية anon مؤقتة متبقية.
+- لا تُدرج/تحدّث `storage.objects` مباشرة؛ استخدم Storage API فقط. حافظ على كائن الاختبار والصنف المحددين أعلاه حتى إكمال العرض والتصدير، ولا تنشئ كائنًا ثانيًا أو تغيّر منتجًا آخر بلا ضرورة.
+### تعليمات المساعد التالي
+1. استكمل من LVE-764 وPR #5 والفرع `work/lve-764-product-image-urls`؛ لا تبدأ من الصفر ولا تُعد تطبيق migrations.
+2. استخدم كائن الاختبار الموجود: `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg` والصنف `QA90K-000421`؛ لا تكرر الرفع أو تنشئ object بديلًا.
+3. أكمل عرض Admin وCounter (lookup + recount) بجلسة Auth/Browser تفاعلية، ثم Client Balance XLSX بعد استيفاء owner-auth وapproved reconciliation، وافحص `xl/media`؛ وثق HTTP/screenshots/metadata.
+4. لا تُغيّر كلمة مرور مالك قائم أو تتجاوز مصادقة Edge Function أو تنشئ قيود/تسوية تشغيلية لمجرد اجتياز التصدير. استخدم مسار QA مصرحًا ومخططًا له.
+5. حدّث CURRENT_STATE والتقرير بعد إثبات الخطوتين 4 و5، ثم فقط انقل PR من Draft للدمج. لا تنتقل للمهمة التالية قبل الإغلاق.
+
+---
 ## LVE-2026-11-23-763 — Gamification server-backed for Counter
 
 **التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
