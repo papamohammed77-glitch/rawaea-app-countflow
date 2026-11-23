@@ -459,7 +459,9 @@ Deno.serve(async (req: Request) => {
         if(/^https:\/\//i.test(reference)){
           imageByProduct.set(product.id,{status:"رابط خارجي - لم يتم تضمينه",reference});continue;
         }
-        if(!reference.startsWith(session.project_id+"/")||reference.includes("..")||reference.includes("\\")||reference.includes("?")){
+        const imagePrefix=session.project_id+"/products/";
+        const imageFilename=reference.startsWith(imagePrefix)?reference.slice(imagePrefix.length):"";
+        if(!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(imageFilename)){
           imageByProduct.set(product.id,{status:"مرجع تخزين غير صالح",reference});continue;
         }
         if(embeddedImages.length>=500){imageByProduct.set(product.id,{status:"تجاوز حد تضمين الصور",reference});continue;}
