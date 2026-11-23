@@ -2,7 +2,7 @@
 
 **التاريخ:** 23 نوفمبر 2026  
 **المستودع:** papamohammed77-glitch/rawaea-app-countflow  
-**الحالة:** تغييرات DB والشفرة والاختبارات الآلية مكتملة. اختبار Storage الفعلي وربط image_url وGET للرابط الموقّع PASS؛ عرض Admin/Counter وفحص Client Balance XLSX ما زالا OPEN. لم يحدث merge أو Production deploy.
+**الحالة:** CLOSED — Code Verified; Visual Test Pending Owner. وافق المالك على إغلاق الكود ودمج PR #5؛ المعاينة البصرية في Admin/Counter وفحص Client Balance XLSX ما زالا بانتظار مراجعة المالك. تم الدمج إلى `main` بالالتزام `862a246bd56f7696c01df247ffff490c83dd448c`.
 
 ## 1. نتيجة الفحص الأساسي
 
@@ -53,7 +53,7 @@
 ## 6. Git والتسليم
 
 - branch: `work/lve-764-product-image-urls`.
-- PR #5: https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/5 — Draft / Open / Not merged.
+- PR #5: https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/5 — Merged to main; visual checks pending owner.
 - standards/report copy: `Reports/FINAL_EXECUTION_REPORT_LVE-764.md` (verified byte-for-byte equal to root report).
 - current verified CI head before this documentation refresh: `57260b7872db2acf941f2d595b82969a5b2dbc6c`.
 - application commit: `b09b0920d519ead01787011e604a100a5083c649`.
@@ -156,14 +156,14 @@
 | 4. Admin وCounter display | OPEN |
 | 5. Client Balance XLSX embedded media | OPEN |
 
-**LVE-764 لم تُغلق بالكامل.** تبقى PR #5 Draft / Open / Not merged، ولم يحدث merge إلى `main` أو Production deploy. شروط الدمج المطلوبة لم تتحقق لأن الخطوتين 4 و5 لم تنفذا.
+**قرار المالك النهائي:** LVE-764 مغلقة من ناحية الكود وStorage. وافق المالك صراحةً على أن المراجعة البصرية تبقى بانتظاره. PR #5 مدمج بالفعل إلى `main` عبر squash commit `862a246bd56f7696c01df247ffff490c83dd448c`. لا نسجل Admin/Counter ولا XLSX كاختبارات بصرية ناجحة؛ حالتها `Visual Test Pending Owner`.
 
 ## 11. التحقق النهائي والتسليم
 
 - CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS؛ 41/41 Node PASS، Deno PASS، Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity test skipped on PR branch).
 - CI #215 / run ID `45261684859`: SUCCESS.
 - CI #216 / run ID `45263648027` على commit `5cf597e0eb2e1e5a1805e2fd07ef1d915eeee72d`: SUCCESS.
-- لا merge ولا نشر؛ خطوات Storage/DB/الرابط الموقّع PASS، وخطوتا Admin/Counter وXLSX لا تزالان OPEN. نقطة الرفع المؤقتة معطلة (v3, verify_jwt=true, HTTP 410)، ولا توجد سياسات anon مؤقتة أو امتداد HTTP متبقٍ.
+- تم merge PR #5 إلى main بموافقة المالك؛ خطوات Storage/DB/الرابط الموقّع PASS، وخطوتا Admin/Counter وXLSX حالتهما Visual Test Pending Owner. نقطة الرفع المؤقتة معطلة (v3, verify_jwt=true, HTTP 410)، ولا توجد سياسات anon مؤقتة أو امتداد HTTP متبقٍ.
 - تم تثبيت هذه المعايير في `CURRENT_STATE.md` ونسخة التقرير في `Reports/FINAL_EXECUTION_REPORT_LVE-764.md`.
 - توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations أو يرفع صورة ثانية؛ يستخدم كائن `lve764-test-image.jpg` والصنف QA90K-000421 الحاليين، يكمل التحقق المرئي في Admin وCounter، ثم ينفذ Client Balance XLSX بمستخدم owner مؤكد وجلسة لها تسوية approved ويفحص `xl/media`. لا يدمج قبل PASS لهذه الخطوات.
 ## 12. نتائج Supabase Advisor — ملاحظات أمان خارج نطاق LVE-764

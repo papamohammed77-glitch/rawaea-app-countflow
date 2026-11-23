@@ -1,18 +1,53 @@
 # CountFlow — CURRENT_STATE
 
-## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
+## LVE-2026-11-23-765 — Camera MVP (تنفيذ أولي)
+
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
+**Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`  
+**الفرع:** `work/lve-765-camera-mvp`  
+**الحالة:** Implemented on branch; automated/static validation pending; authenticated phone-camera E2E pending because no active CountFlow session exists in the current QA project.
+
+### ما تم بناؤه
+- تمت إضافة قسم كاميرا مستقل مباشرة أسفل حقل الباركود في `countflow.html`؛ لا يتداخل مع كاميرا مسح الباركود الموجودة.
+- يستخدم `<input type=file accept="image/*" capture="environment">` لطلب كاميرا الهاتف الخلفية، مع معاينة قبل الحفظ وإلغاء/إعادة اختيار.
+- لا تُضغط الصورة ولا يعاد تحجيمها؛ يرفع التطبيق ملف `File` الأصلي كما التقطه المتصفح.
+- الأنواع المقبولة JPEG/PNG/WebP، والحد 10 MiB. يربط مفتاح التخزين المشروع/الجلسة/عضوية المندوب/الموقع: `<project>/<session>/<member>/<location>/shelf-{timestamp}-{uuid}.{ext}`.
+- يلزم مندوب Counter نشط، وجلسة `active`، وموقع ضمن المواقع الظاهرة/المسندة قبل تفعيل الالتقاط والرفع.
+- بعد Storage upload، يسجل صفاً في `public.count_shelf_images`. عند فشل التسجيل يحاول حذف كائن Storage لعدم ترك صورة يتيمة.
+
+### Supabase
+- Migration `20261123211000_countflow_shelf_image_camera_mvp_v1` مُطبقة على `rawaea-staging`.
+- Bucket `shelf-images` تم إنشاؤه `public=true`، حد الملف 10 MiB، والأنواع JPEG/PNG/WebP.
+- تنبيه وصول: أي شخص لديه رابط الكائن يستطيع قراءة الصورة؛ أما الرفع فمحصور بسياسة INSERT لمستخدم authenticated بدور counter وعضوية نشطة وجلسة نشطة وموقع المشروع/الإسناد.
+- `count_shelf_images` مفعل عليه RLS؛ INSERT لصاحب العضوية في الجلسة والموقع النشطين، وSELECT لمالك المنصة/مشرف المشروع/أعضاء المشروع النشطين أو الموقوفين مؤقتاً. لا توجد صلاحيات client UPDATE/DELETE.
+- لا يوجد في المشروع الحالي أي `active` session (`QA 90K Product Catalogue` ما زالت `planned`)؛ لذلك لم أغيّر حالة الجلسة أو أُنشئ تكليفات/بيانات تشغيلية فقط لاختبار الكاميرا.
+
+### البوابات
+- **CONFIRMED:** Bucket public config والحد وأنواع MIME وسياسة الرفع وجدول المراجعة وRLS عبر فحص SQL حي.
+- **OPEN:** CI واختبارات المصدر على الفرع.
+- **OPEN:** التقاط فعلي من هاتف أو جهاز camera-enabled، Storage upload بواسطة مستخدم Counter مصرح، تسجيل صف review، فتح public URL، ومراجعة الصلاحية لعضو غير مسند.
+
+### توجيه الاستكمال
+1. تحقق من CI على الفرع قبل الدمج.
+2. بعد تجهيز جلسة QA نشطة وإسناد Counter إلى موقع، نفذ Camera E2E: capture → preview → upload → row in `count_shelf_images` → public GET 200.
+3. اختبر الرفض عند جلسة غير نشطة/عضو غير نشط/موقع غير مسند ونوع ملف غير مدعوم أو أكبر من 10 MiB.
+4. لا تنشئ جلسة تشغيلية ولا تغير مخزون/أرصدة بغرض هذا الاختبار.
+
+---
+
+## LVE-2026-11-23-764 — CLOSED: Code Verified; Visual Test Pending Owner
 
 **التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
 **المستودع:** papamohammed77-glitch/rawaea-app-countflow  
 **Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu  
 **Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
 **فرع العمل:** work/lve-764-product-image-urls  
-**PR:** #5 — Draft / Open / Not merged  
+**PR:** #5 — Merged to `main` (squash commit `862a246bd56f7696c01df247ffff490c83dd448c`)  
 **Application commit:** `b09b0920d519ead01787011e604a100a5083c649`  
 **Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
 **Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
 
-### آخر تنفيذ فعلي لـLVE-764 — 23 نوفمبر 2026 (3/5 PASS، E2E ما زال مفتوحًا)
+### اعتماد المالك وإغلاق نطاق الكود — 23 نوفمبر 2026
 
 - **PASS — Storage upload:** رُفع JPEG فعلي 96×72 إلى `counting-product-images` باستخدام Supabase Storage API من Edge Function مؤقتة، مع `service_role` محفوظ في بيئة الخادم؛ سجل Storage: POST `HTTP 200`، طلب `2,283 bytes`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، Version `7b65f830-7ab0-4535-865e-d266f4e3a1b8`، MIME `image/jpeg`.
 - **PASS — Product link/trigger:** الصنف `QA 90K Product 421` (`005d0a73-1d11-4833-80f2-1f4ab18ba705`، SKU `QA90K-000421`) يحفظ الآن object key الدائم `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ UPDATE/RETURNING نجح، أي إن Trigger قبل المرجع بعد وجود الملف ونوعه وحجمه.
@@ -20,7 +55,7 @@
 - **OPEN — Admin/Counter display:** لم يُنفذ بحث تفاعلي أو تحقق بصري في Admin أو Counter؛ اتصال Browser المتاح يقرأ الصفحة فقط ولا يتيح النقر أو إدخال بيانات أو لقطات شاشة.
 - **OPEN — Client Balance XLSX:** لم يُنفذ التصدير الفعلي ولم تُفحص `xl/media`. وظيفة التصدير تشترط Bearer token صالحًا لمستخدم Auth مؤكد بالبريد `owner@rawaea.com`، وتفرض وجود تسوية `approved`. الاستدعاء باستخدام anon أعاد `401 INVALID_USER_TOKEN`؛ الجلسة الحالية `QA 90K Product Catalogue` لا تزال `planned` ولا توجد إسنادات أو تسوية معتمدة.
 - **حالة الأمان بعد الاختبار:** الدلو ما زال `private`؛ سياسات anon المؤقتة أزيلت، وإضافة Postgres `http` أزيلت، والتحقق الحي أكد صفر سياسات مؤقتة وصفر إضافة HTTP. نقطة `lve764-image-ingest-once` المؤقتة رُقّيت إلى v3 مع `verify_jwt=true` واستجابة 410 غير تشغيلية؛ لا تبقى نقطة رفع عامة قابلة للاستخدام. لا توجد كتابة مباشرة في `storage.objects`؛ تم الرفع عبر Storage API.
-- **القرار:** لا تغلق LVE-764 ولا تدمج PR #5 حتى إكمال Admin thumbnail وCounter lookup/recount وXLSX media inspection. لا تُعد رفع نفس الكائن ولا تغيّر صنفًا آخر؛ أكمل على الصنف/الكائن المحددين أعلاه.
+- **اعتماد المالك:** إغلاق LVE-764 من ناحية الكود وStorage مقبول. الحالة النهائية: `CLOSED — Code Verified; Visual Test Pending Owner`. معاينة Admin/Counter وفحص Client Balance XLSX ما زالا بانتظار المراجعة البصرية لدى المالك؛ لم يُسجلا كاختبارات بصرية ناجحة. PR #5 مدمج إلى `main` في `862a246bd56f7696c01df247ffff490c83dd448c`.
 ### الحالة
 ### معيار بيانات الأصناف (معيار إلزامي)
 
@@ -80,7 +115,7 @@
 - Validator الصور الخاص `counting_private.is_valid_product_image_reference` ودالة Trigger `counting_private.enforce_count_product_image_reference` لا تمنحان EXECUTE لـanon أو authenticated.
 - فحص المشروع بأكمله أظهر تحذيرات/أخطاء قائمة خارج مسار الصور: 65 جدولًا عامًا بلا RLS (لا تشمل جداول `count_*`)، و5 دوال SECURITY DEFINER عامة قابلة لـanon (أسماء legacy غير CountFlow)، و14 دالة SECURITY DEFINER قابلة لـauthenticated، منها خمس RPCs تشغيلية CountFlow قديمة. هذه لم تُعدّل ضمن LVE-764 وتحتاج مراجعة أمان مستقلة قبل إتاحة المشروع لعملاء خارجيين.
 - Advisor أظهر أيضًا تحذير حماية كلمات المرور المسرّبة و64 index غير مستخدم ومؤشرًا مكررًا واحدًا على `erp_operation_registry`. لم تُجرَ تغييرات عليها لأنها خارج نطاق LVE-764 وتتطلب مراجعة منفصلة.
-### بوابة الإغلاق المفتوحة
+### نتيجة الإغلاق المعتمدة
 
 - **PASS (1):** رفع JPEG فعلي عبر Storage REST إلى `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ HTTP 200.
 - **PASS (2):** ربط الصورة بالصنف `005d0a73-1d11-4833-80f2-1f4ab18ba705` / `QA90K-000421`، وتأكيد قبول Trigger للـobject key الدائم.

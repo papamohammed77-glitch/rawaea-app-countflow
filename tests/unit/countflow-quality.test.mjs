@@ -824,3 +824,37 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
   assert.doesNotMatch(migration, /UPDATE\s+storage\.objects/i);
   assert.doesNotMatch(migration, /ALTER\s+TABLE\s+public\.count_products\s+ADD\s+COLUMN\s+image_url/i);
 });
+
+test("LVE-765 camera MVP is below the barcode, previews the original capture and uploads only in the active assigned context", () => {
+  const html = read("countflow.html");
+  const barcode = html.indexOf('id="barcode"');
+  const camera = html.indexOf('id="camera-container"');
+  const locations = html.indexOf('class="loc-nav"');
+  assert.ok(barcode >= 0 && camera > barcode && locations > camera, "camera block must sit below barcode and above location navigation");
+  assert.match(html, /id="shelf-image-input" accept="image\/\*" capture="environment"/);
+  assert.match(html, /function shelfCameraContext\(\)/);
+  assert.match(html, /session\?\.status!==\x27active\x27/);
+  assert.match(html, /SHELF_IMAGE_MAX_BYTES=10\*1024\*1024/);
+  assert.match(html, /SHELF_IMAGE_EXTENSIONS=Object\.freeze\(\{\x27image\/jpeg\x27:\x27jpg\x27,\x27image\/png\x27:\x27png\x27,\x27image\/webp\x27:\x27webp\x27\}\)/);
+  assert.match(html, /URL\.createObjectURL\(file\)/);
+  assert.match(html, /upload\(storagePath,file,\{contentType:file\.type,cacheControl:\x273600\x27,upsert:false\}\)/);
+  assert.match(html, /from\(\x27count_shelf_images\x27\)\.insert/);
+  assert.match(html, /from\(\x27shelf-images\x27\)\.remove\(\[storagePath\]\)/);
+  assert.match(html, /\[context\.projectId,context\.sessionId,context\.memberId,context\.locationId,fileName\]\.join\(\x27\/\x27\)/);
+  assert.doesNotMatch(html.slice(html.indexOf('id="camera-container"'), html.indexOf('id="productPanel"')), /onclick=/i);
+  assert.match(html, /دون ضغط أو إعادة تحجيم/);
+});
+
+test("LVE-765 shelf photo schema keeps the bucket public but requires active counter/session/location authorization for upload", () => {
+  const migration = read("database/migrations/20261123211000_countflow_shelf_image_camera_mvp_v1.sql");
+  assert.match(migration, /\x27shelf-images\x27,\s*\x27shelf-images\x27,\s*true,\s*10485760/);
+  assert.match(migration, /allowed_mime_types/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.count_shelf_images/);
+  assert.match(migration, /ALTER TABLE public\.count_shelf_images ENABLE ROW LEVEL SECURITY/);
+  assert.match(migration, /m\.role='counter'/);
+  assert.match(migration, /m\.status='active'/);
+  assert.match(migration, /s\.status='active'/);
+  assert.match(migration, /member_has_location_assignment/);
+  assert.match(migration, /CREATE POLICY shelf_images_counter_upload/);
+  assert.doesNotMatch(migration, /INSERT\s+INTO\s+storage\.objects/i);
+});

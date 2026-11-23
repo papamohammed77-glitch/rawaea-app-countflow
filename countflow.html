@@ -40,6 +40,24 @@ header{background:linear-gradient(120deg,#111827,#1e40af);color:white;padding:17
 .achievement-badge.earned .badge-state{color:#1d4ed8}
 @media(max-width:600px){.gamification-summary{padding:13px}.gamification-cards,.badge-list{grid-template-columns:repeat(2,minmax(0,1fr))}.leaderboard-row{padding:9px}.leaderboard-score{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.gamification-progress-fill{transition:none}}
+
+/* LVE-765 shelf camera MVP */
+.shelf-camera{margin-top:14px;padding:15px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:14px;text-align:center}
+.shelf-camera-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;text-align:right}
+.shelf-camera-heading h3{margin:0 0 3px;font-size:16px;color:#111827}
+.shelf-camera-heading p{margin:0 0 12px;color:#64748b;font-size:12px;line-height:1.8}
+.shelf-camera-tag{flex:none;padding:3px 9px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:10px;font-weight:800}
+.shelf-camera-open,.shelf-camera-save{background:#2563eb;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px}
+.shelf-camera-open{width:100%}
+.shelf-camera-open:disabled,.shelf-camera-save:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.shelf-camera-hint,.shelf-camera-status{display:block;margin-top:8px;color:#64748b;font-size:11px;line-height:1.7}
+.shelf-camera-preview{margin-top:13px;text-align:right}
+.shelf-camera-preview img{display:block;width:100%;max-height:360px;object-fit:contain;background:#0f172a;border-radius:10px}
+.shelf-image-file-info{padding:7px 2px;color:#475569;font-size:11px;overflow-wrap:anywhere}
+.shelf-camera-actions{display:grid;grid-template-columns:1fr auto;gap:8px}
+.shelf-camera-save{background:#059669}
+.shelf-camera-cancel{background:#e2e8f0;color:#334155;padding:10px 14px;border-radius:10px}
+@media(max-width:420px){.shelf-camera{padding:12px}.shelf-camera-heading h3{font-size:15px}}
 </style></head>
 <body>
 <header><div><b>CountFlow</b><br><small>محطة الجرد الميداني</small></div><div style="text-align:left"><div id="userLabel">غير متصل</div><div class="sync" id="syncState">● اتصال مباشر</div></div></header>
@@ -63,7 +81,25 @@ header{background:linear-gradient(120deg,#111827,#1e40af);color:white;padding:17
  </div>
  <div class="tabs"><button class="active" data-tab="count">الجرد</button><button data-tab="recounts">مهام إعادة العد</button><button data-tab="history">سجلّي</button><button data-tab="account">حسابي</button><button data-tab="achievements">إنجازاتي</button></div>
 <div id="tab-count">
-<div class="scanbox"><div class="row"><b class="grow">المسح الفوري</b><button class="soft" id="cameraBtn">فتح الكاميرا</button></div><video id="video" class="camera hidden" playsinline></video><div class="row" style="margin-top:10px"><input id="barcode" placeholder="امسح الباركود أو اكتب الكود..." autocomplete="off"><button class="primary" id="findBtn">بحث</button></div><small style="opacity:.7">امسح كود الموقع أولاً ثم الأصناف؛ تكرار مسح الصنف يزيد الكمية تلقائياً، واحفظه قبل الانتقال لصنف آخر.</small>
+<div class="scanbox"><div class="row"><b class="grow">المسح الفوري</b><button class="soft" id="cameraBtn">فتح الكاميرا</button></div><video id="video" class="camera hidden" playsinline></video><div class="row" style="margin-top:10px"><input id="barcode" placeholder="امسح الباركود أو اكتب الكود..." autocomplete="off"><button class="primary" id="findBtn">بحث</button></div>
+<section id="camera-container" class="shelf-camera" aria-labelledby="shelf-camera-title">
+ <div class="shelf-camera-heading">
+  <div><h3 id="shelf-camera-title">📸 تصوير الرف</h3><p>التقط صورة واضحة للرف الحالي لربطها بالمشروع والجلسة والموقع ومراجعتها لاحقاً.</p></div>
+  <span class="shelf-camera-tag">تجريبي</span>
+ </div>
+ <input type="file" id="shelf-image-input" accept="image/*" capture="environment" hidden>
+ <button type="button" id="shelf-camera-button" class="shelf-camera-open" disabled>فتح كاميرا الهاتف</button>
+ <small id="shelf-camera-hint" class="shelf-camera-hint" aria-live="polite">يلزم تسجيل الدخول وجلسة نشطة وتحديد موقع الرف.</small>
+ <div id="shelf-camera-preview" class="shelf-camera-preview hidden">
+  <img id="shelf-preview-image" alt="معاينة صورة الرف المختارة">
+  <div id="shelf-image-file-info" class="shelf-image-file-info"></div>
+  <div class="shelf-camera-actions">
+   <button type="button" id="shelf-upload-button" class="shelf-camera-save" disabled>تأكيد وحفظ الصورة</button>
+   <button type="button" id="shelf-cancel-button" class="shelf-camera-cancel">إلغاء</button>
+  </div>
+ </div>
+ <p id="shelf-camera-status" class="shelf-camera-status" role="status" aria-live="polite"></p>
+</section><small style="opacity:.7">امسح كود الموقع أولاً ثم الأصناف؛ تكرار مسح الصنف يزيد الكمية تلقائياً، واحفظه قبل الانتقال لصنف آخر.</small>
 <div class="loc-nav">
  <div class="loc-nav-top"><span class="loc-nav-label">الموقع النشط</span><strong id="locBreadcrumb" class="loc-nav-path">لم يتم تحديد موقع</strong></div>
  <span class="loc-nav-label">المواقع في المستوى نفسه</span><div id="locSiblings" class="loc-chips"><span class="loc-empty">اختر موقعاً لعرض المواقع المجاورة</span></div>
@@ -314,11 +350,96 @@ async function touchPresence(state){
  return true;
 }
 function showApp(){ $('login').classList.add('hidden');$('workspace').classList.remove('hidden');$('userLabel').textContent=user.email||'مندوب الجرد';$('accountDetails').textContent=user.email+' · '+member.display_name+' · '+roleLabel(member.role);$('projectName').textContent=project.name}
-async function activateMembership(m){if(memberChannel){await sb.removeChannel(memberChannel);memberChannel=null}member=m;project=availableProjects[m.project_id];if(!project){toast('المشروع المرتبط بهذا الحساب غير متاح');return}deviceId=bindDeviceIdentity(member,project);session=null;activeRecountTask=null;product=null;$('productInfo').classList.add('hidden');$('emptyProduct').classList.remove('hidden');$('saveBtn').textContent='تسجيل الكمية ومتابعة الصنف التالي';const {data:ss,error}=await sb.from('count_sessions').select('*').eq('project_id',project.id) .in('status',['active','paused','review']).order('created_at',{ascending:false}).limit(1).maybeSingle();if(error){console.warn('Counter session load failed',error);toast('تعذر تحميل جلسة الجرد. حاول مرة أخرى.',true)}session=ss||null;clearGamification();showApp();$('projectSwitch').value=m.id;await loadLocations();await loadHistory();await refreshGamification({quiet:true});if(session){$('sessionName').textContent=session.name;$('sessionStatus').textContent=session.status==='active'?'جلسة نشطة':'الجلسة متوقفة مؤقتاً';$('assignmentHint').textContent='التزم بالموقع المسند إليك. كل تسجيل مرتبط بحسابك ووقته وجهازك.';$('saveBtn').disabled=session.status!=='active'||member.status!=='active'}else{$('sessionName').textContent='لا توجد جلسة نشطة';$('sessionStatus').textContent='بانتظار الجلسة';$('saveBtn').disabled=true}await subscribe();const deviceOk=await touchPresence('online');await queueCount();await syncQueue();if(session&&session.status==='active'&&member.status==='active'&&deviceOk)$('saveBtn').disabled=false;await loadRecountTasks()}
+async function activateMembership(m){if(memberChannel){await sb.removeChannel(memberChannel);memberChannel=null}resetShelfPhotoDraft();member=m;project=availableProjects[m.project_id];if(!project){toast('المشروع المرتبط بهذا الحساب غير متاح');return}deviceId=bindDeviceIdentity(member,project);session=null;activeRecountTask=null;product=null;$('productInfo').classList.add('hidden');$('emptyProduct').classList.remove('hidden');$('saveBtn').textContent='تسجيل الكمية ومتابعة الصنف التالي';const {data:ss,error}=await sb.from('count_sessions').select('*').eq('project_id',project.id) .in('status',['active','paused','review']).order('created_at',{ascending:false}).limit(1).maybeSingle();if(error){console.warn('Counter session load failed',error);toast('تعذر تحميل جلسة الجرد. حاول مرة أخرى.',true)}session=ss||null;clearGamification();showApp();$('projectSwitch').value=m.id;await loadLocations();updateShelfCameraAvailability();await loadHistory();await refreshGamification({quiet:true});if(session){$('sessionName').textContent=session.name;$('sessionStatus').textContent=session.status==='active'?'جلسة نشطة':'الجلسة متوقفة مؤقتاً';$('assignmentHint').textContent='التزم بالموقع المسند إليك. كل تسجيل مرتبط بحسابك ووقته وجهازك.';$('saveBtn').disabled=session.status!=='active'||member.status!=='active'}else{$('sessionName').textContent='لا توجد جلسة نشطة';$('sessionStatus').textContent='بانتظار الجلسة';$('saveBtn').disabled=true}await subscribe();const deviceOk=await touchPresence('online');await queueCount();await syncQueue();if(session&&session.status==='active'&&member.status==='active'&&deviceOk)$('saveBtn').disabled=false;await loadRecountTasks()}
 async function boot(){const {data:{session:s}}=await sb.auth.getSession();if(!s)return;user=s.user;const {data:members,error}=await sb.from('count_members').select('*').eq('user_id',user.id).eq('status','active').eq('role','counter').order('created_at');if(error||!members?.length){console.warn('Counter membership load failed',error);$('loginError').textContent='لا يوجد حساب مندوب نشط مرتبط بهذا الدخول. تواصل مع المشرف.';await sb.auth.signOut();return}const projectIds=[...new Set(members.map(m=>m.project_id))];const {data:projects,error:projectError}=await sb.from('count_projects').select('*').in('id',projectIds);if(projectError||!projects?.length){console.warn('Counter project load failed',projectError);$('loginError').textContent='تعذر تحميل جهات الجرد المرتبطة بحسابك. تحقق من الاتصال ثم أعد المحاولة.';await sb.auth.signOut();return}availableMemberships=members.filter(m=>projects.some(p=>p.id===m.project_id));availableProjects=Object.fromEntries(projects.map(p=>[p.id,p]));$('projectSwitch').innerHTML=availableMemberships.map(m=>'<option value="'+m.id+'">'+esc(availableProjects[m.project_id]?.name||'مشروع')+' · '+'مندوب'+'</option>').join('');$('projectSwitch').classList.toggle('hidden',availableMemberships.length<2);$('projectSwitch').onchange=()=>{const next=availableMemberships.find(m=>m.id===$('projectSwitch').value);if(next)activateMembership(next)};await activateMembership(availableMemberships[0]);if(!appTimersStarted){appTimersStarted=true;setInterval(syncQueue,12000);setInterval(async()=>{const ok=await touchPresence(document.hidden?'idle':'online');if(ok)await queueCount()},30000);setInterval(()=>{if(!document.hidden)refreshGamification({quiet:true})},20000)}}
 function renderLocationNavigation(){const currentId=$('location')?.value||'',current=locations.find(v=>v.id===currentId);const renderChips=(items,container)=>{container.innerHTML=items.length?items.map(v=>'<button type="button" class="loc-chip '+(v.id===currentId?'active':'')+'" data-location-nav="'+v.id+'">'+esc(v.code||'')+' · '+esc(v.name)+'</button>').join(''):'<span class="loc-empty">لا توجد مواقع متاحة في هذا المستوى</span>'};if(!current){$('locBreadcrumb').textContent='امسح باركود الموقع أو اختره من قائمة المواقع';const roots=locations.filter(v=>!v.parent_id);renderChips(roots.length?roots:locations.slice(0,20),$('locSiblings'));$('locChildren').innerHTML='<span class="loc-empty">حدد موقعاً لعرض المواقع الفرعية</span>';return}const byId=new Map(allLocations.map(v=>[v.id,v]));const chain=[];let node=current,seen=new Set();while(node&&!seen.has(node.id)){seen.add(node.id);chain.unshift(node);node=byId.get(node.parent_id)||null}$('locBreadcrumb').textContent=chain.map(v=>(v.code?v.code+' · ':'')+v.name).join('  /  ');const siblings=locations.filter(v=>v.parent_id===current.parent_id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.code).localeCompare(String(b.code)));const children=locations.filter(v=>v.parent_id===current.id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||String(a.code).localeCompare(String(b.code)));renderChips(siblings,$('locSiblings'));renderChips(children,$('locChildren'))}
 function handleLocationNavClick(event){const button=event.target.closest('[data-location-nav]');if(!button)return;const id=button.dataset.locationNav;if(!locations.some(v=>v.id===id))return;$('location').value=id;renderLocationNavigation();const selected=locations.find(v=>v.id===id);if(selected)toast('الموقع النشط: '+selected.name)}
 async function loadLocations(){let data=[];for(let offset=0;offset<20000;offset+=1000){const {data:page,error}=await sb.from('count_locations').select('id,name,code,location_type,parent_id,sort_order').eq('project_id',project.id).order('sort_order').order('id').range(offset,offset+999);if(error){console.warn('Counter locations load failed',error);toast('تعذر تحميل المواقع. حاول مرة أخرى.',true);return}data.push(...(page||[]));if((page||[]).length<1000)break}allLocations=data;locations=data;if(session){const {data:scope,error:scopeErr}=await sb.rpc('count_get_assignment_scope',{p_session_id:session.id});if(scopeErr){console.warn('Counter assignment scope check failed',scopeErr);toast('تعذر التحقق من المواقع المسندة إليك. حاول مرة أخرى.',true);locations=[]}else if(scope.has_assignments){if(!scope.all_locations){const allowed=new Set(scope.location_ids||[]);locations=locations.filter(v=>allowed.has(v.id))}$('assignmentHint').textContent=locations.length?'تظهر لك المواقع المصرح بها فقط وفق تعيينات المشرف.':'لم يتم إسناد موقع نشط إليك بعد؛ تواصل مع المشرف.'}else{$('assignmentHint').textContent='لم يضع المشرف تعيينات مواقع بعد؛ الوصول الحالي يشمل مواقع المشروع.'}}$('location').innerHTML='<option value="">اختر موقع الرف</option>'+locations.map(v=>'<option value="'+v.id+'">'+esc(v.name)+' · '+esc(v.code)+'</option>').join('');renderLocationNavigation()}
+const SHELF_IMAGE_MAX_BYTES=10*1024*1024;
+const SHELF_IMAGE_EXTENSIONS=Object.freeze({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'});
+let shelfImageFile=null,shelfPreviewObjectUrl=null,shelfImageContextSnapshot=null,shelfUploadInProgress=false;
+function shelfCameraContext(){
+ const locationId=$('location')?.value||'';
+ if(!user?.id||!member?.id||member.status!=='active'||member.role!=='counter')return {ok:false,message:'يلزم الدخول بحساب مندوب جرد نشط.'};
+ if(!project?.id||!session?.id||session.status!=='active')return {ok:false,message:'تصوير الرف متاح داخل جلسة جرد نشطة فقط.'};
+ if(!locationId||!locations.some(item=>item.id===locationId))return {ok:false,message:'اختر موقع الرف المسند إليك أولاً.'};
+ return {ok:true,projectId:project.id,sessionId:session.id,memberId:member.id,locationId};
+}
+function updateShelfCameraAvailability(){
+ const button=$('shelf-camera-button');if(!button)return;
+ const context=shelfCameraContext();
+ button.disabled=!context.ok||shelfUploadInProgress;
+ $('shelf-camera-hint').textContent=context.ok?'سيتم ربط الصورة بالمشروع والجلسة والموقع المحدد دون تغيير عمليات العد.':context.message;
+ if(!$('shelf-camera-preview').classList.contains('hidden'))$('shelf-upload-button').disabled=!shelfImageFile||!context.ok||shelfUploadInProgress;
+}
+function resetShelfPhotoDraft(){
+ shelfImageFile=null;shelfImageContextSnapshot=null;
+ if(shelfPreviewObjectUrl){URL.revokeObjectURL(shelfPreviewObjectUrl);shelfPreviewObjectUrl=null;}
+ $('shelf-preview-image').removeAttribute('src');$('shelf-image-file-info').textContent='';$('shelf-image-input').value='';
+ $('shelf-camera-preview').classList.add('hidden');$('shelf-upload-button').disabled=true;$('shelf-camera-status').textContent='';
+ updateShelfCameraAvailability();
+}
+function shelfFileSizeLabel(bytes){return bytes>=1048576?(bytes/1048576).toFixed(2)+' MiB':Math.ceil(bytes/1024)+' KiB'}
+function handleShelfImageSelection(event){
+ const file=event.target.files?.[0];if(!file)return;
+ const context=shelfCameraContext();
+ if(!context.ok){resetShelfPhotoDraft();toast(context.message,true);return;}
+ if(!Object.prototype.hasOwnProperty.call(SHELF_IMAGE_EXTENSIONS,file.type)){resetShelfPhotoDraft();toast('صيغة الصورة غير مدعومة. استخدم JPEG أو PNG أو WebP.',true);return;}
+ if(!Number.isFinite(file.size)||file.size<=0||file.size>SHELF_IMAGE_MAX_BYTES){resetShelfPhotoDraft();toast('حجم الصورة يجب أن يكون أكبر من صفر ولا يتجاوز 10 MiB.',true);return;}
+ if(shelfPreviewObjectUrl)URL.revokeObjectURL(shelfPreviewObjectUrl);
+ shelfImageFile=file;shelfImageContextSnapshot={projectId:context.projectId,sessionId:context.sessionId,memberId:context.memberId,locationId:context.locationId};
+ shelfPreviewObjectUrl=URL.createObjectURL(file);$('shelf-preview-image').src=shelfPreviewObjectUrl;
+ $('shelf-image-file-info').textContent=esc(file.name||'صورة الرف')+' · '+shelfFileSizeLabel(file.size)+' · '+esc(file.type);
+ $('shelf-camera-preview').classList.remove('hidden');$('shelf-upload-button').disabled=false;
+ $('shelf-camera-status').textContent='راجع الصورة قبل الحفظ. سيتم رفع الملف الأصلي دون ضغط أو إعادة تحجيم.';
+ updateShelfCameraAvailability();
+}
+async function uploadShelfImage(){
+ const context=shelfCameraContext();
+ if(!context.ok){toast(context.message,true);updateShelfCameraAvailability();return;}
+ const file=shelfImageFile,snapshot=shelfImageContextSnapshot;
+ if(!file||!snapshot){toast('التقط صورة الرف أولاً.',true);return;}
+ if(snapshot.projectId!==context.projectId||snapshot.sessionId!==context.sessionId||snapshot.memberId!==context.memberId||snapshot.locationId!==context.locationId){resetShelfPhotoDraft();toast('تغير المشروع أو الجلسة أو الموقع. التقط الصورة مرة أخرى بعد تحديد الموقع.',true);return;}
+ const extension=SHELF_IMAGE_EXTENSIONS[file.type];
+ if(!extension||file.size<=0||file.size>SHELF_IMAGE_MAX_BYTES){toast('ملف الصورة لم يعد صالحاً للرفع.',true);return;}
+ const fileName='shelf-'+Date.now()+'-'+crypto.randomUUID()+'.'+extension;
+ const storagePath=[context.projectId,context.sessionId,context.memberId,context.locationId,fileName].join('/');
+ const uploadButton=$('shelf-upload-button');
+ shelfUploadInProgress=true;uploadButton.disabled=true;uploadButton.textContent='جاري حفظ الصورة...';
+ $('shelf-camera-button').disabled=true;$('projectSwitch').disabled=true;$('location').disabled=true;
+ $('shelf-camera-status').textContent='جارٍ رفع الصورة الأصلية ثم تسجيل بياناتها للمراجعة.';
+ let uploaded=false;
+ try{
+  const {error:uploadError}=await sb.storage.from('shelf-images').upload(storagePath,file,{contentType:file.type,cacheControl:'3600',upsert:false});
+  if(uploadError)throw uploadError;uploaded=true;
+  const latest=shelfCameraContext();
+  if(!latest.ok||latest.projectId!==context.projectId||latest.sessionId!==context.sessionId||latest.memberId!==context.memberId||latest.locationId!==context.locationId){
+   const {error:cleanupError}=await sb.storage.from('shelf-images').remove([storagePath]);
+   if(cleanupError)console.error('Shelf image context-change cleanup failed',storagePath,cleanupError);else uploaded=false;
+   throw new Error('SHELF_IMAGE_CONTEXT_CHANGED');
+  }
+  const {error:recordError}=await sb.from('count_shelf_images').insert({
+   project_id:context.projectId,session_id:context.sessionId,member_id:context.memberId,location_id:context.locationId,
+   storage_path:storagePath,mime_type:file.type,size_bytes:file.size
+  });
+  if(recordError){
+   const {error:cleanupError}=await sb.storage.from('shelf-images').remove([storagePath]);
+   if(cleanupError)console.error('Shelf image rollback failed; retain this path for manual reconciliation:',storagePath,cleanupError);else uploaded=false;
+   throw recordError;
+  }
+  const {data:{publicUrl}}=sb.storage.from('shelf-images').getPublicUrl(storagePath);
+  console.info('CountFlow shelf image registered',{storagePath,publicUrl,projectId:context.projectId,sessionId:context.sessionId,locationId:context.locationId});
+  toast('تم حفظ صورة الرف وربطها بالمشروع والجلسة والموقع بنجاح.');resetShelfPhotoDraft();
+ }catch(error){
+  console.error('Shelf image upload failed',error,uploaded?{storagePath}:null);
+  $('shelf-camera-status').textContent=uploaded?'تعذر إكمال تسجيل الصورة؛ راجع سجل المتصفح قبل إعادة المحاولة.':'تعذر حفظ صورة الرف. راجع الاتصال وصلاحية الجلسة ثم أعد المحاولة.';
+  toast(error?.message==='SHELF_IMAGE_CONTEXT_CHANGED'?'تغير سياق الجرد أثناء الرفع؛ لم يتم اعتماد الصورة.':'تعذر حفظ الصورة. تحقق من الجلسة والاتصال.',true);
+ }finally{
+  shelfUploadInProgress=false;uploadButton.textContent='تأكيد وحفظ الصورة';$('projectSwitch').disabled=false;$('location').disabled=false;
+  updateShelfCameraAvailability();if(shelfImageFile)uploadButton.disabled=false;
+ }
+}
+
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 const PRODUCT_IMAGE_FALLBACK='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="100%25" height="100%25" rx="12" fill="%23edf2f4"/%3E%3C/svg%3E';
 function isProjectProductImagePath(reference,projectId){
@@ -395,7 +516,7 @@ async function cameraStart(){if(!('BarcodeDetector'in window)){toast('المتص
 let scanning=false,lastCameraCode='',lastCameraSeen=0,lastScanFrameAt=0;async function scanFrame(){if(!stream||scanning)return;const now=Date.now();if(now-lastScanFrameAt<200){requestAnimationFrame(scanFrame);return}lastScanFrameAt=now;scanning=true;try{const codes=await detector.detect($('video'));if(codes.length){const code=String(codes[0].rawValue||'').trim();lastCameraSeen=now;if(code&&code!==lastCameraCode){lastCameraCode=code;$('barcode').value=code;await findProduct()}}else if(lastCameraCode&&now-lastCameraSeen>800){lastCameraCode=''}}catch(e){}scanning=false;if(stream)requestAnimationFrame(scanFrame)}
 function cameraStop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;lastCameraCode='';lastCameraSeen=0;lastScanFrameAt=0;$('video').classList.add('hidden')}
 $('loginBtn').onclick=async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginError').textContent=friendlyErrorMessage(error);return}user=data.user;await boot()};
-$('findBtn').onclick=findProduct;$('locSiblings').addEventListener('click',handleLocationNavClick);$('locChildren').addEventListener('click',handleLocationNavClick);$('location').addEventListener('change',renderLocationNavigation);$('barcode').addEventListener('keydown',e=>{if(e.key==='Enter')findProduct()});$('saveBtn').onclick=saveCount;$('cameraBtn').onclick=()=>stream?cameraStop():cameraStart();$('minus').onclick=()=> $('quantity').value=Math.max(0,Number($('quantity').value)-1);$('plus').onclick=()=> $('quantity').value=Number($('quantity').value)+1;$('syncBtn').onclick=syncQueue;$('logoutBtn').onclick=async()=>{cameraStop();await sb.auth.signOut();location.reload()};
+$('findBtn').onclick=findProduct;$('locSiblings').addEventListener('click',handleLocationNavClick);$('locChildren').addEventListener('click',handleLocationNavClick);$('location').addEventListener('change',()=>{renderLocationNavigation();updateShelfCameraAvailability()});$('barcode').addEventListener('keydown',e=>{if(e.key==='Enter')findProduct()});$('saveBtn').onclick=saveCount;$('cameraBtn').onclick=()=>stream?cameraStop():cameraStart();$('shelf-camera-button').onclick=()=>{const context=shelfCameraContext();if(!context.ok){toast(context.message,true);return}$('shelf-image-input').click()};$('shelf-image-input').addEventListener('change',handleShelfImageSelection);$('shelf-upload-button').onclick=uploadShelfImage;$('shelf-cancel-button').onclick=resetShelfPhotoDraft;$('minus').onclick=()=> $('quantity').value=Math.max(0,Number($('quantity').value)-1);$('plus').onclick=()=> $('quantity').value=Number($('quantity').value)+1;$('syncBtn').onclick=syncQueue;$('logoutBtn').onclick=async()=>{cameraStop();resetShelfPhotoDraft();await sb.auth.signOut();location.reload()};
 document.addEventListener('visibilitychange',async()=>{const ok=await touchPresence(document.hidden?'idle':'online');if(ok){await queueCount();if(!document.hidden)await refreshGamification({quiet:true})}});window.addEventListener('online',()=>{$('syncState').textContent='● اتصال مباشر';$('syncState').classList.remove('off');touchPresence('online').then(async ok=>{if(ok){await queueCount();await syncQueue();if(session?.status==='active'&&member?.status==='active')$('saveBtn').disabled=false}})});window.addEventListener('offline',()=>{$('syncState').textContent='● وضع دون اتصال';$('syncState').classList.add('off')});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));['count','recounts','history','account','achievements'].forEach(x=>$('tab-'+x).classList.toggle('hidden',x!==b.dataset.tab));if(b.dataset.tab==='history')loadHistory();if(b.dataset.tab==='recounts')loadRecountTasks();if(b.dataset.tab==='achievements')refreshGamification({quiet:true})});
 $('refreshRecounts').onclick=loadRecountTasks;
