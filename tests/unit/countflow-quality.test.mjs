@@ -754,3 +754,19 @@ test("Gamification scoring is server-authoritative, idempotent and Counter-only"
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.count_get_gamification_snapshot\(uuid\) TO authenticated/);
   assert.doesNotMatch(migration, /GRANT EXECUTE ON FUNCTION public\.count_get_gamification_snapshot\(uuid\) TO anon/);
 });
+
+
+test("Gamification snapshot rejects counters who are not assigned to an explicitly assigned session", () => {
+  const guard = read("database/migrations/20261123174943_countflow_gamification_session_assignment_guard_v1.sql");
+  assert.match(guard, /counting_private\.assert_gamification_session_participation/);
+  assert.match(guard, /m\.user_id = v_user_id/);
+  assert.match(guard, /m\.role = 'counter'/);
+  assert.match(guard, /m\.status = 'active'/);
+  assert.match(guard, /SELECT EXISTS \([\s\S]*?FROM public\.count_assignments a[\s\S]*?a\.session_id = p_session_id/);
+  assert.match(guard, /v_has_assignments AND NOT EXISTS \([\s\S]*?a\.member_id = v_member_id[\s\S]*?a\.status IN \('assigned','active'\)/);
+  assert.match(guard, /COUNTER_NOT_ASSIGNED_TO_SESSION/);
+  assert.match(guard, /PERFORM counting_private\.assert_gamification_session_participation\(p_session_id\)/);
+  assert.match(guard, /public\.count_get_gamification_snapshot[\s\S]*?SECURITY INVOKER/);
+  assert.match(guard, /REVOKE ALL ON FUNCTION counting_private\.assert_gamification_session_participation\(uuid\) FROM anon/);
+  assert.match(guard, /GRANT EXECUTE ON FUNCTION counting_private\.assert_gamification_session_participation\(uuid\) TO authenticated/);
+});
