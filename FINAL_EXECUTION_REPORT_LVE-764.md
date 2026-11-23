@@ -2,11 +2,11 @@
 
 **التاريخ:** 23 نوفمبر 2026  
 **المستودع:** papamohammed77-glitch/rawaea-app-countflow  
-**الحالة:** DB والشفرة والاختبارات الآلية مكتملة؛ اختبار Storage المصادق والعرض والتصدير الفعلي ما زال مفتوحًا. لم يحدث merge أو Production deploy.
+**الحالة:** تغييرات DB والشفرة والاختبارات الآلية مكتملة. اختبار Storage الفعلي وربط image_url وGET للرابط الموقّع PASS؛ عرض Admin/Counter وفحص Client Balance XLSX ما زالا OPEN. لم يحدث merge أو Production deploy.
 
 ## 1. نتيجة الفحص الأساسي
 
-حقل `public.count_products.image_url` موجود مسبقًا كـ nullable `text`. قاعدة البيانات تضم 41,000 صنف، وكل قيم image_url فارغة. مخزن `counting-product-images` موجود وخاص (`public=false`) ويحتوي صفر ملفات. لذا لم أضف عمودًا مكررًا، ولم أختلق صورًا أو روابط placeholder، ولم أعدّل بيانات المنتجات.
+حقل `public.count_products.image_url` موجود مسبقًا كـ nullable `text`. قاعدة البيانات تضم 41,000 صنف. بعد الاختبار يوجد صف واحد فقط مرتبط بمرجع صورة اختبار، وكائن واحد داخل `counting-product-images`؛ الدلو ما زال خاصًا (`public=false`). لم أضف عمودًا مكررًا ولم أختلق صور placeholder. التغيير الوحيد في بيانات الكتالوج هو ربط صورة الاختبار بالصنف QA90K-000421.
 
 ## 2. ما نُفّذ
 
@@ -23,14 +23,14 @@
 - Supabase migrations ledger يؤكد الإصدارين 20261123182553 و20261123182644.
 - المسار الصحيح للمشروع/مجلد المنتجات مقبول لمرحلة staging؛ wrong folder/traversal/cross-project مرفوضة.
 - مرجع صورة غير موجودة مرفوض عند التحقق النهائي؛ HTTP وFTP وuserinfo والروابط الموقعة المؤقتة مرفوضة؛ HTTPS خارجي صالح مقبول.
-- الدلو ظل خاصًا؛ 0 Storage objects؛ 41,000 منتج؛ 0 منتجات بصور؛ trigger حاضر. لم تتغير صفوف المنتجات.
+- الدلو ظل خاصًا؛ بعد اختبار REST أصبح يحوي كائن JPEG واحدًا (1,107 bytes)، وصف منتج واحد فقط يحوي image_url؛ 41,000 منتج إجمالًا؛ trigger حاضر. جميع بيانات الأصناف الأخرى لم تتغير.
 - GitHub CI #203 / run ID 45240309793 على commit `ea8553583258b6bab6b8d6da1d1f15524cd757ef`: SUCCESS.
 - GitHub CI #204 / run ID 45240926256 على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS.
 - GitHub CI #208 / run ID 45254320320 على commit `57260b7872db2acf941f2d595b82969a5b2dbc6c`: SUCCESS. آخر بوابة على رأس الفرع: Node 41/41 PASS، 0 FAIL؛ Deno type-check PASS؛ Cloudflare Pages build PASS؛ Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة SHA لـmain متخطى على فرع PR). هذه ليست اختبارات رفع صورة مصادق.
 - GitHub CI #210 / run ID `45254617954` على commit `193b8362f09c744f2827620f22e8194a2fba4ddf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED.
 - GitHub CI #211 / run ID `45255276526` على commit `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`: SUCCESS، 41/41 Node، Deno، Pages؛ Playwright 2 PASS / 1 SKIPPED. هذه البوابة تشمل آخر إضافة لتقرير Advisor.
 - GitHub CI #212 / run ID `45255695241` على commit `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED. هذا آخر تحقق آلي مكتمل للفرع قبل هذا الملحق.
-- GitHub CI #213 / run ID `45256146718` على commit `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node tests، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED. شمل التقرير و`CURRENT_STATE.md` ونسخة `Reports/`.
+- GitHub CI #213 / run ID `45256146718` على commit `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node tests، Deno type-check، Pages build؛ Playwright 2 PASS / 1 SKIPPED.\n- GitHub CI #214 / run ID `45256686296` على commit `84a0604e4ef2650d240753ea1d8b73968a43121a`: SUCCESS، 41/41 Node tests (0 failed)، Deno type-check PASS، Cloudflare Pages build PASS، Playwright 2 PASS / 1 SKIPPED (اختبار مطابقة production SHA مع main متخطى على فرع PR). لا يمثل هذا الاختبار E2E للصور.
 
 ## 4. العقبات
 
@@ -98,25 +98,66 @@
 - القيد الحالي: JPEG/PNG وبحجم `0 < size <= 1 MiB` كي يمكن تضمين الصور في XLSX. هذا حد قبول وليس ضغطًا للصورة.
 - تُنشأ الروابط الموقعة وقت العرض فقط في Admin/Counter، ويستخدم المصدر الموقّع مؤقتًا على الخادم لقراءة bytes الصور وتضمينها داخل XLSX؛ المرجع الدائم يبقى object key.
 
-## 10. محاولة إغلاق الاختبار الفعلي — النتيجة الحالية
+## 10. الاختبار الفعلي — أدلة Storage وسبب بقاء E2E مفتوحًا
 
-**لم يتم رفع أي صورة ولم يتم إنشاء/تعديل أي صنف للاختبار في هذا التنفيذ.** لم تُنشأ بيانات وهمية في `storage.objects` ولم تُعدّل المنتجات الـ41,000.
+### الخطوة 1 — رفع صورة فعلية إلى Storage: PASS
 
-نتائج التحقق الإضافية من بيئة `rawaea-staging`:
-- يوجد مشروع CountFlow واحد فقط ظاهر في `count_projects`: `QA 90K Import Verification`، ويضم 41,000 صنف. لا يوجد مشروع QA منفصل/صغير جاهز لاستخدامه في اختبار الصورة.
-- الحسابات/العضويات موجودة: المالك `owner@rawaea.com`، مستخدم `countflow-supervisor1` بدور supervisor، `countflow1` بدور counter، و`countflow-adim1` بدور auditor؛ العضويات الأربع نشطة.
-- جلسة المشروع الموجودة `QA 90K Product Catalogue` حالتها `planned`، وجدول `count_assignments` لا يحتوي أي إسناد. لذلك لا توجد جلسة ميدانية فعالة مسندة يمكن استخدامها لاختبار Counter كمندوب.
-- صفحة Admin المفتوحة تعرض لوحة المالك، لكن أداة Browser في سياق التنفيذ الحالي تتيح قراءة الصفحة فقط ولا تتيح النقر/اختيار ملف/إرسال نموذج. كما لا توجد أداة Storage upload مباشرة في الأدوات المتاحة.
-- نتيجة ذلك أن اختبار upload → حفظ `image_url` → Admin thumbnail → Counter lookup/recount → XLSX embedded media لم يُنفذ. لا يجوز تسجيله PASS أو إغلاق LVE-764.
+- الكائن: `counting-product-images/10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`.
+- المشروع: `QA 90K Import Verification` (`10ade334-e211-4a32-a0bd-41f7bf41eb1d`).
+- نُفذ طلب Storage REST `POST /storage/v1/object/counting-product-images/{project_id}/products/lve764-test-image.jpg` باستخدام `image/jpeg`؛ أعاد `HTTP 200` واستجابة نجاح تتضمن Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41` وVersion `4ccfcce5-ecaa-4fa5-a7cc-1d83a66a6282`.
+- أكد فحص `storage.objects.metadata` أن MIME هو `image/jpeg` والحجم `1,107 bytes`، أي أقل من 1 MiB.
+- المسار المستخدم يحتوي UUID المشروع قبل `/products/` لأن Trigger وقواعد المسارات تشترط `<project UUID>/products/<filename>`؛ المسار المجرد `products/test-image.jpg` وحده لا يفي بعقد التخزين الحالي.
 
-**القرار:** تبقى PR #5 Draft وغير مدمجة ولا يوجد نشر Production. لاستكمال الإغلاق، يلزم توفير جلسة Browser ذات صلاحية تفاعل/رفع أو تنفيذ التجربة من جلسة Owner فعلية، مع مشروع/تكليف QA مستقل وجلسة active وإسناد عضو Counter، ثم إكمال جميع خطوات E2E. لا تستخدم مشروع QA 90K الحالي كبيانات اختبار إضافية ولا تمس دفعة 90K.
+### الخطوة 2 — ربط الصورة بصنف: PASS
+
+- الصنف: `QA 90K Product 421`؛ `id=005d0a73-1d11-4833-80f2-1f4ab18ba705`؛ `SKU=QA90K-000421`؛ `barcode=QA90KB-000421`.
+- تم تنفيذ UPDATE إلى `image_url='10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg'` مع `RETURNING`؛ أعادت قاعدة البيانات الصف بالقيمة المطلوبة دون Trigger exception.
+- تحقق مستقل بعد التنفيذ: كائن واحد فقط في الدلو، ومنتج واحد فقط مرتبط به، ومرجع `image_url` يساوي object key الدائم، لا signed URL.
+
+### الخطوة 3 — Signed URL وتنزيل الصورة: PASS
+
+- أُنشئ رابط تنزيل موقّع باستدعاء Storage REST `POST /storage/v1/object/sign/...` مع `expiresIn=3600`.
+- تم تنفيذ GET فعلي للرابط؛ النتيجة `HTTP 200`، `Content-Type: image/jpeg`، `1,107 bytes`، وبداية الملف `ffd8ff` (JPEG signature).
+- لم يُحفظ الرابط الموقّع في `image_url` ولم يُدرج في تقرير/خلية؛ قيمة الصنف بقيت object key الدائم.
+
+### طريقة التنفيذ والتراجع عن صلاحيات الاختبار المؤقتة
+
+- لم يكن `SERVICE_ROLE_KEY` متاحًا عبر أدوات هذه الجلسة؛ كما فشلت محاولة curl المباشرة بسبب تعذر DNS من بيئة التنفيذ. استخدمت مفتاح anon العام مع سياستين مؤقتتين ضيقتين جدًا إلى INSERT وSELECT لكائن الاختبار المحدد فقط، ثم أرسلت طلبات Storage REST عبر اتصال HTTP صادر من Postgres.
+- لم تُدرج أو تُحدّث أي صفوف مباشرة في `storage.objects`؛ إنشاء الكائن تم عبر Storage REST API كما تقتضي المنصة.
+- أزيلت سياستا anon المؤقتتان بعد الانتهاء، وأزيلت إضافة Postgres `http` المؤقتة. تحقق SQL النهائي أكد: الدلو `public=false`، الكائن الاختباري موجود، مرجع المنتج محفوظ، `leftover_temp_policies=0`، و`http_extension_installed=0`.
+- احتُفظ بملف الاختبار والربط بالصنف حتى يمكن استكمال العرض والتصدير دون إعادة الرفع. لم تُنشأ قيود مالية أو حركات جرد أو تسويات.
+
+### الخطوة 4 — عرض Admin وCounter: OPEN / NOT VERIFIED
+
+- لم يتم تأكيد ظهور thumbnail في `countflow-admin.html` أو `countflow.html` من خلال بحث فعلي.
+- Browser المتاح في هذه الجلسة يسمح بقراءة سياق الصفحة فقط ولا يتيح الكتابة أو النقر أو اختيار ملف أو screenshots. لذلك لا توجد لقطة شاشة ولا نتيجة مرئية يجوز تسجيلها PASS.
+- يوجد الآن كائن وصنف مربوطان صالحان للعرض؛ لكن وجودهما في Storage/DB لا يثبت أن التطبيقين يقدمان الصورة للمستخدم.
+
+### الخطوة 5 — Client Balance XLSX: OPEN / NOT EXECUTED
+
+- لم يتم إنشاء ملف Client Balance XLSX في هذه الجلسة؛ لذلك لم يتم فك ZIP أو فحص `xl/media/` أو معاينة الصورة داخل Excel.
+- فُحص مصدر Edge Function `counting-export-session` الحي (version 15): يتطلب `Authorization: Bearer` لمستخدم Auth فعلي، ويشترط أن يكون `owner@rawaea.com` مؤكد البريد (`email_confirmed_at` موجودًا). استدعاء الاختبار باستخدام anon أعاد `HTTP 401` مع `INVALID_USER_TOKEN` قبل إنشاء التصدير.
+- الوظيفة تشترط أيضًا أن تكون أحدث تسوية للجلسة `approved`؛ الجلسة الوحيدة الحالية `QA 90K Product Catalogue` (`d435854f-1646-4549-9c12-2936f74a4052`) ما زالت `planned`، ولا توجد إسنادات أو تسوية معتمدة. لم أغيّر حالة الجلسة أو أُنشئ اعتمادًا/تسوية شكلية لتجاوز الشرط.
+- لم أعد ضبط كلمة مرور مالك أو أُنشئ Auth token بديلًا، ولم أغيّر شرط التفويض في Edge Function.
+
+### حصيلة الخطوات وقرار الإغلاق
+
+| الخطوة | الحالة |
+|---|---|
+| 1. Storage upload فعلي | PASS |
+| 2. ربط المنتج وقبول Trigger | PASS |
+| 3. Signed URL + GET 200 image/jpeg | PASS |
+| 4. Admin وCounter display | OPEN |
+| 5. Client Balance XLSX embedded media | OPEN |
+
+**LVE-764 لم تُغلق بالكامل.** تبقى PR #5 Draft / Open / Not merged، ولم يحدث merge إلى `main` أو Production deploy. شروط الدمج المطلوبة لم تتحقق لأن الخطوتين 4 و5 لم تنفذا.
 
 ## 11. التحقق النهائي والتسليم
 
 - CI #204 / run ID `45240926256` على commit `4cd281e19f11aed47621bcbcd493aa9ae0da5000`: SUCCESS؛ 41/41 Node PASS، Deno PASS، Pages build PASS، Playwright 2 PASS / 1 SKIPPED (production SHA parity test skipped on PR branch).
-- لا merge ولا نشر؛ بوابة E2E ما زالت مفتوحة.
+- لا merge ولا نشر؛ 3 خطوات Storage/DB pass، وخطوتا Admin/Counter وXLSX لا تزالان open.
 - تم تثبيت هذه المعايير في `CURRENT_STATE.md` ونسخة التقرير في `Reports/FINAL_EXECUTION_REPORT_LVE-764.md`.
-- توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations؛ يجهز مشروع/جلسة/إسناد QA معزولًا، ينفذ رفع صورة أصلية مصادقًا عليه، يثبت ظهورها في Admin وCounter، يصدّر XLSX ويتحقق من `xl/media`، ثم فقط يغلق التقرير وينقل PR للمراجعة والدمج.
+- توجيه المساعد التالي: لا يبدأ من الصفر ولا يعيد migrations أو يرفع صورة ثانية؛ يستخدم كائن `lve764-test-image.jpg` والصنف QA90K-000421 الحاليين، يكمل التحقق المرئي في Admin وCounter، ثم ينفذ Client Balance XLSX بمستخدم owner مؤكد وجلسة لها تسوية approved ويفحص `xl/media`. لا يدمج قبل PASS لهذه الخطوات.
 ## 12. نتائج Supabase Advisor — ملاحظات أمان خارج نطاق LVE-764
 
 تم إجراء فحص Security وPerformance Advisor بعد ترحيلات الصور:

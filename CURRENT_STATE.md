@@ -12,6 +12,15 @@
 **Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
 **Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
 
+### آخر تنفيذ فعلي لـLVE-764 — 23 نوفمبر 2026 (3/5 PASS، E2E ما زال مفتوحًا)
+
+- **PASS — Storage upload:** رُفع JPEG فعلي إلى `counting-product-images` عبر Storage REST API؛ `HTTP 200`، Object ID `f8ef7b0c-fc0f-4fad-a849-880b1e9dab41`، وحجم Storage `1,107 bytes`، MIME `image/jpeg`.
+- **PASS — Product link/trigger:** الصنف `QA 90K Product 421` (`005d0a73-1d11-4833-80f2-1f4ab18ba705`، SKU `QA90K-000421`) يحفظ الآن object key الدائم `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ UPDATE/RETURNING نجح، أي إن Trigger قبل المرجع بعد وجود الملف ونوعه وحجمه.
+- **PASS — Signed URL/GET:** أُنشئ Signed URL بمدة `3600s` من Storage REST؛ تنزيله أعاد `HTTP 200` و`image/jpeg`، `1,107 bytes`، وJPEG magic `ffd8ff`.
+- **OPEN — Admin/Counter display:** لم يُنفذ بحث تفاعلي أو تحقق بصري في Admin أو Counter؛ اتصال Browser المتاح يقرأ الصفحة فقط ولا يتيح النقر أو إدخال بيانات أو لقطات شاشة.
+- **OPEN — Client Balance XLSX:** لم يُنفذ التصدير الفعلي ولم تُفحص `xl/media`. وظيفة التصدير تشترط Bearer token صالحًا لمستخدم Auth مؤكد بالبريد `owner@rawaea.com`، وتفرض وجود تسوية `approved`. الاستدعاء باستخدام anon أعاد `401 INVALID_USER_TOKEN`؛ الجلسة الحالية `QA 90K Product Catalogue` لا تزال `planned` ولا توجد إسنادات أو تسوية معتمدة.
+- **حالة الأمان بعد الاختبار:** الدلو ما زال `private`؛ سياسات anon المؤقتة التي سُمحت لكائن الاختبار المحدد أزيلت، وإضافة Postgres `http` المؤقتة أزيلت، والتحقق الحي أكد صفر سياسات مؤقتة متبقية. لا توجد كتابة مباشرة في `storage.objects`؛ تم الرفع عبر Storage REST.
+- **القرار:** لا تغلق LVE-764 ولا تدمج PR #5 حتى إكمال Admin thumbnail وCounter lookup/recount وXLSX media inspection. لا تُعد رفع نفس الكائن ولا تغيّر صنفًا آخر؛ أكمل على الصنف/الكائن المحددين أعلاه.
 ### الحالة
 ### معيار بيانات الأصناف (معيار إلزامي)
 
@@ -40,10 +49,10 @@
 - حد التطبيق الحالي للصورة هو JPEG أو PNG وبحجم أكبر من صفر وحتى 1 MiB، لتمكين تضمينها في Excel. لا يعني هذا ضغط الملف؛ تُحفظ البايتات الأصلية كما هي ضمن حد القبول.
 - تُنشأ Signed URLs قصيرة العمر وقت العرض فقط في Admin وCounter، وعند جلب الملف داخل عملية تصدير XLSX. لا يُكتب Signed URL في `image_url` ولا يُخزن في خلايا Excel؛ ملف Excel يأخذ bytes الصورة المضمنة عند التصدير.
 
-**حالة البيانات وقت هذا التحديث:** 41,000 صنف في المشروع الحالي، و0 صنف لديه `image_url`، و0 كائن داخل دلو `counting-product-images`. معيار «كل الأصناف مصورة» معيار مستهدف غير متحقق على الكتالوج الحالي حتى إكمال إمداد الصور وربطها بمراجع أصلية.
+**حالة البيانات بعد اختبار LVE-764:** 41,000 صنف؛ صنف واحد فقط لديه `image_url` (fixture الاختبار `QA90K-000421`)؛ وكائن واحد داخل `counting-product-images`. بقية الكتالوج لا تزال بلا صور؛ معيار «كل الأصناف مصورة» لم يتحقق على مستوى الكتالوج.
 
 - image_url موجود مسبقًا كـ nullable text؛ لا تضف عمودًا جديدًا.
-- توجد 41,000 سجلات منتجات، ولا يوجد أي image_url حاليًا. دلو counting-product-images خاص (public=false) وخالٍ من الملفات. لم تتم تعبئة بيانات أو إنشاء placeholders.
+- توجد 41,000 سجلات منتجات؛ يوجد image_url واحد فقط لصنف الاختبار QA90K-000421، وكائن واحد داخل الدلو الخاص (public=false). لم تتم تعبئة بيانات الأصناف الأخرى أو إنشاء placeholders.
 - migration 20261123182553 (countflow_product_image_reference_hardening_v1) وmigration 20261123182644 (countflow_reject_ephemeral_product_image_urls_v1) مطبقتان بالفعل.
 - Storage policies حصرت قراءة/رفع/تحديث الصور في نمط <project UUID>/products/<single filename> مع الحفاظ على أدوار المالك/المشرف/العضوية.
 - validator server-side وtrigger على count_products يمنعان المراجع غير الصالحة، traversal، المسارات خارج products، والملفات غير الموجودة/غير JPEG-PNG/أكبر من 1 MiB. مرحلة stage تتحقق من شكل المسار؛ مرحلة commit تتحقق من وجود الملف.
@@ -61,7 +70,7 @@
 - CI #212 / 45255695241 على SHA `15bb46ae90f309a076df423ed79645b6f9f37066`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. شمل ذلك آخر `CURRENT_STATE.md` ونسختي التقرير.
 - CI #213 / 45256146718 على SHA `28c064715f8222afb3eb8121f09badd84bde39ce`: SUCCESS، 41/41 Node، Deno، Pages، Playwright 2 PASS / 1 SKIPPED. التحقق يشمل تقرير التسليم وملف الحالة ونسخة Reports.
 - هذه اختبارات الشفرة والغلاف العام؛ ليست اختبار رفع صورة بجلسة مصادق عليها ولا تحقق تضمين XLSX لصورة فعلية.
-- تحقق Supabase الحي: المسار الصحيح للـstage مقبول؛ wrong folder/traversal/cross-project/HTTP/FTP/userinfo/signed URL المؤقت مرفوض؛ missing object مرفوض عند commit. الدلو ما زال private، عدد الملفات 0، المنتجات 41,000، المنتجات ذات الصور 0، trigger موجود.
+- تحقق Supabase الحي بعد الاختبار: رُفع كائن JPEG واحد عبر Storage REST؛ UPDATE لصنف واحد بالمسار الكامل للمشروع/products نجح بعد Trigger؛ إنشاء Signed URL لمدة 3600 ثانية وGET أعادا HTTP 200 وimage/jpeg. الدلو private، object count=1، image_url count=1، Trigger موجود. أزيلت سياسات anon المؤقتة وإضافة HTTP المؤقتة؛ عدد السياسات المؤقتة المتبقية=0.
 
 ### نتائج Supabase Advisor ذات الصلة (فحص قراءة فقط)
 - جميع جداول CountFlow الـ23 ذات البادئة `count_*` في schema `public` لديها RLS مفعّل وسياسة واحدة على الأقل؛ لا يوجد بينها جدول أبلغ Advisor عن تعطيل RLS له.
@@ -69,17 +78,20 @@
 - فحص المشروع بأكمله أظهر تحذيرات/أخطاء قائمة خارج مسار الصور: 65 جدولًا عامًا بلا RLS (لا تشمل جداول `count_*`)، و5 دوال SECURITY DEFINER عامة قابلة لـanon (أسماء legacy غير CountFlow)، و14 دالة SECURITY DEFINER قابلة لـauthenticated، منها خمس RPCs تشغيلية CountFlow قديمة. هذه لم تُعدّل ضمن LVE-764 وتحتاج مراجعة أمان مستقلة قبل إتاحة المشروع لعملاء خارجيين.
 - Advisor أظهر أيضًا تحذير حماية كلمات المرور المسرّبة و64 index غير مستخدم ومؤشرًا مكررًا واحدًا على `erp_operation_registry`. لم تُجرَ تغييرات عليها لأنها خارج نطاق LVE-764 وتتطلب مراجعة منفصلة.
 ### بوابة الإغلاق المفتوحة
-- لم يتم رفع ملف صورة فعلي؛ Browser connector للقراءة فقط ولا توجد أداة Storage upload في بيئة التنفيذ.
-- لم يثبت بعد عرض صورة مرفوعة في Admin وCounter، ولا تضمين صورة فعلية في Client Balance XLSX.
-- لا تُدمج أو تنشر PR #5 قبل تنفيذ E2E بجلسة owner مصادق عليها على مشروع/منتج QA مستقل عن دفعة QA 90K: رفع JPEG/PNG ≤1 MiB إلى <project>/products/<uuid>, التحقق من image_url كـobject key، ثم Admin thumbnail، Counter lookup + recount، وتصدير XLSX والتحقق من وجود الصورة في xl/media.
-- لا تُدرج/تحدّث storage.objects مباشرة؛ استخدم Storage API فقط. لا تمس أصنافًا قائمة أو دفعة QA 90K أو بيانات جرد/مال.
 
+- **PASS (1):** رفع JPEG فعلي عبر Storage REST إلى `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg`؛ HTTP 200.
+- **PASS (2):** ربط الصورة بالصنف `005d0a73-1d11-4833-80f2-1f4ab18ba705` / `QA90K-000421`، وتأكيد قبول Trigger للـobject key الدائم.
+- **PASS (3):** Signed URL لمدة 3600 ثانية؛ GET HTTP 200، Content-Type image/jpeg، والحجم 1,107 bytes وJPEG magic ffd8ff.
+- **OPEN (4):** لم يتم التحقق تفاعليًا من thumbnail في Admin وCounter أو البحث العادي/إعادة العد؛ Browser read-only.
+- **OPEN (5):** لم يتم تصدير Client Balance XLSX ولم يتم فحص وجود الصورة داخل `xl/media`. استدعاء Edge Function دون جلسة مستخدم حقيقية أعاد 401 INVALID_USER_TOKEN؛ الوظيفة تتطلب مالك المنصة المؤكد وجولة تسوية approved.
+- لا تُدمج أو تنشر PR #5 قبل نجاح الخطوتين 4 و5. الدلو خاص، والسياسات المؤقتة وإضافة HTTP أزيلتا، ولا توجد صلاحية anon مؤقتة متبقية.
+- لا تُدرج/تحدّث `storage.objects` مباشرة؛ استخدم Storage API فقط. حافظ على كائن الاختبار والصنف المحددين أعلاه حتى إكمال العرض والتصدير، ولا تنشئ كائنًا ثانيًا أو تغيّر منتجًا آخر بلا ضرورة.
 ### تعليمات المساعد التالي
-1. استكمل من LVE-764 وPR #5 والفرع أعلاه؛ لا تبدأ من LVE-763.
-2. الترحيلان مطبقان بالفعل على rawaea-staging؛ لا تعِد تطبيقهما.
-3. أكمل فقط تجربة Storage المصادقة والعرض والتصدير في QA معزول. لا تولد روابط وهمية لـ41 ألف صنف.
-4. حدّث CURRENT_STATE والتقرير بنتيجة الاختبار الحقيقية، ثم انقل PR من Draft للمراجعة بعد اكتمالها. لا تدمج/تنشر قبل gate pass.
-5. لا تنتقل للمهمة التالية قبل إثبات upload → Admin → Counter normal/recount → XLSX.
+1. استكمل من LVE-764 وPR #5 والفرع `work/lve-764-product-image-urls`؛ لا تبدأ من الصفر ولا تُعد تطبيق migrations.
+2. استخدم كائن الاختبار الموجود: `10ade334-e211-4a32-a0bd-41f7bf41eb1d/products/lve764-test-image.jpg` والصنف `QA90K-000421`؛ لا تكرر الرفع أو تنشئ object بديلًا.
+3. أكمل عرض Admin وCounter (lookup + recount) بجلسة Auth/Browser تفاعلية، ثم Client Balance XLSX بعد استيفاء owner-auth وapproved reconciliation، وافحص `xl/media`؛ وثق HTTP/screenshots/metadata.
+4. لا تُغيّر كلمة مرور مالك قائم أو تتجاوز مصادقة Edge Function أو تنشئ قيود/تسوية تشغيلية لمجرد اجتياز التصدير. استخدم مسار QA مصرحًا ومخططًا له.
+5. حدّث CURRENT_STATE والتقرير بعد إثبات الخطوتين 4 و5، ثم فقط انقل PR من Draft للدمج. لا تنتقل للمهمة التالية قبل الإغلاق.
 
 ---
 ## LVE-2026-11-23-763 — Gamification server-backed for Counter
