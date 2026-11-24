@@ -871,7 +871,8 @@ test("Client-balance XLSX excludes products without a complete counted result at
   const branch = exporter.slice(branchStart, branchEnd);
   assert.match(branch, /const clientProducts=products\.filter\(\(product:any\)=>hasCompleteClientCountResult\(/);
   assert.match(branch, /clientProductIds\.has\(row\.product_id\)/);
-  assert.ok(branch.includes("countEntries].filter((row:any)=>clientProductIds.has(row.product_id))"), "Count-event detail must be scoped to delivered products");
+  assert.ok(branch.includes("const clientCountEntries=countEntries.filter((entry:any)=>clientProductIds.has(entry.product_id))"), "Count events must be scoped to delivered products");
+  assert.match(branch, /count_events:clientCountEntries\.length/);
   assert.ok(branch.includes("committedImportRows.filter((item:any)=>clientProductIds.has(item.product_id))"), "Import exception details must be scoped to delivered products");
   assert.match(branch, /for\(const product of clientProducts\)/);
   assert.match(branch, /row_count:clientProducts\.length/);
