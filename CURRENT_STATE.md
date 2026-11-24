@@ -6,10 +6,12 @@
 **Repository:** `papamohammed77-glitch/rawaea-app-countflow`  
 **Baseline main:** `862a246bd56f7696c01df247ffff490c83dd448c`  
 **Working branch:** `work/lve-765-admin-ui-surgical`  
-**Source/test commit:** `fe2d0d8608a48ed361a03c8901f597c9c9f265da`  
-**Admin source blob:** `e6b517d7d5e4937eb76a4a0e70e3aa4fae99a90a`  
-**Unit test blob:** `4dbc224a900e6125d64286dc6e76a7b785fede35`  
-**Status:** PR #7 is OPEN on `work/lve-765-admin-ui-surgical`. Source correction is pushed. The latest CI run has passed unit tests, Deno checks, and the Pages build; Playwright is still running. No merge to main, production deployment, or Supabase write was performed. The PR integration automatically created a branch Preview only.
+**Initial source/test commit:** `fe2d0d8608a48ed361a03c8901f597c9c9f265da`  
+**Audit error handling fix:** `649ab8019df506de6a15dab1cfc0176aa07f3bd5`  
+**All-table sticky header fix:** `b79f75080a491e75094cdef076fd2db80b832908`  
+**Current Admin source blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
+**Current unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
+**Status:** PR #7 is OPEN on `work/lve-765-admin-ui-surgical`. Source correction is pushed. The previous code-head run passed unit tests, Deno checks, and the Pages build but was cancelled during Playwright after the PR head advanced. Final-head CI must be rerun. No merge to main, production deployment, or Supabase write was performed. The PR integration automatically created a branch Preview only.
 **PR:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/7
 
 ### Scope and surgical change set
@@ -26,13 +28,14 @@ Only `countflow-admin.html` and `tests/unit/countflow-quality.test.mjs` changed 
 
 ### Verification — SOURCE ONLY
 
-- **PASS:** all inline JavaScript in `countflow-admin.html` parsed with the local V8 JavaScript parser.
+- **PASS:** all inline JavaScript in the latest `countflow-admin.html` parsed with the local V8 JavaScript parser.
+- **PASS:** sticky-header CSS explicitly covers the direct table hosts (`memberTable`, `roleTable`, `locationTable`, `sessionTable`, `operationsTable`, `auditTable`, `operationImportHistory`) and the product virtual scroller, in addition to `.tablewrap` tables.
 - **PASS:** ten unique navigation tab keys remain present.
 - **PASS:** static source scan found zero native `confirm()` and zero native `prompt()` calls in the Admin source.
 - **PASS:** test suite source contains 42 unit tests (41 existing + one Admin UI regression test).
 - **CI attempt 45298898309:** Deno type-check **PASS**; the Admin UI regression test **PASS**; 41 of 42 unit tests passed. Existing test 13 failed because the skeleton-loader refactor removed the explicit safe Arabic audit-load error message. Cloudflare Pages PR check **PASS**.
 - **Correction commit:** `649ab8019df506de6a15dab1cfc0176aa07f3bd5` restored the established audit-load error message without exposing raw database errors. Updated Admin source blob: `e3be1be5660b0f5cee98497083d0e8032a347d6d`. The code fix was JavaScript-parsed successfully.
-- **PENDING:** rerun full CI on the latest PR head after the audit-message correction: `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright. The first workflow run was triggered before the correction commit.
+- **PENDING:** rerun full CI on the final PR head after the all-table sticky-header correction: `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright. Previous-run 42/42 is evidence for the prior code head only, not final-head acceptance.
 - **OPEN:** interactive visual/browser verification, responsive device review, and signed-in destructive-action E2E have not been performed. No visual PASS is claimed.
 
 - **PASS:** all inline JavaScript in `countflow-admin.html` parsed with the local V8 JavaScript parser.
