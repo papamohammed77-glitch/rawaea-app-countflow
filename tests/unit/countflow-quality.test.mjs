@@ -1018,3 +1018,21 @@ test("Supervisor lists only active supervisor project scopes and deletes one ass
   assert.ok(supervisor.includes(".delete().eq('id',b.dataset.removeAssignment).eq('session_id',session.id)"), "The delete must target one assignment row and stay session-scoped");
   assert.doesNotMatch(supervisor, /\.delete\(\)\.eq\('session_id',session\.id\)\.eq\('member_id',b\.dataset\.removeAssignment\)/, "Do not delete all assignment rows for the same member in a session");
 });
+
+test("other owner actor columns remain inaccessible while operational columns stay readable", () => {
+  const migration = read("database/migrations/20261124184500_countflow_hide_owner_actor_audit_columns_v1.sql");
+  const restricted = [
+    ["count_presence", "queue_resolved_by"],
+    ["count_devices", "revoked_by"],
+    ["count_recount_tasks", "created_by"],
+    ["count_recount_tasks", "reviewed_by"],
+    ["count_reconciliation_runs", "created_by"],
+    ["count_reconciliation_runs", "approved_by"],
+    ["count_reconciliation_runs", "metadata"]
+  ];
+  for (const [table, column] of restricted) {
+    assert.ok(migration.includes("REVOKE SELECT ON TABLE public." + table + " FROM PUBLIC, anon, authenticated"));
+    assert.match(migration, new RegExp("GRANT SELECT \\([\\s\\S]*?\\) ON TABLE public\\." + table + " TO authenticated"));
+    assert.ok(!new RegExp("GRANT SELECT \\([^)]*\\b" + column + "\\b[^)]*\\) ON TABLE public\\." + table).test(migration), "Restricted owner column must not be granted: " + table + "." + column);
+  }
+});
