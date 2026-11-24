@@ -984,3 +984,27 @@ test("Control team monitor reads realtime presence, device status, current locat
   assert.ok(control.includes("Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()])"), "Realtime refresh must refresh all live Control panels");
   assert.ok(control.includes("document.hidden&&state.session"), "Background tabs must not run unnecessary polling");
 });
+
+test("authenticated clients cannot select platform-owner identity columns from projects or sessions", () => {
+  const migration = read("database/migrations/20261124184000_countflow_hide_owner_actor_columns_from_clients_v1.sql");
+  assert.match(migration, /REVOKE SELECT ON TABLE public\.count_projects FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /GRANT SELECT \(id,name,code,status,created_at,updated_at\)[\s\S]*ON TABLE public\.count_projects TO authenticated/);
+  assert.match(migration, /REVOKE SELECT ON TABLE public\.count_sessions FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /id,project_id,name,status,started_at,closed_at,created_at,updated_at,[\s\S]*sync_barrier_version,queue_barrier_action,queue_barrier_run_id,queue_barrier_requested_at/);
+  assert.match(migration, /ON TABLE public\.count_sessions TO authenticated/);
+  assert.doesNotMatch(migration, /GRANT SELECT ON TABLE public\.count_projects TO authenticated/);
+  assert.doesNotMatch(migration, /GRANT SELECT ON TABLE public\.count_sessions TO authenticated/);
+
+  const admin = read("countflow-admin.html");
+  const counter = read("countflow.html");
+  const supervisor = read("Countflow-supervisor.html");
+  const control = read("countflow-control.html");
+  assert.ok(admin.includes("count_projects').select('id,name,code,status,created_at,updated_at')"));
+  assert.doesNotMatch(admin, /count_projects'\)\.select\([^)]*created_by/);
+  assert.ok(admin.includes("count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at"));
+  assert.ok(counter.includes("count_projects').select('id,name,code,status,created_at,updated_at')"));
+  assert.ok(counter.includes("count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at"));
+  assert.ok(supervisor.includes("fetchAllRows('count_projects','id,name,code,status,created_at,updated_at'"));
+  assert.ok(control.includes("count_projects').select('id,name,code,status,created_at'"));
+  assert.doesNotMatch([admin,counter,supervisor,control].join("\\n"), /count_projects'\)\.select\('\*'\)|count_sessions'\)\.select\('\*'\)/);
+});
