@@ -3,11 +3,14 @@
 ## LVE-2026-11-24-765 — Admin UI surgical overhaul (mainline continuation)
 
 **Date:** 24 November 2026 (Africa/Cairo)  
-**Current main baseline:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (includes the existing `Reports/P6`; preserve it)  
+**Current main baseline:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (includes the existing `Reports/P6`; preserved)  
 **Continuation branch:** `work/lve-765-admin-ui-final-mainline`  
-**Prior execution branch / PR:** `work/lve-765-admin-ui-surgical` / PR #7 (kept in history; superseded after the mainline PR is verified)  
+**PR #8:** OPEN — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
+**Superseded PR #7:** remains in history; close after PR #8's CI gate passes  
+**Mainline source commit:** `1f2348ddf44e1c93c7c17161cd790f0b6ab53370` (before this state-only update)  
 **Admin blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
 **Unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
+**Formal report blob:** `0afb9444bdaf0879f6fd3e08d351bcfef3dd820f`  
 **Detailed report:** `Reports/FINAL_EXECUTION_REPORT_LVE-765.md`
 
 ### Scope and completed work
