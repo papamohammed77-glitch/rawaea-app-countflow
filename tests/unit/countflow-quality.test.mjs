@@ -1005,7 +1005,7 @@ test("authenticated clients cannot select platform-owner identity columns from p
   const counter = read("countflow.html");
   const supervisor = read("Countflow-supervisor.html");
   const control = read("countflow-control.html");
-  assert.ok(admin.includes("count_projects').select('id,name,code,status,created_at,updated_at')"));
+  assert.ok(admin.includes("count_projects').select('id,client_id,name,code,status,created_at,updated_at')"));
   assert.doesNotMatch(admin, /count_projects'\)\.select\([^)]*created_by/);
   assert.ok(admin.includes("count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at"));
   assert.ok(counter.includes("count_projects').select('id,name,code,status,created_at,updated_at')"));
@@ -1084,9 +1084,9 @@ test("Admin roles and memberships have search, usage metrics, system-role read-o
   const admin = read("countflow-admin.html");
   assert.match(admin, /id="systemRoleList"/);
   assert.match(admin, /id="customRoleSearch"/);
-  assert.match(admin, /const roleClientId=state\.clientId\|\|state\.project\?\.client_id\|\|null/);
+  assert.match(admin, /const roleClientId=state\.platformOwner\?state\.roleClientId:state\.clientId/);
   assert.match(admin, /eq\(\x27client_id\x27,roleClientId\)/);
-  assert.match(admin, /payload=\{client_id:roleClientId/);
+  assert.match(admin, /payload=\{client_id:\(state\.platformOwner\?state\.roleClientId:state\.clientId\)/);
   assert.match(admin, /data-clone-custom-role=/);
   assert.match(admin, /نظامي — للقراءة فقط/);
   assert.match(admin, /لا يمكن حذف الدور لأنه مرتبط بعضوية واحدة أو أكثر/);
