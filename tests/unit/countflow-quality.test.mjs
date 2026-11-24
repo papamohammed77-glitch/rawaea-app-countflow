@@ -879,3 +879,21 @@ test("Client-balance XLSX excludes products without a complete counted result at
   assert.match(branch, /incomplete_products_excluded:excludedUncountedProductCount/);
   assert.doesNotMatch(branch, /for\(const product of products\)\{/);
 });
+
+test("Supervisor live rows open a paginated, filtered, read-only count detail view with realtime refresh", () => {
+  const supervisor = read("Countflow-supervisor.html");
+  assert.ok(supervisor.includes('id="entryDetailModal"'), "Missing accessible count detail dialog");
+  assert.ok(supervisor.includes('role="dialog" aria-modal="true"'), "Detail view must be announced as a modal dialog");
+  assert.ok(supervisor.includes('data-entry-product="'), "Live count rows must expose a product drilldown target");
+  assert.match(supervisor, /async function openEntryDetails\(productId,productName\)/);
+  assert.match(supervisor, /async function loadEntryDetailPage\(quiet=false\)/);
+  assert.ok(supervisor.includes(".eq('session_id',sessionId).eq('product_id',productId)"), "Detail query must stay inside the selected session and product");
+  assert.ok(supervisor.includes(".range(from,from+entryDetailState.pageSize-1)"), "Detail results must be paginated");
+  assert.ok(supervisor.includes("entryDetailLocation"), "Location filter is required");
+  assert.ok(supervisor.includes("entryDetailMember"), "Team-member filter is required");
+  assert.ok(supervisor.includes("count_entry_images"), "Count evidence metadata must be included");
+  assert.ok(supervisor.includes("createSignedUrls(paths,3600)"), "Evidence links must use temporary signed URLs");
+  assert.ok(supervisor.includes("row?.product_id===entryDetailState.productId"), "Realtime events for the open product must refresh the detail table");
+  assert.ok(supervisor.includes("entryDetailNext"), "Detail pagination must expose a next-page control");
+  assert.doesNotMatch(supervisor, /confirm\(/, "Read-only drilldown must not trigger native mutation confirmations");
+});
