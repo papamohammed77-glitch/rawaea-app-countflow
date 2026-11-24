@@ -1,3 +1,37 @@
+## LVE-2026-11-24-771 — Admin bootstrap 403 / count_projects SELECT projection fix
+
+**Last Verified Event:** 24 November 2026 (Africa/Cairo).  
+**Report:** `Reports/LVE-771_ADMIN_BOOTSTRAP_403_PERMISSION_FIX_20261124.md`.  
+**Branch:** `main`.  
+**Commits:** Admin projection `13c3cb32b22bc53cb63ba9f8942c6240e763c78b`; regression test `17cd8cd1e9ec79c7f1051c3b71ee6a153b1c370d`; Service Worker cache invalidation `41c2b5c3e67c0ab18c905ab6b018d04af6ccac29`; report `88b4ba8299e322f82177997aa737bbfdd3dd9427`.
+
+### Confirmed cause
+- `main/countflow-admin.html` requested `created_by` in `loadProjects()`.
+- `created_by` is deliberately denied to `authenticated` to preserve platform-owner identity privacy.
+- The app did not use this field in rendering; the request alone caused HTTP 403 / SQLSTATE 42501 and aborted Admin bootstrap.
+- The newer work branch already used the operational projection and was not the source of the user's running request; main was stale.
+
+### Applied fix
+- Admin project projection now selects only `id,name,code,status,created_at`.
+- Preserved the RLS policy and column-level owner-identity hiding. No broad `GRANT SELECT ON count_projects` and no grant of `created_by` were applied.
+- Added a regression test forbidding `created_by` / `select('*')` in Admin project bootstrap.
+- Incremented Service Worker cache build from `countflow-sw-20261120-2` to `countflow-sw-20261124-2` so the stale Admin shell cache is retired on activation.
+
+### Verification
+- Authenticated owner JWT simulation with `SET LOCAL ROLE authenticated` and `ROLLBACK`: PASS.
+- Safe project query succeeded and returned 1 visible project.
+- `created_by` SELECT remained false; all required projection columns were allowed.
+- Source was re-read from main; Admin query and Service Worker build marker matched the repair.
+- GitHub Actions run `45481534540` was IN_PROGRESS at report time; recheck before declaring final close.
+- Visual login in the user's browser and Cloudflare Pages deployment completion remain unverified.
+
+### Safety
+No business rows, Auth identities, import jobs, count entries, sessions, stock/accounting data or Production ERP data were modified.
+
+**Status:** SOURCE + SQL AUTHORIZATION VERIFIED; CI / PAGES / VISUAL LOGIN ACCEPTANCE PENDING. Do not grant table-wide SELECT or expose `created_by` as a workaround.
+
+---
+
 # CountFlow — CURRENT_STATE
 
 ## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
