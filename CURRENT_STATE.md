@@ -9,7 +9,7 @@
 **Source/test commit:** `fe2d0d8608a48ed361a03c8901f597c9c9f265da`  
 **Admin source blob:** `e6b517d7d5e4937eb76a4a0e70e3aa4fae99a90a`  
 **Unit test blob:** `4dbc224a900e6125d64286dc6e76a7b785fede35`  
-**Status:** PR #7 is OPEN on `work/lve-765-admin-ui-surgical`. Source correction is pushed; remote CI rerun is pending. No merge to main, production deployment, or Supabase write was performed.
+**Status:** PR #7 is OPEN on `work/lve-765-admin-ui-surgical`. Source correction is pushed. The latest CI run has passed unit tests, Deno checks, and the Pages build; Playwright is still running. No merge to main, production deployment, or Supabase write was performed. The PR integration automatically created a branch Preview only.
 **PR:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/7
 
 ### Scope and surgical change set
@@ -46,7 +46,7 @@ Only `countflow-admin.html` and `tests/unit/countflow-quality.test.mjs` changed 
 
 - No edits to `countflow.html`, `Countflow-supervisor.html`, `countflow-core.js`, Service Worker, Supabase schema/RLS/grants/Edge Functions, or the design-only ERP reference.
 - No Supabase request, Auth change, test fixture, import, count, reconciliation, or other database write was performed.
-- No Cloudflare deployment was triggered. The LVE-747/LVE-748 `rawaea-staging` write/deployment governance hold remains in force.
+- Cloudflare Pages automatically deployed an isolated PR branch Preview at https://work-lve-765-admin-ui-surgic.rawaea-app-countflow.pages.dev (Preview only; not the production branch). No production deployment, Supabase deployment, or database write was performed. The LVE-747/LVE-748 `rawaea-staging` write/deployment governance hold remains in force.
 - Existing LVE-764 image and Client Balance operational acceptance gates remain separate and OPEN where already documented. This UI-only source change does not close the Admin/Counter image display or XLSX embedded-image checks.
 - GitHub confirms PR #5 was already merged to main at `862a246bd56f7696c01df247ffff490c83dd448c` on 23 November 2026. The older LVE-764 summary below contained stale “Draft/Open/Not merged” wording; that status is corrected below without changing its still-open E2E gate.
 
