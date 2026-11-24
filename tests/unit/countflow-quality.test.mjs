@@ -852,3 +852,28 @@ test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky
   assert.match(admin, /new MutationObserver\(/);
   assert.match(admin, /button\.prepend\(icon\)/);
 });
+
+test("Client-balance XLSX excludes products without a complete counted result at every reconciliation location", () => {
+  const exporter = read("functions/counting-export-session/index.ts");
+  const helperStart = exporter.indexOf("function hasCompleteClientCountResult(");
+  const helperEnd = exporter.indexOf("\n}", helperStart) + 2;
+  assert.ok(helperStart >= 0 && helperEnd > helperStart, "Missing complete-count predicate");
+  const hasCompleteClientCountResult = vm.runInNewContext("(" + exporter.slice(helperStart, helperEnd).trim() + ")");
+  assert.equal(hasCompleteClientCountResult([]), false, "A catalogue product without reconciliation lines is not a counted result");
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: null, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: undefined, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 4, result_status: "counted" }, { counted_quantity: null, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 4, result_status: "counted" }, { counted_quantity: 2, result_status: "variance" }]), true);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 0, result_status: "matched" }]), true, "An explicitly counted zero must be retained");
+
+  const branchStart = exporter.indexOf('if (scope === "client_balance") {');
+  const branchEnd = exporter.indexOf("    // Count the large relations", branchStart);
+  const branch = exporter.slice(branchStart, branchEnd);
+  assert.match(branch, /const clientProducts=products\.filter\(\(product:any\)=>hasCompleteClientCountResult\(/);
+  assert.match(branch, /clientProductIds\.has\(row\.product_id\)/);
+  assert.match(branch, /clientProductIds\.has\(entry\.product_id\)/);
+  assert.match(branch, /for\(const product of clientProducts\)/);
+  assert.match(branch, /row_count:clientProducts\.length/);
+  assert.match(branch, /incomplete_products_excluded:excludedUncountedProductCount/);
+  assert.doesNotMatch(branch, /for\(const product of products\)\{/);
+});
