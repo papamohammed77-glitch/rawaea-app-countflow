@@ -1,6 +1,82 @@
 # CountFlow — CURRENT_STATE
 
-## LVE-2026-11-24-765 — Admin UI surgical overhaul (mainline continuation)
+## LVE-2026-11-24-768 — Product vision first implementation (latest verified event)
+
+**Last Verified Event:** 24 November 2026 (Africa/Cairo), commit `ffec2c4e2119b63b7ebed9f76f440ad93d4668f4`; PR #8 OPEN / UNMERGED.  
+**Repository:** `papamohammed77-glitch/rawaea-app-countflow` only.  
+**Branch:** `work/lve-765-admin-ui-final-mainline`.  
+**Base:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (the existing P6 history remains in the base and is preserved).  
+**PR:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
+**Execution report:** `Reports/PRODUCT_VISION_EXECUTION_LVE-768.md`  
+**Previous Admin-stage report:** `Reports/FINAL_EXECUTION_REPORT_LVE-765.md` (historical source retained).
+
+### Current status
+- READY WITH LIMITATIONS for the first implementation wave on branch Preview and rawaea-staging.
+- GitHub Actions run `45463194986` on `ffec2c4`: SUCCESS; Node `53/53`, Deno Type Check PASS, Pages allowlisted build PASS, Playwright 2 passed / 1 skipped (Production SHA parity).
+- Cloudflare Pages Preview successful: https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev
+- PR #8 is still OPEN and UNMERGED. No Production merge/deployment.
+- No SMART ERP / legacy RAWAEA ERP changes.
+
+### Implemented in LVE-768
+1. **Client result export:** `client_balance` output now includes only products with non-empty reconciliation lines and counted quantities for all expected lines. Explicit zero is valid; NULL / missing / not_counted is excluded. Unit events, image rows, client result rows, import-warning details and export metadata are scoped to delivered product IDs. Incomplete product count is retained in the summary/metadata.
+2. **Supervisor:** projects are restricted to active supervisor memberships; assignment removal targets `count_assignments.id` + active session; count-row drilldown is paginated/filterable and read-only with temporary signed evidence URLs; search requests are debounced and stale results discarded; confirmation is SweetAlert2 fail-closed.
+3. **Control:** new independent `countflow-control.html` with active-auditor-only authentication, allowed project/session list, paginated live counts, product/location/member filters, private Realtime topics, 15-second polling fallback, signed evidence/product image URLs, alerts, live presence/device/team state, current location and offline queue counts, and safe paginated reconciliation views. It has no CountFlow business-table write operations.
+4. **Admin:** distinct “إنشاء عملية جرد جديدة” action, clearer project/session/catalog naming, Control link and reviewer role description. Project/session query fields explicitly exclude owner identity.
+5. **Portal and deployment:** `index.html` exposes Admin, Supervisor, Counter and Control entry points; `scripts/build-pages.sh` and `countflow-sw.js` include the Control shell; worker cache is `countflow-sw-20261124-1`.
+6. **Counter:** existing counting behavior preserved; project/session queries now request only operational fields instead of `select('*')`.
+
+### Applied staging-only security migrations
+Project: `rawaea-staging` / `hfzznsiprnwkpayskzhu`. These are schema/policy/grant/function changes only; they did not insert/update/delete CountFlow business rows.
+
+| Migration version | Name | Status |
+|---|---|---|
+| `20261124182140` | `countflow_auditor_read_only_control_scope_v1` | APPLIED |
+| `20261124182507` | `countflow_auditor_evidence_read_v1` | APPLIED |
+| `20261124183136` | `countflow_control_safe_reconciliation_views_and_owner_realtime_redaction_v1` | APPLIED |
+| `20261124184201` | `countflow_hide_owner_actor_columns_from_clients_v1` | APPLIED |
+| `20261124184611` | `countflow_hide_owner_actor_audit_columns_v1` | APPLIED |
+
+Security evidence:
+- Authenticated auditor JWT simulation with `SET LOCAL ROLE authenticated` verified active auditor scope, project/session topic access, hidden owner membership row and denied owner-member topic. Test transaction ended with ROLLBACK.
+- `count_control_reconciliation_runs` and `count_control_reconciliation_lines` views expose safe columns only; actor columns are absent.
+- Column grants deny `created_by` from authenticated clients on `count_projects` / `count_sessions`; service_role retains required read. Similar restrictions hide `queue_resolved_by`, `revoked_by`, recount `created_by/reviewed_by`, and reconciliation `created_by/approved_by/metadata`.
+- Both `counting-evidence` and `counting-product-images` remain private. Auditor evidence read requires a registered object path in the active project; no upload/update/delete right was added.
+- Realtime trigger redacts owner actor IDs and sensitive owner metadata from session, alert, recount and reconciliation payloads.
+- These checks prove specific policies/columns/views, not total privacy across every table, Edge Function, Storage bucket or channel.
+
+### Staging data invariants — must preserve
+Latest verified QA batch: `f799c5c1-b766-4712-b74f-c0bb19836ddc` / `qa-90000-products.csv` remains `committing` (90,000 rows; 41,000 accepted; 0 rejected; no completed_at). **Do not resume, stop, delete, duplicate or otherwise mutate it.**
+
+Counts after the five migrations:
+- projects 1; members 4; products 41,000; sessions 1.
+- entries 0; assignments 0; presence 0; devices 0; entry images 0.
+- reconciliation runs 0; reconciliation lines 0; exports 0.
+No synthetic count data, users, sessions, images or exports were created. No Edge Function was changed or deployed.
+
+### Explicitly not complete
+- Global cross-client catalog: current `count_products` remains project-scoped. It persists across sessions inside the project but is not yet a platform-wide global catalog with client/branch overrides.
+- Dynamic role editor and Client Admin / tenant-scoped user management.
+- Full new-operation modal and complete operational fields (branch, floors, departments, aisles/racks/shelves, schedule, team/resource scope).
+- Full Power BI-style KPI dashboard with trend/comparison/coverage/quality/recount charts.
+- Physical Counter camera/barcode/Offline field testing.
+- Authenticated human E2E for owner, supervisor, counter and auditor; actual Excel workbook opened and verified with image bytes.
+- Complete end-to-end privacy audit for every owner actor field, Edge Function, Storage object type and Realtime channel.
+- Production deployment/merge.
+
+### Successor instructions
+1. Start from the PR #8 head and this LVE-768; do not repeat Admin-only LVE-765 work.
+2. Keep PR #8 open/unmerged until the owner visually accepts the Preview and authenticated role-flow checks pass.
+3. Do not touch the QA import batch or create test count entries, reconciliations, exports or Auth users without explicit scope and non-destructive plan.
+4. Before designing the global catalog/RBAC/Client Admin, inspect all current tables, foreign keys, unique constraints, policies, Edge contracts and UI consumers; propose additive schema only. Never delete or rewrite the 41,000 products.
+5. Keep Counter read-only query fields minimal; keep Control read-only. Do not give Auditor Supervisor/Counter write policies.
+6. Do not expose owner actor IDs in raw table reads, Realtime, Storage metadata, audit or export UI. Extend the owner-field audit before claiming global owner privacy.
+7. Do not modify `erp-frontend`, SMART ERP, Production data, accounting/inventory balances, or deployed Edge Functions as part of this CountFlow continuation.
+
+---
+
+## Historical LVE-2026-11-24-765 — Admin UI surgical overhaul
+
+
 
 **Date:** 24 November 2026 (Africa/Cairo)  
 **Current main baseline:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (includes the existing `Reports/P6`; preserved)  
