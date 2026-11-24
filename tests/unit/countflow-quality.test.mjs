@@ -842,6 +842,9 @@ test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky
   assert.doesNotMatch(admin, /\b(?:window\.)?confirm\s*\(/);
   assert.doesNotMatch(admin, /\b(?:window\.)?prompt\s*\(/);
   assert.match(admin, /\.tablewrap thead th\{position:sticky;top:0/);
+  assert.match(admin, /#memberTable thead th,#roleTable thead th/);
+  assert.match(admin, /#operationsTable thead th,#auditTable thead th/);
+  assert.match(admin, /#productVirtualScroller thead th/);
   assert.match(admin, /async function withTableSkeletons\(/);
   for (const target of ["projectList", "memberTable", "roleTable", "locationTable", "sessionTable", "productTable", "operationsTable", "auditTable"]) {
     assert.ok(admin.includes("['" + target + "'"), "Missing skeleton loading target: " + target);
