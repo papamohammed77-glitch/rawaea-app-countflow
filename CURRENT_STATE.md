@@ -6,7 +6,7 @@
 **Current main baseline:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (includes the existing `Reports/P6`; preserved)  
 **Continuation branch:** `work/lve-765-admin-ui-final-mainline`  
 **PR #8:** OPEN — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
-**Superseded PR #7:** remains in history; close after PR #8's CI gate passes  
+**Superseded PR #7:** CLOSED after PR #8 CI passed; retained for audit history  
 **Mainline source commit:** `1f2348ddf44e1c93c7c17161cd790f0b6ab53370` (before this state-only update)  
 **Admin blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
 **Unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
@@ -23,15 +23,15 @@
 - Existing owner-only bootstrap, role model, RPC/API contracts, import/export workflow and business semantics were not changed.
 - No change to `countflow.html`, `Countflow-supervisor.html`, Core, Service Worker, Supabase or the design-only ERP reference.
 
-### Verified CI on the prior equivalent source/test tree
+### Verified CI on PR #8 mainline
 
-GitHub Actions run `45299931306` on prior branch head `bc456fa5151770624c76b6f07306621eba0bcb59` — **SUCCESS**:
+GitHub Actions run `45302351806` on PR #8 source/test commit `b43fcd389394768ac78039abc9bc0ff2490c5042` — **SUCCESS**:
 - 42/42 Node unit tests, 0 failed.
 - Deno Type Check: PASS.
 - Pages allowlisted build: PASS.
 - Playwright public login-shell test: 2 passed / 1 skipped (Production SHA parity skipped on PR branch).
-- Cloudflare Pages branch Preview deployed successfully. This is not Production.
-- The mainline continuation PR must run a fresh CI after its latest commit; do not transfer the previous CI result to a different commit.
+- Cloudflare Pages branch Preview deployed successfully: https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev. This is not Production.
+- CI on PR #8 is successful; the current follow-up updates only documentation and does not alter Admin source/test blobs.
 
 ### Read-only Supabase snapshot — 24 November 2026
 
@@ -42,9 +42,14 @@ GitHub Actions run `45299931306` on prior branch head `bc456fa5151770624c76b6f07
 - Edge Functions remain `counting-provision-member` v7/JWT-required and `counting-export-session` v15/JWT-required. No Edge deploy.
 - Security Advisor's 65 RLS-disabled tables and 5 anon-callable SECURITY DEFINER findings belong to non-CountFlow legacy objects in the shared staging project; do not touch them from the Admin UI task.
 
+### Verified PR #8 preview
+
+- Preview: https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev — Cloudflare check SUCCESS on commit `b43fcd3`.
+- PR #8 CI run `45302351806`: 42/42 Node, Deno, Pages; Playwright 2 passed / 1 skipped (Production SHA parity skipped on PR branch).
+
 ### Open acceptance gates
 
-- Fresh CI on `work/lve-765-admin-ui-final-mainline`.
+- **PASS:** PR #8 fresh-head CI — 42/42 Node, Deno, Pages, Playwright 2 passed / 1 skipped.
 - Authenticated owner visual review of the new Preview, desktop/mobile RTL, and non-destructive interaction checks.
 - Production SHA parity / production deployment.
 - Authenticated role/member/session/alert workflows and all destructive actions remain untested.
@@ -57,7 +62,7 @@ GitHub Actions run `45299931306` on prior branch head `bc456fa5151770624c76b6f07
 - No Supabase write, Auth operation, import, count, reconciliation, business balance change or deployment was performed by this Admin UI task.
 - Keep this task Admin-only. Counter and Supervisor UI work require separate surgical changesets.
 - Preserve the mainline `Reports/P6` file; do not delete or overwrite it.
-- Current readiness: **READY WITH LIMITATIONS** pending fresh mainline PR CI and authenticated visual preview acceptance.
+- Current readiness: **READY WITH LIMITATIONS** pending authenticated visual Preview acceptance and Production SHA parity.
 
 ---
 

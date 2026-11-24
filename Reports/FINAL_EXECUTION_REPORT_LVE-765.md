@@ -7,7 +7,7 @@
 **فرع المتابعة من main:** `work/lve-765-admin-ui-final-mainline`  
 **الفرع السابق:** `work/lve-765-admin-ui-surgical`  
 **نطاق هذا التقرير:** Admin UI فقط؛ لا تغيير في Counter أو Supervisor أو قاعدة البيانات.  
-**الحالة:** **READY WITH LIMITATIONS** — شفرة Admin واختبارات المصدر اجتازت CI على الفرع السابق المطابق في المحتوى؛ يجب إكمال CI على PR المتفرع من أحدث main، كما أن القبول البصري المصادق للمالك لم يُثبت.
+**الحالة:** **READY WITH LIMITATIONS** — Admin واختباراته اجتازا CI على PR #8 المتفرع من أحدث main؛ القبول البصري المصادق للمالك ومطابقة Production SHA لم يُثبتا.
 
 ---
 
@@ -83,7 +83,7 @@
 - التشغيل `45298898309` فشل في الاختبار القائم `admin UI hides raw database errors and serialized audit payloads` لأن wrapper تحميل التدقيق لم يحتفظ برسالة الخطأ العربية الآمنة `تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.`.
 - تم إصلاح المسار في commit `649ab8019df506de6a15dab1cfc0176aa07f3bd5` مع الحفاظ على تنقية الخطأ وعدم إظهار رسالة Supabase الخام.
 
-### التشغيل النهائي على رأس الفرع السابق
+### التشغيل السابق على فرع PR #7
 
 **GitHub Actions run `45299931306` — SUCCESS** على commit `bc456fa5151770624c76b6f07306621eba0bcb59`.
 
@@ -98,14 +98,14 @@
   `https://work-lve-765-admin-ui-surgic.rawaea-app-countflow.pages.dev`.
 - التشغيل لا يثبت تسجيل دخول Admin مصادقًا، أو التفاعل مع نوافذ SweetAlert، أو اختبار الأدوار/العمليات المدمرة في المتصفح.
 
-**مهم:** نجاح CI أعلاه يخص رأس الفرع السابق ومحتوى المصدر/الاختبارات ببصماته المذكورة. فرع المتابعة الحالي مأخوذ من main الذي يحتوي P6؛ يجب إكمال CI جديد على PR المتفرع من main قبل الدمج. لا تُنقل نتيجة CI القديمة تلقائيًا إلى commit جديد.
+**مهم:** تشغيل PR #7 أعلاه تاريخي. نتيجة CI الأحدث لفرع mainline الجديد موثقة في القسم 12 أدناه، ولا تُنقل نتيجة أي تشغيل إلى commit مختلف.
 
 ## 6. GitHub والحفاظ على P6
 
 - main الحالي عند استعادة المهمة: `2bd494d7028723fbdb278b2c2b56fff9669f881b`، commit بعنوان `Create P6`.
 - المقارنة مع baseline `862a246bd56f7696c01df247ffff490c83dd448c` أظهرت commit واحدًا متقدمًا يضيف `Reports/P6` فقط.
-- PR #7 بقي OPEN / NOT MERGED على base أقدم. لا تُدمج عليه مباشرة ولا تفقد تقرير P6.
-- أنشئ فرع المتابعة `work/lve-765-admin-ui-final-mainline` انطلاقًا من main الحالي، ويُعاد تقديم ملفات المهمة عليه ثم فتح PR جديد إلى main. بعد التحقق من PR الجديد، يُغلق PR #7 بصفته superseded دون حذف تاريخه.
+- PR #7 بقي على base أقدم واستُبدل بـPR #8 بعد نجاح CI على mainline. لا يُحذف تاريخ PR #7.
+- فرع المتابعة `work/lve-765-admin-ui-final-mainline` وPR #8 مبنيان على main الحالي؛ PR #7 أُغلق بوصفه superseded مع الاحتفاظ بالتاريخ. لا تفتح PR ثالثًا ما لم يتغير المصدر.
 - لا دمج إلى main أو Production في هذه المرحلة بسبب بقاء القبول البصري المصادق مفتوحًا.
 
 ## 7. فحص Supabase — قراءة فقط
@@ -190,10 +190,10 @@
 ## 10. التعليمات التنفيذية للمساعد التالي
 
 1. ابدأ من main الحالي والـPR الجديد لا من PR #7 القديم؛ تحقق من أن تقرير P6 باقٍ.
-2. شغّل CI كاملًا على أحدث PR head. يجب أن تكون 42/42 Node وDeno وPages وPlaywright public shell ناجحة.
+2. CI PR #8 اجتاز 42/42 Node وDeno وPages وPlaywright public shell؛ أعد تشغيله فقط عند تغيير المصدر أو الاختبارات.
 3. نفّذ مراجعة بصرية فعلية للـPreview في جلسة Browser مصرح بها، على desktop وmobile RTL، دون الضغط على أي إجراء يحفظ/يغيّر بيانات. تحقّق من Sidebar groups، Font Awesome icons، SweetAlert2، الجداول الطويلة، Skeleton، وسلوك reduced motion.
 4. اختبر SweetAlert تفاعليًا فقط بأزرار عرض غير مدمرة أو بصفحة Preview بدون متابعة الإجراء؛ لا تنفذ تغيير دور/عضوية/جلسة/تنبيه/تجاوز queue على البيانات الحالية.
-5. لا تدمج PR إلى main ولا تدّعِ Production deployment قبل CI الجديد ومراجعة Preview والموافقة التشغيلية المطلوبة.
+5. لا تدمج PR #8 إلى main ولا تدّعِ Production deployment قبل المراجعة البصرية المصادق عليها ومطابقة Production SHA.
 6. لا تلمس Counter أو Supervisor في هذه المهمة. اجعل تحسينهما مرحلتين مستقلتين مع ChangeSet مستقل.
 7. لا تتدخل في import batch 90K أو جلسة QA أو الأربعة أعضاء أو الـ41,000 صنف.
 8. أبقِ تسعير المنتج/FX/القيمة المالية UNKNOWN حتى اعتماد سياسة صريحة؛ UI overhaul لا يثبت صحة التصدير المالي.
@@ -202,4 +202,23 @@
 ## 11. الحكم النهائي
 
 **READY WITH LIMITATIONS.**  
-إعادة تطوير Admin UI، اختبارات المصدر، Type Check، Pages Build وPublic Playwright smoke مثبتة على الفرع السابق. المتبقي: CI على فرع mainline الجديد، مراجعة Preview بصرية وتفاعلية غير مدمرة، وفصل القبول البصري عن النشر الإنتاجي. قاعدة البيانات لم تتغير.
+إعادة تطوير Admin UI واختباراته وDeno وPages وPublic Playwright smoke مثبتة على PR #8 من mainline. المتبقي: مراجعة Preview بصرية وتفاعلية غير مدمرة ومطابقة Production SHA. قاعدة البيانات لم تتغير.
+
+
+---
+
+## 12. إثبات PR #8 بعد النقل إلى أحدث main
+
+**PR:** #8 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
+**Base:** `main` / `2bd494d7028723fbdb278b2c2b56fff9669f881b`  
+**CI head:** `b43fcd389394768ac78039abc9bc0ff2490c5042`  
+**GitHub Actions:** run `45302351806` — **SUCCESS**.
+
+- Deno Type Check: PASS.
+- Node: **42/42 PASS، 0 FAIL**.
+- Cloudflare Pages allowlisted build: PASS.
+- Playwright: **2 passed / 1 skipped**. تم تخطي فحص Production SHA parity لأنه PR branch وليس main؛ نجح فحص RTL mobile shell وفحص شاشة الدخول العامة.
+- Cloudflare Pages Preview: `https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev`، Check SUCCESS للالتزام `b43fcd3`.
+- PR #8 بقي OPEN / UNMERGED. لا نشر Production.
+- مراجعة واجهة Preview بصريًا بعد المصادقة، وتغيير الأدوار/العضوية/الجلسة/التنبيه، ما زالت OPEN.
+- تحديث التقرير والحالة بعد هذا التشغيل توثيقي فقط؛ Admin source وunit test blobs ظلا دون تغيير.
