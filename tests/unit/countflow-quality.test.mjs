@@ -904,3 +904,17 @@ test("Supervisor live rows open a paginated, filtered, read-only count detail vi
   assert.ok(supervisor.includes("confirmButtonColor:'#dc2626'"), "Supervisor confirmations must be red and explicit");
   assert.doesNotMatch(supervisor, /confirm\(/, "Read-only drilldown must not trigger native mutation confirmations");
 });
+
+test("Admin exposes a separate new-operation action and keeps client catalogue separate from sessions", () => {
+  const admin = read("countflow-admin.html");
+  const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(navTabs.length, 10);
+  assert.ok(navTabs.includes("projects") && navTabs.includes("sessions") && navTabs.includes("operations"));
+  assert.ok(admin.includes('id="newOperationButton"'), "Missing dedicated create-operation action");
+  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{/);
+  assert.match(admin, /activateTab\('sessions'\)/);
+  assert.match(admin, /sessionName'\)\.focus/);
+  assert.ok(admin.includes("كتالوج أصناف الجهة / التكليف"), "The catalogue needs a persistent client/project scope label");
+  assert.ok(admin.includes("لا تُحذف أصنافه عند إغلاق أي جلسة جرد"), "Catalogue persistence rule must be explicit");
+  assert.ok(admin.includes("ملف الجهة؛ تبقى الأصناف والمواقع والمستخدمون محفوظة لإعادة الاستخدام"));
+});
