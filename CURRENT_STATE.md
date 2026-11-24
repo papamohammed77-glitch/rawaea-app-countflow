@@ -1,3 +1,28 @@
+## LVE-2026-11-24-769 — CountFlow contract discovery (latest read-only event)
+
+**Last Verified Event:** 24 November 2026 (Africa/Cairo), report commit `fcdefc66f442ed52bb9ecffefb2d84568baf98c4`.  
+**Report:** `Reports/LVE-769_ARCHITECTURE_DISCOVERY_20261124.md`.  
+**Branch:** `work/lve-765-admin-ui-final-mainline`; **PR #8:** OPEN / UNMERGED.  
+**PR head at audit:** `6a29e5d56a834c904350a5ec4e4a537462f122f8`; current head CI run `45463890990` SUCCESS.  
+**Code/test head:** `ffec2c4e2119b63b7ebed9f76f440ad93d4668f4` — 53/53 Node, Deno, Pages, Playwright 2 PASS / 1 SKIPPED as documented in LVE-768.
+
+### Confirmed read-only findings
+- CountFlow staging `hfzznsiprnwkpayskzhu` is ACTIVE_HEALTHY; 24/24 CountFlow tables have RLS and 78 CountFlow policies.
+- Live counts rechecked: 1 project, 4 members, 41,000 project-scoped products, 1 session, 0 entries, 0 assignments, 1 import batch / 90,000 import rows.
+- QA batch `f799c5c1-b766-4712-b74f-c0bb19836ddc` remains `committing` (90,000 total / 41,000 accepted / 0 rejected). **Do not resume, stop, delete, duplicate, or mutate it.**
+- `count_products` is project-scoped; global catalog and client-product mappings do not exist.
+- `count_members.role` is constrained to `supervisor / counter / auditor`; RLS helper functions and provisioning are role-fixed/owner-only. Client Admin or dynamic roles require server-side contract changes, not UI-only edits.
+- `count_projects` is currently engagement-level; no separate client entity. `count_sessions` does not yet contain the complete operation metadata requested.
+- Location hierarchy exists but allowed types omit explicit branch/floor/rack.
+- No code, SQL, DML, Auth, Storage, Edge deployment, merge, or Production changes were made in LVE-769.
+
+### Next execution step
+Complete the additive tenant/client + global catalog + project mapping + role-permission contract across all app consumers, RLS policies, import RPCs and provisioning Edge Function; then prepare a precise migration/source ChangeSet and staging acceptance tests. Keep PR #8 open and preserve the QA batch. Do not repeat LVE-765 or claim the global catalog/RBAC/Client Admin is implemented.
+
+**Status:** READY WITH LIMITATIONS — discovery verified; implementation phase not yet applied.
+
+---
+
 # CountFlow — CURRENT_STATE
 
 ## LVE-2026-11-24-768 — Product vision first implementation (latest verified event)
