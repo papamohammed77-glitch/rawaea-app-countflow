@@ -1579,7 +1579,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   if(!state.project)return;
   return withTableSkeletons([['auditTable',5,5]],async()=>{
    const {data,error}=await db.from('count_audit_log').select('id,actor_id,action,entity_type,entity_id,details,created_at').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(100);
-   if(error)throw error;
+   if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.</div>';return;}
    $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">—</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>مستخدم مخوّل</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
   });
  }
