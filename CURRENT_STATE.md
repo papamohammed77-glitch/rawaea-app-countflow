@@ -1,5 +1,55 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-24-765 — Admin UI surgical overhaul
+
+**Date:** 24 November 2026 (Africa/Cairo)  
+**Repository:** `papamohammed77-glitch/rawaea-app-countflow`  
+**Baseline main:** `862a246bd56f7696c01df247ffff490c83dd448c`  
+**Working branch:** `work/lve-765-admin-ui-surgical`  
+**Source/test commit:** `fe2d0d8608a48ed361a03c8901f597c9c9f265da`  
+**Admin source blob:** `e6b517d7d5e4937eb76a4a0e70e3aa4fae99a90a`  
+**Unit test blob:** `4dbc224a900e6125d64286dc6e76a7b785fede35`  
+**Status:** Source and regression test pushed to the working branch. Pull request and remote CI are the next gate. No merge to main, deployment, or Supabase write was performed.
+
+### Scope and surgical change set
+
+Only `countflow-admin.html` and `tests/unit/countflow-quality.test.mjs` changed in the source commit.
+
+1. **Native confirmations replaced:** all ten native `confirm()` call sites were replaced with a centralized SweetAlert2 confirmation helper. The confirm action is red; cancellation is explicit; if the CDN library is unavailable, the action fails closed and is not executed.
+2. **Typed reason prompts replaced:** the three native `prompt()` call sites for recount review, alert resolution, and device-queue override now use SweetAlert2 textarea prompts. Reasons are trimmed and must contain at least 10 characters.
+3. **Font Awesome:** pinned Font Awesome 7.3.1 assets were added. A central decorator applies semantic icons to static and dynamically rendered buttons; existing button handlers and IDs remain intact.
+4. **Navigation grouping:** the existing ten tabs are grouped into Home, Operations, Reference Data, Team & Permissions, and Governance. All ten original `data-tab` values and section IDs are preserved. Mobile groups scroll horizontally.
+5. **Sticky table headers:** table wrappers now provide bounded vertical scrolling and sticky `thead th` headers.
+6. **Skeleton loaders:** a shared tokenized loader is used for projects, members, roles, locations, sessions, products, global operations, and the audit log. Request tokens prevent an older overlapping request from clearing a newer loading state.
+7. **Regression test:** one unit test was added to verify grouped navigation, pinned UI dependencies, the red SweetAlert action, required reason validation, absence of native dialogs, sticky headers, skeleton targets, and dynamic button decoration.
+
+### Verification — SOURCE ONLY
+
+- **PASS:** all inline JavaScript in `countflow-admin.html` parsed with the local V8 JavaScript parser.
+- **PASS:** ten unique navigation tab keys remain present.
+- **PASS:** static source scan found zero native `confirm()` and zero native `prompt()` calls in the Admin source.
+- **PASS:** test suite source now contains 42 unit tests (41 existing + one Admin UI regression test).
+- **PENDING:** execute `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright workflow through the repository CI on the PR. Static V8 parsing is not a substitute for executing Node tests.
+- **OPEN:** interactive visual/browser verification, responsive device review, and signed-in destructive-action E2E have not been performed. No visual PASS is claimed.
+
+### Operational safety and boundaries
+
+- No edits to `countflow.html`, `Countflow-supervisor.html`, `countflow-core.js`, Service Worker, Supabase schema/RLS/grants/Edge Functions, or the design-only ERP reference.
+- No Supabase request, Auth change, test fixture, import, count, reconciliation, or other database write was performed.
+- No Cloudflare deployment was triggered. The LVE-747/LVE-748 `rawaea-staging` write/deployment governance hold remains in force.
+- Existing LVE-764 image and Client Balance operational acceptance gates remain separate and OPEN where already documented. This UI-only source change does not close the Admin/Counter image display or XLSX embedded-image checks.
+- GitHub confirms PR #5 was already merged to main at `862a246bd56f7696c01df247ffff490c83dd448c` on 23 November 2026. The older LVE-764 summary below contained stale “Draft/Open/Not merged” wording; that status is corrected below without changing its still-open E2E gate.
+
+### Mandatory successor instructions
+
+- Review PR for `work/lve-765-admin-ui-surgical` and require the full CI gate to pass before considering merge.
+- Do not merge or deploy solely because source parsing passed. Run an authenticated visual Admin review in an authorized browser before declaring visual acceptance.
+- Do not relax the SweetAlert fail-closed behavior or the 10-character reason rule.
+- Preserve all role checks, owner-only bootstrap, existing RPC contracts, and existing operation workflow semantics.
+- Do not run CountFlow write tests or deploy to `rawaea-staging` until the recorded governance conflict is explicitly resolved by the owner.
+
+---
+
 ## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
 
 **التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
@@ -7,7 +57,7 @@
 **Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu  
 **Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
 **فرع العمل:** work/lve-764-product-image-urls  
-**PR:** #5 — Draft / Open / Not merged  
+**PR:** #5 — CLOSED / MERGED 23 نوفمبر 2026 / merge SHA `862a246bd56f7696c01df247ffff490c83dd448c` (عرض Admin/Counter وتصدير XLSX يظلان بوابة قبول مفتوحة)  
 **Application commit:** `b09b0920d519ead01787011e604a100a5083c649`  
 **Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
 **Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
