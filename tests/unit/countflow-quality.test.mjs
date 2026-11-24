@@ -824,3 +824,14 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
   assert.doesNotMatch(migration, /UPDATE\s+storage\.objects/i);
   assert.doesNotMatch(migration, /ALTER\s+TABLE\s+public\.count_products\s+ADD\s+COLUMN\s+image_url/i);
 });
+
+
+test("Admin project bootstrap selects only columns readable by authenticated users", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf("async function loadProjects()");
+  const end = admin.indexOf("\\n }", start);
+  assert.ok(start >= 0 && end > start, "loadProjects() must exist");
+  const source = admin.slice(start, end);
+  assert.match(source, /db\\.from\\('count_projects'\\)\\.select\\('id,name,code,status,created_at'\\)/);
+  assert.doesNotMatch(source, /created_by|select\\('\\*'\\)/);
+});
