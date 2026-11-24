@@ -60,7 +60,18 @@
    <div class="table-scroll"><table><thead><tr><th>التاريخ والوقت</th><th>الصنف</th><th>الباركود / SKU</th><th>الموقع</th><th>المندوب</th><th>الكمية</th><th>الوحدة</th><th>كمية الأساس</th><th>الجولة / المراجعة</th><th>الصورة / الدليل</th><th>ملاحظة</th></tr></thead><tbody id="entryRows"><tr><td colspan="11" class="empty">اختر عملية جرد لمشاهدة البيانات.</td></tr></tbody></table></div>
    <div class="pager"><span id="entryPageInfo" class="muted small">—</span><div class="pager-actions"><button id="entryPrev" class="outline" type="button" disabled>السابق</button><button id="entryNext" class="outline" type="button" disabled>التالي</button></div></div>
   </div>
-  <div class="split">
+<section class="panel" id="reconPanel">
+   <div class="bar"><div><h3 style="margin:0"><i class="fa-solid fa-scale-balanced"></i> نتائج التسوية والمراجعة</h3><small id="reconMeta" class="muted">آخر جولة للعملية المحددة</small></div><span id="reconStatus" class="pill">—</span></div>
+   <div class="kpis">
+    <div class="kpi"><div class="kpi-label">المواقع المتوقعة</div><div id="reconExpected" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">المواقع المعدودة</div><div id="reconCounted" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">مواقع بها فروقات</div><div id="reconVariance" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">مواقع لم تُعدّ</div><div id="reconUncounted" class="kpi-value">—</div></div>
+   </div>
+   <div class="table-scroll"><table><thead><tr><th>SKU</th><th>الصنف</th><th>الموقع</th><th>الوحدة</th><th>الدفترية</th><th>المعدود</th><th>الفرق</th><th>الفرق %</th><th>عمليات العد</th><th>عدد العدادين</th><th>الحالة</th></tr></thead><tbody id="reconRows"><tr><td colspan="11" class="empty">اختر عملية لمشاهدة نتائج التسوية.</td></tr></tbody></table></div>
+   <div class="pager"><span id="reconPageInfo" class="muted small">—</span><div class="pager-actions"><button id="reconPrev" class="outline" type="button" disabled>السابق</button><button id="reconNext" class="outline" type="button" disabled>التالي</button></div></div>
+  </section>
+    <div class="split">
    <section class="panel"><h3><i class="fa-solid fa-people-group"></i> حالة الفريق</h3><div class="table-scroll"><table><thead><tr><th>العضو</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th></tr></thead><tbody id="teamRows"></tbody></table></div></section>
    <section class="panel"><h3><i class="fa-solid fa-bell"></i> التنبيهات</h3><div id="alertRows" class="small muted">لا توجد تنبيهات.</div></section>
   </div>
@@ -74,7 +85,7 @@
  if(!CF||typeof CF.createClient!=='function'){document.getElementById('loginError').textContent='تعذر تحميل خدمات CountFlow الأساسية.';return}
  const sb=CF.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,memberships:[],projects:[],project:null,sessions:[],session:null,locations:[],members:[],sessionPage:0,entryPage:0,pageSize:100,totalEntries:0,detailLoading:false,projectChannel:null,sessionChannel:null,pollTimer:null,refreshTimer:null,searchTimer:null,requestToken:0};
+ const state={user:null,memberships:[],projects:[],project:null,sessions:[],session:null,locations:[],members:[],sessionPage:0,entryPage:0,reconPage:0,pageSize:100,totalEntries:0,totalReconLines:0,reconRun:null,detailLoading:false,projectChannel:null,sessionChannel:null,pollTimer:null,refreshTimer:null,searchTimer:null,requestToken:0};
  const labels={planned:'مخططة',active:'قيد التنفيذ',paused:'متوقفة مؤقتاً',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة',activeMember:'نشط',pausedMember:'موقوف مؤقتاً',removed:'مسحوبة',open:'مفتوح',acknowledged:'تم الاطلاع',resolved:'تم الحل',critical:'حرج',high:'مرتفع',medium:'متوسط',low:'منخفض'};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const status=v=>labels[v]||v||'—';
@@ -148,7 +159,7 @@
    $('kpiEvents').textContent=Number(count||0).toLocaleString('ar-EG');$('entryResultCount').textContent=Number(count||0).toLocaleString('ar-EG')+' حدث';
    const {data:sample,error:sampleError}=await sb.from('count_entries').select('product_id').eq('session_id',sessionId).limit(1000);
    if(!sampleError)$('kpiProducts').textContent=new Set((sample||[]).map(x=>x.product_id)).size.toLocaleString('ar-EG')+(Number(count||0)>1000?'+':'');
-   await loadEntryPage(token);
+   await Promise.all([loadEntryPage(token),loadReconciliation()]);
    if(state.project?.id!==projectId||state.session?.id!==sessionId)return;
   }catch(e){console.warn('Control monitor refresh failed',e);if(!quiet)toast(friendly(e),true)}finally{state.detailLoading=false}
  }
@@ -184,6 +195,50 @@
   }).join(''):'<tr><td colspan="11" class="empty">لا توجد نتائج عد مطابقة للفلاتر.</td></tr>';
   const pages=Math.max(1,Math.ceil(state.totalEntries/state.pageSize));$('entryPageInfo').textContent='صفحة '+(state.entryPage+1)+' من '+pages+' · '+state.totalEntries.toLocaleString('ar-EG')+' نتيجة';$('entryPrev').disabled=state.entryPage<=0;$('entryNext').disabled=state.entryPage+1>=pages;
  }
+ async function loadReconciliation(){
+  if(!state.session)return;
+  const sessionId=state.session.id,projectId=state.project.id;
+  const {data:runs,error}=await sb.from('count_control_reconciliation_runs')
+   .select('id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,created_at,computed_at,approved_at,entry_count_snapshot')
+   .eq('session_id',sessionId).eq('project_id',projectId)
+   .order('run_number',{ascending:false}).limit(1);
+  if(error)throw error;
+  if(state.session?.id!==sessionId)return;
+  state.reconRun=(runs||[])[0]||null;state.reconPage=0;
+  if(!state.reconRun){
+   $('reconMeta').textContent='لم تُنشأ جولة تسوية لهذه العملية بعد.';
+   $('reconStatus').textContent='لا توجد جولة';
+   ['reconExpected','reconCounted','reconVariance','reconUncounted'].forEach(id=>$(id).textContent='—');
+   $('reconRows').innerHTML='<tr><td colspan="11" class="empty">ستظهر نتائج التسوية هنا بعد تنفيذها من النظام الأم.</td></tr>';
+   $('reconPageInfo').textContent='—';$('reconPrev').disabled=true;$('reconNext').disabled=true;return;
+  }
+  const run=state.reconRun;
+  $('reconMeta').textContent='الجولة رقم '+run.run_number+' · احتساب '+(run.computed_at?new Date(run.computed_at).toLocaleString('ar-EG'):'—')+' · '+(run.approved_at?'اعتماد '+new Date(run.approved_at).toLocaleString('ar-EG'):'لم تعتمد بعد');
+  $('reconStatus').textContent=status(run.status);
+  $('reconExpected').textContent=Number(run.expected_rows||0).toLocaleString('ar-EG');
+  $('reconCounted').textContent=Number(run.counted_rows||0).toLocaleString('ar-EG');
+  $('reconVariance').textContent=Number(run.variance_rows||0).toLocaleString('ar-EG');
+  $('reconUncounted').textContent=Number(run.uncounted_rows||0).toLocaleString('ar-EG');
+  await loadReconciliationLines();
+ }
+ async function loadReconciliationLines(){
+  if(!state.reconRun||!state.session)return;
+  const sessionId=state.session.id,runId=state.reconRun.id,from=state.reconPage*state.pageSize;
+  let q=sb.from('count_control_reconciliation_lines')
+   .select('id,product_id,location_id,product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,counted_events,counter_count,result_status,expected_scope',{count:'exact'})
+   .eq('run_id',runId).eq('session_id',sessionId).order('location_path',{ascending:true});
+  if($('locationFilter').value)q=q.eq('location_id',$('locationFilter').value);
+  const {data,error,count}=await q.range(from,from+state.pageSize-1);if(error)throw error;
+  if(state.session?.id!==sessionId||state.reconRun?.id!==runId)return;
+  const lines=data||[];state.totalReconLines=Number(count||0);
+  const statusLabel=v=>({matched:'مطابق',variance:'فرق',not_counted:'غير معدود',unexpected:'غير متوقع',pending:'قيد المراجعة'})[v]||v||'—';
+  $('reconRows').innerHTML=lines.length?lines.map(x=>{
+   return '<tr><td>'+esc(x.product_sku||'—')+'</td><td><b>'+esc(x.product_name||'—')+'</b></td><td>'+esc(x.location_path||'موقع غير محدد')+'</td><td>'+esc(x.unit||'—')+'</td><td>'+((x.expected_quantity===null||x.expected_quantity===undefined)?'—':Number(x.expected_quantity).toLocaleString('ar-EG'))+'</td><td>'+((x.counted_quantity===null||x.counted_quantity===undefined)?'—':Number(x.counted_quantity).toLocaleString('ar-EG'))+'</td><td><b>'+((x.variance_quantity===null||x.variance_quantity===undefined)?'—':Number(x.variance_quantity).toLocaleString('ar-EG'))+'</b></td><td>'+((x.variance_percent===null||x.variance_percent===undefined)?'—':Number(x.variance_percent).toLocaleString('ar-EG',{maximumFractionDigits:2})+'%')+'</td><td>'+Number(x.counted_events||0).toLocaleString('ar-EG')+'</td><td>'+Number(x.counter_count||0).toLocaleString('ar-EG')+'</td><td><span class="pill">'+esc(statusLabel(x.result_status))+'</span></td></tr>';
+  }).join(''):'<tr><td colspan="11" class="empty">لا توجد أسطر تسوية مطابقة.</td></tr>';
+  const pages=Math.max(1,Math.ceil(state.totalReconLines/state.pageSize));
+  $('reconPageInfo').textContent='صفحة '+(state.reconPage+1)+' من '+pages+' · '+state.totalReconLines.toLocaleString('ar-EG')+' موقع';
+  $('reconPrev').disabled=state.reconPage<=0;$('reconNext').disabled=state.reconPage+1>=pages;
+ }
  async function loadAlerts(){if(!state.session)return;const {data,error}=await sb.from('count_alerts').select('id,alert_type,severity,status,title,created_at,details').eq('session_id',state.session.id).order('created_at',{ascending:false}).limit(50);if(error)throw error;$('alertRows').innerHTML=(data||[]).length?(data||[]).map(a=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(a.title)+'</b> <span class="pill">'+esc(status(a.severity))+'</span><div class="muted small">'+esc(a.alert_type)+' · '+esc(status(a.status))+' · '+new Date(a.created_at).toLocaleString('ar-EG')+'</div></div>').join(''):'لا توجد تنبيهات في العملية المحددة.'}
  async function safeOpenSession(id){try{await openSession(id);await loadAlerts()}catch(e){toast(friendly(e),true)}}
  async function openSession(id){const s=state.sessions.find(x=>x.id===id);if(!s)return;if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});state.session=s;state.entryPage=0;state.requestToken++;$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';$('selectedSessionName').textContent=s.name;$('selectedSessionMeta').textContent=state.project.name+' · '+state.project.code+' · '+new Date(s.created_at).toLocaleString('ar-EG');$('selectedSessionStatus').textContent=status(s.status);$('sessionMonitor').classList.remove('hidden');$('sessionRows').querySelectorAll('[data-session]').forEach(b=>b.classList.toggle('selected',b.dataset.session===id));state.sessionChannel=subscribePrivate('countflow:session:'+id);await Promise.all([refreshMonitor(false),loadAlerts()])}
@@ -198,8 +253,10 @@
  $('refreshAll').onclick=()=>loadSessions().then(()=>{if(state.session)return Promise.all([refreshMonitor(true),loadAlerts()])}).catch(e=>toast(friendly(e),true));
  $('entryPrev').onclick=()=>{if(state.entryPage>0){state.entryPage--;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))}};
  $('entryNext').onclick=()=>{if((state.entryPage+1)*state.pageSize<state.totalEntries){state.entryPage++;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))}};
+ $('reconPrev').onclick=()=>{if(state.reconPage>0){state.reconPage--;loadReconciliationLines().catch(e=>toast(friendly(e),true))}};
+ $('reconNext').onclick=()=>{if((state.reconPage+1)*state.pageSize<state.totalReconLines){state.reconPage++;loadReconciliationLines().catch(e=>toast(friendly(e),true))}};
  const reloadEntries=()=>{state.entryPage=0;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))};
- $('locationFilter').onchange=reloadEntries;$('memberFilter').onchange=reloadEntries;
+ $('locationFilter').onchange=()=>{reloadEntries();loadReconciliationLines().catch(e=>console.warn(e))};$('memberFilter').onchange=reloadEntries;
  $('productSearch').oninput=()=>{clearTimeout(state.searchTimer);state.searchTimer=setTimeout(reloadEntries,300)};
  $('clearEntryFilters').onclick=()=>{$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';reloadEntries()};
  $('sessionRows').addEventListener('click',event=>{const b=event.target.closest('[data-session]');if(b)safeOpenSession(b.dataset.session)});
