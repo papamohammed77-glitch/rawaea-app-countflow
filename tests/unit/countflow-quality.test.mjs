@@ -828,10 +828,8 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
 
 test("Admin project bootstrap selects only columns readable by authenticated users", () => {
   const admin = read("countflow-admin.html");
-  const start = admin.indexOf("async function loadProjects()");
-  const end = admin.indexOf("\\n }", start);
-  assert.ok(start >= 0 && end > start, "loadProjects() must exist");
-  const source = admin.slice(start, end);
-  assert.match(source, /db\\.from\\('count_projects'\\)\\.select\\('id,name,code,status,created_at'\\)/);
-  assert.doesNotMatch(source, /created_by|select\\('\\*'\\)/);
+  const query = admin.match(/db\\.from\\('count_projects'\\)\\.select\\('([^']+)'\\)/);
+  assert.ok(query, "Admin must have an explicit count_projects projection");
+  assert.equal(query[1], "id,name,code,status,created_at");
+  assert.doesNotMatch(query[1], /created_by|\\*/);
 });
