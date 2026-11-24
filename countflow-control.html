@@ -72,7 +72,7 @@
    <div class="pager"><span id="reconPageInfo" class="muted small">—</span><div class="pager-actions"><button id="reconPrev" class="outline" type="button" disabled>السابق</button><button id="reconNext" class="outline" type="button" disabled>التالي</button></div></div>
   </section>
     <div class="split">
-   <section class="panel"><h3><i class="fa-solid fa-people-group"></i> حالة الفريق</h3><div class="table-scroll"><table><thead><tr><th>العضو</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th></tr></thead><tbody id="teamRows"></tbody></table></div></section>
+   <section class="panel"><h3><i class="fa-solid fa-people-group"></i> حالة الفريق</h3><div class="table-scroll"><table><thead><tr><th>العضو</th><th>الدور</th><th>العضوية</th><th>الحضور</th><th>الجهاز / المنصة</th><th>الموقع الحالي / المزامنة</th><th>آخر نشاط</th></tr></thead><tbody id="teamRows"></tbody></table></div></section>
    <section class="panel"><h3><i class="fa-solid fa-bell"></i> التنبيهات</h3><div id="alertRows" class="small muted">لا توجد تنبيهات.</div></section>
   </div>
  </section>
@@ -85,7 +85,7 @@
  if(!CF||typeof CF.createClient!=='function'){document.getElementById('loginError').textContent='تعذر تحميل خدمات CountFlow الأساسية.';return}
  const sb=CF.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,memberships:[],projects:[],project:null,sessions:[],session:null,locations:[],members:[],sessionPage:0,entryPage:0,reconPage:0,pageSize:100,totalEntries:0,totalReconLines:0,reconRun:null,detailLoading:false,projectChannel:null,sessionChannel:null,pollTimer:null,refreshTimer:null,searchTimer:null,requestToken:0};
+ const state={user:null,memberships:[],projects:[],project:null,sessions:[],session:null,locations:[],members:[],presence:[],devices:[],sessionPage:0,entryPage:0,reconPage:0,pageSize:100,totalEntries:0,totalReconLines:0,reconRun:null,detailLoading:false,projectChannel:null,sessionChannel:null,pollTimer:null,refreshTimer:null,searchTimer:null,requestToken:0};
  const labels={planned:'مخططة',active:'قيد التنفيذ',paused:'متوقفة مؤقتاً',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة',activeMember:'نشط',pausedMember:'موقوف مؤقتاً',removed:'مسحوبة',open:'مفتوح',acknowledged:'تم الاطلاع',resolved:'تم الحل',critical:'حرج',high:'مرتفع',medium:'متوسط',low:'منخفض'};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const status=v=>labels[v]||v||'—';
@@ -93,7 +93,7 @@
  function friendly(error){const msg=String(error?.message||error||'');if(/network|fetch|timeout|503|502/i.test(msg))return 'تعذر الاتصال بالخدمة. سيعاد تحديث الشاشة عند عودة الاتصال.';if(/permission|row.level|policy|not allowed/i.test(msg))return 'ليس لديك صلاحية قراءة هذه البيانات.';return 'تعذر تحميل البيانات. أعد المحاولة.'}
  async function rows(table,columns,filters,order,pageSize=500){const all=[];let offset=0;while(true){let q=sb.from(table).select(columns);for(const f of filters||[])q=q[f.op](f.column,f.value);q=q.order(order||'id',{ascending:true}).range(offset,offset+pageSize-1);const {data,error}=await q;if(error)throw error;const page=data||[];all.push(...page);if(page.length<pageSize)return all;offset+=pageSize}}
  function stopRealtime(){clearInterval(state.pollTimer);clearTimeout(state.refreshTimer);if(state.projectChannel)sb.removeChannel(state.projectChannel).catch(()=>{});if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});state.projectChannel=null;state.sessionChannel=null}
- function scheduleRefresh(){clearTimeout(state.refreshTimer);state.refreshTimer=setTimeout(()=>{if(!document.hidden)refreshMonitor(true).catch(e=>console.warn(e))},450)}
+ function scheduleRefresh(){clearTimeout(state.refreshTimer);state.refreshTimer=setTimeout(()=>{if(!document.hidden&&state.session)Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))},450)}
  function subscribePrivate(topic){return sb.channel(topic,{config:{private:true}}).on('broadcast',{event:'*'},scheduleRefresh).subscribe(status=>{$('realtimeState').innerHTML=status==='SUBSCRIBED'?'<span class="dot"></span> مزامنة مباشرة':'<span class="dot" style="background:#d97706"></span> تحديث دوري'})}
  async function signOut(){stopRealtime();await sb.auth.signOut();state.user=null;$('appPanel').classList.add('hidden');$('noAccessPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden');$('logout').classList.add('hidden')}
  async function acceptUser(user){
@@ -127,8 +127,18 @@
   $('kpiMembers').textContent=state.members.length.toLocaleString('ar-EG');
   renderTeam();
  }
- function renderTeam(){$('teamRows').innerHTML=state.members.length?state.members.map(m=>'<tr><td><b>'+esc(m.display_name)+'</b><div class="muted small">'+esc(m.username||'')+'</div></td><td>'+esc(m.role==='counter'?'مسؤول جرد':m.role==='supervisor'?'مشرف الجرد':'مراجع')+'</td><td><span class="pill '+(m.status==='active'?'active':'paused')+'">'+esc(status(m.status))+'</span></td><td>'+esc(m.last_seen_at?new Date(m.last_seen_at).toLocaleString('ar-EG'):'—')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">لا يوجد أعضاء.</td></tr>'}
- async function chooseProject(id){const project=state.projects.find(p=>p.id===id);if(!project)return;stopRealtime();state.project=project;state.session=null;state.sessions=[];state.sessionPage=0;$('sessionMonitor').classList.add('hidden');await Promise.all([loadProjectResources(),loadSessions()]);state.projectChannel=subscribePrivate('countflow:project:'+project.id);state.pollTimer=setInterval(()=>{if(!document.hidden)refreshMonitor(true).catch(e=>console.warn(e))},15000)}
+ function renderTeam(){
+  const presenceMap=Object.fromEntries(state.presence.map(x=>[x.member_id,x]));
+  const deviceMap={};for(const d of state.devices){if(!deviceMap[d.member_id]||String(d.last_seen_at||'')>String(deviceMap[d.member_id].last_seen_at||''))deviceMap[d.member_id]=d}
+  const locationMap=Object.fromEntries(state.locations.map(x=>[x.id,(x.code?x.code+' · ':'')+x.name]));
+  $('teamRows').innerHTML=state.members.length?state.members.map(m=>{
+   const p=presenceMap[m.id]||{},d=deviceMap[m.id]||{};
+   const presenceLabel=p.presence_state==='online'?'متصل':p.presence_state==='idle'?'غير نشط':p.presence_state==='offline'?'غير متصل':p.presence_state||'لا توجد نبضة';
+   const queue=Number(p.pending_queue_count||0);
+   return '<tr><td><b>'+esc(m.display_name)+'</b><div class="muted small">'+esc(m.username||'')+'</div></td><td>'+esc(m.role==='counter'?'مسؤول جرد':m.role==='supervisor'?'مشرف الجرد':'مراجع')+'</td><td><span class="pill '+(m.status==='active'?'active':'paused')+'">'+esc(status(m.status))+'</span></td><td><span class="pill '+(p.presence_state==='online'?'active':'')+'">'+esc(presenceLabel)+'</span></td><td>'+esc(d.device_label||'—')+'<div class="muted small">'+esc(d.platform||'')+' '+esc(d.app_version||'')+'</div></td><td>'+esc(locationMap[p.current_location_id]||'—')+(queue?'<div class="muted small">عمليات تنتظر المزامنة: '+queue.toLocaleString('ar-EG')+'</div>':'')+'</td><td>'+esc((p.last_seen_at||m.last_seen_at)?new Date(p.last_seen_at||m.last_seen_at).toLocaleString('ar-EG'):'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="7" class="empty">لا يوجد أعضاء.</td></tr>';
+}
+ async function chooseProject(id){const project=state.projects.find(p=>p.id===id);if(!project)return;stopRealtime();state.project=project;state.session=null;state.sessions=[];state.sessionPage=0;$('sessionMonitor').classList.add('hidden');await Promise.all([loadProjectResources(),loadSessions()]);state.projectChannel=subscribePrivate('countflow:project:'+project.id);state.pollTimer=setInterval(()=>{if(!document.hidden&&state.session)Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))},15000)}
  async function loadSessions(){
   if(!state.project)return;const size=50,from=state.sessionPage*size,term=$('sessionSearch').value.trim().replace(/[%,().]/g,' ').slice(0,80);
   let q=sb.from('count_sessions').select('id,project_id,name,status,created_at,started_at,closed_at',{count:'exact'}).eq('project_id',state.project.id);
@@ -145,7 +155,7 @@
   $('selectedSessionName').textContent=session.name;$('selectedSessionMeta').textContent=state.project.name+' · '+state.project.code+' · '+new Date(session.created_at).toLocaleString('ar-EG');$('selectedSessionStatus').textContent=status(session.status);$('sessionMonitor').classList.remove('hidden');
   $('sessionRows').querySelectorAll('[data-session]').forEach(b=>b.classList.toggle('selected',b.dataset.session===id));
   state.sessionChannel=subscribePrivate('countflow:session:'+id);
-  await Promise.all([refreshMonitor(false),loadAlerts()]);
+  await Promise.all([refreshMonitor(false),loadAlerts(),loadSessionTeam()]);
  }
  async function findProductIds(term){
   const safe=term.replace(/[%(),.]/g,' ').replace(/\s+/g,' ').trim().slice(0,80);if(!safe)return null;
@@ -239,6 +249,19 @@
   $('reconPageInfo').textContent='صفحة '+(state.reconPage+1)+' من '+pages+' · '+state.totalReconLines.toLocaleString('ar-EG')+' موقع';
   $('reconPrev').disabled=state.reconPage<=0;$('reconNext').disabled=state.reconPage+1>=pages;
  }
+ async function loadSessionTeam(){
+  if(!state.session||!state.project)return;
+  const sessionId=state.session.id,projectId=state.project.id;
+  const [presenceResult,deviceResult]=await Promise.all([
+   sb.from('count_presence').select('member_id,device_id,presence_state,current_location_id,last_seen_at,pending_queue_count,queue_reported_at').eq('session_id',sessionId),
+   sb.from('count_devices').select('member_id,device_id,device_label,platform,app_version,status,last_seen_at').eq('project_id',projectId).order('last_seen_at',{ascending:false})
+  ]);
+  if(presenceResult.error)throw presenceResult.error;
+  if(deviceResult.error)throw deviceResult.error;
+  if(state.session?.id!==sessionId)return;
+  state.presence=presenceResult.data||[];state.devices=deviceResult.data||[];
+  renderTeam();
+ }
  async function loadAlerts(){if(!state.session)return;const {data,error}=await sb.from('count_alerts').select('id,alert_type,severity,status,title,created_at,details').eq('session_id',state.session.id).order('created_at',{ascending:false}).limit(50);if(error)throw error;$('alertRows').innerHTML=(data||[]).length?(data||[]).map(a=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(a.title)+'</b> <span class="pill">'+esc(status(a.severity))+'</span><div class="muted small">'+esc(a.alert_type)+' · '+esc(status(a.status))+' · '+new Date(a.created_at).toLocaleString('ar-EG')+'</div></div>').join(''):'لا توجد تنبيهات في العملية المحددة.'}
  async function safeOpenSession(id){try{await openSession(id);await loadAlerts()}catch(e){toast(friendly(e),true)}}
  async function openSession(id){const s=state.sessions.find(x=>x.id===id);if(!s)return;if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});state.session=s;state.entryPage=0;state.requestToken++;$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';$('selectedSessionName').textContent=s.name;$('selectedSessionMeta').textContent=state.project.name+' · '+state.project.code+' · '+new Date(s.created_at).toLocaleString('ar-EG');$('selectedSessionStatus').textContent=status(s.status);$('sessionMonitor').classList.remove('hidden');$('sessionRows').querySelectorAll('[data-session]').forEach(b=>b.classList.toggle('selected',b.dataset.session===id));state.sessionChannel=subscribePrivate('countflow:session:'+id);await Promise.all([refreshMonitor(false),loadAlerts()])}
@@ -260,7 +283,7 @@
  $('productSearch').oninput=()=>{clearTimeout(state.searchTimer);state.searchTimer=setTimeout(reloadEntries,300)};
  $('clearEntryFilters').onclick=()=>{$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';reloadEntries()};
  $('sessionRows').addEventListener('click',event=>{const b=event.target.closest('[data-session]');if(b)safeOpenSession(b.dataset.session)});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.session){refreshMonitor(true).catch(e=>console.warn(e));loadAlerts().catch(e=>console.warn(e))}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.session){Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))}});
  authenticate();
 })();
 </script>
