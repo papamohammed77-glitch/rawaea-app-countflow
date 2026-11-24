@@ -604,21 +604,21 @@ test("Client Balance workbook image anchors and right-to-left layout reference t
 
 test("Admin bootstrap isolates the confirmed platform owner from scoped client administrators", () => {
   const admin = read("countflow-admin.html");
-  assert.match(admin, /function isPlatformOwner\\(user\\)/);
-  assert.match(admin, /toLowerCase\\(\\)==='owner@rawaea\\.com'&&Boolean\\(user\\?\\.email_confirmed_at\\)/);
+  assert.match(admin, /function isPlatformOwner\(user\)/);
+  assert.match(admin, /toLowerCase\(\)==='owner@rawaea\.com'&&Boolean\(user\?\.email_confirmed_at\)/);
   const start = admin.indexOf("async function bootstrap()");
-  const end = admin.indexOf("\\n }", start);
+  const end = admin.indexOf("\n }", start);
   assert.ok(start >= 0 && end > start);
   const bootstrap = admin.slice(start, end);
-  assert.match(bootstrap, /db\\.auth\\.getUser\\(\\)/);
-  assert.match(bootstrap, /state\\.platformOwner=isPlatformOwner\\(state\\.user\\)/);
-  assert.match(bootstrap, /if\\(state\\.platformOwner\\)/);
-  assert.match(bootstrap, /from\\('count_client_members'\\)/);
-  assert.match(bootstrap, /count_roles\\(role_key,scope\\)/);
+  assert.match(bootstrap, /db\.auth\.getUser\(\)/);
+  assert.match(bootstrap, /state\.platformOwner=isPlatformOwner\(state\.user\)/);
+  assert.match(bootstrap, /if\(state\.platformOwner\)/);
+  assert.match(bootstrap, /from\('count_client_members'\)/);
+  assert.match(bootstrap, /count_roles\(role_key,scope\)/);
   assert.match(bootstrap, /count_has_client_permission/);
-  assert.match(bootstrap, /client\\.read/);
-  assert.match(bootstrap, /db\\.auth\\.signOut\\(\\)/);
-  assert.doesNotMatch(bootstrap, /platform\\.license\\.manage/);
+  assert.match(bootstrap, /client\.read/);
+  assert.match(bootstrap, /db\.auth\.signOut\(\)/);
+  assert.doesNotMatch(bootstrap, /platform\.license\.manage/);
 });
 
 test("Admin operations keep the institution name and engagement code visible", () => {
@@ -834,7 +834,7 @@ test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(navTabs.length, 12);
-  assert.equal(new Set(navTabs).size, 10);
+  assert.equal(new Set(navTabs).size, 12);
   assert.match(admin, /class="nav-group"/);
   assert.match(admin, /class="nav-group-title"/);
   assert.match(admin, /data-icon="gauge-high"/);
@@ -910,19 +910,19 @@ test("Supervisor live rows open a paginated, filtered, read-only count detail vi
   assert.doesNotMatch(supervisor, /confirm\(/, "Read-only drilldown must not trigger native mutation confirmations");
 });
 
-test("Admin exposes a separate new-operation action and keeps client catalogue separate from sessions", () => {
+test("Admin exposes a modal operation creator, stable catalogue and distinct engagement/session/operation scopes", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 12);
   assert.ok(navTabs.includes("projects") && navTabs.includes("sessions") && navTabs.includes("operations"));
   assert.ok(navTabs.includes("clients") && navTabs.includes("catalog"));
   assert.ok(admin.includes('id="newOperationButton"'), "Missing dedicated create-operation action");
-  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{/);
-  assert.match(admin, /activateTab\('sessions'\)/);
-  assert.match(admin, /sessionName'\)\.focus/);
-  assert.ok(admin.includes("كتالوج أصناف الجهة / التكليف"), "The catalogue needs a persistent client/project scope label");
+  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
+  assert.match(admin, /id="operationCreateModal"/);
+  assert.match(admin, /id="sessionTeam"[^>]*multiple/);
+  assert.ok(admin.includes("كتالوج أصناف الجهة / التكليف"), "The client/engagement catalogue must persist across sessions");
   assert.ok(admin.includes("لا تُحذف أصنافه عند إغلاق أي جلسة جرد"), "Catalogue persistence rule must be explicit");
-  assert.ok(admin.includes("ملف الجهة؛ تبقى الأصناف والمواقع والمستخدمون محفوظة لإعادة الاستخدام"));
+  assert.ok(admin.includes("ملف التكليف المحدد"), "Sessions must be scoped to the selected engagement");
+  assert.ok(admin.includes("سجل عمليات الجرد — جميع ملفات التكليف"), "Operations register must cover all visible engagements");
 });
 
 test("Control requires an active auditor membership and is strictly read-only", () => {
