@@ -445,13 +445,14 @@ Deno.serve(async (req: Request) => {
       // A quantity of zero is valid; null/undefined must never be coerced to zero.
       const clientProducts=products.filter((product:any)=>hasCompleteClientCountResult(linesByProduct.get(product.id)||[]));
       const clientProductIds=new Set(clientProducts.map((product:any)=>product.id));
+      const clientCountEntries=countEntries.filter((entry:any)=>clientProductIds.has(entry.product_id));
       const excludedUncountedProductCount=Math.max(0,products.length-clientProducts.length);
       const unitRows:any[][]=[[
         "SKU","الباركود","الصنف","الفرع / المخزن / الموقع","الكمية التي أدخلها العداد",
         "وحدة العد","معامل التحويل إلى الوحدة الأساسية","الكمية المحولة إلى الوحدة الأساسية",
         "الوحدة الأساسية","جولة العد","رقم المراجعة","تاريخ/وقت التسجيل","كود المسح","مهمة إعادة العد","ملاحظات",
       ]];
-      for(const entry of [...countEntries].filter((row:any)=>clientProductIds.has(row.product_id)).sort((a:any,b:any)=>String(a.counted_at||"").localeCompare(String(b.counted_at||"")))){
+      for(const entry of [...clientCountEntries].sort((a:any,b:any)=>String(a.counted_at||"").localeCompare(String(b.counted_at||"")))){
         const product:any=productMap.get(entry.product_id)||{};
         unitRows.push([
           product.sku||"",product.barcode||"",product.name||"",
@@ -658,7 +659,7 @@ Deno.serve(async (req: Request) => {
         ["أصناف لها تكلفة مكتملة المصدر",fullyPricedProducts,"",""],
         ["أصناف بلا/بتكلفة غير مكتملة",unpricedProducts,"",""],
         ["أصناف أمكن احتساب قيمة لها",valueEligibleProducts,"",""],
-        ["عدد أحداث العد المسجلة",countEntries.length,"",""],
+        ["عدد أحداث العد المسجلة",clientCountEntries.length,"",""],
         ["تفاصيل الوحدات", "تتضمن جميع أحداث التسجيل وجولات العد؛ الرصيد النهائي المعتمد في ورقة الرصيد الفعلي","",""],
         ["صور مضمنة داخل المصنف",embeddedCount,"",""],
         ["صور غير مضمنة/مفقودة",notEmbeddedCount,"",""],
@@ -696,7 +697,7 @@ Deno.serve(async (req: Request) => {
         engine:"counting-client-balance-ooxml-v1",format:"xlsx",scope:"client_balance",
         reconciliation_run_id:latestRun.id,reconciliation_run_number:latestRun.run_number,
         products:clientProducts.length,catalog_products_in_scope:products.length,incomplete_products_excluded:excludedUncountedProductCount,unit_count_rows:unitRows.length-1,location_rows:locationRows.length-1,gap_rows:gapRows.length-1,
-        count_events:countEntries.length,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,embedded_image_bytes:embeddedBytes,
+        count_events:clientCountEntries.length,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,embedded_image_bytes:embeddedBytes,
         complete_quantity_products:fullyCountedProducts,partial_quantity_products:partiallyCountedProducts,
         not_counted_products:notCountedProducts,fully_priced_products:fullyPricedProducts,
         unpriced_products:unpricedProducts,value_eligible_products:valueEligibleProducts,
@@ -719,7 +720,7 @@ Deno.serve(async (req: Request) => {
         project_id:session.project_id,actor_id:user.id,action:"export.client_balance.ready",
         entity_type:"count_export",entity_id:exportId,
         details:{session_id:session.id,scope:"client_balance",reconciliation_run_id:latestRun.id,
-          products:clientProducts.length,catalog_products_in_scope:products.length,incomplete_products_excluded:excludedUncountedProductCount,count_events:countEntries.length,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,
+          products:clientProducts.length,catalog_products_in_scope:products.length,incomplete_products_excluded:excludedUncountedProductCount,count_events:clientCountEntries.length,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,
           value_eligible_products:valueEligibleProducts,sha256}
       });
       if(auditError)throw new Error("CLIENT_BALANCE_AUDIT_WRITE_FAILED: "+auditError.message);
@@ -727,7 +728,7 @@ Deno.serve(async (req: Request) => {
         export_id:exportId,status:"ready",scope:"client_balance",file_name:fileName,
         signed_url:signed.signedUrl,row_count:clientProducts.length,file_size_bytes:bytes.byteLength,
         sha256,expires_at:expiresAt,images_embedded:embeddedCount,images_not_embedded:notEmbeddedCount,
-        count_events:countEntries.length,products_fully_counted:fullyCountedProducts,products_with_incomplete_cost:unpricedProducts,
+        count_events:clientCountEntries.length,products_fully_counted:fullyCountedProducts,products_with_incomplete_cost:unpricedProducts,
         pricing_policy:"UNKNOWN",
         pricing_basis:{status:"NOT_OWNER_APPROVED",base_unit_cost:"purchase_unit_cost / unit_factor_to_base",value:"complete_counted_base_quantity * derived_base_unit_cost",currency_handling:"Separate totals by stored currency; no FX conversion",accounting_valuation:false}
       });
