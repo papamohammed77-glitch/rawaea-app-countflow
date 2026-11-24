@@ -7,7 +7,7 @@
 **Continuation branch:** `work/lve-765-admin-ui-final-mainline`  
 **PR #8:** OPEN — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
 **Superseded PR #7:** CLOSED after PR #8 CI passed; retained for audit history  
-**Mainline source commit:** `1f2348ddf44e1c93c7c17161cd790f0b6ab53370` (before this state-only update)  
+**Last mainline content commit before this documentation refresh:** `5ed708a249d8b11bf7c43fcea9cde0724fbc0a4d` (no Admin/test code changes after the checked source/test blobs)  
 **Admin blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
 **Unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
 **Formal report blob:** `0afb9444bdaf0879f6fd3e08d351bcfef3dd820f`  
@@ -25,7 +25,7 @@
 
 ### Verified CI on PR #8 mainline
 
-GitHub Actions run `45302351806` on PR #8 source/test commit `b43fcd389394768ac78039abc9bc0ff2490c5042` — **SUCCESS**:
+GitHub Actions run `45302694819` on PR #8 source/test commit `5ed708a249d8b11bf7c43fcea9cde0724fbc0a4d` — **SUCCESS**:
 - 42/42 Node unit tests, 0 failed.
 - Deno Type Check: PASS.
 - Pages allowlisted build: PASS.
@@ -44,8 +44,8 @@ GitHub Actions run `45302351806` on PR #8 source/test commit `b43fcd389394768ac7
 
 ### Verified PR #8 preview
 
-- Preview: https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev — Cloudflare check SUCCESS on commit `b43fcd3`.
-- PR #8 CI run `45302351806`: 42/42 Node, Deno, Pages; Playwright 2 passed / 1 skipped (Production SHA parity skipped on PR branch).
+- Preview: https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev — Cloudflare check SUCCESS on commit `5ed708a`.
+- PR #8 CI run `45302694819` on head `5ed708a`: 42/42 Node, Deno, Pages; Playwright 2 passed / 1 skipped (Production SHA parity skipped on PR branch).
 
 ### Open acceptance gates
 

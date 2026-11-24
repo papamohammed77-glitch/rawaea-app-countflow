@@ -207,18 +207,26 @@
 
 ---
 
-## 12. إثبات PR #8 بعد النقل إلى أحدث main
+## 12. إثبات PR #8 بعد النقل إلى أحدث main والتشغيل النهائي
 
 **PR:** #8 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
 **Base:** `main` / `2bd494d7028723fbdb278b2c2b56fff9669f881b`  
-**CI head:** `b43fcd389394768ac78039abc9bc0ff2490c5042`  
-**GitHub Actions:** run `45302351806` — **SUCCESS**.
+**CI head:** `5ed708a249d8b11bf7c43fcea9cde0724fbc0a4d`  
+**GitHub Actions:** run `45302694819` — **SUCCESS**.
 
 - Deno Type Check: PASS.
 - Node: **42/42 PASS، 0 FAIL**.
 - Cloudflare Pages allowlisted build: PASS.
 - Playwright: **2 passed / 1 skipped**. تم تخطي فحص Production SHA parity لأنه PR branch وليس main؛ نجح فحص RTL mobile shell وفحص شاشة الدخول العامة.
-- Cloudflare Pages Preview: `https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev`، Check SUCCESS للالتزام `b43fcd3`.
-- PR #8 بقي OPEN / UNMERGED. لا نشر Production.
+- Cloudflare Pages Preview: `https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev`، Check SUCCESS للالتزام `5ed708a`.
+- PR #8 بقي OPEN / UNMERGED. PR #7 مغلق بوصفه superseded وغير مدمج. لا نشر Production.
 - مراجعة واجهة Preview بصريًا بعد المصادقة، وتغيير الأدوار/العضوية/الجلسة/التنبيه، ما زالت OPEN.
 - تحديث التقرير والحالة بعد هذا التشغيل توثيقي فقط؛ Admin source وunit test blobs ظلا دون تغيير.
+
+
+## 13. تثبيت حالة PR بعد إغلاق الطلب السابق
+
+- PR #7: **CLOSED / superseded**؛ غير مدمج، commits محفوظة.
+- PR #8: **OPEN / NOT MERGED** على `main` الحالي.
+- لم يحدث merge أو نشر Production أو تغيير قاعدة بيانات.
+- PR #8 Preview هو بيئة المعاينة الوحيدة التي نُشرت تلقائيًا؛ قبول مالك النظام المصادق ما زال مطلوبًا.
