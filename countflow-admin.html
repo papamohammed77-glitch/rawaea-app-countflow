@@ -75,13 +75,13 @@
     </div>
     <div class="nav-group" data-owner-only><div class="nav-group-title">إدارة العملاء</div><button class="nav" data-tab="clients" data-icon="building">العملاء ومديروهم</button></div>
     <div class="nav-group"><div class="nav-group-title">العمليات والتكليفات</div>
-     <button class="nav" data-tab="projects" data-icon="folder-open">مشاريع الجرد</button>
-     <button class="nav" data-tab="operations" data-icon="clipboard-list">عمليات الجرد القائمة</button>
-     <button class="nav" data-tab="sessions" data-icon="calendar-check">جلسات الجرد</button>
+     <button class="nav" data-tab="projects" data-icon="folder-open">ملفات التكليف</button>
+     <button class="nav" data-tab="operations" data-icon="clipboard-list">سجل العمليات</button>
+     <button class="nav" data-tab="sessions" data-icon="calendar-check">جلسات الملف</button>
     </div>
     <div class="nav-group">
      <div class="nav-group-title">البيانات المرجعية</div>
-     <button class="nav" data-tab="products" data-icon="boxes-stacked">أصناف العمليات</button><button class="nav" data-tab="catalog" data-icon="barcode">الكتالوج الشامل</button>
+     <button class="nav" data-tab="products" data-icon="boxes-stacked">أصناف ملف التكليف</button><button class="nav" data-tab="catalog" data-icon="barcode">الأصناف العالمية</button>
      <button class="nav" data-tab="locations" data-icon="location-dot">المواقع</button>
     </div>
     <div class="nav-group">
@@ -1267,7 +1267,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const ids=state.projects.map(p=>p.id);
    if(!ids.length){
     state.allMembers=[];state.allSessions=[];state.assignmentCounts={};
-    renderMembers();renderRoles();renderGlobalOperations();
+    renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
     await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard refresh failed',e));
     return;
    }
@@ -1289,7 +1289,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    for(const id of Object.keys(state.assignmentCounts))state.assignmentCounts[id]=state.assignmentCounts[id].size;
    $('kMembers').textContent=members.filter(x=>x.status==='active').length;
    $('kSessions').textContent=sessions.length;
-   renderMembers();renderRoles();renderGlobalOperations();
+   renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
    await loadAdminOverview().catch(e=>{
     console.warn('[CountFlow Admin] dashboard query failed',e);
     $('overviewStatusChart').textContent='تعذر تحميل مؤشرات التحليل. تحقق من صلاحية قراءة العرض أو أعد المحاولة.';
