@@ -492,7 +492,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
    const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;
    const actions=self?'الحساب الحالي':(x.status==='removed'?'عضوية مسحوبة':'<button type="button" class="soft" data-member-reset-password="'+x.id+'">تغيير كلمة المرور</button>')+(canPause?' <button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':'');
-   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleName(x.role)+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
+   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+esc(roleName(x.role,x.role_id))+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا يوجد مستخدمون في جهات الجرد التي يديرها هذا الحساب.</div>';
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
   $('memberTable').querySelectorAll('[data-member-reset-password]').forEach(b=>b.onclick=()=>openMemberPasswordDialog(b.dataset.memberResetPassword));
@@ -500,8 +500,12 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
  function renderRoles(){
   const q=($('roleSearch')?.value||'').trim().toLowerCase();
-  const rows=(state.allMembers||[]).filter(m=>{const p=state.projects.find(v=>v.id===m.project_id);return [m.display_name,m.username,m.role,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));});
-  $('roleTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور الحالي</th><th>الدور الجديد</th><th>حالة العضوية</th><th>إجراء</th></tr></thead><tbody>'+rows.map(m=>{const p=state.projects.find(v=>v.id===m.project_id),self=state.user?.id===m.user_id;return '<tr><td><b>'+esc(m.display_name)+'</b><span class="sub">'+esc(m.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'<span class="sub">'+esc(p?.code||'')+'</span></td><td>'+roleName(m.role)+'</td><td><select id="roleSelect-'+m.id+'" data-role-select="'+m.id+'" '+(self?'disabled':'')+'><option value="counter" '+(m.role==='counter'?'selected':'')+'>مندوب الجرد</option><option value="auditor" '+(m.role==='auditor'?'selected':'')+'>مراجع / مدقق</option><option value="supervisor" '+(m.role==='supervisor'?'selected':'')+'>مشرف الجرد</option></select></td><td>'+statusPill(m.status)+'</td><td>'+(self?'لا يمكن تعديل دورك من هنا':'<button type="button" class="soft" data-save-role="'+m.id+'">حفظ الدور</button>')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات مطابقة في التكليفات المتاحة.</div>';
+  const rows=(state.allMembers||[]).filter(m=>{const p=state.projects.find(v=>v.id===m.project_id);return [m.display_name,m.username,m.role,roleName(m.role,m.role_id),p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));});
+  $('roleTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>المشروع</th><th>الدور الحالي</th><th>الدور الجديد</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+rows.map(m=>{
+   const p=state.projects.find(v=>v.id===m.project_id),self=state.user?.id===m.user_id;
+   const options=state.roles.filter(r=>r.scope==='project'&&r.is_active&&(r.is_system||r.client_id===state.clientId)).map(r=>'<option value="'+esc(r.id)+'" '+(m.role_id===r.id?'selected':'')+'>'+esc(r.name)+'</option>').join('');
+   return '<tr><td><b>'+esc(m.display_name)+'</b><span class="sub">'+esc(m.username)+'</span></td><td>'+esc(p?.name||'تكليف')+'</td><td>'+esc(roleName(m.role,m.role_id))+'</td><td><select id="roleSelect-'+m.id+'" data-role-select="'+m.id+'" '+(self?'disabled':'')+'>'+options+'</select></td><td>'+statusPill(m.status)+'</td><td>'+(self?'الحساب الحالي':'<button type="button" class="soft" data-save-role="'+m.id+'">حفظ الدور</button>')+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات مطابقة في نطاق العميل الحالي.</div>';
   $('roleTable').querySelectorAll('[data-save-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveRole));
  }
  async function reloadMemberViews(projectId){
@@ -514,11 +518,11 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   const select=$('roleSelect-'+memberId),next=select?.value;
   if(!state.roles.some(r=>r.id===next&&r.scope==='project'&&r.is_active))return notify('الدور المطلوب غير متاح.',true);
   if(next===m.role_id)return notify('لم يتغير الدور.');
-  if(m.role==='supervisor'&&m.status==='active'&&next!=='supervisor'){
+  if(m.role==='supervisor'&&m.status==='active'&&state.roleMap.get(next)?.role_key!=='supervisor'){
    const activeSupervisors=state.allMembers.filter(x=>x.project_id===m.project_id&&x.role==='supervisor'&&x.status==='active').length;
    if(activeSupervisors<=1)return notify('لا يمكن خفض دور آخر مشرف نشط في هذا التكليف.',true);
   }
-  const warning=next==='supervisor'?'سيُمنح المستخدم صلاحيات مشرف التكليف. تأكد من صحة الإسناد.':'سيتم تغيير الدور وفق صلاحيات CountFlow الفعلية. هل تريد المتابعة؟';
+  const warning=state.roleMap.get(next)?.role_key==='supervisor'?'سيُمنح المستخدم صلاحيات إشراف الفريق والمواقع. تأكد من صحة الإسناد.':'سيتم تحديث دور المستخدم وصلاحياته. هل تريد المتابعة؟';
   if(!await confirmAction(warning,{title:'تأكيد تعديل دور المستخدم',confirmText:'تأكيد التعديل'}))return;
   try{
    const {error}=await db.from('count_members').update({role_id:next}).eq('id',memberId).eq('project_id',m.project_id);
