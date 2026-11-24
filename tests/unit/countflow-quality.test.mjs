@@ -1084,6 +1084,9 @@ test("Admin roles and memberships have search, usage metrics, system-role read-o
   const admin = read("countflow-admin.html");
   assert.match(admin, /id="systemRoleList"/);
   assert.match(admin, /id="customRoleSearch"/);
+  assert.match(admin, /const roleClientId=state\.clientId\|\|state\.project\?\.client_id\|\|null/);
+  assert.match(admin, /eq\(\x27client_id\x27,roleClientId\)/);
+  assert.match(admin, /payload=\{client_id:roleClientId/);
   assert.match(admin, /data-clone-custom-role=/);
   assert.match(admin, /نظامي — للقراءة فقط/);
   assert.match(admin, /لا يمكن حذف الدور لأنه مرتبط بعضوية واحدة أو أكثر/);
@@ -1108,4 +1111,10 @@ test("Admin keeps operation register, per-file sessions, project catalog and glo
   assert.match(admin, /قاعدة الأصناف العالمية/);
   assert.match(admin, /كتالوج أصناف الجهة \/ التكليف/);
   assert.match(admin, /id="sideToggle"/);
+});
+
+test("Admin script declarations remain syntactically unique after UI refactors", () => {
+  const admin = read("countflow-admin.html");
+  assert.doesNotMatch(admin, /function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*function\s+\1/);
+  assert.doesNotMatch(admin, /async\s+function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*async\s+function\s+\1/);
 });
