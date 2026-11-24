@@ -65,7 +65,7 @@ async function auth(){
  await loadProjects();
 }
 async function loadProjects(){
- try{projects=await fetchAllRows('count_projects','*',[]);projects.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));}
+ try{projects=await fetchAllRows('count_projects','id,name,code,status,created_at,updated_at',[]);projects.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));}
  catch(e){console.warn('Supervisor engagement load failed',e);toast('تعذر تحميل ملفات التكليف. حاول مرة أخرى.');return}
  $('projectSelect').innerHTML=projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
  if(!projects.length){$('projectTitle').textContent='لا توجد تكليفات مرتبطة بحسابك؛ يضيف المالك التكليف من لوحة الإدارة.';return}
