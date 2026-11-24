@@ -536,9 +536,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
    const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;
    const actions=self?'الحساب الحالي':(x.status==='removed'?'عضوية مسحوبة':'<button type="button" class="soft" data-member-reset-password="'+x.id+'">تغيير كلمة المرور</button>')+(canPause?' <button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':'');
-   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+esc(roleName(x.role,x.role_id))+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
+   const project=p,allowedRoles=state.roles.filter(r=>r.scope==='project'&&r.is_active&&(r.is_system||r.client_id===project?.client_id));
+   const canChangeRole=Boolean(state.memberManageProjects?.has(x.project_id)&&!self&&x.status!=='removed'&&allowedRoles.length);
+   const roleCell=canChangeRole?'<div class="cf-inline-actions"><select data-member-role="'+x.id+'" aria-label="الدور الجديد للمستخدم">'+allowedRoles.map(r=>'<option value="'+r.id+'" '+(r.id===x.role_id?'selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select><button type="button" class="soft" data-save-member-role="'+x.id+'">حفظ الدور</button></div>':esc(roleName(x.role,x.role_id));
+   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleCell+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات تطابق المرشحات ضمن النطاق المسموح لحسابك.</div>';
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
+  $('memberTable').querySelectorAll('[data-save-member-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveMemberRole));
   $('memberTable').querySelectorAll('[data-member-reset-password]').forEach(b=>b.onclick=()=>openMemberPasswordDialog(b.dataset.memberResetPassword));
  }
  function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
@@ -575,6 +579,26 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    await reloadMemberViews(m.project_id);
   }catch(err){fail('تعذر تحديث الدور',err);}
  }
+ async function saveMemberRole(memberId){
+  const member=(state.allMembers||[]).find(x=>x.id===memberId),select=$('memberTable').querySelector('[data-member-role="'+memberId+'"]');
+  if(!member||!select)return notify('تعذر العثور على العضوية أو قائمة الأدوار.',true);
+  if(!state.memberManageProjects?.has(member.project_id))return notify('لا تملك صلاحية إدارة فريق هذا المشروع.',true);
+  if(member.user_id===state.user?.id)return notify('لا يمكن تغيير دور حسابك الحالي من هذه الشاشة.',true);
+  const role=state.roleMap.get(select.value),project=state.projects.find(p=>p.id===member.project_id);
+  if(!role||role.scope!=='project'||!role.is_active||(!role.is_system&&role.client_id!==project?.client_id))return notify('الدور المحدد غير صالح لهذا المشروع أو العميل.',true);
+  if(role.id===member.role_id)return notify('الدور المحدد هو الدور الحالي بالفعل.');
+  if(member.status==='active'&&member.role==='supervisor'&&role.role_key!=='supervisor'){
+   const activeSupervisors=state.allMembers.filter(x=>x.project_id===member.project_id&&x.role==='supervisor'&&x.status==='active').length;
+   if(activeSupervisors<=1)return notify('لا يمكن تغيير دور آخر مشرف نشط في هذا التكليف.',true);
+  }
+  if(!await confirmAction('سيتم تغيير دور '+member.display_name+' إلى '+role.name+'؛ ستتغير صلاحياته التشغيلية وفق إعدادات الدور. هل تريد المتابعة؟',{title:'تغيير دور العضوية',confirmText:'حفظ الدور'}))return;
+  try{
+   const {error}=await db.from('count_members').update({role:role.role_key,role_id:role.id}).eq('id',member.id).eq('project_id',member.project_id);
+   if(error)throw error;
+   notify('تم تحديث دور العضوية.');await reloadMemberViews(member.project_id);
+  }catch(err){fail('تعذر تغيير دور العضوية',err);}
+ }
+ 
  async function changeMemberStatus(memberId){
   const m=(state.allMembers||[]).find(x=>x.id===memberId);if(!m)return notify('العضوية غير موجودة أو لم تعد ضمن نطاقك.',true);
   if(m.user_id===state.user?.id)return notify('لا يمكن إيقاف الحساب الحالي من هذه الشاشة.',true);
@@ -1267,7 +1291,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   return withTableSkeletons([['memberTable',5,6],['roleTable',5,6],['operationsTable',6,9]],async()=>{
    const ids=state.projects.map(p=>p.id);
    if(!ids.length){
-    state.allMembers=[];state.allSessions=[];state.assignmentCounts={};
+    state.allMembers=[];state.allSessions=[];state.assignmentCounts={};state.memberManageProjects=new Set();
     renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
     await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard refresh failed',e));
     return;
@@ -1277,6 +1301,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
     loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
    ]);
    state.allMembers=members;state.allSessions=sessions;state.assignmentCounts={};
+   const permissionChecks=await Promise.all(state.projects.map(async project=>{const check=await db.rpc('count_can_manage_project_members',{p_project_id:project.id});if(check.error){console.warn('[CountFlow Admin] team-management permission check failed',project.id,check.error);return [project.id,false];}return [project.id,check.data===true];}));
+   state.memberManageProjects=new Set(permissionChecks.filter(([,allowed])=>allowed).map(([projectId])=>projectId));
    const sessionIds=sessions.map(x=>x.id);
    for(let i=0;i<sessionIds.length;i+=80){
     const chunk=sessionIds.slice(i,i+80);let offset=0;
