@@ -38,12 +38,7 @@ Only `countflow-admin.html` and `tests/unit/countflow-quality.test.mjs` changed 
 - **PENDING:** rerun full CI on the final PR head after the all-table sticky-header correction: `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright. Previous-run 42/42 is evidence for the prior code head only, not final-head acceptance.
 - **OPEN:** interactive visual/browser verification, responsive device review, and signed-in destructive-action E2E have not been performed. No visual PASS is claimed.
 
-- **PASS:** all inline JavaScript in `countflow-admin.html` parsed with the local V8 JavaScript parser.
-- **PASS:** ten unique navigation tab keys remain present.
-- **PASS:** static source scan found zero native `confirm()` and zero native `prompt()` calls in the Admin source.
-- **PASS:** test suite source now contains 42 unit tests (41 existing + one Admin UI regression test).
-- **PENDING:** execute `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright workflow through the repository CI on the PR. Static V8 parsing is not a substitute for executing Node tests.
-- **OPEN:** interactive visual/browser verification, responsive device review, and signed-in destructive-action E2E have not been performed. No visual PASS is claimed.
+
 
 ### Operational safety and boundaries
 
