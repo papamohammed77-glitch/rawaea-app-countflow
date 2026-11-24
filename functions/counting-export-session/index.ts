@@ -622,7 +622,7 @@ Deno.serve(async (req: Request) => {
           }
         }
       }
-      for(const row of committedImportRows){
+      for(const row of committedImportRows.filter((item:any)=>clientProductIds.has(item.product_id))){
         const warnings=Array.isArray(row.warning_codes)?row.warning_codes:[];
         if(!warnings.length)continue;
         const p:any=productMap.get(row.product_id)||{};
