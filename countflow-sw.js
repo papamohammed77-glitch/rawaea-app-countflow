@@ -1,6 +1,6 @@
 /* CountFlow Service Worker — shell/static assets only; never cache business data. */
 'use strict';
-var CF_SW_BUILD = 'countflow-sw-20261120-2';
+var CF_SW_BUILD = 'countflow-sw-20261124-1';
 var CF_SHELL_CACHE = 'cf-shell-' + CF_SW_BUILD;
 var CF_STATIC_CACHE = 'cf-static-' + CF_SW_BUILD;
 var CF_SHELL = [
@@ -9,6 +9,7 @@ var CF_SHELL = [
   './countflow-admin.html',
   './countflow.html',
   './Countflow-supervisor.html',
+  './countflow-control.html',
   './countflow-core.js',
   './manifest.webmanifest',
   './countflow-icon.svg'
@@ -16,7 +17,8 @@ var CF_SHELL = [
 var CF_CDN = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js',
-  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css'
 ];
 
 self.addEventListener('install', function (event) {
