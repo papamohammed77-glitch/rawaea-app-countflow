@@ -3,7 +3,7 @@
 **Last Verified Event:** 24 November 2026 (Africa/Cairo).  
 **Report:** `Reports/LVE-771_ADMIN_BOOTSTRAP_403_PERMISSION_FIX_20261124.md`.  
 **Branch:** `main`.  
-**Commits:** Admin projection `13c3cb32b22bc53cb63ba9f8942c6240e763c78b`; regression test `17cd8cd1e9ec79c7f1051c3b71ee6a153b1c370d`; Service Worker cache invalidation `41c2b5c3e67c0ab18c905ab6b018d04af6ccac29`; report `88b4ba8299e322f82177997aa737bbfdd3dd9427`.
+**Commits:** Admin projection `13c3cb32b22bc53cb63ba9f8942c6240e763c78b`; Service Worker `41c2b5c3e67c0ab18c905ab6b018d04af6ccac29`; regression test final `c7172128a5426cf904790ff95473d27cdb889a47`; detailed report `dee4eeeb99d29355dba520a916cfaeba2cc96b89`. Final verified code/test head: `c7172128a5426cf904790ff95473d27cdb889a47`.
 
 ### Confirmed cause
 - `main/countflow-admin.html` requested `created_by` in `loadProjects()`.
@@ -22,13 +22,13 @@
 - Safe project query succeeded and returned 1 visible project.
 - `created_by` SELECT remained false; all required projection columns were allowed.
 - Source was re-read from main; Admin query and Service Worker build marker matched the repair.
-- GitHub Actions run `45481534540` was IN_PROGRESS at report time; recheck before declaring final close.
-- Visual login in the user's browser and Cloudflare Pages deployment completion remain unverified.
+- GitHub Actions run `45481868275`: **COMPLETED / SUCCESS**. Node 42/42; Deno type-check PASS; Pages allowlisted build PASS; Playwright 3/3 PASS, including production Pages SHA parity against `c7172128a5426cf904790ff95473d27cdb889a47` and public RTL login shell checks.
+- Cloudflare Pages deployment and exact main SHA parity were verified in Playwright. Interactive owner-password entry in the user's own browser was not performed; the secured SQL project query was separately verified under authenticated owner JWT.
 
 ### Safety
 No business rows, Auth identities, import jobs, count entries, sessions, stock/accounting data or Production ERP data were modified.
 
-**Status:** SOURCE + SQL AUTHORIZATION VERIFIED; CI / PAGES / VISUAL LOGIN ACCEPTANCE PENDING. Do not grant table-wide SELECT or expose `created_by` as a workaround.
+**Status:** CLOSED — root cause removed; least-privilege preserved; authenticated owner SQL/JWT projection PASS; CI PASS; Pages source-SHA parity PASS; production login-shell Playwright 3/3 PASS. Do not grant table-wide SELECT or expose `created_by` as a workaround.
 
 ---
 
