@@ -324,7 +324,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],overviewRows:[],project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -397,6 +397,8 @@
    const rows=[];let offset=0,pageSize=500;
    while(true){const {data,error}=await db.from('count_projects').select('id,name,code,status,created_at,updated_at').order('created_at',{ascending:false}).range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;}
    state.projects=rows;
+   if($('memberProjectFilter')){const keepProjectFilter=$('memberProjectFilter').value;$('memberProjectFilter').innerHTML='<option value="">كل ملفات التكليف</option>'+rows.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');if(rows.some(p=>p.id===keepProjectFilter))$('memberProjectFilter').value=keepProjectFilter;}
+   if($('overviewProjectFilter')){const keepOverviewFilter=$('overviewProjectFilter').value;$('overviewProjectFilter').innerHTML='<option value="">جميع ملفات التكليف المتاحة</option>'+rows.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');if(rows.some(p=>p.id===keepOverviewFilter))$('overviewProjectFilter').value=keepOverviewFilter;}
    $('projectPicker').innerHTML=state.projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
    $('projectList').innerHTML=state.projects.length?'<div class="tablewrap"><table><thead><tr><th>التكليف</th><th>الكود</th><th>الحالة</th><th>تاريخ الإنشاء</th></tr></thead><tbody>'+state.projects.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.code)+'</td><td>'+statusPill(p.status)+'</td><td>'+date(p.created_at)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد تكليفات مرتبطة بهذا الحساب. سجّل تكليفاً من النموذج.</div>';
    $('kProjects').textContent=state.projects.length;
@@ -519,17 +521,26 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>loadProductsPage(Number(b.dataset.productPage),state.productQuery).catch(e=>fail('تعذر تحميل صفحة الأصناف',e)));
  }
  function renderMembers(){
-  const q=$('memberSearch').value.trim().toLowerCase();
-  const rows=(state.allMembers||[]).filter(x=>{const p=state.projects.find(v=>v.id===x.project_id);return [x.display_name,x.username,x.role,p?.name].some(v=>String(v||'').toLowerCase().includes(q));});
+  const all=state.allMembers||[],q=$('memberSearch').value.trim().toLowerCase();
+  const projectFilter=$('memberProjectFilter')?.value||'',statusFilter=$('memberStatusFilter')?.value||'';
+  $('memberTotalCount').textContent=all.length;
+  $('memberActiveCount').textContent=all.filter(x=>x.status==='active').length;
+  $('memberPausedCount').textContent=all.filter(x=>x.status==='paused').length;
+  $('memberCustomCount').textContent=all.filter(x=>x.role==='custom').length;
+  const rows=all.filter(x=>{
+   const p=state.projects.find(v=>v.id===x.project_id);
+   const matchesText=[x.display_name,x.username,x.role,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));
+   return matchesText&&(!projectFilter||x.project_id===projectFilter)&&(!statusFilter||x.status===statusFilter);
+  });
   $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
    const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;
    const actions=self?'الحساب الحالي':(x.status==='removed'?'عضوية مسحوبة':'<button type="button" class="soft" data-member-reset-password="'+x.id+'">تغيير كلمة المرور</button>')+(canPause?' <button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':'');
    return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+esc(roleName(x.role,x.role_id))+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
-  }).join('')+'</tbody></table>':'<div class="empty">لا يوجد مستخدمون في جهات الجرد التي يديرها هذا الحساب.</div>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات تطابق المرشحات ضمن النطاق المسموح لحسابك.</div>';
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
   $('memberTable').querySelectorAll('[data-member-reset-password]').forEach(b=>b.onclick=()=>openMemberPasswordDialog(b.dataset.memberResetPassword));
  }
- function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
+ function roleName( function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
  function renderRoles(){
   const q=($('roleSearch')?.value||'').trim().toLowerCase();
   const rows=(state.allMembers||[]).filter(m=>{const p=state.projects.find(v=>v.id===m.project_id);return [m.display_name,m.username,m.role,roleName(m.role,m.role_id),p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));});
@@ -1040,7 +1051,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $(targetId+'-warnings-more').onclick=()=>loadMoreProductImportDetails('warnings');
  }
  function renderLocations(){
-  $('locationParent').innerHTML='<option value="">بدون أب (جذر)</option>'+state.locations.map(x=>'<option value="'+x.id+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');if($('sessionBranch'))$('sessionBranch').innerHTML=state.locations.filter(x=>['branch','site','store','warehouse'].includes(x.location_type)&&!x.parent_id).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
+  $('locationParent').innerHTML='<option value="">بدون أب (جذر)</option>'+state.locations.map(x=>'<option value="'+x.id+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');if($('sessionBranch'))$('sessionBranch').innerHTML='<option value="">بدون تحديد فرع</option>'+state.locations.filter(x=>['branch','site','store','warehouse'].includes(x.location_type)&&!x.parent_id).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
+  if($('sessionProject'))renderOperationCreateOptions();
   $('locationTable').innerHTML=state.locations.length?'<table><thead><tr><th>الموقع</th><th>النوع</th><th>الكود</th><th>الموقع الأب</th></tr></thead><tbody>'+state.locations.map(x=>{const parent=state.locations.find(p=>p.id===x.parent_id);return '<tr><td>'+esc(x.name)+'</td><td>'+esc(locationTypeName(x.location_type))+'</td><td>'+esc(x.code)+'</td><td>'+esc(parent?.name||'جذر')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم تُعرّف مواقع بعد.</div>';
  }
  function renderSessions(){
@@ -1252,7 +1264,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  async function loadGlobalOperations(){
   return withTableSkeletons([['memberTable',5,6],['roleTable',5,6],['operationsTable',6,9]],async()=>{
-   const ids=state.projects.map(p=>p.id);if(!ids.length){state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();return;}
+   const ids=state.projects.map(p=>p.id);
+   if(!ids.length){
+    state.allMembers=[];state.allSessions=[];state.assignmentCounts={};
+    renderMembers();renderRoles();renderGlobalOperations();
+    await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard refresh failed',e));
+    return;
+   }
    const [members,sessions]=await Promise.all([
     loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,role_id,status,last_seen_at,created_at',ids,'created_at'),
     loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
@@ -1272,10 +1290,52 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    $('kMembers').textContent=members.filter(x=>x.status==='active').length;
    $('kSessions').textContent=sessions.length;
    renderMembers();renderRoles();renderGlobalOperations();
+   await loadAdminOverview().catch(e=>{
+    console.warn('[CountFlow Admin] dashboard query failed',e);
+    $('overviewStatusChart').textContent='تعذر تحميل مؤشرات التحليل. تحقق من صلاحية قراءة العرض أو أعد المحاولة.';
+    $('overviewPerformanceChart').textContent='تعذر تحميل بيانات الأداء.';
+   });
   });
  }
-
- function renderGlobalOperations(){
+ async function loadAdminOverview(){
+  const ids=state.projects.map(p=>p.id);
+  if(!ids.length){state.overviewRows=[];renderAdminOverview();return;}
+  const rows=[];let offset=0,pageSize=500;
+  while(true){
+   const {data,error}=await db.from('count_operation_overview')
+    .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at')
+    .in('project_id',ids).order('planned_start_at',{ascending:false}).range(offset,offset+pageSize-1);
+   if(error)throw error;
+   const page=data||[];rows.push(...page);if(page.length<pageSize)break;
+   offset+=pageSize;if(rows.length>10000)throw new Error('تجاوز سجل العمليات حد القراءة الآمن 10,000 صف؛ استخدم المرشحات.');
+  }
+  state.overviewRows=rows;renderAdminOverview();
+ }
+ function renderAdminOverview(){
+  const statusNames={planned:'مخططة',active:'قيد التنفيذ',paused:'متوقفة',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة'};
+  const projectFilter=$('overviewProjectFilter')?.value||'',statusFilter=$('overviewStatusFilter')?.value||'';
+  const from=$('overviewFrom')?.value||'',to=$('overviewTo')?.value||'';
+  const rows=(state.overviewRows||[]).filter(x=>{
+   const day=String(x.planned_start_at||'').slice(0,10);
+   return (!projectFilter||x.project_id===projectFilter)&&(!statusFilter||x.operation_status===statusFilter)&&(!from||(day&&day>=from))&&(!to||(day&&day<=to));
+  });
+  const num=x=>Number(x||0),fmt=x=>num(x).toLocaleString('en-US');
+  const coverage=x=>num(x.active_products)>0?Math.max(0,Math.min(100,num(x.counted_products)/num(x.active_products)*100)):0;
+  $('overviewTotalOperations').textContent=fmt(rows.length);
+  $('overviewActiveOperations').textContent=fmt(rows.filter(x=>x.operation_status==='active').length);
+  $('overviewEntryEvents').textContent=fmt(rows.reduce((a,x)=>a+num(x.entry_events),0));
+  $('overviewCoverage').textContent=(rows.length?rows.reduce((a,x)=>a+coverage(x),0)/rows.length:0).toFixed(1)+'%';
+  const statusOrder=['active','planned','paused','review','completed','cancelled'];
+  const counts=statusOrder.map(k=>({key:k,label:statusNames[k],count:rows.filter(x=>x.operation_status===k).length})).filter(x=>x.count>0);
+  const maxCount=Math.max(1,...counts.map(x=>x.count));
+  $('overviewStatusChart').innerHTML=counts.length?counts.map(x=>'<div class="cf-chart-item"><span>'+esc(x.label)+'</span><div class="cf-bar-track"><div class="cf-bar-fill" style="width:'+(x.count/maxCount*100).toFixed(1)+'%"></div></div><b>'+fmt(x.count)+'</b></div>').join(''):'<div class="empty">لا توجد عمليات ضمن المرشحات المختارة.</div>';
+  const ranked=[...rows].sort((a,b)=>coverage(b)-coverage(a)||num(b.entry_events)-num(a.entry_events)).slice(0,12);
+  $('overviewPerformanceChart').innerHTML=ranked.length?'<table><thead><tr><th>العملية / التكليف</th><th>الحالة</th><th>أحداث العد</th><th>الأصناف</th><th>التغطية</th></tr></thead><tbody>'+ranked.map(x=>{
+   const pct=coverage(x);
+   return '<tr><td><b>'+esc(x.operation_name||'عملية غير مسماة')+'</b><span class="sub">'+esc(x.project_name||'')+' · '+esc(x.project_code||'')+'</span></td><td>'+statusPill(x.operation_status)+'</td><td>'+fmt(x.entry_events)+'</td><td>'+fmt(x.counted_products)+' / '+fmt(x.active_products)+'</td><td><div class="row"><div class="cf-progress"><span style="width:'+pct.toFixed(1)+'%"></span></div><b>'+pct.toFixed(1)+'%</b></div></td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد عمليات لعرض أدائها.</div>';
+ }
+ function renderGlobalOperations(){ function renderGlobalOperations(){
   const all=state.allSessions||[];
   $('kActiveOperations').textContent=all.filter(x=>x.status==='active').length;
   $('kPendingOperations').textContent=all.filter(x=>['planned','paused'].includes(x.status)).length;
@@ -1717,10 +1777,52 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   renderCustomRoles();renderMembers();renderRoles();
  }
  function renderRolePermissions(selected=[]){const set=new Set(selected);$('rolePermissionOptions').innerHTML=state.permissions.filter(p=>!p.is_sensitive&&p.code!=='platform.license.manage').map(p=>'<label><input type="checkbox" value="'+esc(p.code)+'" '+(set.has(p.code)?'checked':'')+'><span><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.permission_group)+'</span></span></label>').join('');}
- function renderCustomRoles(){const el=$('customRoleList');if(!el)return;const rows=state.roles.filter(r=>r.client_id===state.clientId&&!r.is_system);el.innerHTML=rows.length?'<table><thead><tr><th>الدور</th><th>الصلاحيات</th><th>الحالة</th><th>إدارة</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><b>'+esc(r.name)+'</b><span class="sub">'+esc(r.role_key)+'</span></td><td>'+(state.rolePermissions.get(r.id)?.size||0)+'</td><td>'+statusPill(r.is_active?'active':'paused')+'</td><td><button type="button" class="soft" data-edit-custom-role="'+r.id+'">تعديل</button> <button type="button" class="danger" data-delete-custom-role="'+r.id+'">حذف</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أدوار مخصصة لهذا العميل.</div>';el.querySelectorAll('[data-edit-custom-role]').forEach(b=>b.onclick=()=>{const r=state.roles.find(x=>x.id===b.dataset.editCustomRole);$('customRoleId').value=r.id;$('customRoleKey').value=r.role_key;$('customRoleKey').disabled=true;$('customRoleName').value=r.name;$('customRoleDescription').value=r.description||'';renderRolePermissions([...(state.rolePermissions.get(r.id)||[])]);});
-  el.querySelectorAll('[data-delete-custom-role]').forEach(b=>b.onclick=async()=>{const id=b.dataset.deleteCustomRole;const {count,error}=await db.from('count_members').select('id',{count:'exact',head:true}).eq('role_id',id);if(error)throw error;if(count)return notify('لا يمكن حذف الدور لأنه مسند إلى أعضاء.');if(!await confirmAction('حذف الدور وصلاحياته؟',{title:'حذف الدور',confirmText:'حذف'}))return;const x=await db.from('count_roles').delete().eq('id',id);if(x.error)throw x.error;await loadRoleCatalog();});
+ function renderCustomRoles(){
+  const el=$('customRoleList');if(!el)return;
+  const systemRoles=state.roles.filter(r=>r.is_system&&r.scope==='project');
+  const custom=state.roles.filter(r=>r.scope==='project'&&!r.is_system&&r.client_id===state.clientId);
+  const usedIds=new Set((state.allMembers||[]).filter(m=>m.role_id).map(m=>m.role_id));
+  $('roleSystemCount').textContent=systemRoles.length;
+  $('roleCustomCount').textContent=custom.length;
+  $('roleUsedCount').textContent=custom.filter(r=>usedIds.has(r.id)).length;
+  $('roleUnusedCount').textContent=custom.filter(r=>!usedIds.has(r.id)).length;
+  $('systemRoleList').innerHTML=systemRoles.length?'<table><thead><tr><th>الدور النظامي</th><th>المفتاح</th><th>الصلاحيات</th><th>عضويات مسندة</th><th>الحالة</th><th>الإدارة</th></tr></thead><tbody>'+systemRoles.map(r=>{
+   const use=(state.allMembers||[]).filter(m=>m.role_id===r.id).length;
+   return '<tr><td><b>'+esc(r.name)+'</b><span class="sub">'+esc(r.description||'دور أساسي للمنصة التشغيلية')+'</span></td><td>'+esc(r.role_key)+'</td><td>'+(state.rolePermissions.get(r.id)?.size||0)+'</td><td>'+use+'</td><td>'+statusPill(r.is_active?'active':'paused')+'</td><td><span class="pill">نظامي — للقراءة فقط</span></td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد أدوار نظامية للمشروع.</div>';
+  const q=($('customRoleSearch')?.value||'').trim().toLowerCase();
+  const rows=custom.filter(r=>[r.name,r.role_key,r.description].some(v=>String(v||'').toLowerCase().includes(q)));
+  el.innerHTML=rows.length?'<table><thead><tr><th>الدور المخصص</th><th>الصلاحيات</th><th>عضويات مسندة</th><th>الحالة</th><th>إدارة</th></tr></thead><tbody>'+rows.map(r=>{
+   const use=(state.allMembers||[]).filter(m=>m.role_id===r.id).length;
+   return '<tr><td><b>'+esc(r.name)+'</b><span class="sub">'+esc(r.role_key)+' · '+esc(r.description||'بدون وصف')+'</span></td><td>'+(state.rolePermissions.get(r.id)?.size||0)+'</td><td>'+use+'</td><td>'+statusPill(r.is_active?'active':'paused')+'</td><td><div class="cf-inline-actions"><button type="button" class="soft" data-edit-custom-role="'+r.id+'">تعديل</button><button type="button" class="soft" data-clone-custom-role="'+r.id+'">نسخ الدور</button><button type="button" class="danger" data-delete-custom-role="'+r.id+'">حذف</button></div></td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد أدوار مخصصة تطابق البحث في العميل الحالي.</div>';
+  el.querySelectorAll('[data-edit-custom-role]').forEach(b=>b.onclick=()=>{
+   const r=state.roles.find(x=>x.id===b.dataset.editCustomRole);if(!r)return;
+   $('customRoleId').value=r.id;$('customRoleKey').value=r.role_key;$('customRoleKey').disabled=true;
+   $('customRoleName').value=r.name;$('customRoleDescription').value=r.description||'';
+   renderRolePermissions([...(state.rolePermissions.get(r.id)||[])]);
+   $('customRoleForm').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  el.querySelectorAll('[data-clone-custom-role]').forEach(b=>b.onclick=()=>{
+   const r=state.roles.find(x=>x.id===b.dataset.cloneCustomRole);if(!r)return;
+   $('customRoleId').value='';$('customRoleKey').disabled=false;
+   $('customRoleKey').value=(r.role_key.slice(0,49)+'_copy_'+Date.now().toString().slice(-6)).slice(0,64);
+   $('customRoleName').value=('نسخة من '+r.name).slice(0,80);
+   $('customRoleDescription').value=r.description||'';
+   renderRolePermissions([...(state.rolePermissions.get(r.id)||[])]);
+   $('customRoleForm').scrollIntoView({behavior:'smooth',block:'center'});
+   notify('تم تجهيز نسخة قابلة للتعديل؛ لن تُحفظ قبل الضغط على حفظ الدور.');
+  });
+  el.querySelectorAll('[data-delete-custom-role]').forEach(b=>b.onclick=async()=>{
+   const id=b.dataset.deleteCustomRole;
+   const {count,error}=await db.from('count_members').select('id',{count:'exact',head:true}).eq('role_id',id);
+   if(error)throw error;if(count)return notify('لا يمكن حذف الدور لأنه مرتبط بعضوية واحدة أو أكثر. أعد إسناد الأعضاء أولاً.');
+   if(!await confirmAction('حذف الدور وصلاحياته نهائياً؟',{title:'حذف الدور',confirmText:'حذف'}))return;
+   const x=await db.from('count_roles').delete().eq('id',id);if(x.error)throw x.error;
+   await loadRoleCatalog();
+  });
  }
- function resetCustomRole(){ $('customRoleForm').reset();$('customRoleId').value='';$('customRoleKey').disabled=false;renderRolePermissions([]); }
+ function resetCustomRole( function resetCustomRole(){ $('customRoleForm').reset();$('customRoleId').value='';$('customRoleKey').disabled=false;renderRolePermissions([]); }
  $('customRoleForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.clientId)return notify('اختر عميلاً أولاً.',true);const f=e.currentTarget;setBusy(f,true);try{
   const id=$('customRoleId').value,payload={client_id:state.clientId,role_key:$('customRoleKey').value.trim(),name:$('customRoleName').value.trim(),description:$('customRoleDescription').value.trim(),scope:'project',is_system:false,is_active:true,created_by:state.user.id};let roleId=id;
   if(id){const x=await db.from('count_roles').update({name:payload.name,description:payload.description,updated_by:state.user.id}).eq('id',id);if(x.error)throw x.error;}else{const x=await db.from('count_roles').insert(payload).select('id').single();if(x.error)throw x.error;roleId=x.data.id;}
@@ -1732,19 +1834,83 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  $('clientAdminForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.platformOwner)return notify('إنشاء مدير العميل للمالك فقط.',true);const f=e.currentTarget;setBusy(f,true);try{
   const body={action:'create_client_admin',client_id:$('clientAdminTarget').value,email:$('clientAdminEmail').value.trim(),password:$('clientAdminPassword').value,display_name:$('clientAdminName').value.trim(),username:$('clientAdminUsername').value.trim()};
   const {data,error}=await db.functions.invoke('counting-provision-member',{body});if(error)throw error;if(!data?.ok)throw new Error(data?.error||'تعذر إنشاء مدير العميل.');f.reset();await loadClients();notify('تم إنشاء / ربط مدير العميل.');}catch(err){fail('تعذر إنشاء مدير العميل',err);}finally{setBusy(f,false);}});
- async function loadCatalog(){if(!state.user)return;let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,is_active,image_storage_path').order('name').limit(500);const term=$('catalogSearch').value.trim().replace(/[%,().]/g,' ').slice(0,90);if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];
-  $('clientProductCatalog').innerHTML=state.catalogProducts.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'')+'</option>').join('');
-  $('catalogTable').innerHTML=state.catalogProducts.length?'<table><thead><tr><th>الصنف</th><th>SKU</th><th>باركود</th><th>التصنيف</th><th>الوحدة</th></tr></thead><tbody>'+state.catalogProducts.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.canonical_sku||'—')+'</td><td>'+esc(p.barcode||'—')+'</td><td>'+esc(p.category||'—')+'</td><td>'+esc(p.base_unit)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">الكتالوج الشامل فارغ حالياً.</div>';
+ async function loadCatalog(){
+  if(!state.user)return;
+  let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,is_active,image_storage_path').order('name').limit(500);
+  const term=$('catalogSearch').value.trim().replace(/[%,().]/g,' ').slice(0,90);
+  const stateFilter=$('catalogStatusFilter')?.value||'active';
+  if(stateFilter==='active')q=q.eq('is_active',true);else if(stateFilter==='inactive')q=q.eq('is_active',false);
+  if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));
+  const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];
+  $('clientProductCatalog').innerHTML=state.catalogProducts.filter(p=>p.is_active).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'')+'</option>').join('');
+  $('catalogTable').innerHTML=state.catalogProducts.length?'<table><thead><tr><th>الصنف</th><th>SKU</th><th>باركود</th><th>التصنيف</th><th>الوحدة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'+state.catalogProducts.map(p=>{
+   const actions=state.platformOwner?'<div class="cf-inline-actions"><button type="button" class="soft" data-edit-catalog="'+p.id+'">تعديل</button><button type="button" class="'+(p.is_active?'danger':'soft')+'" data-catalog-state="'+p.id+'">'+(p.is_active?'إيقاف':'إعادة تفعيل')+'</button></div>':'<span class="pill">عرض فقط</span>';
+   return '<tr><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.brand||'')+'</span></td><td>'+esc(p.canonical_sku||'—')+'</td><td>'+esc(p.barcode||'—')+'</td><td>'+esc(p.category||'—')+'</td><td>'+esc(p.base_unit)+'</td><td>'+statusPill(p.is_active?'active':'paused')+'</td><td>'+actions+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد أصناف تطابق المرشح الحالي في قاعدة الأصناف العالمية.</div>';
+  $('catalogTable').querySelectorAll('[data-edit-catalog]').forEach(b=>b.onclick=()=>{
+   if(!state.platformOwner)return;
+   const p=state.catalogProducts.find(x=>x.id===b.dataset.editCatalog);if(!p)return;
+   $('globalProductId').value=p.id;$('globalSku').value=p.canonical_sku||'';$('globalBarcode').value=p.barcode||'';
+   $('globalName').value=p.name||'';$('globalBrand').value=p.brand||'';$('globalCategory').value=p.category||'';
+   $('globalBaseUnit').value=p.base_unit||'';$('globalImageFile').value='';
+   $('globalProductFormTitle').textContent='تعديل صنف دائم في الكتالوج';
+   $('globalProductSave').textContent='حفظ التعديلات';
+   $('globalProductForm').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  $('catalogTable').querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=()=>toggleCatalogProduct(b.dataset.catalogState));
   await loadClientCatalogMappings();
  }
- async function loadClientCatalogMappings(){if(!state.clientId)return;const x=await db.from('count_client_products').select('id,client_sku,client_barcode,name_override,base_unit_override,count_catalog_products(name,canonical_sku,base_unit)').eq('client_id',state.clientId).limit(500);if(x.error)throw x.error;const rows=x.data||[];
+ async function toggleCatalogProduct(id){
+  if(!state.platformOwner)return notify('تعديل الكتالوج العالمي للمالك فقط.',true);
+  const p=state.catalogProducts.find(x=>x.id===id);if(!p)return;
+  if(p.is_active&&!await confirmAction('سيتم إيقاف الصنف عن الاستخدام في عمليات الجرد الجديدة. ستظل بياناته وروابطه التاريخية محفوظة. هل تريد المتابعة؟',{title:'إيقاف صنف عالمي',confirmText:'إيقاف الصنف'}))return;
+  const {error}=await db.from('count_catalog_products').update({is_active:!p.is_active,updated_by:state.user.id,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error)throw error;
+  notify(p.is_active?'تم إيقاف الصنف مع الاحتفاظ بسجله وروابطه.':'تمت إعادة تفعيل الصنف.');
+  await loadCatalog();
+ }
+ function resetGlobalProductForm(){
+  $('globalProductForm').reset();$('globalProductId').value='';
+  $('globalProductFormTitle').textContent='إضافة صنف عالمي';$('globalProductSave').textContent='إضافة للكتالوج';
+ }
+
+ async function loadClientCatalogMappings() async function loadClientCatalogMappings(){if(!state.clientId)return;const x=await db.from('count_client_products').select('id,client_sku,client_barcode,name_override,base_unit_override,count_catalog_products(name,canonical_sku,base_unit)').eq('client_id',state.clientId).limit(500);if(x.error)throw x.error;const rows=x.data||[];
   $('clientCatalogTable').innerHTML=rows.length?'<table><thead><tr><th>الصنف</th><th>SKU العميل</th><th>الباركود</th><th>الوحدة</th><th>إجراء</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.name_override||p.count_catalog_products?.name||'')+'</td><td>'+esc(p.client_sku||'—')+'</td><td>'+esc(p.client_barcode||'—')+'</td><td>'+esc(p.base_unit_override||p.count_catalog_products?.base_unit||'')+'</td><td><button type="button" class="soft" data-attach="'+p.id+'">إدراج في المشروع</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد مواءمات لهذا العميل.</div>';
   $('clientCatalogTable').querySelectorAll('[data-attach]').forEach(b=>b.onclick=async()=>{if(!state.project)return notify('اختر مشروعاً أولاً.');const a=await db.rpc('count_attach_catalog_product',{p_project_id:state.project.id,p_client_product_id:b.dataset.attach,p_expected_qty:null});if(a.error)throw a.error;notify(a.data?.already_linked?'الصنف موجود بالفعل.':'تم إدراج الصنف في المشروع.');await loadProjectData();});
  }
- $('globalProductForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.platformOwner)return notify('إضافة الصنف العالمي للمالك فقط.',true);const f=e.currentTarget;setBusy(f,true);try{
-  const sku=$('globalSku').value.trim()||null,barcode=$('globalBarcode').value.trim()||null;if(!sku&&!barcode)throw new Error('أدخل SKU أو باركود.');const payload={canonical_sku:sku,barcode,name:$('globalName').value.trim(),brand:$('globalBrand').value.trim()||null,category:$('globalCategory').value.trim()||null,base_unit:$('globalBaseUnit').value.trim(),units:[],is_active:true,source_type:'curated',created_by:state.user.id};
-  const x=await db.from('count_catalog_products').insert(payload).select('id').single();if(x.error)throw x.error;const file=$('globalImageFile').files[0];if(file){if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('الصورة يجب أن تكون JPEG/PNG/WEBP وأقل من 5MB.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path='catalog/products/'+x.data.id+'/'+Date.now()+'.'+ext;const up=await db.storage.from('counting-product-images').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const u=await db.from('count_catalog_products').update({image_storage_path:path,updated_by:state.user.id}).eq('id',x.data.id);if(u.error)throw u.error;}f.reset();await loadCatalog();notify('تمت إضافة الصنف إلى الكتالوج العالمي.');}catch(err){fail('تعذر إضافة الصنف',err);}finally{setBusy(f,false);}});
- $('clientProductForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.clientId)return notify('اختر العميل أولاً.');const f=e.currentTarget;setBusy(f,true);try{const p={p_client_id:state.clientId,p_catalog_product_id:$('clientProductCatalog').value,p_client_sku:$('clientProductSku').value.trim()||null,p_client_barcode:$('clientProductBarcode').value.trim()||null,p_name_override:$('clientProductName').value.trim()||null,p_base_unit_override:$('clientProductUnit').value.trim()||null,p_category_override:null,p_units_override:null,p_image_storage_path_override:null};const x=await db.rpc('count_upsert_client_product',p);if(x.error)throw x.error;f.reset();await loadClientCatalogMappings();notify('تم حفظ مواءمة الصنف.');}catch(err){fail('تعذر حفظ المواءمة',err);}finally{setBusy(f,false);}});
+ $('globalProductForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(!state.platformOwner)return notify('إدارة الكتالوج العالمي للمالك فقط.',true);
+  const f=e.currentTarget;setBusy(f,true);
+  try{
+   const id=$('globalProductId').value||null,existing=id?state.catalogProducts.find(p=>p.id===id):null;
+   const sku=$('globalSku').value.trim()||null,barcode=$('globalBarcode').value.trim()||null;
+   if(!sku&&!barcode)throw new Error('أدخل SKU أو باركود.');
+   const file=$('globalImageFile').files[0]||null;
+   if(file&&(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type)))throw new Error('الصورة يجب أن تكون JPEG/PNG/WEBP وأقل من 5MB.');
+   const payload={canonical_sku:sku,barcode,name:$('globalName').value.trim(),brand:$('globalBrand').value.trim()||null,category:$('globalCategory').value.trim()||null,base_unit:$('globalBaseUnit').value.trim(),updated_by:state.user.id,updated_at:new Date().toISOString()};
+   let productId=id;
+   if(id){
+    const x=await db.from('count_catalog_products').update(payload).eq('id',id);if(x.error)throw x.error;
+   }else{
+    const x=await db.from('count_catalog_products').insert({...payload,units:[],is_active:true,source_type:'curated',created_by:state.user.id}).select('id').single();
+    if(x.error)throw x.error;productId=x.data.id;
+   }
+   let imageWarning='';
+   if(file){
+    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path='catalog/products/'+productId+'/'+Date.now()+'.'+ext;
+    const up=await db.storage.from('counting-product-images').upload(path,file,{contentType:file.type,upsert:false});
+    if(up.error)imageWarning=' تم حفظ بيانات الصنف لكن تعذر رفع صورته: '+up.error.message;
+    else{const u=await db.from('count_catalog_products').update({image_storage_path:path,updated_by:state.user.id,updated_at:new Date().toISOString()}).eq('id',productId);if(u.error)imageWarning=' تم حفظ بيانات الصنف لكن تعذر ربط الصورة: '+u.error.message;}
+   }
+   resetGlobalProductForm();await loadCatalog();
+   notify((id?'تم تحديث الصنف الدائم.':'تمت إضافة الصنف إلى الكتالوج العالمي.')+imageWarning,Boolean(imageWarning));
+  }catch(err){fail('تعذر حفظ الصنف العالمي',err);}
+  finally{setBusy(f,false);}
+ });
+ $('globalProductCancel').onclick=resetGlobalProductForm;
+ $('catalogSearch').addEventListener('input',()=>loadCatalog().catch(e=>fail('تعذر البحث في الكتالوج',e)));
+ $('catalogStatusFilter').addEventListener('change',()=>loadCatalog().catch(e=>fail('تعذر تغيير مرشح الكتالوج',e)));
+  $('clientProductForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.clientId)return notify('اختر العميل أولاً.');const f=e.currentTarget;setBusy(f,true);try{const p={p_client_id:state.clientId,p_catalog_product_id:$('clientProductCatalog').value,p_client_sku:$('clientProductSku').value.trim()||null,p_client_barcode:$('clientProductBarcode').value.trim()||null,p_name_override:$('clientProductName').value.trim()||null,p_base_unit_override:$('clientProductUnit').value.trim()||null,p_category_override:null,p_units_override:null,p_image_storage_path_override:null};const x=await db.rpc('count_upsert_client_product',p);if(x.error)throw x.error;f.reset();await loadClientCatalogMappings();notify('تم حفظ مواءمة الصنف.');}catch(err){fail('تعذر حفظ المواءمة',err);}finally{setBusy(f,false);}});
  $('catalogRefresh').onclick=()=>loadCatalog().catch(e=>fail('تعذر تحديث الكتالوج',e));$('catalogSearch').addEventListener('keydown',e=>{if(e.key==='Enter')loadCatalog().catch(x=>fail('تعذر البحث',x));});
  $('projectClient').addEventListener('change',async()=>{if(state.platformOwner){state.clientId=$('projectClient').value||null;try{await loadRoleCatalog();await loadCatalog();}catch(e){fail('تعذر تحميل العميل المحدد',e);}}});
  $('clientAdminTarget').addEventListener('change',()=>{if(state.platformOwner){state.clientId=$('clientAdminTarget').value||null;loadRoleCatalog().catch(e=>fail('تعذر تحديث الأدوار',e));}});
@@ -1825,7 +1991,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  $('productImportFile').addEventListener('change',()=>{state.productImportRows=[];state.productImportRowCount=0;state.productImportHeaders=[];state.productImportMapping={};state.productImportMappingId=null;$('productImportPreview').textContent='';$('productImportResult').textContent='';$('productImportMapping').classList.add('hidden');$('productImportCommitBtn').disabled=true;});
  $('productImportPreviewBtn').onclick=previewProductImport;$('productImportCommitBtn').onclick=commitProductImport;$('productImportResetBtn').onclick=resetProductImport;
  $('roleSearch').addEventListener('input',renderRoles);
+ $('customRoleSearch').addEventListener('input',renderCustomRoles);
  $('memberSearch').addEventListener('input',renderMembers);
+ $('memberProjectFilter').addEventListener('change',renderMembers);
+ $('memberStatusFilter').addEventListener('change',renderMembers);
  function closeMemberPasswordDialog(){
   state.passwordResetMemberId=null;$('memberPasswordForm').reset();$('memberPasswordStatus').textContent='';$('memberPasswordModal').classList.add('hidden');
  }
@@ -1857,13 +2026,47 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }catch(error){console.warn('Member password reset failed',error);$('memberPasswordStatus').textContent='تعذر تغيير كلمة المرور. تحقق من الاتصال والصلاحية ثم أعد المحاولة.';}
   finally{button.disabled=false;}
  });
- $('newOperationButton').onclick=()=>{
-  if(!state.project){notify('اختر أو أنشئ جهة / ملف تكليف أولاً.',true);activateTab('projects');return;}
-  activateTab('sessions');
-  $('sessionForm').scrollIntoView({behavior:'smooth',block:'center'});
+ function renderOperationCreateOptions(){
+  if(!$('sessionProject'))return;
+  const projectOptions=state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
+  $('sessionProject').innerHTML=projectOptions||'<option value="">لا يوجد ملف تكليف متاح</option>';
+  if(state.project&&state.projects.some(p=>p.id===state.project.id))$('sessionProject').value=state.project.id;
+  const branches=state.locations.filter(x=>['branch','site','store','warehouse'].includes(x.location_type)&&!x.parent_id);
+  $('sessionBranch').innerHTML='<option value="">بدون تحديد فرع</option>'+branches.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
+  const keep=[...($('sessionTeam').selectedOptions||[])].map(x=>x.value);
+  const members=(state.members||[]).filter(m=>m.status==='active');
+  $('sessionTeam').innerHTML=members.length?members.map(m=>'<option value="'+esc(m.id)+'" '+(keep.includes(m.id)?'selected':'')+'>'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join(''):'<option value="" disabled>لا يوجد أعضاء نشطون في هذا التكليف؛ أضف المستخدمين أولاً</option>';
+ }
+ async function openOperationCreateModal(){
+  if(!state.projects.length){notify('لا يوجد ملف تكليف متاح لإنشاء عملية داخله.',true);activateTab('projects');return;}
+  if(!state.project||!state.projects.some(p=>p.id===state.project.id))state.project=state.projects[0];
+  $('projectPicker').value=state.project.id;
+  try{await loadProjectData();renderOperationCreateOptions();}
+  catch(e){fail('تعذر تحميل فريق ملف التكليف',e);return;}
+  $('sessionProject').value=state.project.id;
+  $('operationCreateModal').classList.remove('hidden');
   $('sessionName').focus({preventScroll:true});
-};
-$('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
+ }
+ function closeOperationCreateModal(){
+  $('operationCreateModal').classList.add('hidden');
+ }
+ $('closeOperationCreateModalTop').onclick=closeOperationCreateModal;
+ $('closeOperationCreateModal').onclick=closeOperationCreateModal;
+ $('openSessionCreateFromTab').onclick=openOperationCreateModal;
+ $('operationCreateModal').addEventListener('click',e=>{if(e.target===$('operationCreateModal'))closeOperationCreateModal();});
+ $('sessionProject').addEventListener('change',async()=>{
+  const project=state.projects.find(p=>p.id===$('sessionProject').value);
+  if(!project)return;
+  state.project=project;$('projectPicker').value=project.id;
+  try{await loadProjectData();renderOperationCreateOptions();$('sessionProject').value=project.id;}
+  catch(e){fail('تعذر تحميل نطاق فريق العملية',e);}
+ });
+
+ $('newOperationButton').onclick=()=>{activateTab('operations');openOperationCreateModal();};
+$('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تحديث مؤشرات الأداء')).catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));
+ ['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
+ $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');renderAdminOverview();};
+ $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
  ['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
  $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
@@ -1887,11 +2090,42 @@ $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم 
   const row={project_id:state.project.id,parent_id:$('locationParent').value||null,location_type:$('locationType').value,code:$('locationCode').value.trim(),name:$('locationName').value.trim(),sort_order:state.locations.length};
   const {error}=await db.from('count_locations').insert(row);if(error)throw error;notify('تم إضافة الموقع');f.reset();await loadProjectData();
  }catch(err){fail('تعذر إضافة الموقع',err);}finally{setBusy(f,false);}});
- $('sessionForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.project)return notify('اختر مشروعاً أولاً',true);const f=e.currentTarget;setBusy(f,true);try{const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
-  const {data,error}=await db.from('count_sessions').insert({project_id:state.project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id,operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,branch_location_id:$('sessionBranch').value||null,planned_start_at:toIso('sessionStart'),planned_end_at:toIso('sessionEnd'),schedule_timezone:$('sessionTimezone').value,priority:Number($('sessionPriority').value),counting_mode:$('sessionMode').value,show_expected_quantity:$('sessionShowExpected').checked,capture_images:$('sessionCaptureImages').checked,require_images:$('sessionRequireImages').checked,allow_unknown_products:$('sessionAllowUnknown').checked,instructions:$('sessionInstructions').value.trim()||null}).select('id').single();
-  if(error)throw error;notify('تم إنشاء العملية بإعداداتها ونطاقها.');f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';await loadProjectData();await loadGlobalOperations();await selectOperation(data.id);
- }catch(err){fail('تعذر إنشاء العملية',err);}finally{setBusy(f,false);}});
- document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();if(b.dataset.tab==='catalog')loadCatalog().catch(e=>fail('تعذر تحميل الكتالوج',e));}));
+ $('sessionForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const project=state.projects.find(p=>p.id===$('sessionProject').value);
+  if(!project)return notify('اختر ملف تكليف صالحاً أولاً.',true);
+  state.project=project;$('projectPicker').value=project.id;
+  const f=e.currentTarget;setBusy(f,true);
+  try{
+   const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
+   const selectedMemberIds=[...$('sessionTeam').selectedOptions].map(o=>o.value).filter(Boolean);
+   const {data,error}=await db.from('count_sessions').insert({
+    project_id:project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id,
+    operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
+    branch_location_id:$('sessionBranch').value||null,
+    planned_start_at:toIso('sessionStart'),planned_end_at:toIso('sessionEnd'),
+    schedule_timezone:$('sessionTimezone').value,priority:Number($('sessionPriority').value),
+    counting_mode:$('sessionMode').value,show_expected_quantity:$('sessionShowExpected').checked,
+    capture_images:$('sessionCaptureImages').checked,require_images:$('sessionRequireImages').checked,
+    allow_unknown_products:$('sessionAllowUnknown').checked,
+    instructions:$('sessionInstructions').value.trim()||null
+   }).select('id').single();
+   if(error)throw error;
+   let assignmentWarning='';
+   if(selectedMemberIds.length){
+    const assignmentRows=selectedMemberIds.map(memberId=>({session_id:data.id,member_id:memberId,location_id:null,status:'assigned'}));
+    const assigned=await db.from('count_assignments').upsert(assignmentRows,{onConflict:'session_id,member_id,location_id'});
+    if(assigned.error)assignmentWarning=' تم إنشاء العملية، لكن فشل إسناد بعض/كل أعضاء الفريق: '+assigned.error.message+'؛ يمكنك إكمال الإسناد من تفاصيل العملية.';
+   }
+   f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';
+   closeOperationCreateModal();
+   await loadProjectData();await loadGlobalOperations();await selectOperation(data.id);
+   if(assignmentWarning)notify('تم إنشاء العملية بنجاح.'+assignmentWarning,true);
+   else notify('تم إنشاء العملية المخططة'+(selectedMemberIds.length?' وإسناد '+selectedMemberIds.length+' عضو/أعضاء':' دون إسناد فريق بعد')+'. لم تُسجل أي كميات أو حركة مخزون.');
+  }catch(err){fail('تعذر إنشاء العملية',err);}
+  finally{setBusy(f,false);}
+ });
+ document.querySelectorAll('.nav') document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();if(b.dataset.tab==='catalog')loadCatalog().catch(e=>fail('تعذر تحميل الكتالوج',e));}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
 
