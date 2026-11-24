@@ -93,7 +93,7 @@
      <div class="panel"><h3>روابط التشغيل</h3><div class="actions"><a class="link" href="./Countflow-supervisor.html">مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html">واجهة العدّ الميداني</a></div><p class="hint">النظام الأم لإعداد البيانات وإدارة المستخدمين ودورة الجلسة والتسويات ومراجعة إعادة العد والتنبيهات والاعتماد. لوحة المشرف للمراقبة الحية وإسناد المندوبين للمواقع والجلسات فقط.</p></div>
     </section>
     <section id="tab-projects" class="section">
-     <div class="headrow"><h2>ملفات التكليف / مشاريع الجرد</h2></div>
+     <div class="headrow"><h2>الجهات وملفات التكليف</h2></div>
      <div class="split">
       <div class="panel"><h3>تسجيل تكليف جرد جديد</h3><form id="projectForm">
        <div class="field"><label>اسم الجهة المتعاقدة</label><input id="projectName" required maxlength="120" placeholder="كارفور"></div>
@@ -106,7 +106,8 @@
      </div>
     </section>
     <section id="tab-products" class="section">
-     <div class="headrow"><h2>كتالوج الأصناف</h2><span class="pill" id="productCount">0 صنف</span></div>
+     <div class="headrow"><h2>كتالوج أصناف الجهة / التكليف</h2><span class="pill" id="productCount">0 صنف</span></div>
+     <p class="hint">هذا سجل الأصناف الدائم داخل ملف التكليف؛ لا تُحذف أصنافه عند إغلاق أي جلسة جرد. تُربط كل عملية جرد بجلسة مستقلة وتستخدم أصناف الجهة المعتمدة.</p>
      <div class="panel">
       <h3>استيراد الأصناف من Excel / CSV</h3>
       <p class="hint">ارفع ملف XLSX أو CSV للاستيراد المتدفق، أو ملف XLS قديم لا يتجاوز 8MB. طابق الأعمدة وراجع العينة قبل الاعتماد. يُنفذ الاستيراد عبر دفعات CountFlow المعتمدة، ولا ينشئ حركة مخزون. اختر «كتالوج فقط» عند استيراد بيانات التعريف دون رصيد مرجعي.</p>
@@ -173,7 +174,7 @@
      </div>
     </section>
     <section id="tab-sessions" class="section">
-     <div class="headrow"><h2>دورة جلسات الجرد</h2></div>
+     <div class="headrow"><div><h2>إدارة عمليات الجرد داخل الجهة المحددة</h2><p class="hint">كل عملية جرد هي جلسة مستقلة داخل ملف الجهة؛ تبقى الأصناف والمواقع والمستخدمون محفوظة لإعادة الاستخدام.</p></div></div>
      <div class="split">
       <div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label>اسم الجلسة</label><input id="sessionName" required maxlength="150" placeholder="جرد نهاية الشهر - المستودع الرئيسي"></div><div class="actions"><button class="primary">إنشاء جلسة مخططة</button></div><p class="hint">تُنشأ الجلسة بحالة مخططة. بدء التنفيذ والإيقاف واحتساب التسوية واعتمادها وإغلاقها وإدارة إعادة العد والتنبيهات تتم من هذا النظام الأم بواسطة مالك CountFlow. لوحة المشرف للمراقبة والإسناد فقط.</p></form></div>
       <div class="panel"><h3>جلسات التكليف المحدد</h3><div id="sessionTable" class="tablewrap"><div class="empty">لا توجد جلسات.</div></div></div>
@@ -181,7 +182,7 @@
      <div class="panel hidden" id="sessionWorkflowPanel"><div id="sessionWorkflowContent"></div></div>
     </section>
     <section id="tab-operations" class="section">
-     <div class="headrow"><div><h2>سجل عمليات الجرد</h2><p class="hint">سجل موحد لجميع عمليات الجرد؛ يمكن فتح أي عملية قديمة لمعاينة نتائجها وملفاتها.</p></div><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div>
+     <div class="headrow"><div><h2>مشاريع وعمليات الجرد</h2><p class="hint">سجل موحد لجميع العمليات عبر الجهات؛ اضغط على العملية لمتابعة الفريق والنتائج والمزامنة والتصدير.</p></div><div class="actions"><button id="newOperationButton" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد جديدة</button><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div></div>
      <div class="grid"><div class="stat"><small>قيد التنفيذ</small><strong id="kActiveOperations">0</strong></div><div class="stat"><small>مخططة / متوقفة</small><strong id="kPendingOperations">0</strong></div><div class="stat"><small>قيد المراجعة</small><strong id="kReviewOperations">0</strong></div><div class="stat"><small>إجمالي العمليات</small><strong id="kAllOperations">0</strong></div></div>
      <div class="panel">
       <h3>البحث والتصفية</h3>
@@ -1754,7 +1755,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }catch(error){console.warn('Member password reset failed',error);$('memberPasswordStatus').textContent='تعذر تغيير كلمة المرور. تحقق من الاتصال والصلاحية ثم أعد المحاولة.';}
   finally{button.disabled=false;}
  });
- $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
+ $('newOperationButton').onclick=()=>{
+  if(!state.project){notify('اختر أو أنشئ جهة / ملف تكليف أولاً.',true);activateTab('projects');return;}
+  activateTab('sessions');
+  $('sessionForm').scrollIntoView({behavior:'smooth',block:'center'});
+  $('sessionName').focus({preventScroll:true});
+};
+$('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
  ['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
  $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
