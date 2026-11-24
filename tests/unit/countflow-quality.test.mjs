@@ -668,7 +668,7 @@ test("Admin can reuse an existing confirmed Auth account without requesting or c
   assert.match(admin, /دون تغيير كلمة مروره/);
   assert.match(admin, /error\.context\?\.clone\?\.\(\)\.json\(\)/);
   const provision = read("functions/counting-provision-member/index.ts");
-  assert.match(provision, /if \(password.length < 10\) throw new Error\(\{ error: "PASSWORD_REQUIRED_FOR_NEW_ACCOUNT" \}/);
+  assert.match(provision, /if \(password.length < 10\) throw new Error\("PASSWORD_REQUIRED_FOR_NEW_ACCOUNT"\)/);
   assert.match(provision, /existing_password_changed: false/);
   assert.match(provision, /if \(!authUser.email_confirmed_at\)/);
 });
