@@ -2164,7 +2164,7 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
   }catch(err){fail('تعذر إنشاء العملية',err);}
   finally{setBusy(f,false);}
  });
- document.querySelectorAll('.nav') document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();if(b.dataset.tab==='catalog')loadCatalog().catch(e=>fail('تعذر تحميل الكتالوج',e));}));
+ document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();if(b.dataset.tab==='catalog')loadCatalog().catch(e=>fail('تعذر تحميل الكتالوج',e));}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
 
