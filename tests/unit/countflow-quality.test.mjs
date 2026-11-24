@@ -973,3 +973,14 @@ test("Auditor evidence storage remains private and grants read only to registere
   assert.ok(migration.includes("NOT counting_private.is_platform_owner_actor(i.uploaded_by)"));
   assert.doesNotMatch(migration, /CREATE POLICY|FOR INSERT|FOR UPDATE|FOR DELETE/);
 });
+
+test("Control team monitor reads realtime presence, device status, current location and pending sync queue", () => {
+  const control = read("countflow-control.html");
+  assert.ok(control.includes("from('count_presence')"), "Live presence must be read from the session scope");
+  assert.ok(control.includes("from('count_devices')"), "Registered device state must be read from the project scope");
+  assert.ok(control.includes("pending_queue_count"), "Pending offline queue count must be visible");
+  assert.ok(control.includes("current_location_id"), "Current field location must be visible");
+  assert.ok(control.includes("device_label,platform,app_version,status,last_seen_at"), "Device model and version must be displayed");
+  assert.ok(control.includes("Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()])"), "Realtime refresh must refresh all live Control panels");
+  assert.ok(control.includes("document.hidden&&state.session"), "Background tabs must not run unnecessary polling");
+});
