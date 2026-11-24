@@ -824,3 +824,31 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
   assert.doesNotMatch(migration, /UPDATE\s+storage\.objects/i);
   assert.doesNotMatch(migration, /ALTER\s+TABLE\s+public\.count_products\s+ADD\s+COLUMN\s+image_url/i);
 });
+
+test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
+  const admin = read("countflow-admin.html");
+  const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(navTabs.length, 10);
+  assert.equal(new Set(navTabs).size, 10);
+  assert.match(admin, /class="nav-group"/);
+  assert.match(admin, /class="nav-group-title"/);
+  assert.match(admin, /data-icon="gauge-high"/);
+  assert.match(admin, /font-awesome\/7\.3\.1\/css\/all\.min\.css/);
+  assert.match(admin, /sweetalert2@11\.26\.25\/dist\/sweetalert2\.all\.min\.js/);
+  assert.match(admin, /confirmButtonColor:'#dc2626'/);
+  assert.match(admin, /async function confirmAction\(/);
+  assert.match(admin, /async function promptReason\(/);
+  assert.match(admin, /inputValidator:value=>String\(value\|\|''\)\.trim\(\)\.length<10/);
+  assert.doesNotMatch(admin, /\b(?:window\.)?confirm\s*\(/);
+  assert.doesNotMatch(admin, /\b(?:window\.)?prompt\s*\(/);
+  assert.match(admin, /\.tablewrap thead th\{position:sticky;top:0/);
+  assert.match(admin, /#memberTable thead th,#roleTable thead th/);
+  assert.match(admin, /#operationsTable thead th,#auditTable thead th/);
+  assert.match(admin, /#productVirtualScroller thead th/);
+  assert.match(admin, /async function withTableSkeletons\(/);
+  for (const target of ["projectList", "memberTable", "roleTable", "locationTable", "sessionTable", "productTable", "operationsTable", "auditTable"]) {
+    assert.ok(admin.includes("['" + target + "'"), "Missing skeleton loading target: " + target);
+  }
+  assert.match(admin, /new MutationObserver\(/);
+  assert.match(admin, /button\.prepend\(icon\)/);
+});

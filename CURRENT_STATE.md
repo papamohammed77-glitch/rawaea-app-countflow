@@ -1,5 +1,63 @@
 # CountFlow — CURRENT_STATE
 
+## LVE-2026-11-24-765 — Admin UI surgical overhaul (mainline continuation)
+
+**Date:** 24 November 2026 (Africa/Cairo)  
+**Current main baseline:** `2bd494d7028723fbdb278b2c2b56fff9669f881b` (includes the existing `Reports/P6`; preserve it)  
+**Continuation branch:** `work/lve-765-admin-ui-final-mainline`  
+**Prior execution branch / PR:** `work/lve-765-admin-ui-surgical` / PR #7 (kept in history; superseded after the mainline PR is verified)  
+**Admin blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
+**Unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
+**Detailed report:** `Reports/FINAL_EXECUTION_REPORT_LVE-765.md`
+
+### Scope and completed work
+
+- Admin only: 10 native confirmation call sites are routed through SweetAlert2; 3 reason prompts use validated textareas (minimum 10 trimmed characters); no native `confirm()` or `prompt()` remains.
+- Font Awesome 7.3.1 supports static and dynamically rendered buttons.
+- The existing ten sidebar tabs are grouped into five groups while preserving every `data-tab` key.
+- Sticky table headers cover the wrapper tables and direct Admin table hosts, including members, roles, locations, sessions, operations, audit, import history and the product virtual scroller.
+- Tokenized skeleton loading covers projects, members, roles, locations, sessions, products, global operations and audit.
+- Existing owner-only bootstrap, role model, RPC/API contracts, import/export workflow and business semantics were not changed.
+- No change to `countflow.html`, `Countflow-supervisor.html`, Core, Service Worker, Supabase or the design-only ERP reference.
+
+### Verified CI on the prior equivalent source/test tree
+
+GitHub Actions run `45299931306` on prior branch head `bc456fa5151770624c76b6f07306621eba0bcb59` — **SUCCESS**:
+- 42/42 Node unit tests, 0 failed.
+- Deno Type Check: PASS.
+- Pages allowlisted build: PASS.
+- Playwright public login-shell test: 2 passed / 1 skipped (Production SHA parity skipped on PR branch).
+- Cloudflare Pages branch Preview deployed successfully. This is not Production.
+- The mainline continuation PR must run a fresh CI after its latest commit; do not transfer the previous CI result to a different commit.
+
+### Read-only Supabase snapshot — 24 November 2026
+
+- `rawaea-staging` is ACTIVE_HEALTHY and distinct from SMART ERP.
+- 24/24 CountFlow tables have RLS; 78 CountFlow policies; zero anon table grants; 175 total migrations.
+- Current business/QA rows: 1 project, 4 members, 41,000 products, 1 planned session, 1 import batch, 90,000 import rows, 9 audit events; zero count entries, expected balances, cost snapshots, reconciliation runs and exports.
+- Batch `f799c5c1-b766-4712-b74f-c0bb19836ddc` remains `committing` (90,000 total, 41,000 accepted, 0 rejected). DO NOT resume, stop, delete, duplicate or otherwise mutate this batch.
+- Edge Functions remain `counting-provision-member` v7/JWT-required and `counting-export-session` v15/JWT-required. No Edge deploy.
+- Security Advisor's 65 RLS-disabled tables and 5 anon-callable SECURITY DEFINER findings belong to non-CountFlow legacy objects in the shared staging project; do not touch them from the Admin UI task.
+
+### Open acceptance gates
+
+- Fresh CI on `work/lve-765-admin-ui-final-mainline`.
+- Authenticated owner visual review of the new Preview, desktop/mobile RTL, and non-destructive interaction checks.
+- Production SHA parity / production deployment.
+- Authenticated role/member/session/alert workflows and all destructive actions remain untested.
+- LVE-764 Admin/Counter image display and Client Balance XLSX `xl/media` gates remain open.
+- ID collision: the current handover also labels Camera MVP as LVE-765; this existing Admin UI execution record already uses LVE-765. Keep the records separate and assign a new unique LVE identifier to any future camera follow-up.
+
+### Governance and mandatory successor instructions
+
+- The owner handover designates `rawaea-staging` as the CountFlow playground; this does not authorize mutations of the existing QA batch or an uncontrolled schema/RLS/Edge change.
+- No Supabase write, Auth operation, import, count, reconciliation, business balance change or deployment was performed by this Admin UI task.
+- Keep this task Admin-only. Counter and Supervisor UI work require separate surgical changesets.
+- Preserve the mainline `Reports/P6` file; do not delete or overwrite it.
+- Current readiness: **READY WITH LIMITATIONS** pending fresh mainline PR CI and authenticated visual preview acceptance.
+
+---
+
 ## LVE-2026-11-23-764 — Product image reference hardening (E2E GATE OPEN)
 
 **التاريخ:** 23 نوفمبر 2026 (Africa/Cairo)  
@@ -7,7 +65,7 @@
 **Supabase:** rawaea-staging / hfzznsiprnwkpayskzhu  
 **Baseline main:** b4d19ac4fbcfd5c800d1019e42bd6d282d42c829  
 **فرع العمل:** work/lve-764-product-image-urls  
-**PR:** #5 — Draft / Open / Not merged  
+**PR:** #5 — CLOSED / MERGED 23 نوفمبر 2026 / merge SHA `862a246bd56f7696c01df247ffff490c83dd448c` (عرض Admin/Counter وتصدير XLSX يظلان بوابة قبول مفتوحة)  
 **Application commit:** `b09b0920d519ead01787011e604a100a5083c649`  
 **Migration-source/documentation commit:** `ea8553583258b6bab6b8d6da1d1f15524cd757ef`  
 **Latest confirmed docs/Advisor snapshot before this report refresh:** `1baa2fc756ea95a4b96bba9e4e7fc6b602fbd4bf`.
