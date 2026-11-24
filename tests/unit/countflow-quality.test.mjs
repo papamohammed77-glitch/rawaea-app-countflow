@@ -1042,3 +1042,70 @@ test("other owner actor columns remain inaccessible while operational columns st
     assert.ok(!new RegExp("GRANT SELECT \\([^)]*\\b" + column + "\\b[^)]*\\) ON TABLE public\\." + table).test(migration), "Restricted owner column must not be granted: " + table + "." + column);
   }
 });
+
+
+test("Admin operation creation is a dedicated modal with project scope and team assignment", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="operationCreateModal"/);
+  assert.match(admin, /id="sessionProject"/);
+  assert.match(admin, /id="sessionTeam"[^>]*multiple/);
+  assert.match(admin, /async function openOperationCreateModal\(\)/);
+  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
+  assert.match(admin, /from\('count_assignments'\)\.upsert\(assignmentRows,\{onConflict:'session_id,member_id,location_id'\}\)/);
+  assert.match(admin, /branch_location_id:\$\('sessionBranch'\)\.value\|\|null/);
+  assert.doesNotMatch(admin, /newOperationButton'\)\.onclick=\(\)=>\{[\s\S]{0,300}sessionForm'\)\.scrollIntoView/);
+  assert.equal((admin.match(/id="sessionForm"/g) || []).length, 1);
+  assert.equal((admin.match(/id="sessionTable"/g) || []).length, 1);
+});
+
+test("Admin overview uses live operation analytics and user-visible filters, without sample KPI data", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /from\('count_operation_overview'\)/);
+  assert.match(admin, /async function loadAdminOverview\(\)/);
+  assert.match(admin, /function renderAdminOverview\(\)/);
+  for (const id of ["overviewProjectFilter", "overviewStatusFilter", "overviewFrom", "overviewTo", "overviewTotalOperations", "overviewEntryEvents", "overviewCoverage", "overviewStatusChart", "overviewPerformanceChart"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing overview element: " + id);
+  }
+  assert.match(admin, /loadAdminOverview\(\)\.catch/);
+});
+
+test("Global catalogue keeps stable products and exposes owner-only edit and deactivate rather than delete", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="globalProductId"/);
+  assert.match(admin, /data-edit-catalog=/);
+  assert.match(admin, /data-catalog-state=/);
+  assert.match(admin, /async function toggleCatalogProduct\(id\)/);
+  assert.match(admin, /is_active:!p\.is_active/);
+  assert.match(admin, /ستظل بياناته وروابطه التاريخية محفوظة/);
+  assert.doesNotMatch(admin, /from\('count_catalog_products'\)\.delete/);
+});
+
+test("Admin roles and memberships have search, usage metrics, system-role read-only and scope filters", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="systemRoleList"/);
+  assert.match(admin, /id="customRoleSearch"/);
+  assert.match(admin, /data-clone-custom-role=/);
+  assert.match(admin, /نظامي — للقراءة فقط/);
+  assert.match(admin, /لا يمكن حذف الدور لأنه مرتبط بعضوية واحدة أو أكثر/);
+  for (const id of ["memberTotalCount", "memberActiveCount", "memberPausedCount", "memberProjectFilter", "memberStatusFilter"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing membership management element: " + id);
+  }
+});
+
+test("Platform owner-only client administration, licensing and audit remain hidden as complete navigation surfaces", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /<section id="tab-clients" class="section" data-owner-only>/);
+  assert.match(admin, /<section id="tab-license" class="section" data-owner-only>/);
+  assert.match(admin, /<div class="nav-group" data-owner-only>/);
+  assert.match(admin, /data-tab="license"[^>]*data-owner-only/);
+  assert.match(admin, /قائمة البريد أدناه مخصصة للإشعارات فقط/);
+});
+
+test("Admin keeps operation register, per-file sessions, project catalog and global catalogue as distinct scopes", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /سجل عمليات الجرد — جميع ملفات التكليف/);
+  assert.match(admin, /جلسات الجرد داخل ملف التكليف المحدد/);
+  assert.match(admin, /قاعدة الأصناف العالمية/);
+  assert.match(admin, /كتالوج أصناف الجهة \/ التكليف/);
+  assert.match(admin, /id="sideToggle"/);
+});
