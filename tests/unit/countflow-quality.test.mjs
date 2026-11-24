@@ -602,18 +602,23 @@ test("Client Balance workbook image anchors and right-to-left layout reference t
 });
 
 
-test("Admin bootstrap requires the confirmed platform owner, not a supervisor membership", () => {
+test("Admin bootstrap isolates the confirmed platform owner from scoped client administrators", () => {
   const admin = read("countflow-admin.html");
-  assert.match(admin, /function isPlatformOwner\(user\)/);
-  assert.match(admin, /toLowerCase\(\)==='owner@rawaea\.com'&&Boolean\(user\?\.email_confirmed_at\)/);
+  assert.match(admin, /function isPlatformOwner\\(user\\)/);
+  assert.match(admin, /toLowerCase\\(\\)==='owner@rawaea\\.com'&&Boolean\\(user\\?\\.email_confirmed_at\\)/);
   const start = admin.indexOf("async function bootstrap()");
-  const end = admin.indexOf("\n }", start);
+  const end = admin.indexOf("\\n }", start);
   assert.ok(start >= 0 && end > start);
   const bootstrap = admin.slice(start, end);
-  assert.match(bootstrap, /db\.auth\.getUser\(\)/);
-  assert.match(bootstrap, /if\(!isPlatformOwner\(state\.user\)\)/);
-  assert.match(bootstrap, /db\.auth\.signOut\(\)/);
-  assert.doesNotMatch(bootstrap, /role==='supervisor'|status==='active'/);
+  assert.match(bootstrap, /db\\.auth\\.getUser\\(\\)/);
+  assert.match(bootstrap, /state\\.platformOwner=isPlatformOwner\\(state\\.user\\)/);
+  assert.match(bootstrap, /if\\(state\\.platformOwner\\)/);
+  assert.match(bootstrap, /from\\('count_client_members'\\)/);
+  assert.match(bootstrap, /count_roles\\(role_key,scope\\)/);
+  assert.match(bootstrap, /count_has_client_permission/);
+  assert.match(bootstrap, /client\\.read/);
+  assert.match(bootstrap, /db\\.auth\\.signOut\\(\\)/);
+  assert.doesNotMatch(bootstrap, /platform\\.license\\.manage/);
 });
 
 test("Admin operations keep the institution name and engagement code visible", () => {
@@ -663,7 +668,7 @@ test("Admin can reuse an existing confirmed Auth account without requesting or c
   assert.match(admin, /دون تغيير كلمة مروره/);
   assert.match(admin, /error\.context\?\.clone\?\.\(\)\.json\(\)/);
   const provision = read("functions/counting-provision-member/index.ts");
-  assert.match(provision, /if \(password.length < 10\) return reply\(\{ error: "PASSWORD_REQUIRED_FOR_NEW_ACCOUNT" \}/);
+  assert.match(provision, /if \(password.length < 10\) throw new Error\(\{ error: "PASSWORD_REQUIRED_FOR_NEW_ACCOUNT" \}/);
   assert.match(provision, /existing_password_changed: false/);
   assert.match(provision, /if \(!authUser.email_confirmed_at\)/);
 });
@@ -828,7 +833,7 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
 test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 10);
+  assert.equal(navTabs.length, 12);
   assert.equal(new Set(navTabs).size, 10);
   assert.match(admin, /class="nav-group"/);
   assert.match(admin, /class="nav-group-title"/);
@@ -908,8 +913,9 @@ test("Supervisor live rows open a paginated, filtered, read-only count detail vi
 test("Admin exposes a separate new-operation action and keeps client catalogue separate from sessions", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 10);
+  assert.equal(navTabs.length, 12);
   assert.ok(navTabs.includes("projects") && navTabs.includes("sessions") && navTabs.includes("operations"));
+  assert.ok(navTabs.includes("clients") && navTabs.includes("catalog"));
   assert.ok(admin.includes('id="newOperationButton"'), "Missing dedicated create-operation action");
   assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{/);
   assert.match(admin, /activateTab\('sessions'\)/);
