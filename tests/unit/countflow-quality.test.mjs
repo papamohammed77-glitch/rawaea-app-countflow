@@ -918,3 +918,58 @@ test("Admin exposes a separate new-operation action and keeps client catalogue s
   assert.ok(admin.includes("لا تُحذف أصنافه عند إغلاق أي جلسة جرد"), "Catalogue persistence rule must be explicit");
   assert.ok(admin.includes("ملف الجهة؛ تبقى الأصناف والمواقع والمستخدمون محفوظة لإعادة الاستخدام"));
 });
+
+test("Control requires an active auditor membership and is strictly read-only", () => {
+  const control = read("countflow-control.html");
+  assert.match(control, /eq\('role','auditor'\)\.eq\('status','active'\)/);
+  assert.match(control, /async function acceptUser\(user\)/);
+  assert.ok(control.includes("countflow:project:"+ "'+project.id"), "Control must subscribe only to its authorized project topic");
+  assert.ok(control.includes("countflow:session:"+ "'+id"), "Control must subscribe to the selected session topic");
+  assert.ok(control.includes("config:{private:true}"), "Control realtime channels must be private");
+  assert.ok(control.includes("count_control_reconciliation_runs"), "Control must read the safe reconciliation run projection");
+  assert.ok(control.includes("count_control_reconciliation_lines"), "Control must read paginated reconciliation detail");
+  assert.ok(control.includes("from('counting-evidence').createSignedUrls(paths,3600)"), "Evidence must use expiring private signed URLs");
+  assert.ok(control.includes("from('counting-product-images').createSignedUrls(productPaths,3600)"), "Product images must use private signed URLs");
+  assert.match(control, /\.range\(from,from\+state\.pageSize-1\)/);
+  assert.doesNotMatch(control, /\.from\([^)]*\)\.(?:insert|update|upsert|delete)\(/, "Control must not write to CountFlow tables");
+  assert.doesNotMatch(control, /count_audit_log|count_exports|count_platform_settings/, "Control must not read owner administration or license data");
+});
+
+test("Control portal, Pages build, and Service Worker include the separate reviewer app", () => {
+  const portal = read("index.html");
+  const build = read("scripts/build-pages.sh");
+  const sw = read("countflow-sw.js");
+  assert.ok(portal.includes('href="./countflow-admin.html"'));
+  assert.ok(portal.includes('href="./Countflow-supervisor.html"'));
+  assert.ok(portal.includes('href="./countflow.html"'));
+  assert.ok(portal.includes('href="./countflow-control.html"'));
+  assert.ok(build.includes('"$SCRIPT_DIR/countflow-control.html"'), "Pages build must publish Control");
+  assert.ok(build.includes("Countflow-supervisor.html countflow-control.html countflow-core.js"));
+  assert.ok(sw.includes("'./countflow-control.html'"), "Service Worker shell must precache Control");
+  assert.ok(sw.includes("countflow-sw-20261124-1"), "Service Worker cache must be versioned");
+});
+
+test("Control reconciliation views omit owner identity and are gated by active project authorization", () => {
+  const migration = read("database/migrations/20261124182600_countflow_control_safe_reconciliation_views_and_owner_realtime_redaction_v1.sql");
+  const runsView = migration.slice(migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_runs"), migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_lines"));
+  const linesView = migration.slice(migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_lines"), migration.indexOf("REVOKE ALL ON public.count_control_reconciliation_runs"));
+  assert.match(runsView, /counting_private\.is_auditor\(project_id\)/);
+  assert.match(linesView, /counting_private\.is_auditor\(project_id\)/);
+  assert.doesNotMatch(runsView, /created_by|approved_by/);
+  assert.doesNotMatch(linesView, /created_by|approved_by/);
+  assert.ok(migration.includes("v_session_new.created_by:=NULL"));
+  assert.ok(migration.includes("v_run_new.approved_by:=NULL"));
+  assert.ok(migration.includes("v_run_new.metadata:='{}'::jsonb"));
+  assert.ok(migration.includes("v_alert_new.acknowledged_by:=NULL"));
+  assert.ok(migration.includes("v_recount_new.reviewed_by:=NULL"));
+});
+
+test("Auditor evidence storage remains private and grants read only to registered project evidence", () => {
+  const migration = read("database/migrations/20261124182400_countflow_auditor_evidence_read_v1.sql");
+  assert.ok(migration.includes("bucket_id = 'counting-evidence'"));
+  assert.ok(migration.includes("counting_private.is_platform_owner()"));
+  assert.ok(migration.includes("counting_private.is_auditor"));
+  assert.ok(migration.includes("FROM public.count_entry_images"));
+  assert.ok(migration.includes("NOT counting_private.is_platform_owner_actor(i.uploaded_by)"));
+  assert.doesNotMatch(migration, /CREATE POLICY|FOR INSERT|FOR UPDATE|FOR DELETE/);
+});
