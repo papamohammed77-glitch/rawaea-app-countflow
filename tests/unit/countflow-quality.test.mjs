@@ -895,5 +895,12 @@ test("Supervisor live rows open a paginated, filtered, read-only count detail vi
   assert.ok(supervisor.includes("createSignedUrls(paths,3600)"), "Evidence links must use temporary signed URLs");
   assert.ok(supervisor.includes("row?.product_id===entryDetailState.productId"), "Realtime events for the open product must refresh the detail table");
   assert.ok(supervisor.includes("entryDetailNext"), "Detail pagination must expose a next-page control");
+
+  assert.ok(supervisor.includes("requestToken!==entryDetailState.requestToken"), "Newer filter results must supersede stale responses");
+  assert.ok(supervisor.includes("entryDetailSearchTimer=setTimeout"), "Detail search must debounce input");
+  assert.match(supervisor, /font-awesome\/7\.3\.1\/css\/all\.min\.css/);
+  assert.match(supervisor, /sweetalert2@11\.26\.25\/dist\/sweetalert2\.all\.min\.js/);
+  assert.match(supervisor, /async function confirmSupervisorAction\(/);
+  assert.ok(supervisor.includes("confirmButtonColor:'#dc2626'"), "Supervisor confirmations must be red and explicit");
   assert.doesNotMatch(supervisor, /confirm\(/, "Read-only drilldown must not trigger native mutation confirmations");
 });
