@@ -334,7 +334,7 @@ BEGIN
     END IF;
   ELSIF TG_TABLE_NAME='count_locations' THEN
     v_project_id := coalesce(NEW.project_id,OLD.project_id);
-    PERFORM realtime.broadcast_changes('countflow:project:'||v_project_id::text,TG_OP,TG_OP,TG_TABLE_NAME,TG_SCHEMA,NEW,OLD);
+    PERFORM realtime.broadcast_changes('countflow:project:'||v_project_id::text,TG_OP,TG_OP,TG_TABLE_NAME,TG_TABLE_SCHEMA,NEW,OLD);
     FOR m IN SELECT id FROM public.count_members WHERE project_id=v_project_id AND status IN ('active','paused') LOOP
       PERFORM realtime.broadcast_changes('countflow:member:'||m.id::text,TG_OP,TG_OP,TG_TABLE_NAME,TG_TABLE_SCHEMA,NEW,OLD);
     END LOOP;
@@ -354,7 +354,7 @@ BEGIN
     IF TG_TABLE_NAME='count_recount_tasks' THEN
       v_member_id := coalesce(NEW.assigned_member_id,OLD.assigned_member_id);
       IF v_member_id IS NOT NULL THEN
-        PERFORM realtime.broadcast_changes('countflow:member:'||v_member_id::text,TG_OP,TG_OP,TG_TABLE_NAME,TG_SCHEMA,NEW,OLD);
+        PERFORM realtime.broadcast_changes('countflow:member:'||v_member_id::text,TG_OP,TG_OP,TG_TABLE_NAME,TG_TABLE_SCHEMA,NEW,OLD);
       END IF;
     END IF;
   END IF;
