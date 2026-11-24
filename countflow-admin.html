@@ -2100,6 +2100,9 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
   try{
    const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
    const selectedMemberIds=[...$('sessionTeam').selectedOptions].map(o=>o.value).filter(Boolean);
+   const startValue=$('sessionStart').value,endValue=$('sessionEnd').value;
+   if(endValue&&!startValue)throw new Error('حدد بداية العملية قبل تحديد نهايتها.');
+   if(startValue&&endValue&&new Date(endValue)<=new Date(startValue))throw new Error('وقت نهاية العملية يجب أن يكون بعد وقت البداية.');
    const {data,error}=await db.from('count_sessions').insert({
     project_id:project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id,
     operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
