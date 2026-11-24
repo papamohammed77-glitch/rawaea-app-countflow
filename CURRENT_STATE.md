@@ -9,7 +9,8 @@
 **Source/test commit:** `fe2d0d8608a48ed361a03c8901f597c9c9f265da`  
 **Admin source blob:** `e6b517d7d5e4937eb76a4a0e70e3aa4fae99a90a`  
 **Unit test blob:** `4dbc224a900e6125d64286dc6e76a7b785fede35`  
-**Status:** Source and regression test pushed to the working branch. Pull request and remote CI are the next gate. No merge to main, deployment, or Supabase write was performed.
+**Status:** PR #7 is OPEN on `work/lve-765-admin-ui-surgical`. Source correction is pushed; remote CI rerun is pending. No merge to main, production deployment, or Supabase write was performed.
+**PR:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/7
 
 ### Scope and surgical change set
 
@@ -31,7 +32,7 @@ Only `countflow-admin.html` and `tests/unit/countflow-quality.test.mjs` changed 
 - **PASS:** test suite source contains 42 unit tests (41 existing + one Admin UI regression test).
 - **CI attempt 45298898309:** Deno type-check **PASS**; the Admin UI regression test **PASS**; 41 of 42 unit tests passed. Existing test 13 failed because the skeleton-loader refactor removed the explicit safe Arabic audit-load error message. Cloudflare Pages PR check **PASS**.
 - **Correction commit:** `649ab8019df506de6a15dab1cfc0176aa07f3bd5` restored the established audit-load error message without exposing raw database errors. Updated Admin source blob: `e3be1be5660b0f5cee98497083d0e8032a347d6d`. The code fix was JavaScript-parsed successfully.
-- **PENDING:** rerun full CI on the updated PR head: `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright.
+- **PENDING:** rerun full CI on the latest PR head after the audit-message correction: `node --test tests/unit/countflow-quality.test.mjs`, Deno checks, Pages build, and Playwright. The first workflow run was triggered before the correction commit.
 - **OPEN:** interactive visual/browser verification, responsive device review, and signed-in destructive-action E2E have not been performed. No visual PASS is claimed.
 
 - **PASS:** all inline JavaScript in `countflow-admin.html` parsed with the local V8 JavaScript parser.
