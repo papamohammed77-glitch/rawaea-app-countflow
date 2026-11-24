@@ -9,7 +9,7 @@ USING (
       AND ((storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$')
       AND ((storage.foldername(name))[3] ~* '^[0-9a-f-]{36}$')
     ) THEN (
-      counting_private.is_platform_owner(((storage.foldername(name))[1])::uuid)
+      counting_private.is_platform_owner()
       OR (
         EXISTS (
           SELECT 1
