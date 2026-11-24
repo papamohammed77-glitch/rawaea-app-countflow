@@ -1118,3 +1118,24 @@ test("Admin script declarations remain syntactically unique after UI refactors",
   assert.doesNotMatch(admin, /function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*function\s+\1/);
   assert.doesNotMatch(admin, /async\s+function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*async\s+function\s+\1/);
 });
+
+test("Admin member role reassignment requires the database team-management permission and protects the last supervisor", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /rpc\('count_can_manage_project_members'/);
+  assert.match(admin, /state\.memberManageProjects=new Set\(permissionChecks\.filter/);
+  assert.match(admin, /data-save-member-role=/);
+  assert.match(admin, /async function saveMemberRole\(memberId\)/);
+  assert.match(admin, /state\.memberManageProjects\?\.has\(member\.project_id\)/);
+  assert.match(admin, /count_members'\)\.update\(\{role:role\.role_key,role_id:role\.id\}\)/);
+  assert.match(admin, /لا يمكن تغيير دور آخر مشرف نشط/);
+  assert.match(admin, /لا يمكن تغيير دور حسابك الحالي/);
+});
+
+test("Platform owner custom-role scope is explicitly selected and client administrators remain client-bound", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="roleClientScope"/);
+  assert.match(admin, /state\.platformOwner\?state\.roleClientId:state\.clientId/);
+  assert.match(admin, /roleClientScope'\)\.addEventListener\('change'/);
+  assert.match(admin, /roleClientScope'\)\.value=x\.data\.id/);
+  assert.match(admin, /r\.client_id===\(state\.roleClientId\|\|state\.clientId\)/);
+});
