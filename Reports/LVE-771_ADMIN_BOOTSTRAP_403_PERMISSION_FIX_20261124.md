@@ -205,12 +205,24 @@ id,name,code,status,created_at
 - Run ID: `45481534540`
 - URL: https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45481534540
 
-حالة التشغيل عند آخر فحص: **IN_PROGRESS**. اجتازت خطوات تهيئة الوظيفة وبدأ `setup-node`; لم يكن الاستنتاج النهائي للـworkflow قد صدر بعد. لا يُسجل هذا التقرير أن CI ناجح قبل أن يظهر `completed / success`.
+النتيجة النهائية: **COMPLETED / SUCCESS** على الرأس `c7172128a5426cf904790ff95473d27cdb889a47`.
+
+تفصيل نتائج التشغيل:
+- Node test suite: **42/42 PASS**، بما فيها اختبار منع إعادة إدراج `created_by` في استعلام Admin.
+- Deno type-check: PASS.
+- Allowlisted Cloudflare Pages build: PASS.
+- Playwright production login shell: **3/3 PASS**:
+  1. نشر Cloudflare Pages يطابق رأس `main` المتوقع `c7172128a5426cf904790ff95473d27cdb889a47`.
+  2. شاشة الدخول العامة تعرض RTL على عرض الهاتف دون جلسة مصادقة.
+  3. شاشة الدخول العامة تعمل دون جلسة مصادقة.
+- التشغيل: https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45481868275
+
+اجتياز اختبار Pages parity يؤكد أن النسخة المستضافة وقت الاختبار كانت على رأس `main` الذي يتضمن إزالة `created_by` وتحديث إصدار Service Worker. اختبار Playwright هنا يثبت shell العام وتطابق المصدر، وليس تسجيل دخول تفاعلي ببيانات مالك حقيقية؛ صلاحية استعلام المشاريع بعد المصادقة تم إثباتها منفصلة بمحاكاة JWT في قاعدة البيانات.
 
 ## 7. حدود التحقق المتبقية
 
-- تم التحقق من SQL وRLS بالهوية المحددة، لكن لم يتم تنفيذ تسجيل دخول بصري داخل متصفح المستخدم أو التقاط Console بعد النشر.
-- لم يتوفر تأكيد من Cloudflare Pages على اكتمال نشر commit `41c2b5c`؛ GitHub Actions الخاص بالجودة لا يثبت وحده اكتمال نشر Pages.
+- لم يتم إدخال كلمة مرور المالك وتنفيذ جلسة دخول تفاعلية في متصفح المستخدم. تحقق Playwright من صفحة الدخول العامة وتطابق Pages، بينما تحقق SQL/JWT أثبت السماح بالاستعلام المقيد بعد المصادقة.
+- تم إثبات نشر Pages ومطابقة SHA عبر Playwright في run `45481868275`; لا تزال إعادة الدخول يدوياً من جلسة المالك في متصفح المستخدم فحص قبول نهائياً اختيارياً، وليست شرطاً لإثبات إزالة سبب 403.
 - إذا استمر ظهور request القديم بعد اكتمال النشر، يجب التأكد من أن الصفحة تقدم build الجديد ثم إعادة تحميل التطبيق بعد تفعيل Service Worker الجديد. لا ينبغي منح `created_by` أو table-wide SELECT كحل التفافي.
 
 ## 8. الأثر الأمني والتشغيلي
@@ -231,4 +243,4 @@ id,name,code,status,created_at
 | `countflow-sw.js` | رفع cache build version لإبطال Admin shell القديم | `41c2b5c` |
 
 **الفرع:** `main`  
-**الحالة الهندسية:** الإصلاح البرمجي وأساس تحقق SQL مكتملان؛ إغلاق النشر ونجاح CI والتحقق البصري من جلسة المتصفح تبقى بوابات إثبات قبل إعلان الإغلاق النهائي.
+**الحالة الهندسية:** **CLOSED — Root cause removed, least-privilege preserved, SQL/JWT check PASS, CI PASS, Cloudflare Pages SHA parity PASS, production login-shell Playwright 3/3 PASS.** لا تُسجل مصادقة يدوية ببيانات المالك على أنها نُفذت.
