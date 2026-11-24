@@ -10,7 +10,7 @@
 **Last mainline content commit before this documentation refresh:** `5ed708a249d8b11bf7c43fcea9cde0724fbc0a4d` (no Admin/test code changes after the checked source/test blobs)  
 **Admin blob:** `eeb8edd33e0325400baba19a3d71f4dee3f5dcc2`  
 **Unit test blob:** `580f16511e8e4377e11330cc84c4734da141f6bb`  
-**Formal report blob:** `0afb9444bdaf0879f6fd3e08d351bcfef3dd820f`  
+**Formal report blob:** `a13f87323d5432b0971f8a0e0f5996652e3b8fbb`  
 **Detailed report:** `Reports/FINAL_EXECUTION_REPORT_LVE-765.md`
 
 ### Scope and completed work
