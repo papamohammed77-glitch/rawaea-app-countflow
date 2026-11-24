@@ -541,7 +541,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
   $('memberTable').querySelectorAll('[data-member-reset-password]').forEach(b=>b.onclick=()=>openMemberPasswordDialog(b.dataset.memberResetPassword));
  }
- function roleName( function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
+ function roleName(r,id=null){return state.roleMap.get(id)?.name||({supervisor:'مشرف الجرد',counter:'مندوب الجرد',auditor:'مراجع / مدقق',custom:'دور مخصص'})[r]||'عضو';}
  function renderRoles(){
   const q=($('roleSearch')?.value||'').trim().toLowerCase();
   const rows=(state.allMembers||[]).filter(m=>{const p=state.projects.find(v=>v.id===m.project_id);return [m.display_name,m.username,m.role,roleName(m.role,m.role_id),p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));});
