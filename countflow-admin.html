@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="manifest" href="./manifest.webmanifest"><title>CountFlow | النظام الأم</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="./countflow-core.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css"><link rel="manifest" href="./manifest.webmanifest"><title>CountFlow | النظام الأم</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script><script src="./countflow-core.js"></script>
 <style>
 :root{--navy:#111827;--teal:#2563eb;--mint:#eff6ff;--ink:#111827;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--red:#dc2626;--amber:#b45309;--green:#059669;--shadow:0 8px 30px rgba(15,23,42,.05)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Cairo",system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{border:0;border-radius:12px;padding:11px 15px;font-weight:750;cursor:pointer;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}button:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.primary{background:var(--teal);color:#fff}.dark{background:var(--navy);color:#fff}.soft{background:var(--mint);color:var(--teal)}.danger{background:#fff0f0;color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}.wrap{max-width:1500px;margin:auto;padding:20px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px}.side,.panel,.stat,.auth-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}.side{padding:12px;height:max-content;position:sticky;top:14px}.nav{width:100%;text-align:right;background:transparent;color:var(--ink);margin:3px 0}.nav.active{background:var(--mint);color:var(--teal)}.content{min-width:0}.headrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 15px}.headrow h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.stat{padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;margin-top:7px;font-variant-numeric:tabular-nums}.panel{padding:17px;margin-bottom:14px;min-width:0}.panel h3{margin:0 0 13px;font-size:16px}.split{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}th{color:var(--muted);font-weight:750;background:#fafcfd}td .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.pill{display:inline-block;border-radius:99px;padding:4px 9px;background:#eef3f5;font-size:11px}.pill.ok{background:#e7f5ef;color:var(--green)}.pill.warn{background:#fff4df;color:var(--amber)}.pill.off{background:#fceced;color:var(--red)}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:9px 11px;border:1px solid var(--line);border-radius:10px;min-width:200px}.empty{padding:22px;text-align:center;color:var(--muted)}.toast{position:fixed;bottom:18px;left:18px;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;max-width:min(500px,calc(100vw - 36px));box-shadow:var(--shadow)}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(430px,100%);padding:25px}.auth-card h2{margin:0 0 5px}.auth-card p{color:var(--muted);font-size:13px;line-height:1.7}.auth-card .field{margin:13px 0}.auth-card button{width:100%;margin-top:7px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.link{color:var(--teal);text-decoration:none;font-weight:700}.section{display:none}.section.active{display:block}.statusline{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.grow{flex:1;min-width:0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Cairo",system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{border:0;border-radius:12px;padding:11px 15px;font-weight:750;cursor:pointer;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}button:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.primary{background:var(--teal);color:#fff}.dark{background:var(--navy);color:#fff}.soft{background:var(--mint);color:var(--teal)}.danger{background:#fff0f0;color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}.wrap{max-width:1500px;margin:auto;padding:20px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px}.side,.panel,.stat,.auth-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}.side{padding:12px;height:max-content;position:sticky;top:14px}.nav-group{display:grid;gap:3px;margin:0 0 10px}.nav-group:last-of-type{margin-bottom:4px}.nav-group-title{padding:8px 10px 3px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.02em}.nav{width:100%;display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:42px;text-align:right;background:transparent;color:var(--ink);margin:1px 0;padding:10px 12px}.nav.active{background:var(--mint);color:var(--teal)}.cf-button-icon{width:1.1em;flex:0 0 1.1em;text-align:center;font-size:.95em;line-height:1}.nav .cf-button-icon{color:var(--muted)}.nav.active .cf-button-icon{color:var(--teal)}button.has-icon{display:inline-flex;align-items:center;justify-content:center;gap:8px}.nav.has-icon{justify-content:flex-start}.nav-group-title{user-select:none}.content{min-width:0}.headrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 15px}.headrow h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.stat{padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;margin-top:7px;font-variant-numeric:tabular-nums}.panel{padding:17px;margin-bottom:14px;min-width:0}.panel h3{margin:0 0 13px;font-size:16px}.split{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tablewrap{overflow:auto;max-height:min(68vh,760px);overscroll-behavior:contain}table{width:100%;border-collapse:separate;border-spacing:0;min-width:650px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}th{color:var(--muted);font-weight:750;background:#fafcfd}.tablewrap thead th{position:sticky;top:0;z-index:8;background:#f8fafc;box-shadow:0 1px 0 var(--line)}.tablewrap table{isolation:isolate}.cf-skeleton-table{width:100%;min-width:650px;table-layout:fixed}.cf-skeleton-table th,.cf-skeleton-table td{padding:13px 10px}.cf-skeleton-line{display:block;width:var(--skeleton-width,70%);height:12px;border-radius:999px;background:linear-gradient(90deg,#edf1f5 25%,#f8fafc 42%,#edf1f5 63%);background-size:400% 100%;animation:cf-skeleton-shimmer 1.35s ease-in-out infinite}.cf-skeleton-table th .cf-skeleton-line{height:10px;width:74%}@keyframes cf-skeleton-shimmer{0%{background-position:100% 0}100%{background-position:0 0}}@media(prefers-reduced-motion:reduce){.cf-skeleton-line{animation:none}}.cf-swal-popup{font-family:"Cairo",system-ui,sans-serif!important;direction:rtl}.cf-swal-popup .swal2-html-container{line-height:1.8}td .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.pill{display:inline-block;border-radius:99px;padding:4px 9px;background:#eef3f5;font-size:11px}.pill.ok{background:#e7f5ef;color:var(--green)}.pill.warn{background:#fff4df;color:var(--amber)}.pill.off{background:#fceced;color:var(--red)}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:9px 11px;border:1px solid var(--line);border-radius:10px;min-width:200px}.empty{padding:22px;text-align:center;color:var(--muted)}.toast{position:fixed;bottom:18px;left:18px;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;max-width:min(500px,calc(100vw - 36px));box-shadow:var(--shadow)}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(430px,100%);padding:25px}.auth-card h2{margin:0 0 5px}.auth-card p{color:var(--muted);font-size:13px;line-height:1.7}.auth-card .field{margin:13px 0}.auth-card button{width:100%;margin-top:7px}.hint{font-size:12px;color:var(--muted);line-height:1.7}.link{color:var(--teal);text-decoration:none;font-weight:700}.section{display:none}.section.active{display:block}.statusline{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.grow{flex:1;min-width:0}
 .product-thumb{display:block}.product-image-link{display:inline-flex;line-height:0;border-radius:13px;text-decoration:none;cursor:zoom-in}.product-image-link:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}.product-image-placeholder{width:52px;height:52px;flex:0 0 52px;border-radius:13px;border:1px solid var(--line);background:#f1f5f9;object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:10px;text-align:center;overflow:hidden}
 .product-image-preview{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#f8fafc}
 .product-image-preview img{width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:#fff}
@@ -20,7 +20,7 @@
 .dialog-card .field{margin:13px 0}
 .dialog-card input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px}
 .operation-client{display:grid;gap:2px;min-width:140px}
-@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:12px}.layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow:auto;gap:5px;padding:7px}.nav{white-space:nowrap;width:auto}.top{align-items:flex-start}.brand h1{font-size:17px}.grid{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.headrow h2{font-size:18px}}
+@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:12px}.layout{grid-template-columns:1fr}.side{position:static;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;gap:10px;padding:9px;scroll-snap-type:x proximity}.nav-group{flex:0 0 auto;min-width:148px;padding:0 5px;border-inline-end:1px solid var(--line);scroll-snap-align:start}.nav-group-title{padding:5px 8px 2px}.nav{white-space:nowrap;width:100%;font-size:12px;min-height:38px;padding:8px 9px}.top{align-items:flex-start}.brand h1{font-size:17px}.grid{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.headrow h2{font-size:18px}}
 </style>
 </head>
 <body>
@@ -45,17 +45,32 @@
    <div class="top-actions"><span id="identity" class="statusline"></span><button id="refreshBtn" class="soft">تحديث البيانات</button><button id="logoutBtn" class="dark">خروج</button></div>
   </header>
   <div class="layout">
-   <aside class="side">
-    <button class="nav active" data-tab="overview">نظرة عامة</button>
-    <button class="nav" data-tab="projects">مشاريع الجرد</button>
-    <button class="nav" data-tab="products">الأصناف</button>
-    <button class="nav" data-tab="members">المستخدمون</button>
-    <button class="nav" data-tab="roles">إدارة أدوار المستخدمين</button>
-    <button class="nav" data-tab="operations">عمليات الجرد القائمة</button>
-    <button class="nav" data-tab="locations">المواقع</button>
-    <button class="nav" data-tab="sessions">جلسات الجرد</button>
-    <button class="nav" data-tab="license">إدارة التراخيص</button>
-    <button class="nav" data-tab="audit">سجل التدقيق</button>
+   <aside class="side" aria-label="التنقل الرئيسي">
+    <div class="nav-group">
+     <div class="nav-group-title">الرئيسية</div>
+     <button class="nav active" data-tab="overview" data-icon="gauge-high">نظرة عامة</button>
+    </div>
+    <div class="nav-group">
+     <div class="nav-group-title">العمليات والتكليفات</div>
+     <button class="nav" data-tab="projects" data-icon="folder-open">مشاريع الجرد</button>
+     <button class="nav" data-tab="operations" data-icon="clipboard-list">عمليات الجرد القائمة</button>
+     <button class="nav" data-tab="sessions" data-icon="calendar-check">جلسات الجرد</button>
+    </div>
+    <div class="nav-group">
+     <div class="nav-group-title">البيانات المرجعية</div>
+     <button class="nav" data-tab="products" data-icon="boxes-stacked">الأصناف</button>
+     <button class="nav" data-tab="locations" data-icon="location-dot">المواقع</button>
+    </div>
+    <div class="nav-group">
+     <div class="nav-group-title">الفريق والصلاحيات</div>
+     <button class="nav" data-tab="members" data-icon="users">المستخدمون</button>
+     <button class="nav" data-tab="roles" data-icon="user-shield">إدارة أدوار المستخدمين</button>
+    </div>
+    <div class="nav-group">
+     <div class="nav-group-title">الحوكمة والرقابة</div>
+     <button class="nav" data-tab="license" data-icon="id-card">إدارة التراخيص</button>
+     <button class="nav" data-tab="audit" data-icon="shield-halved">سجل التدقيق</button>
+    </div>
     <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:12px">
      <div class="field"><label for="projectPicker">جهة الجرد الحالية</label><select id="projectPicker"></select></div>
      <p class="hint">كل تكليف جرد مستقل بفريقه وبياناته؛ ويمكن تنفيذ تكليف جديد للجهة نفسها دون دمج بياناته مع أي تكليف سابق.</p>
@@ -260,6 +275,49 @@
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
+ let tableSkeletonSequence=0;
+ function renderTableSkeleton(targetId,rowCount=5,columnCount=5){
+  const host=$(targetId);if(!host)return null;
+  const token=String(++tableSkeletonSequence);host.dataset.cfSkeletonToken=token;host.setAttribute('aria-busy','true');
+  const headers=Array.from({length:columnCount},()=>'<th><span class="cf-skeleton-line"></span></th>').join('');
+  const body=Array.from({length:rowCount},(_,row)=>'<tr>'+Array.from({length:columnCount},(_,column)=>{const width=48+((row*17+column*23)%43);return '<td><span class="cf-skeleton-line" style="--skeleton-width:'+width+'%"></span></td>';}).join('')+'</tr>').join('');
+  host.innerHTML='<table class="cf-skeleton-table" role="presentation" aria-hidden="true"><thead><tr>'+headers+'</tr></thead><tbody>'+body+'</tbody></table>';
+  return token;
+ }
+ function finishTableSkeleton(targetId,token,failed=false){
+  const host=$(targetId);if(!host||!token||host.dataset.cfSkeletonToken!==token)return;
+  host.removeAttribute('aria-busy');delete host.dataset.cfSkeletonToken;
+  if(host.querySelector('.cf-skeleton-table'))host.innerHTML=failed?'<div class="empty" role="status">تعذر تحميل البيانات. حاول تحديث الجدول.</div>':'<div class="empty" role="status">لا توجد بيانات للعرض.</div>';
+ }
+ async function withTableSkeletons(targets,loader){
+  const active=targets.map(([id,rows,columns])=>({id,token:renderTableSkeleton(id,rows,columns)}));
+  try{return await loader();}
+  catch(error){for(const item of active)finishTableSkeleton(item.id,item.token,true);throw error;}
+  finally{for(const item of active)finishTableSkeleton(item.id,item.token,false);}
+ }
+ async function confirmAction(message,options={}){
+  if(!window.Swal||typeof window.Swal.fire!=='function'){notify('تعذر تحميل نافذة التأكيد الآمنة؛ لم يتم تنفيذ الإجراء.',true);return false;}
+  const result=await window.Swal.fire({
+   icon:options.icon||'warning',title:options.title||'تأكيد الإجراء',text:String(message||'هل تريد متابعة هذا الإجراء؟'),
+   showCancelButton:true,confirmButtonText:options.confirmText||'تأكيد',cancelButtonText:'إلغاء',
+   confirmButtonColor:'#dc2626',cancelButtonColor:'#64748b',reverseButtons:true,focusCancel:true,
+   allowOutsideClick:false,allowEscapeKey:true,customClass:{popup:'cf-swal-popup'}
+  });
+  return result.isConfirmed===true;
+ }
+ async function promptReason(message,options={}){
+  if(!window.Swal||typeof window.Swal.fire!=='function'){notify('تعذر تحميل نافذة إدخال السبب؛ لم يتم تنفيذ الإجراء.',true);return null;}
+  const result=await window.Swal.fire({
+   icon:'warning',title:options.title||'سبب الإجراء',text:String(message||'اكتب سبباً موثقاً للمتابعة.'),
+   input:'textarea',inputPlaceholder:'اكتب السبب هنا (10 أحرف على الأقل)',inputAttributes:{'aria-label':options.title||'سبب الإجراء','maxlength':'1000','rows':'4'},
+   showCancelButton:true,confirmButtonText:options.confirmText||'متابعة',cancelButtonText:'إلغاء',
+   confirmButtonColor:'#dc2626',cancelButtonColor:'#64748b',reverseButtons:true,focusCancel:true,
+   allowOutsideClick:false,allowEscapeKey:true,customClass:{popup:'cf-swal-popup'},
+   inputValidator:value=>String(value||'').trim().length<10?'سبب الإجراء يجب ألا يقل عن 10 أحرف.':undefined
+  });
+  return result.isConfirmed?String(result.value||'').trim():null;
+ }
+
  function friendlyErrorMessage(error){
   const raw=String(error?.message||error||'');
   if(/invalid login credentials|invalid credentials/i.test(raw))return 'بيانات الدخول غير صحيحة. راجع البريد وكلمة المرور ثم أعد المحاولة.';
@@ -282,16 +340,19 @@
  function showLogin(message=''){ $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('loginError').textContent=message; }
  function activateTab(tab){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));}
  async function loadProjects(){
-  const rows=[];let offset=0,pageSize=500;
-  while(true){const {data,error}=await db.from('count_projects').select('id,name,code,status,created_at,created_by').order('created_at',{ascending:false}).range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;}
-  state.projects=rows;
-  $('projectPicker').innerHTML=state.projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
-  $('projectList').innerHTML=state.projects.length?'<div class="tablewrap"><table><thead><tr><th>التكليف</th><th>الكود</th><th>الحالة</th><th>تاريخ الإنشاء</th></tr></thead><tbody>'+state.projects.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.code)+'</td><td>'+statusPill(p.status)+'</td><td>'+date(p.created_at)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد تكليفات مرتبطة بهذا الحساب. سجّل تكليفاً من النموذج.</div>';
-  $('kProjects').textContent=state.projects.length;
-  if(!state.projects.length){state.project=null;$('projectPicker').innerHTML='<option value="">لا توجد جهة</option>';clearProjectViews();state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();subscribeGlobalRealtime();return;}
-  const keep=state.project&&state.projects.some(p=>p.id===state.project.id)?state.project.id:state.projects[0].id;
-  $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
+  return withTableSkeletons([['projectList',4,4]],async()=>{
+   const rows=[];let offset=0,pageSize=500;
+   while(true){const {data,error}=await db.from('count_projects').select('id,name,code,status,created_at,created_by').order('created_at',{ascending:false}).range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;}
+   state.projects=rows;
+   $('projectPicker').innerHTML=state.projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
+   $('projectList').innerHTML=state.projects.length?'<div class="tablewrap"><table><thead><tr><th>التكليف</th><th>الكود</th><th>الحالة</th><th>تاريخ الإنشاء</th></tr></thead><tbody>'+state.projects.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.code)+'</td><td>'+statusPill(p.status)+'</td><td>'+date(p.created_at)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد تكليفات مرتبطة بهذا الحساب. سجّل تكليفاً من النموذج.</div>';
+   $('kProjects').textContent=state.projects.length;
+   if(!state.projects.length){state.project=null;$('projectPicker').innerHTML='<option value="">لا توجد جهة</option>';clearProjectViews();state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();subscribeGlobalRealtime();return;}
+   const keep=state.project&&state.projects.some(p=>p.id===state.project.id)?state.project.id:state.projects[0].id;
+   $('projectPicker').value=keep;state.project=state.projects.find(p=>p.id===keep);await loadProjectData();await loadGlobalOperations();subscribeGlobalRealtime();
+  });
  }
+
  function clearProjectViews(){state.products=[];state.productTotal=0;state.productQuery='';state.productScrollTop=0;state.members=[];state.locations=[];state.sessions=[];state.productPage=1;state.productImportRows=[];state.productImportRowCount=0;state.productImportMapping={};state.productImportMappingId=null;if($('productImportHistory'))$('productImportHistory').innerHTML='<div class="empty">اختر تكليفاً لعرض سجل الاستيراد.</div>';if($('productImportDetails'))$('productImportDetails').innerHTML='';['kProducts','kMembers','kSessions'].forEach(id=>$(id).textContent='0');['productTable','memberTable','locationTable','sessionTable','auditTable','recentSessions'].forEach(id=>$(id).innerHTML='<div class="empty">سجّل أو اختر تكليفاً لعرض البيانات.</div>');$('projectSummary').textContent='لا يوجد تكليف محدد.';}
 function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'قيد التنفيذ',ready:'جاهز',completed:'مكتمل',paused:'متوقف مؤقتاً',review:'قيد المراجعة',planned:'مخطط',draft:'مسودة',closed:'مغلق',archived:'مؤرشف',cancelled:'ملغى',removed:'موقوف',open:'مفتوح',acknowledged:'تم الاطلاع',resolved:'تم الحل',dismissed:'مستبعد',committed:'تم الاعتماد',committing:'قيد الاعتماد',failed:'لم يكتمل',processing:'جارٍ الفحص',staged:'قيد الفحص',pending:'بانتظار الاعتماد',assigned:'مسند',in_progress:'قيد التنفيذ',online:'متصل',idle:'غير نشط',offline:'غير متصل',revoked:'موقوف',waived:'تم التجاوز بتوثيق',critical:'حرج',high:'مرتفع',medium:'متوسط',low:'منخفض',info:'معلومات',computed:'تم الاحتساب',approved:'معتمد',matched:'متطابق',variance:'يوجد فرق',uncounted:'غير معدود',unexpected:'غير متوقع','نشط':'نشط','موقوف':'موقوف'};return labels[key]||'غير محدد';}
   function locationTypeName(s){return ({store:'متجر',warehouse:'مستودع',department:'قسم',zone:'منطقة',aisle:'ممر',shelf:'رف',bin:'خانة',role:'موقع مخصص',branch:'فرع',other:'موقع آخر'})[String(s||'').toLowerCase()]||'موقع مخصص';}
@@ -303,19 +364,22 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—';}
  async function loadProjectData(){
   if(!state.project){clearProjectViews();return;}
-  const pid=state.project.id;
-  const [members,locations,sessions]=await Promise.all([
-   db.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(500),
-   db.from('count_locations').select('*').eq('project_id',pid).order('sort_order').limit(2000),
-   db.from('count_sessions').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
-  ]);
-  for(const [label,res] of [['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
-  state.products=[];state.productTotal=0;state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
-  state.productPage=1;state.productQuery=$('productSearch').value.trim();state.productScrollTop=0;
-  renderProject();
-  await Promise.all([loadProductsPage(1,state.productQuery),loadAudit(),loadProductImportHistory()]);
-  if(state.workflowSessionId&&state.sessions.some(x=>x.id===state.workflowSessionId))await loadSessionWorkflow(state.workflowSessionId);
+  return withTableSkeletons([['memberTable',5,6],['roleTable',5,6],['locationTable',5,4],['sessionTable',5,6]],async()=>{
+   const pid=state.project.id;
+   const [members,locations,sessions]=await Promise.all([
+    db.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(500),
+    db.from('count_locations').select('*').eq('project_id',pid).order('sort_order').limit(2000),
+    db.from('count_sessions').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
+   ]);
+   for(const [label,res] of [['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
+   state.products=[];state.productTotal=0;state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
+   state.productPage=1;state.productQuery=$('productSearch').value.trim();state.productScrollTop=0;
+   renderProject();
+   await Promise.all([loadProductsPage(1,state.productQuery),loadAudit(),loadProductImportHistory()]);
+   if(state.workflowSessionId&&state.sessions.some(x=>x.id===state.workflowSessionId))await loadSessionWorkflow(state.workflowSessionId);
+  });
  }
+
  function renderProductImportSessions(){
   const select=$('productImportSession');if(!select)return;
   const keep=select.value;
@@ -333,18 +397,21 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  async function loadProductsPage(page=1,query=state.productQuery){
   if(!state.project)return;
-  const pid=state.project.id,requestToken=++state.productImageToken,limit=100,q=String(query||'').trim().replace(/[(),]/g,' ').replace(/[%_]/g,' ').slice(0,100);
-  let request=db.from('count_products').select('*',{count:'exact'}).eq('project_id',pid);
-  if(q)request=request.or(['name','sku','barcode','category'].map(k=>k+'.ilike.%'+q+'%').join(','));
-  const {data,error,count}=await request.order('name',{ascending:true}).order('id',{ascending:true}).range((Math.max(1,page)-1)*limit,Math.max(1,page)*limit-1);
-  if(error)throw error;
-  if(state.project?.id!==pid||state.productImageToken!==requestToken)return;
-  state.productImageUrls.clear();
-  await loadProductImageUrls(data||[],pid,requestToken);
-  if(state.project?.id!==pid||state.productImageToken!==requestToken)return;
-  state.products=data||[];state.productTotal=count||0;state.productPage=Math.max(1,page);state.productQuery=query||'';state.productScrollTop=0;
-  renderProducts();
+  return withTableSkeletons([['productTable',6,6]],async()=>{
+   const pid=state.project.id,requestToken=++state.productImageToken,limit=100,q=String(query||'').trim().replace(/[(),]/g,' ').replace(/[%_]/g,' ').slice(0,100);
+   let request=db.from('count_products').select('*',{count:'exact'}).eq('project_id',pid);
+   if(q)request=request.or(['name','sku','barcode','category'].map(k=>k+'.ilike.%'+q+'%').join(','));
+   const {data,error,count}=await request.order('name',{ascending:true}).order('id',{ascending:true}).range((Math.max(1,page)-1)*limit,Math.max(1,page)*limit-1);
+   if(error)throw error;
+   if(state.project?.id!==pid||state.productImageToken!==requestToken)return;
+   state.productImageUrls.clear();
+   await loadProductImageUrls(data||[],pid,requestToken);
+   if(state.project?.id!==pid||state.productImageToken!==requestToken)return;
+   state.products=data||[];state.productTotal=count||0;state.productPage=Math.max(1,page);state.productQuery=query||'';state.productScrollTop=0;
+   renderProducts();
+  });
  }
+
  function isProjectProductImagePath(reference,projectId){
   const value=String(reference??''),prefix=String(projectId||'')+'/products/';
   if(!projectId||!value.startsWith(prefix))return false;
@@ -431,7 +498,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    if(activeSupervisors<=1)return notify('لا يمكن خفض دور آخر مشرف نشط في هذا التكليف.',true);
   }
   const warning=next==='supervisor'?'سيُمنح المستخدم صلاحيات مشرف التكليف. تأكد من صحة الإسناد.':'سيتم تغيير الدور وفق صلاحيات CountFlow الفعلية. هل تريد المتابعة؟';
-  if(!confirm(warning))return;
+  if(!await confirmAction(warning,{title:'تأكيد تعديل دور المستخدم',confirmText:'تأكيد التعديل'}))return;
   try{
    const {error}=await db.from('count_members').update({role:next}).eq('id',memberId).eq('project_id',m.project_id);
    if(error)throw error;
@@ -448,7 +515,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const activeSupervisors=state.allMembers.filter(x=>x.project_id===m.project_id&&x.role==='supervisor'&&x.status==='active').length;
    if(activeSupervisors<=1)return notify('لا يمكن إيقاف آخر مشرف نشط في هذا التكليف.',true);
   }
-  if(!confirm(next==='paused'?'سيتم إيقاف العضوية مؤقتاً ومنع تسجيل عمليات جديدة. هل تريد المتابعة؟':'سيتم استئناف عضوية المستخدم بالدور الحالي. هل تريد المتابعة؟'))return;
+  if(!await confirmAction(next==='paused'?'سيتم إيقاف العضوية مؤقتاً ومنع تسجيل عمليات جديدة. هل تريد المتابعة؟':'سيتم استئناف عضوية المستخدم بالدور الحالي. هل تريد المتابعة؟',{title:'تأكيد حالة العضوية'}))return;
   try{
    const {error}=await db.from('count_members').update({status:next}).eq('id',memberId).eq('project_id',m.project_id);
    if(error)throw error;
@@ -1048,18 +1115,18 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   if(action==='start'||action==='pause'||action==='resume'||action==='complete'){
    const target={start:'active',pause:'paused',resume:'active',complete:'completed'}[action];
    const messages={start:'بدء الجرد سيفتح التسجيل للمندوبين المصرح لهم. متابعة؟',pause:'إيقاف الجلسة سيمنع تسجيل العد الجديد مؤقتاً ويطلب تأكيد طوابير الأجهزة. متابعة؟',resume:'استئناف الجلسة سيفتح التسجيل مجدداً ويزيد إصدار حاجز المزامنة. متابعة؟',complete:'الإغلاق نهائي ويمنع إدخال أي عد جديد. لا يمكن التراجع عنه من التطبيق. هل تأكدت من التسوية وأجهزة المندوبين؟'};
-   if(!confirm(messages[action]))return;
+   if(!await confirmAction(messages[action],{title:'تأكيد تغيير حالة الجلسة',confirmText:'متابعة'}))return;
    const {data,error}=await db.rpc('count_transition_session',{p_session_id:sessionId,p_target_status:target});
    if(error)throw error;
    notify('تم تحديث حالة الجلسة إلى '+statusName(target)+'.');
   }else if(action==='reconcile'){
-   if(!confirm('سيتم إنشاء جولة تسوية جديدة من بيانات العد الحالية دون ترحيل مخزون أو قيود محاسبية. متابعة؟'))return;
+   if(!await confirmAction('سيتم إنشاء جولة تسوية جديدة من بيانات العد الحالية دون ترحيل مخزون أو قيود محاسبية. متابعة؟',{title:'تأكيد احتساب التسوية',confirmText:'احتساب التسوية'}))return;
    const {data,error}=await db.rpc('count_reconcile_session',{p_session_id:sessionId});
    if(error)throw error;
    notify('اكتمل احتساب جولة التسوية: '+data);
   }else if(action==='approve'){
    const w=state.workflowData;if(!w?.run)return notify('لا توجد جولة تسوية للاعتماد.',true);
-   if(!confirm('سيتم اعتماد آخر تسوية وتجميد العد. يشترط اكتمال المواقع ومراجعة مهام إعادة العد والتنبيهات وإقرار طوابير الأجهزة. متابعة؟'))return;
+   if(!await confirmAction('سيتم اعتماد آخر تسوية وتجميد العد. يشترط اكتمال المواقع ومراجعة مهام إعادة العد والتنبيهات وإقرار طوابير الأجهزة. متابعة؟',{title:'اعتماد التسوية وتجميد العد',confirmText:'اعتماد التسوية'}))return;
    const {data,error}=await db.rpc('count_approve_reconciliation',{p_run_id:w.run.id});
    if(error)throw error;
    notify('تم اعتماد التسوية والدخول إلى مرحلة المراجعة النهائية.');
@@ -1068,7 +1135,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const selected=$('workflowGenerateAssignee')?.value||null;
    const threshold=Number($('workflowMinVariance')?.value||0);
    if(!Number.isFinite(threshold)||threshold<0)return notify('أدخل نسبة فرق صحيحة.',true);
-   if(!confirm('إنشاء مهام إعادة العد للصفوف ذات الفروقات أو غير المعدودة؟'))return;
+   if(!await confirmAction('إنشاء مهام إعادة العد للصفوف ذات الفروقات أو غير المعدودة؟',{title:'إنشاء مهام إعادة العد',confirmText:'إنشاء المهام'}))return;
    const {data,error}=await db.rpc('count_generate_recount_tasks',{p_run_id:w.run.id,p_assigned_member_id:selected,p_min_variance_percent:threshold});
    if(error)throw error;
    notify('تم إنشاء مهام إعادة العد: '+Number(data?.created_tasks||0));
@@ -1086,11 +1153,11 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   await loadSessionWorkflow(state.workflowSessionId);
  }
  async function reviewRecountTask(taskId,decision){
-  const notes=window.prompt('اكتب سبب قرار مراجعة إعادة العد (10 أحرف على الأقل):');
+  const notes=await promptReason('اكتب سبب قرار مراجعة إعادة العد (10 أحرف على الأقل):',{title:'سبب قرار مراجعة إعادة العد'});
   if(notes===null)return;
   if(notes.trim().length<10)return notify('سبب المراجعة يجب ألا يقل عن 10 أحرف.',true);
   const labels={accept:'قبول نتيجة إعادة العد',repeat:'طلب إعادة عد جديدة',cancel:'إلغاء مهمة إعادة العد'};
-  if(!confirm('تأكيد '+labels[decision]+'؟'))return;
+  if(!await confirmAction('تأكيد '+labels[decision]+'؟',{title:'مراجعة إعادة العد',confirmText:'تأكيد القرار'}))return;
   const {data,error}=await db.rpc('count_review_recount_task',{p_task_id:taskId,p_decision:decision,p_note:notes.trim()});
   if(error)throw error;
   notify('تم تحديث نتيجة مراجعة إعادة العد.');
@@ -1099,10 +1166,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  async function setAlertStatus(alertId,target){
   let note=null;
   if(target==='resolved'){
-   note=window.prompt('اكتب سبب حل التنبيه (10 أحرف على الأقل):');
+   note=await promptReason('اكتب سبب حل التنبيه (10 أحرف على الأقل):',{title:'سبب حل التنبيه'});
    if(note===null)return;
    if(note.trim().length<10)return notify('سبب الحل يجب ألا يقل عن 10 أحرف.',true);
-   if(!confirm('هل تؤكد حل التنبيه؟'))return;
+   if(!await confirmAction('هل تؤكد حل التنبيه؟',{title:'تأكيد حل التنبيه',confirmText:'حل التنبيه'}))return;
   }
   const {data,error}=await db.rpc('count_set_alert_status',{p_alert_id:alertId,p_target_status:target,p_note:note});
   if(error)throw error;
@@ -1110,10 +1177,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   await loadSessionWorkflow(state.workflowSessionId);
  }
  async function waiveDeviceQueue(sessionId,memberId,deviceId){
-  const reason=window.prompt('تجاوز طابور الجهاز قد يعني فقد عمليات عد لم تصل إلى الخادم. اكتب سبباً موثقاً (10 أحرف على الأقل):');
+  const reason=await promptReason('تجاوز طابور الجهاز قد يعني فقد عمليات عد لم تصل إلى الخادم. اكتب سبباً موثقاً (10 أحرف على الأقل):',{title:'سبب تجاوز طابور الجهاز'});
   if(reason===null)return;
   if(reason.trim().length<10)return notify('سبب التجاوز يجب ألا يقل عن 10 أحرف.',true);
-  if(!confirm('تحذير: هذا لا يستعيد العمليات المحلية ولا يحذفها. إنه يسجل قبول المالك لخطر فقدها ويتيح المتابعة. تأكيد؟'))return;
+  if(!await confirmAction('تحذير: هذا لا يستعيد العمليات المحلية ولا يحذفها. إنه يسجل قبول المالك لخطر فقدها ويتيح المتابعة. تأكيد؟',{title:'تجاوز حاجز مزامنة الجهاز',confirmText:'تسجيل التجاوز'}))return;
   const {data,error}=await db.rpc('count_waive_device_queue',{p_session_id:sessionId,p_member_id:memberId,p_device_id:deviceId,p_reason:reason.trim()});
   if(error)throw error;
   notify('تم تسجيل التجاوز في سجل التدقيق مع إبقاء عدد وبصمة الطابور.');
@@ -1127,27 +1194,30 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   return result;
  }
  async function loadGlobalOperations(){
-  const ids=state.projects.map(p=>p.id);if(!ids.length){state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();return;}
-  const [members,sessions]=await Promise.all([
-   loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,status,last_seen_at,created_at',ids,'created_at'),
-   loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
-  ]);
-  state.allMembers=members;state.allSessions=sessions;state.assignmentCounts={};
-  const sessionIds=sessions.map(x=>x.id);
-  for(let i=0;i<sessionIds.length;i+=80){
-   const chunk=sessionIds.slice(i,i+80);let offset=0;
-   while(true){
-    const {data,error}=await db.from('count_assignments').select('session_id,member_id,status').in('session_id',chunk).range(offset,offset+999);
-    if(error)throw error;const page=data||[];
-    for(const a of page){if(a.status==='done')continue;state.assignmentCounts[a.session_id]??=new Set();state.assignmentCounts[a.session_id].add(a.member_id);}
-    if(page.length<1000)break;offset+=1000;
+  return withTableSkeletons([['memberTable',5,6],['roleTable',5,6],['operationsTable',6,9]],async()=>{
+   const ids=state.projects.map(p=>p.id);if(!ids.length){state.allMembers=[];state.allSessions=[];renderMembers();renderRoles();renderGlobalOperations();return;}
+   const [members,sessions]=await Promise.all([
+    loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,status,last_seen_at,created_at',ids,'created_at'),
+    loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
+   ]);
+   state.allMembers=members;state.allSessions=sessions;state.assignmentCounts={};
+   const sessionIds=sessions.map(x=>x.id);
+   for(let i=0;i<sessionIds.length;i+=80){
+    const chunk=sessionIds.slice(i,i+80);let offset=0;
+    while(true){
+     const {data,error}=await db.from('count_assignments').select('session_id,member_id,status').in('session_id',chunk).range(offset,offset+999);
+     if(error)throw error;const page=data||[];
+     for(const a of page){if(a.status==='done')continue;state.assignmentCounts[a.session_id]??=new Set();state.assignmentCounts[a.session_id].add(a.member_id);}
+     if(page.length<1000)break;offset+=1000;
+    }
    }
-  }
-  for(const id of Object.keys(state.assignmentCounts))state.assignmentCounts[id]=state.assignmentCounts[id].size;
-  $('kMembers').textContent=members.filter(x=>x.status==='active').length;
-  $('kSessions').textContent=sessions.length;
-  renderMembers();renderRoles();renderGlobalOperations();
+   for(const id of Object.keys(state.assignmentCounts))state.assignmentCounts[id]=state.assignmentCounts[id].size;
+   $('kMembers').textContent=members.filter(x=>x.status==='active').length;
+   $('kSessions').textContent=sessions.length;
+   renderMembers();renderRoles();renderGlobalOperations();
+  });
  }
+
  function renderGlobalOperations(){
   const all=state.allSessions||[];
   $('kActiveOperations').textContent=all.filter(x=>x.status==='active').length;
@@ -1255,7 +1325,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('operationTeamList').innerHTML=assignments.length?'<table><thead><tr><th>المستخدم</th><th>الدور</th><th>نطاق الإسناد</th><th>الحالة</th><th>تاريخ الإسناد</th><th>إجراء</th></tr></thead><tbody>'+assignments.map(a=>{const m=map[a.member_id]||{},loc=state.locations.find(x=>x.id===a.location_id);return '<tr><td><b>'+esc(m.display_name||'عضو')+'</b><span class="sub">'+esc(m.username||'')+'</span></td><td>'+esc(roleName(m.role))+'</td><td>'+esc(loc?.name||'كل المواقع')+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.assigned_at)+'</td><td><button type="button" class="danger" data-remove-operation-member="'+a.member_id+'">إخراج من العملية</button></td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم يتم إسناد أعضاء لهذه العملية بعد.</div>';
   document.querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
    const current=state.selectedSession;if(!current||!['planned','active','paused','review'].includes(current.status))return notify('العملية غير قابلة لتعديل الفريق في حالتها الحالية.',true);
-   if(!confirm('إخراج المستخدم من هذه العملية فقط؟ سيبقى حسابه وعضويته وسجل العد السابق محفوظاً.'))return;
+   if(!await confirmAction('إخراج المستخدم من هذه العملية فقط؟ سيبقى حسابه وعضويته وسجل العد السابق محفوظاً.',{title:'إخراج عضو من العملية',confirmText:'إخراج من العملية'}))return;
    const {error}=await db.from('count_assignments').delete().eq('session_id',current.id).eq('member_id',b.dataset.removeOperationMember);
    if(error)return fail('تعذر إخراج المستخدم',error);
    notify('تم إخراج المستخدم من هذه العملية فقط.');await loadOperationTeam();await loadGlobalOperations();
@@ -1506,10 +1576,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
 
  async function loadAudit(){
-  const {data,error}=await db.from('count_audit_log').select('id,actor_id,action,entity_type,entity_id,details,created_at').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(100);
-  if(error){$('auditTable').innerHTML='<div class="empty">تعذر تحميل سجل الأحداث. حاول تحديث الصفحة.</div>';return;}
-  $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">'+esc('—')+'</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>'+esc('مستخدم مخوّل')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
+  if(!state.project)return;
+  return withTableSkeletons([['auditTable',5,5]],async()=>{
+   const {data,error}=await db.from('count_audit_log').select('id,actor_id,action,entity_type,entity_id,details,created_at').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(100);
+   if(error)throw error;
+   $('auditTable').innerHTML=(data||[]).length?'<table><thead><tr><th>التوقيت</th><th>الحدث</th><th>الكيان</th><th>تفاصيل</th><th>المنفذ</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+date(x.created_at)+'</td><td>'+esc(auditActionLabel(x.action))+'</td><td>'+esc(auditEntityLabel(x.entity_type))+'<span class="sub">—</span></td><td>'+esc(auditDetailsSummary(x.details))+'</td><td>مستخدم مخوّل</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا توجد أحداث مسجلة.</div>';
+  });
  }
+
  function renderProductUnitEditor(units=[]){
   const container=$('productUnitsEditor');if(!container)return;
   const rows=Array.isArray(units)?units.map(u=>({name:String(u?.name||''),factor_to_base:String(u?.factor_to_base??u?.conversion_factor??u?.factor??'')})):[];
@@ -1711,6 +1785,34 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license')loadLicenseSettings();if(b.dataset.tab==='roles')renderRoles();if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
+
+ const buttonIconRules=[
+  [/خروج/,'right-from-bracket'],[/دخول/,'right-to-bracket'],[/إزالة|حذف|إخراج/,'trash-can'],
+  [/إلغاء/,'xmark'],[/تحديث|إعادة تحميل/,'arrows-rotate'],[/تصدير|تسليم رصيد/,'file-export'],
+  [/استيراد|قراءة الملف|رفع/,'file-import'],[/بحث|تطبيق الفلاتر/,'filter'],
+  [/معاينة|فتح|عرض|تفاصيل|مراجعة/,'eye'],[/بدء|تشغيل/,'play'],[/إيقاف/,'pause'],
+  [/استئناف/,'rotate'],[/اعتماد|قبول|حفظ|حل التنبيه|إقرار/,'check'],
+  [/كلمة المرور/,'key'],[/إعادة العد|إعادة/,'rotate'],[/تجاوز/,'triangle-exclamation'],
+  [/التالي/,'chevron-left'],[/السابق/,'chevron-right'],[/طباعة/,'print'],
+  [/إضافة|إنشاء/,'plus'],[/إسناد|الفريق|المستخدم/,'users'],[/جلسة|العملية|التكليف/,'clipboard-list'],
+  [/صورة/,'image'],[/تفعيل/,'toggle-on'],[/دور/,'user-shield']
+ ];
+ function decorateButtons(root=document){
+  const buttons=root?.matches?.('button')?[root]:Array.from(root?.querySelectorAll?.('button')||[]);
+  for(const button of buttons){
+   if(button.dataset.iconDecorated==='true')continue;
+   const label=(button.textContent||'').replace(/\s+/g,' ').trim();
+   const iconName=button.dataset.icon||(buttonIconRules.find(([pattern])=>pattern.test(label))||[])[1]||'circle-dot';
+   const icon=document.createElement('i');icon.className='fa-solid fa-'+iconName+' cf-button-icon';icon.setAttribute('aria-hidden','true');
+   button.prepend(icon);button.classList.add('has-icon');button.dataset.iconDecorated='true';
+  }
+ }
+ decorateButtons(document);
+ if(window.MutationObserver){
+  const buttonIconObserver=new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1||node.nodeType===11)decorateButtons(node);});
+  buttonIconObserver.observe(document.body,{childList:true,subtree:true});
+ }
+
  db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){stopGlobalRealtime();state.user=null;state.project=null;showLogin();}});
  db.auth.getSession().then(({data})=>{if(data.session)bootstrap().catch(e=>{console.error(e);showLogin(friendlyErrorMessage(e));});});
 })();
