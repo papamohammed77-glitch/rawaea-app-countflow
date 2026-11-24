@@ -370,7 +370,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const [members,locations,sessions]=await Promise.all([
     db.from('count_members').select('id,user_id,display_name,username,role,status,last_seen_at,created_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(500),
     db.from('count_locations').select('*').eq('project_id',pid).order('sort_order').limit(2000),
-    db.from('count_sessions').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
+    db.from('count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at,sync_barrier_version,queue_barrier_action,queue_barrier_run_id,queue_barrier_requested_at').eq('project_id',pid).order('created_at',{ascending:false}).limit(200)
    ]);
    for(const [label,res] of [['الأعضاء',members],['المواقع',locations],['الجلسات',sessions]])if(res.error)throw new Error(label+': '+res.error.message);
    state.products=[];state.productTotal=0;state.members=members.data||[];state.locations=locations.data||[];state.sessions=sessions.data||[];
