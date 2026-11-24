@@ -1008,3 +1008,13 @@ test("authenticated clients cannot select platform-owner identity columns from p
   assert.ok(control.includes("count_projects').select('id,name,code,status,created_at'"));
   assert.doesNotMatch([admin,counter,supervisor,control].join("\\n"), /count_projects'\)\.select\('\*'\)|count_sessions'\)\.select\('\*'\)/);
 });
+
+test("Supervisor lists only active supervisor project scopes and deletes one assignment row by ID", () => {
+  const supervisor = read("Countflow-supervisor.html");
+  assert.ok(supervisor.includes("supervisorMemberships=supervisors"), "Active supervisor memberships must be retained as the authorization scope");
+  assert.ok(supervisor.includes(".filter(x=>x.role==='supervisor'&&x.status==='active').map(x=>x.project_id)"), "Only active supervisor project IDs may be loaded");
+  assert.ok(supervisor.includes("fetchAllRows('count_projects','id,name,code,status,created_at,updated_at',[{op:'in',key:'id',value:allowedProjectIds}])"), "Project visibility in the UI must match supervisor memberships");
+  assert.ok(supervisor.includes("data-remove-assignment=\"'+x.id+'\""), "The action must carry one assignment primary key");
+  assert.ok(supervisor.includes(".delete().eq('id',b.dataset.removeAssignment).eq('session_id',session.id)"), "The delete must target one assignment row and stay session-scoped");
+  assert.doesNotMatch(supervisor, /\.delete\(\)\.eq\('session_id',session\.id\)\.eq\('member_id',b\.dataset\.removeAssignment\)/, "Do not delete all assignment rows for the same member in a session");
+});
