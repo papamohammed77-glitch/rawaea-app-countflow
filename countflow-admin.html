@@ -161,7 +161,7 @@
       <div class="field"><label for="globalImageFile">الصورة (اختيارية)</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><div class="actions"><button id="globalProductSave" class="primary">إضافة للكتالوج</button><button id="globalProductCancel" class="soft" type="button">إلغاء التعديل</button></div></form></div>
       <div class="panel"><h3>مواءمة صنف للعميل</h3><form id="clientProductForm"><div class="field"><label for="clientProductCatalog">الصنف العالمي</label><select id="clientProductCatalog" required></select></div>
        <div class="fields"><div class="field"><label for="clientProductSku">SKU العميل</label><input id="clientProductSku" maxlength="100"></div><div class="field"><label for="clientProductBarcode">باركود العميل</label><input id="clientProductBarcode" maxlength="120"></div><div class="field"><label for="clientProductName">اسم بديل</label><input id="clientProductName" maxlength="240"></div><div class="field"><label for="clientProductUnit">وحدة بديلة</label><input id="clientProductUnit" maxlength="40"></div></div><div class="actions"><button class="primary">حفظ المواءمة</button></div></form></div></div>
-     <div class="panel"><div class="toolbar"><input id="catalogSearch" placeholder="بحث بالاسم / SKU / Barcode / العلامة"><select id="catalogStatusFilter"><option value="active">الأصناف المفعلة</option><option value="all">جميع الأصناف</option><option value="inactive">الأصناف الموقوفة</option></select><button id="catalogRefresh" type="button" class="soft">تحديث</button></div><div id="catalogTable" class="tablewrap"></div></div>
+     <div class="panel"><div class="toolbar"><input id="catalogSearch" placeholder="بحث بالاسم / SKU / Barcode / العلامة"><select id="catalogStatusFilter"><option value="active">الأصناف المفعلة</option><option value="all">جميع الأصناف</option><option value="inactive">الأصناف الموقوفة</option></select><button id="catalogRefresh" type="button" class="soft">تحديث</button></div><div id="catalogTable" class="tablewrap"></div><div id="catalogPagination" class="row" style="justify-content:space-between;margin-top:10px"></div></div>
      <div class="panel"><h3>مواءمات العميل - إدراج الصنف في المشروع الحالي</h3><div id="clientCatalogTable" class="tablewrap"></div></div></section>
     <section id="tab-products" class="section">
      <div class="headrow"><h2>كتالوج أصناف الجهة / التكليف</h2><span class="pill" id="productCount">0 صنف</span></div>
@@ -325,7 +325,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],overviewRows:[],project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,overviewRows:[],project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -1837,12 +1837,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   const {data,error}=await db.functions.invoke('counting-provision-member',{body});if(error)throw error;if(!data?.ok)throw new Error(data?.error||'تعذر إنشاء مدير العميل.');f.reset();await loadClients();notify('تم إنشاء / ربط مدير العميل.');}catch(err){fail('تعذر إنشاء مدير العميل',err);}finally{setBusy(f,false);}});
  async function loadCatalog(){
   if(!state.user)return;
-  let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,is_active,image_storage_path').order('name').limit(500);
+  let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,is_active,image_storage_path',{count:'exact'}).order('name');
   const term=$('catalogSearch').value.trim().replace(/[%,().]/g,' ').slice(0,90);
   const stateFilter=$('catalogStatusFilter')?.value||'active';
   if(stateFilter==='active')q=q.eq('is_active',true);else if(stateFilter==='inactive')q=q.eq('is_active',false);
   if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));
-  const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];
+  const pageSize=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*pageSize,page*pageSize-1);
+  const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);
   $('clientProductCatalog').innerHTML=state.catalogProducts.filter(p=>p.is_active).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'')+'</option>').join('');
   $('catalogTable').innerHTML=state.catalogProducts.length?'<table><thead><tr><th>الصنف</th><th>SKU</th><th>باركود</th><th>التصنيف</th><th>الوحدة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'+state.catalogProducts.map(p=>{
    const actions=state.platformOwner?'<div class="cf-inline-actions"><button type="button" class="soft" data-edit-catalog="'+p.id+'">تعديل</button><button type="button" class="'+(p.is_active?'danger':'soft')+'" data-catalog-state="'+p.id+'">'+(p.is_active?'إيقاف':'إعادة تفعيل')+'</button></div>':'<span class="pill">عرض فقط</span>';
@@ -1859,6 +1860,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    $('globalProductForm').scrollIntoView({behavior:'smooth',block:'center'});
   });
   $('catalogTable').querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=()=>toggleCatalogProduct(b.dataset.catalogState));
+  const pageCount=Math.max(1,Math.ceil(state.catalogTotal/50));
+  $('catalogPagination').innerHTML='<span class="hint">عرض '+(state.catalogTotal?((page-1)*50+1):0)+'–'+Math.min(page*50,state.catalogTotal)+' من '+state.catalogTotal+' صنفاً · الصفحة '+page+' / '+pageCount+'</span><div class="actions"><button id="catalogPrev" class="soft" type="button" '+(page<=1?'disabled':'')+'>السابق</button><button id="catalogNext" class="soft" type="button" '+(page>=pageCount?'disabled':'')+'>التالي</button></div>';
+  $('catalogPrev').onclick=()=>{if(state.catalogPage>1){state.catalogPage--;loadCatalog().catch(e=>fail('تعذر تحميل صفحة الكتالوج',e));}};
+  $('catalogNext').onclick=()=>{if(state.catalogPage<pageCount){state.catalogPage++;loadCatalog().catch(e=>fail('تعذر تحميل صفحة الكتالوج',e));}};
   await loadClientCatalogMappings();
  }
  async function toggleCatalogProduct(id){
@@ -1909,8 +1914,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   finally{setBusy(f,false);}
  });
  $('globalProductCancel').onclick=resetGlobalProductForm;
- $('catalogSearch').addEventListener('input',()=>loadCatalog().catch(e=>fail('تعذر البحث في الكتالوج',e)));
- $('catalogStatusFilter').addEventListener('change',()=>loadCatalog().catch(e=>fail('تعذر تغيير مرشح الكتالوج',e)));
+ $('catalogSearch').addEventListener('input',()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر البحث في الكتالوج',e));});
+ $('catalogStatusFilter').addEventListener('change',()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تغيير مرشح الكتالوج',e));});
   $('clientProductForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.clientId)return notify('اختر العميل أولاً.');const f=e.currentTarget;setBusy(f,true);try{const p={p_client_id:state.clientId,p_catalog_product_id:$('clientProductCatalog').value,p_client_sku:$('clientProductSku').value.trim()||null,p_client_barcode:$('clientProductBarcode').value.trim()||null,p_name_override:$('clientProductName').value.trim()||null,p_base_unit_override:$('clientProductUnit').value.trim()||null,p_category_override:null,p_units_override:null,p_image_storage_path_override:null};const x=await db.rpc('count_upsert_client_product',p);if(x.error)throw x.error;f.reset();await loadClientCatalogMappings();notify('تم حفظ مواءمة الصنف.');}catch(err){fail('تعذر حفظ المواءمة',err);}finally{setBusy(f,false);}});
  $('catalogRefresh').onclick=()=>loadCatalog().catch(e=>fail('تعذر تحديث الكتالوج',e));$('catalogSearch').addEventListener('keydown',e=>{if(e.key==='Enter')loadCatalog().catch(x=>fail('تعذر البحث',x));});
  $('projectClient').addEventListener('change',async()=>{if(state.platformOwner){state.clientId=$('projectClient').value||null;try{await loadRoleCatalog();await loadCatalog();}catch(e){fail('تعذر تحميل العميل المحدد',e);}}});
