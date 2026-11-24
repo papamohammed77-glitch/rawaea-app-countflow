@@ -23,6 +23,27 @@
 @media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:12px}.layout{grid-template-columns:1fr}.side{position:static;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;gap:10px;padding:9px;scroll-snap-type:x proximity}.nav-group{flex:0 0 auto;min-width:148px;padding:0 5px;border-inline-end:1px solid var(--line);scroll-snap-align:start}.nav-group-title{padding:5px 8px 2px}.nav{white-space:nowrap;width:100%;font-size:12px;min-height:38px;padding:8px 9px}.top{align-items:flex-start}.brand h1{font-size:17px}.grid{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.headrow h2{font-size:18px}}
 
 .layout.cf-sidebar-collapsed .side{width:76px;min-width:76px;padding-inline:10px}.layout.cf-sidebar-collapsed .side .nav-group-title,.layout.cf-sidebar-collapsed .side .field,.layout.cf-sidebar-collapsed .side p,.layout.cf-sidebar-collapsed .side .link{display:none}.layout.cf-sidebar-collapsed .side .nav{font-size:0;justify-content:center;padding:12px 8px}.layout.cf-sidebar-collapsed .side .nav::after{content:attr(data-short);font-size:15px;font-weight:800}#sideToggle{width:100%;margin:0 0 10px;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--navy);font-weight:700}.cf-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cf-role-permissions{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}.cf-role-permissions label{display:flex;gap:8px;align-items:flex-start;padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff}@media(max-width:760px){.cf-grid-2{grid-template-columns:1fr}.layout.cf-sidebar-collapsed .side{width:54px;min-width:54px}}
+
+.cf-hero{background:linear-gradient(120deg,#0f172a,#1d4ed8);color:#fff;border-radius:24px;padding:22px 24px;margin:4px 0 16px;box-shadow:0 18px 45px rgba(15,23,42,.13);display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.cf-hero h2{font-size:24px;line-height:1.4;margin:0 0 5px}.cf-hero p{margin:0;color:rgba(255,255,255,.78);font-size:13px}
+.cf-analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 15px}
+.cf-analytics-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:var(--shadow);min-width:0}
+.cf-analytics-card small{color:var(--muted);font-weight:700}.cf-analytics-card strong{display:block;margin-top:8px;font-size:27px;font-weight:900;font-variant-numeric:tabular-nums}.cf-analytics-card .sub{font-size:11px;color:var(--muted);margin-top:5px}
+.cf-analytics-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:13px;background:#fff;border:1px solid var(--line);border-radius:16px}
+.cf-analytics-toolbar .field{min-width:150px;flex:1}.cf-analytics-toolbar .field input,.cf-analytics-toolbar .field select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cf-chart-row{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(0,1.2fr);gap:14px}
+.cf-chart-list{display:grid;gap:12px}.cf-chart-item{display:grid;grid-template-columns:minmax(105px,1fr) minmax(90px,2fr) 40px;gap:9px;align-items:center;font-size:12px}
+.cf-bar-track{height:10px;background:#edf2f7;border-radius:99px;overflow:hidden}.cf-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#10b981)}
+.cf-progress{height:8px;background:#edf2f7;border-radius:99px;overflow:hidden;min-width:90px}.cf-progress>span{display:block;height:100%;border-radius:99px;background:#2563eb}
+.cf-modal-wide{width:min(820px,100%);max-height:calc(100vh - 36px);overflow:auto}.cf-modal-wide .panel{box-shadow:none;margin:0;padding:0;border:0}
+.cf-modal-wide .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cf-team-select{min-height:150px;max-height:220px;overflow:auto}
+.cf-role-stat-grid,.cf-member-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:13px}
+.cf-role-stat-grid .stat,.cf-member-stat-grid .stat{padding:13px;border-radius:15px}.cf-role-stat-grid strong,.cf-member-stat-grid strong{font-size:23px}
+.cf-filter-grid{display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,.55fr) minmax(140px,.45fr);gap:8px;margin-bottom:11px}
+.cf-filter-grid input,.cf-filter-grid select{width:100%;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+@media(max-width:900px){.cf-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-chart-row{grid-template-columns:1fr}.cf-role-stat-grid,.cf-member-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.cf-analytics-grid{grid-template-columns:1fr 1fr}.cf-modal-wide .fields{grid-template-columns:1fr}.cf-filter-grid{grid-template-columns:1fr}.cf-chart-item{grid-template-columns:minmax(85px,1fr) minmax(70px,1.4fr) 34px}}
 </style>
 </head>
 <body>
@@ -81,20 +102,31 @@
    </aside>
    <main class="content">
     <section id="tab-overview" class="section active">
-     <div class="headrow"><div><h2 id="welcomeTitle">لوحة الإدارة</h2><div class="statusline"><span class="dot"></span><span>متصل بقاعدة CountFlow · rawaea-staging</span></div></div></div>
-     <div class="grid">
-      <div class="stat"><small>ملفات التكليف</small><strong id="kProjects">0</strong></div>
-      <div class="stat"><small>الأصناف النشطة</small><strong id="kProducts">0</strong></div>
-      <div class="stat"><small>أعضاء الفريق النشطون</small><strong id="kMembers">0</strong></div>
-      <div class="stat"><small>جلسات الجرد</small><strong id="kSessions">0</strong></div>
+     <div class="cf-hero"><div><h2 id="welcomeTitle">مركز قيادة عمليات الجرد</h2><p>مؤشرات تشغيلية مباشرة من عمليات الجرد والعدّ المسجلة — دون بيانات افتراضية.</p></div><div class="statusline" style="color:#dbeafe"><span class="dot"></span><span>مؤشرات حية من قاعدة CountFlow</span></div></div>
+     <div class="cf-analytics-toolbar">
+      <div class="field"><label for="overviewProjectFilter">ملف التكليف</label><select id="overviewProjectFilter"><option value="">جميع ملفات التكليف المتاحة</option></select></div>
+      <div class="field"><label for="overviewStatusFilter">حالة العملية</label><select id="overviewStatusFilter"><option value="">جميع الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+      <div class="field"><label for="overviewFrom">بداية التنفيذ من</label><input id="overviewFrom" type="date"></div>
+      <div class="field"><label for="overviewTo">بداية التنفيذ إلى</label><input id="overviewTo" type="date"></div>
+      <button id="overviewReset" class="soft" type="button">إعادة ضبط المرشحات</button>
+      <button id="overviewRefresh" class="primary" type="button">تحديث المؤشرات</button>
+     </div>
+     <div class="cf-analytics-grid">
+      <div class="cf-analytics-card"><small>عمليات الجرد الظاهرة</small><strong id="overviewTotalOperations">0</strong><div class="sub">ضمن نطاق صلاحيات حسابك</div></div>
+      <div class="cf-analytics-card"><small>عمليات قيد التنفيذ</small><strong id="overviewActiveOperations">0</strong><div class="sub">الحالة التشغيلية الحالية</div></div>
+      <div class="cf-analytics-card"><small>حركات العد المسجلة</small><strong id="overviewEntryEvents">0</strong><div class="sub">إجمالي أحداث العد للعمليات المعروضة</div></div>
+      <div class="cf-analytics-card"><small>متوسط تغطية الأصناف</small><strong id="overviewCoverage">0%</strong><div class="sub">متوسط نسبة الأصناف المعدودة لكل عملية</div></div>
+     </div>
+     <div class="cf-chart-row">
+      <div class="panel"><h3>توزيع العمليات حسب الحالة</h3><div id="overviewStatusChart" class="cf-chart-list"><div class="empty">جار تحميل المؤشرات…</div></div></div>
+      <div class="panel"><h3>الأداء حسب العملية</h3><div id="overviewPerformanceChart" class="tablewrap"><div class="empty">جار تحميل المؤشرات…</div></div></div>
      </div>
      <div class="split">
-      <div class="panel"><h3>حالة التكليف المحدد</h3><div id="projectSummary" class="empty">اختر تكليفاً أو سجّل تكليفك الأول.</div></div>
-      <div class="panel"><h3>آخر الجلسات</h3><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></div>
+      <div class="panel"><h3>حالة ملف التكليف المحدد</h3><div id="projectSummary" class="empty">اختر تكليفاً أو سجّل تكليفك الأول.</div></div>
+      <div class="panel"><h3>آخر الجلسات في التكليف المحدد</h3><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></div>
      </div>
-     <div class="panel"><h3>روابط التشغيل</h3><div class="actions"><a class="link" href="./Countflow-supervisor.html">مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html">واجهة العدّ الميداني</a><a class="link" href="./countflow-control.html">Control — المراقبة والمراجعة للقراءة فقط</a></div><p class="hint">النظام الأم لإعداد البيانات وإدارة المستخدمين ودورة الجلسة والتسويات ومراجعة إعادة العد والتنبيهات والاعتماد. لوحة المشرف للمراقبة الحية وإسناد المندوبين للمواقع والجلسات فقط.</p></div>
-    </section>
-    <section id="tab-clients" class="section"><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
+     <div class="panel"><h3>مساحات التشغيل</h3><div class="actions"><a class="link" href="./Countflow-supervisor.html">مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html">واجهة العدّ الميداني</a><a class="link" href="./countflow-control.html">Control — المراقبة والمراجعة للقراءة فقط</a></div><p class="hint">سجل العمليات يعرض جميع عمليات الجرد المسموح لك بها، بينما تعرض جلسات الجرد تفاصيل التكليف المختار. لوحة المشرف للمراقبة الحية وإسناد الفريق والمواقع.</p></div>
+    </section><section id="tab-clients" class="section" data-owner-only><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
      <div class="split"><div class="panel"><h3>إضافة عميل</h3><form id="clientForm"><div class="fields">
       <div class="field"><label for="clientCode">كود العميل</label><input id="clientCode" required maxlength="40"></div><div class="field"><label for="clientName">اسم العميل</label><input id="clientName" required maxlength="160"></div>
       <div class="field"><label for="clientIndustry">النشاط</label><input id="clientIndustry" maxlength="120"></div><div class="field"><label for="clientContact">مسؤول التواصل</label><input id="clientContact" maxlength="120"></div>
@@ -104,8 +136,8 @@
       <div class="panel"><h3>إضافة مدير عميل</h3><form id="clientAdminForm"><div class="field"><label for="clientAdminTarget">العميل</label><select id="clientAdminTarget" required></select></div>
        <div class="fields"><div class="field"><label for="clientAdminName">الاسم</label><input id="clientAdminName" required maxlength="120"></div><div class="field"><label for="clientAdminUsername">اسم المستخدم</label><input id="clientAdminUsername" required maxlength="100"></div><div class="field"><label for="clientAdminEmail">البريد</label><input id="clientAdminEmail" type="email" required></div><div class="field"><label for="clientAdminPassword">كلمة المرور الأولية</label><input id="clientAdminPassword" type="password" minlength="10" autocomplete="new-password"></div></div><div class="actions"><button class="primary">إنشاء / ربط مدير العميل</button></div><p class="hint">إعادة استخدام حساب Auth مؤكد لا تغير كلمة مروره.</p></form></div></div>
      <div class="panel"><h3>العملاء المسجلون</h3><div id="clientList" class="tablewrap"></div></div></section>
-    <section id="tab-projects" class="section"><div class="headrow"><h2>مشاريع الجرد وتكليفات العملاء</h2></div>
-     <div class="split"><div class="panel"><h3>إنشاء مشروع وعملية أولى</h3><form id="projectForm">
+    <section id="tab-projects" class="section"><div class="headrow"><div><h2>ملفات التكليف ومشاريع العملاء</h2><p class="hint">ملف التكليف مساحة دائمة لأصناف العميل ومواقعه وأعضائه؛ تنشأ بداخله عمليات جرد متكررة دون إعادة إدخال الأصناف.</p></div></div>
+     <div class="split"><div class="panel"><h3>إنشاء ملف تكليف والعملية الأولى</h3><form id="projectForm">
       <div class="field" data-owner-only><label for="projectClient">العميل</label><select id="projectClient" required><option value="">اختر العميل</option></select></div>
       <div class="fields">
        <div class="field"><label for="projectName">اسم المشروع</label><input id="projectName" required maxlength="160"></div><div class="field"><label for="projectCode">كود المشروع</label><input id="projectCode" required maxlength="40" pattern="[A-Za-z0-9_-]{2,40}"></div>
@@ -118,17 +150,17 @@
        <div class="field"><label for="operationInstructions">تعليمات الفريق</label><input id="operationInstructions" maxlength="2000"></div>
       </div>
       <div class="cf-grid-2"><label><input id="showExpectedQuantity" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="captureImages" type="checkbox" checked> السماح بالصور</label><label><input id="requireImages" type="checkbox"> إلزام الصور</label><label><input id="allowUnknownProducts" type="checkbox"> قبول الأصناف غير المعروفة</label></div>
-      <div class="actions"><button class="primary">إنشاء المشروع والعملية والفرع</button></div><p class="hint">إنشاء العملية لا يسجل كميات ولا ينشئ حركة مخزون.</p>
+      <div class="actions"><button class="primary">إنشاء ملف التكليف والعملية الأولى</button></div><p class="hint">إنشاء العملية لا يسجل كميات ولا ينشئ حركة مخزون.</p>
      </form></div><div class="panel"><h3>ملفات التكليف</h3><div id="projectList" class="empty">جار التحميل…</div></div></div></section>
-    <section id="tab-catalog" class="section"><div class="headrow"><div><h2>الكتالوج الشامل</h2><p class="hint">الأصناف مرجعية دائمة؛ لكل عميل أكواده ووحداته البديلة، ولا تُحذف بانتهاء الجرد.</p></div></div>
-     <div class="split"><div class="panel" data-owner-only><h3>إضافة صنف عالمي</h3><form id="globalProductForm"><div class="fields">
+    <section id="tab-catalog" class="section"><div class="headrow"><div><h2>قاعدة الأصناف العالمية</h2><p class="hint">سجل مركزي مستديم للأصناف. لا تحذف الأصناف بعد الجرد؛ عدّل بياناتها أو أوقفها مع بقاء ارتباطاتها التاريخية.</p></div></div>
+     <div class="split"><div class="panel" data-owner-only><h3 id="globalProductFormTitle">إضافة صنف عالمي</h3><form id="globalProductForm"><input id="globalProductId" type="hidden"><div class="fields">
       <div class="field"><label for="globalSku">SKU</label><input id="globalSku" maxlength="100"></div><div class="field"><label for="globalBarcode">الباركود</label><input id="globalBarcode" maxlength="120"></div>
       <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div><div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
       <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120"></div><div class="field"><label for="globalBaseUnit">الوحدة الأساسية</label><input id="globalBaseUnit" required maxlength="40"></div>
-      <div class="field"><label for="globalImageFile">الصورة (اختيارية)</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><div class="actions"><button class="primary">إضافة للكتالوج</button></div></form></div>
+      <div class="field"><label for="globalImageFile">الصورة (اختيارية)</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><div class="actions"><button id="globalProductSave" class="primary">إضافة للكتالوج</button><button id="globalProductCancel" class="soft" type="button">إلغاء التعديل</button></div></form></div>
       <div class="panel"><h3>مواءمة صنف للعميل</h3><form id="clientProductForm"><div class="field"><label for="clientProductCatalog">الصنف العالمي</label><select id="clientProductCatalog" required></select></div>
        <div class="fields"><div class="field"><label for="clientProductSku">SKU العميل</label><input id="clientProductSku" maxlength="100"></div><div class="field"><label for="clientProductBarcode">باركود العميل</label><input id="clientProductBarcode" maxlength="120"></div><div class="field"><label for="clientProductName">اسم بديل</label><input id="clientProductName" maxlength="240"></div><div class="field"><label for="clientProductUnit">وحدة بديلة</label><input id="clientProductUnit" maxlength="40"></div></div><div class="actions"><button class="primary">حفظ المواءمة</button></div></form></div></div>
-     <div class="panel"><div class="toolbar"><input id="catalogSearch" placeholder="بحث بالاسم / SKU / Barcode / العلامة"><button id="catalogRefresh" type="button" class="soft">تحديث</button></div><div id="catalogTable" class="tablewrap"></div></div>
+     <div class="panel"><div class="toolbar"><input id="catalogSearch" placeholder="بحث بالاسم / SKU / Barcode / العلامة"><select id="catalogStatusFilter"><option value="active">الأصناف المفعلة</option><option value="all">جميع الأصناف</option><option value="inactive">الأصناف الموقوفة</option></select><button id="catalogRefresh" type="button" class="soft">تحديث</button></div><div id="catalogTable" class="tablewrap"></div></div>
      <div class="panel"><h3>مواءمات العميل - إدراج الصنف في المشروع الحالي</h3><div id="clientCatalogTable" class="tablewrap"></div></div></section>
     <section id="tab-products" class="section">
      <div class="headrow"><h2>كتالوج أصناف الجهة / التكليف</h2><span class="pill" id="productCount">0 صنف</span></div>
@@ -159,20 +191,21 @@
       <div class="panel"><h3>الأصناف المسجلة</h3><div class="toolbar"><input id="productSearch" placeholder="بحث بالكود أو الاسم أو الباركود"></div><div id="productTable" class="tablewrap"><div class="empty">لا توجد أصناف بعد.</div></div><div id="productPager" class="actions"></div></div>
      </div>
     </section>
-    <section id="tab-roles" class="section"><div class="headrow"><h2>إدارة الأدوار والصلاحيات</h2></div><div class="panel">
+    <section id="tab-roles" class="section"><div class="headrow"><div><h2>إدارة الأدوار والصلاحيات</h2><p class="hint">الأدوار النظامية للقراءة فقط؛ تُنشأ الأدوار المخصصة داخل العميل وتُمنح صلاحيات المشروع فقط.</p></div></div><div class="cf-role-stat-grid"><div class="stat"><small>الأدوار النظامية</small><strong id="roleSystemCount">0</strong></div><div class="stat"><small>الأدوار المخصصة</small><strong id="roleCustomCount">0</strong></div><div class="stat"><small>الأدوار المخصصة المسندة</small><strong id="roleUsedCount">0</strong></div><div class="stat"><small>الأدوار المخصصة غير المستخدمة</small><strong id="roleUnusedCount">0</strong></div></div><div class="panel"><h3>الأدوار النظامية — للقراءة فقط</h3><div id="systemRoleList" class="tablewrap"></div></div><div class="panel">
      <h3>الدور المخصص</h3><p class="hint">أنشئ أدواراً تشغيلية ضمن العميل وصمّم صلاحياتها. لا يمكن منح صلاحيات المنصة أو إدارة مديري العملاء من هذه الشاشة.</p>
      <form id="customRoleForm"><input id="customRoleId" type="hidden"><div class="fields"><div class="field"><label for="customRoleKey">المفتاح</label><input id="customRoleKey" required maxlength="64" pattern="[a-z][a-z0-9_]{1,63}"></div><div class="field"><label for="customRoleName">اسم الدور</label><input id="customRoleName" required maxlength="80"></div><div class="field full"><label for="customRoleDescription">الوصف</label><input id="customRoleDescription" maxlength="500"></div></div>
       <div id="rolePermissionOptions" class="cf-role-permissions"></div><div class="actions"><button class="primary">حفظ الدور والصلاحيات</button><button id="resetCustomRole" class="soft" type="button">دور جديد</button></div></form>
-      <div id="customRoleList" class="tablewrap" style="margin-top:14px"></div></div>
+      <div class="toolbar"><input id="customRoleSearch" placeholder="بحث في الأدوار المخصصة بالاسم أو المفتاح"></div><div id="customRoleList" class="tablewrap" style="margin-top:14px"></div></div>
      <div class="panel"><h3>توزيع الأدوار على المستخدمين</h3><div class="toolbar"><input id="roleSearch" placeholder="بحث بالمستخدم أو المشروع أو الدور"></div><div id="roleTable" class="tablewrap"><div class="empty">جار تحميل العضويات…</div></div></div></section><section id="tab-members" class="section">
-     <div class="headrow"><h2>إدارة المستخدمين والصلاحيات</h2></div>
+     <div class="headrow"><div><h2>إدارة المستخدمين والعضويات</h2><p class="hint">قد يرتبط الحساب الواحد بأكثر من ملف تكليف؛ الإحصاءات تحصي العضويات التي يسمح لك النظام برؤيتها.</p></div></div>
+     <div class="cf-member-stat-grid"><div class="stat"><small>إجمالي العضويات الظاهرة</small><strong id="memberTotalCount">0</strong></div><div class="stat"><small>عضويات نشطة</small><strong id="memberActiveCount">0</strong></div><div class="stat"><small>عضويات متوقفة</small><strong id="memberPausedCount">0</strong></div><div class="stat"><small>عضويات بأدوار مخصصة</small><strong id="memberCustomCount">0</strong></div></div>
      <div class="split">
       <div class="panel"><h3>إضافة مستخدم إلى التكليف المحدد</h3><form id="memberForm"><div class="fields">
        <div class="field full"><label>الاسم الظاهر</label><input id="memberName" required maxlength="120"></div>
        <div class="field"><label>اسم المستخدم</label><input id="memberUsername" required maxlength="80"></div><div class="field"><label>البريد الإلكتروني (لتسجيل الدخول)</label><input id="memberEmail" type="email" required></div>
        <div class="field"><label>كلمة المرور الأولية (للحساب الجديد فقط)</label><input id="memberPassword" type="password" minlength="10" autocomplete="new-password"></div><div class="field"><label>الدور</label><select id="memberRole"><option value="counter">مسؤول جرد / مندوب عدّ</option><option value="auditor">مراجع / مدقق</option><option value="supervisor">مشرف جرد</option></select></div>
       </div><div class="actions"><button class="primary">إنشاء الحساب والعضوية</button></div><p class="hint">إذا كان البريد مرتبطاً بحساب Auth مؤكد، سيُعاد استخدامه دون تغيير كلمة مروره أو بيانات دخوله. اترك كلمة المرور فارغة لهذه الحالة. الحساب الجديد فقط يحتاج كلمة مرور أولية لا تقل عن 10 أحرف. لن يُعاد تفعيل عضوية موقوفة تلقائياً.</p></form></div>
-      <div class="panel"><h3>مستخدمو جميع جهات الجرد</h3><div class="toolbar"><input id="memberSearch" placeholder="بحث بالاسم أو اسم المستخدم"></div><div id="memberTable" class="tablewrap"><div class="empty">لا يوجد أعضاء بعد.</div></div></div>
+      <div class="panel"><h3>المستخدمون وعضويات ملفات التكليف</h3><div class="cf-filter-grid"><input id="memberSearch" placeholder="بحث بالاسم أو اسم المستخدم"><select id="memberProjectFilter"><option value="">كل ملفات التكليف</option></select><select id="memberStatusFilter"><option value="">كل الحالات</option><option value="active">نشط</option><option value="paused">متوقف</option><option value="removed">مسحوب</option></select></div><div id="memberTable" class="tablewrap"><div class="empty">لا يوجد أعضاء بعد.</div></div></div>
      </div>
     </section>
     <section id="tab-locations" class="section">
@@ -187,8 +220,11 @@
      </div>
     </section>
     <section id="tab-sessions" class="section">
-     <div class="headrow"><div><h2>إدارة عمليات الجرد داخل الجهة المحددة</h2><p class="hint">كل عملية جرد هي جلسة مستقلة داخل ملف الجهة؛ تبقى الأصناف والمواقع والمستخدمون محفوظة لإعادة الاستخدام.</p></div></div>
-     <div class="split">
+     <div class="headrow"><div><h2>جلسات الجرد داخل ملف التكليف المحدد</h2><p class="hint">هذا عرض تفصيلي لجلسات الملف المختار فقط. سجل العمليات يعرض جميع الملفات المسموح بها.</p></div><button id="openSessionCreateFromTab" class="primary" type="button">إنشاء جلسة جرد</button></div>
+     <div class="panel"><div id="sessionTable" class="tablewrap"><div class="empty">لا توجد جلسات.</div></div></div>
+     <div class="panel hidden" id="sessionWorkflowPanel"><div id="sessionWorkflowContent"></div></div>
+    </section>
+    
       <div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="fields">
       <div class="field"><label for="sessionName">اسم العملية</label><input id="sessionName" required maxlength="160"></div><div class="field"><label for="sessionOperationCode">كود العملية</label><input id="sessionOperationCode" maxlength="40"></div>
       <div class="field"><label for="sessionBranch">الفرع / النطاق الرئيسي</label><select id="sessionBranch" required></select></div><div class="field"><label for="sessionTimezone">المنطقة الزمنية</label><select id="sessionTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
@@ -201,8 +237,16 @@
      </div>
      <div class="panel hidden" id="sessionWorkflowPanel"><div id="sessionWorkflowContent"></div></div>
     </section>
+    <div id="operationCreateModal" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="operationCreateTitle"><div class="dialog-card cf-modal-wide"><div class="headrow"><div><h3 id="operationCreateTitle">إنشاء عملية جرد جديدة</h3><p class="hint">حدد ملف التكليف وفريق التنفيذ وإعدادات الجرد قبل إنشاء العملية.</p></div><button id="closeOperationCreateModalTop" type="button" class="soft">إغلاق</button></div><div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label for="sessionProject">ملف التكليف</label><select id="sessionProject" required></select></div><div class="fields">
+      <div class="field"><label for="sessionName">اسم العملية</label><input id="sessionName" required maxlength="160"></div><div class="field"><label for="sessionOperationCode">كود العملية</label><input id="sessionOperationCode" maxlength="40"></div>
+      <div class="field"><label for="sessionBranch">الفرع / النطاق الرئيسي (اختياري)</label><select id="sessionBranch"><option value="">بدون تحديد فرع</option></select></div><div class="field"><label for="sessionTimezone">المنطقة الزمنية</label><select id="sessionTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
+      <div class="field"><label for="sessionStart">البداية</label><input id="sessionStart" type="datetime-local"></div><div class="field"><label for="sessionEnd">النهاية</label><input id="sessionEnd" type="datetime-local"></div>
+      <div class="field"><label for="sessionPriority">الأولوية</label><select id="sessionPriority"><option value="1">حرجة</option><option value="2">عالية</option><option value="3" selected>عادية</option><option value="4">منخفضة</option><option value="5">لاحقاً</option></select></div><div class="field"><label for="sessionMode">طريقة العد</label><select id="sessionMode"><option value="barcode">باركود</option><option value="mixed" selected>مختلط</option><option value="manual">يدوي</option></select></div>
+      <div class="field full"><label for="sessionInstructions">تعليمات</label><input id="sessionInstructions" maxlength="2000"></div></div>
+      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeam">فريق هذه العملية — اختر أعضاء التكليف النشطين</label><select id="sessionTeam" class="cf-team-select" multiple size="6"></select><p class="hint">سيتم إسناد الأعضاء المختارين إلى هذه العملية بعد الإنشاء. ويمكن إضافة أعضاء أو تعديل إسنادهم لاحقاً من تفاصيل العملية.</p></div><div class="cf-grid-2"><label><input id="sessionShowExpected" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="sessionCaptureImages" type="checkbox" checked> السماح بالصور</label><label><input id="sessionRequireImages" type="checkbox"> إلزام الصور</label><label><input id="sessionAllowUnknown" type="checkbox"> السماح بصنف غير معروف</label></div>
+      <div class="actions"><button class="primary" type="submit">إنشاء العملية وإسناد الفريق</button><button id="closeOperationCreateModal" class="soft" type="button">إلغاء</button></div><p class="hint">لا تنشأ قيود كمية بمجرد إنشاء العملية.</p></form></div></div></div>
     <section id="tab-operations" class="section">
-     <div class="headrow"><div><h2>مشاريع وعمليات الجرد</h2><p class="hint">سجل موحد لجميع العمليات عبر الجهات؛ اضغط على العملية لمتابعة الفريق والنتائج والمزامنة والتصدير.</p></div><div class="actions"><button id="newOperationButton" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد جديدة</button><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div></div>
+     <div class="headrow"><div><h2>سجل عمليات الجرد — جميع ملفات التكليف</h2><p class="hint">السجل الإداري الشامل. افتح أي عملية لمراجعة الفريق والتقدم والتسوية والمزامنة والتصدير.</p></div><div class="actions"><button id="newOperationButton" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد جديدة</button><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div></div>
      <div class="grid"><div class="stat"><small>قيد التنفيذ</small><strong id="kActiveOperations">0</strong></div><div class="stat"><small>مخططة / متوقفة</small><strong id="kPendingOperations">0</strong></div><div class="stat"><small>قيد المراجعة</small><strong id="kReviewOperations">0</strong></div><div class="stat"><small>إجمالي العمليات</small><strong id="kAllOperations">0</strong></div></div>
      <div class="panel">
       <h3>البحث والتصفية</h3>
@@ -251,8 +295,8 @@
       <div class="panel"><h3>ملخص التسوية ونتائج الجرد</h3><div id="operationReconciliation" class="tablewrap"><div class="empty">لم يتم احتساب تسوية بعد.</div></div></div>
      </div>
     </section>
-    <section id="tab-license" class="section">
-     <div class="headrow"><h2>إدارة التراخيص والبريد</h2></div>
+    <section id="tab-license" class="section" data-owner-only>
+     <div class="headrow"><h2>إعدادات المالك والتراخيص</h2></div><p class="hint">هذه المساحة للمالك وحده. قائمة البريد أدناه مخصصة للإشعارات فقط؛ لا تنشئ حسابات ولا تمنح دوراً أو ترخيص دخول.</p>
      <div class="panel">
       <h3>هوية مالك CountFlow</h3>
       <div class="field"><label>بريد حساب المالك المعتمد (ثابت لأغراض التفويض)</label><input value="owner@rawaea.com" type="email" readonly></div>
