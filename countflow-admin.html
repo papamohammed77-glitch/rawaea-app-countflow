@@ -1155,7 +1155,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    if(parsed.count>90000)throw new Error('الحد الأقصى للدليل العالمي 90,000 صف في الملف الواحد.');
    const ext=(file.name.split('.').pop()||'').toLowerCase();
    if(!['csv','xlsx','xls'].includes(ext))throw new Error('امتداد الملف غير مدعوم. استخدم CSV أو XLSX.');
-   state.globalCatalogImport={file,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext==='csv'?'csv':'xlsx',parseErrors:Number(parsed.parseErrors||0),stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+   state.globalCatalogImport={file,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext==='csv'?'csv':ext==='xlsx'?'xlsx':'xls',parseErrors:Number(parsed.parseErrors||0),stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
    renderGlobalCatalogImportMapping();
    renderGlobalCatalogImportPreview();
    $('globalCatalogImportProgress').textContent=(parsed.streaming?'تم فحص الملف دون تحميل جميع صفوفه إلى الذاكرة. ':'تمت قراءة الملف. ')+Number(parsed.count).toLocaleString('en-US')+' صف؛ راجع مطابقة الأعمدة قبل الاستيراد.';
