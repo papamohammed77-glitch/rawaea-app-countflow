@@ -952,7 +952,7 @@ test("Control portal, Pages build, and Service Worker include the separate revie
   assert.ok(build.includes('"$SCRIPT_DIR/countflow-control.html"'), "Pages build must publish Control");
   assert.ok(build.includes("Countflow-supervisor.html countflow-control.html countflow-core.js"));
   assert.ok(sw.includes("'./countflow-control.html'"), "Service Worker shell must precache Control");
-  assert.ok(sw.includes("countflow-sw-20261124-1"), "Service Worker cache must be versioned");
+  assert.match(sw, /var CF_SW_BUILD = 'countflow-sw-\d{8}-\d+';/, "Service Worker cache must carry a dated build version");
 });
 
 test("Control reconciliation views omit owner identity and are gated by active project authorization", () => {
