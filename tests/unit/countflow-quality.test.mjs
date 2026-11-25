@@ -710,7 +710,7 @@ test("Admin can reuse an existing confirmed Auth account without requesting or c
 test("Admin product UoM editor validates and persists conversion factors", () => {
   const admin = read("countflow-admin.html");
   assert.match(admin, /function renderProductUnitEditor\(units=\[\]\)/);
-  assert.match(admin, /function readProductUnits\(baseUnit\)/);
+  assert.match(admin, /function readProductUnits\(baseUnit(?:,primaryBarcode=null)?\)/);
   assert.match(admin, /factor_to_base:factor/);
   assert.match(admin, /factor<=0\|\|factor>1000000000/);
   assert.match(admin, /const units=getUnitMetaFields\('unit',readProductUnits\(baseUnit\)\)/);
@@ -1257,7 +1257,7 @@ test("Admin overview keeps the first screen simple and moves advanced analytics 
 test("CountFlow global catalogue stores unit conversion and preserves barcodes as text", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/id="globalProductUnitsEditor"/);
- assert.match(admin,/readCatalogUnits\('globalProductUnitsEditor',base\)/);
+ assert.match(admin,/readCatalogUnits\('globalProductUnitsEditor',base(?:,barcode)?\)/);
  assert.match(admin,/base_unit:base,units,updated_by:state\.user\.id/);
  assert.match(admin,/input id="globalBarcode" inputmode="text"/);
  assert.match(admin,/data-sort-catalog="canonical_sku"/);
@@ -1469,7 +1469,7 @@ test("Imported product units keep the dimension class and precision metadata in 
  const source=admin.slice(start,end);
  assert.match(source,/unit_class/);
  assert.match(source,/decimal_precision/);
- assert.match(source,/withProductUnitMeta\(units,unitClass,decimalPrecision\)/);
+ assert.match(source,/withProductUnitMeta\(units,unitClass,decimalPrecision(?:,\{)/);
 });
 
 
@@ -1501,4 +1501,17 @@ test("Admin product unit summaries exclude precision metadata from alternate-uni
  assert.equal(helpers.productUnitRows(saved)[0].name, "case");
  const sw = read("countflow-sw.js");
  assert.match(sw, /countflow-sw-20261125-8/);
+});
+
+test("Global catalogue importer handlers are defined and use bounded owner RPC batches", () => {
+ const admin=read("countflow-admin.html");
+ for(const name of ["previewGlobalCatalogImport","commitGlobalCatalogImport","resetGlobalCatalogImport","normalizeGlobalCatalogImportRow"]) {
+  assert.match(admin,new RegExp("(?:async\\s+)?function\\s+"+name+"\\s*\\("),"Missing global catalogue handler: "+name);
+ }
+ assert.match(admin,/\$\('globalCatalogImportPreview'\)\.onclick=previewGlobalCatalogImport/);
+ assert.match(admin,/\$\('globalCatalogImportCommit'\)\.onclick=commitGlobalCatalogImport/);
+ assert.match(admin,/db\.rpc\('count_upsert_catalog_products_chunk',\{p_rows:rows\}\)/);
+ assert.match(admin,/pending\.length>=500/);
+ assert.match(admin,/parsed\.count>90000/);
+ assert.match(admin,/deterministic='CFI-'/);
 });
