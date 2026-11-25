@@ -1,3 +1,93 @@
+## LVE-2026-11-25-778 — استكمال دليل العملاء ومديريهم في Admin
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**المستودع:** papamohammed77-glitch/rawaea-app-countflow — **الفرع:** main  
+**آخر التزام برمجي تم التحقق منه:** 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b  
+**التقرير:** Reports/LVE-2026-11-25-778_ADMIN_CLIENT_DIRECTORY_UX.md  
+**GitHub Actions:** Run 45661891730 — SUCCESS  
+**Service Worker:** countflow-sw-20261125-6
+
+### ما تم تنفيذه
+- استبدال نماذج العميل ومديره الثابتة بدليل عملاء ذي مؤشرات وModal تحرير.
+- بحث متعدد الحقول يشمل اسم العميل وكوده ونشاطه وبيانات الاتصال واسم مستخدم/اسم مدير العميل.
+- مرشح حالة، وفرز خادمي، وترقيم 25 سجلاً للصفحة باستخدام range وcount exact.
+- عرض المسؤول وبيانات التواصل والعملة والمنطقة الزمنية والمديرين المرتبطين.
+- Modal إضافة/تحرير العميل مع تثبيت الكود بعد الإنشاء، وتحرير حقول CountFlow الفعلية فقط.
+- إدارة مدير العميل في سياق العميل: إنشاء/ربط عبر Edge الحالية، تعديل الاسم واسم المستخدم، إيقاف وإعادة تفعيل العضوية، وإعادة تعيين كلمة المرور عبر Edge الحالية.
+- سجل تدقيق لأحداث العميل والمدير التي يدعمها العقد الحالي.
+- تحديث Service Worker إلى countflow-sw-20261125-6.
+- إضافة اختبارات انحدار للبحث والترقيم والنطاق والصلاحيات ودورة حياة العميل والمدير.
+
+### الملفات والتزامات التنفيذ
+- 060e89622d50cfa96aa83d64c52d9a8a510a1267 — feat(admin): complete client and manager directory UX
+- e8fb9a217d1f29b17d54fcc862c05a3d4b63e484 — fix(admin): select new client in role scope after create
+- 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b — fix(admin): align client lifecycle labels and role-scope test
+- الملفات البرمجية المعدلة: countflow-admin.html، countflow-sw.js، tests/unit/countflow-quality.test.mjs.
+
+### التحقق
+- Node: 84 PASS / 0 FAIL / 0 SKIPPED.
+- Deno type-check لوظيفتي Edge الحاليتين: PASS.
+- Cloudflare Pages allowlisted build: PASS.
+- Playwright production login shell: 3/3 PASS.
+- Pages Production SHA parity مع 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b: PASS.
+- JavaScript inline parse: PASS.
+- لا معرفات HTML ثابتة مكررة.
+- لا حذف مادي للعميل أو العضوية ضمن التغيير.
+
+### Supabase والسلامة
+- count_clients وcount_client_members وcount_roles وcount_client_audit_log وعلاقاتها وRLS موجودة ومناسبة للمهمة.
+- لم ينفذ أي DDL/DML أو Migration أو تعديل Policy/Grant أو RPC أو Edge deploy.
+- لم تُنشأ حسابات أو عملاء أو عضويات اختبارية.
+- لم تُمس دفعة QA أو بيانات المشروع القائمة.
+- لم يتغير ERP المرجعي أو Counter أو Supervisor أو Control.
+
+### ما بقي مفتوحاً
+- القبول البصري داخل جلسة مالك مصادق عليها، والكمبيوتر والهاتف.
+- اختبار مدير عميل مصادق عليه للتحقق من العزل على مستوى التطبيق، دون استخدام بيانات حقيقية غير مصرح بها.
+- البحث بالمديرين محدود إلى 1,000 عضوية في استعلام المطابقة الحالي.
+- بريد Auth للمدير غير موجود في عقد قراءة count_client_members؛ لا تعرضه الواجهة الحالية، وأي توسعة تتطلب عقد قراءة آمن منفصل.
+
+### التوجيه
+تابع القبول المصادق على SHA 9396347d؛ لا تعِد بناء التبويب ولا توسع قاعدة البيانات دون دليل. قفل المرحلة النهائي يتطلب قبولاً بصرياً مصادقاً وتجربة Client Admin، وليس مجرد نجاح CI.
+
+---
+
+## LVE-2026-11-25-777 — تحسين كاميرا ماسح الباركود في Counter
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**الالتزام البرمجي الذي تم تسليمه:** 30d61a5773e2cbeb929bcef68e34d52a651cd05f  
+**آخر main وقت إغلاق المرحلة قبل LVE-778:** 255e91ed1598894a6c34f50f0cddbd0caafbaa47  
+**التقرير:** Reports/LVE-2026-11-25-777_COUNTER_CAMERA_UX.md
+
+### ما تم تنفيذه
+- تحسين لوحة ماسح الكاميرا في Counter وتوضيح حالات الإذن والتشغيل والفشل.
+- فحص HTTPS وgetUserMedia وBarcodeDetector وgetSupportedFormats.
+- منع تعدد طلبات تشغيل الكاميرا ومعالجة سباق انتهاء الإذن بعد ترك الصفحة.
+- إيقاف جميع MediaStream tracks، وإيقاف الفيديو وفصل srcObject.
+- الإيقاف التلقائي عند إخفاء الصفحة، ومغادرة تطبيق Counter، أو تغيير التبويب.
+- الإبقاء على مسار queueCount والمنطق الأساسي للعد والمزامنة دون تعديل.
+- تحديث Service Worker إلى countflow-sw-20261125-5.
+- إضافة اختبارات لمخرجات أخطاء الكاميرا وتنظيف البث ودورة حياة المشغل.
+
+### ملفات وCommits
+- countflow.html — 52ad9e2d2de40a29dd96b035a841da61a6a2f605
+- countflow-sw.js — bc18188d7b1931fc5c7743bca4bb39340aaecc0e
+- tests/unit/countflow-quality.test.mjs — c1972db579b2b55dd386c99c42488ac56a406eb4
+- إصلاح اختبار Boundary — 30d61a5773e2cbeb929bcef68e34d52a651cd05f
+- تقرير المرحلة — Reports/LVE-2026-11-25-777_COUNTER_CAMERA_UX.md
+
+### التحقق وحدود الإثبات
+- inline script parse وstatic checks الخاصة بالكاميرا: PASS وقت التنفيذ.
+- لم يثبت اختبار جهاز فعلي أو كاميرا هاتف حقيقية ضمن الجلسة.
+- لم يختبر نظام الكاميرا في جلسة مصادق عليها على جهاز ميداني.
+- لم تضف المرحلة التقاط صورة رف أو تعديل count_shelf_images.
+- لم تنفذ كتابة Supabase أو نشر Edge.
+
+### التوجيه
+لا تعِد تنفيذ LVE-777. القبول على جهاز فعلي يظل مفتوحاً، وتقرير LVE-777 مرجع التنفيذ لتلك المرحلة.
+
+---
+
 ## LVE-2026-11-25-776 — دليل الأصناف الدائم ووحدات المؤسسة
 
 **Last Verified Event:** 25 نوفمبر 2026 (Africa/Cairo).  
