@@ -41,7 +41,7 @@ BEGIN
     v_type:='CODE128';
   END IF;
   IF v_type IN ('EAN8','UPC_A','EAN13','GTIN14') THEN
-    IF v_length<>CASE v_type WHEN 'EAN8' THEN 8 WHEN 'UPC_A' THEN 12 WHEN 'EAN13' THEN 13 ELSE 14 END
+    IF v_length<>(CASE v_type WHEN 'EAN8' THEN 8 WHEN 'UPC_A' THEN 12 WHEN 'EAN13' THEN 13 ELSE 14 END)
        OR NOT counting_private.is_valid_gtin(p_code) THEN
       RAISE EXCEPTION 'INVALID_GS1_CHECK_DIGIT_OR_LENGTH';
     END IF;
