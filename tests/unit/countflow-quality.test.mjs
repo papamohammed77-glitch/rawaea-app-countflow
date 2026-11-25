@@ -713,7 +713,7 @@ test("Admin product UoM editor validates and persists conversion factors", () =>
   assert.match(admin, /function readProductUnits\(baseUnit\)/);
   assert.match(admin, /factor_to_base:factor/);
   assert.match(admin, /factor<=0\|\|factor>1000000000/);
-  assert.match(admin, /const units=readProductUnits\(baseUnit\)/);
+  assert.match(admin, /const units=getUnitMetaFields\('unit',readProductUnits\(baseUnit\)\)/);
   assert.match(admin, /base_unit:baseUnit,units,expected_qty:/);
   assert.doesNotMatch(admin, /insert\(\{\.\.\.row,units:\[\],is_active:true\}\)/);
 });
@@ -1470,4 +1470,16 @@ test("Imported product units keep the dimension class and precision metadata in 
  assert.match(source,/unit_class/);
  assert.match(source,/decimal_precision/);
  assert.match(source,/withProductUnitMeta\(units,unitClass,decimalPrecision\)/);
+});
+
+
+test("Counter applies product-specific decimal precision and blocks quantities with excess fractional digits", () => {
+ const counter=read("countflow.html");
+ assert.match(counter,/function counterProductDecimalPrecision\(product\)/);
+ assert.match(counter,/function counterProductQuantityStep\(product\)/);
+ assert.match(counter,/function applyCounterProductPrecision\(product\)/);
+ assert.match(counter,/applyCounterProductPrecision\(product\)/);
+ assert.match(counter,/الكمية تتجاوز دقة الصنف المسموح بها/);
+ assert.match(counter,/هذا الصنف لا يقبل الكسور/);
+ assert.match(counter,/Math\.abs\(scaled-Math\.round\(scaled\)\)>1e-7/);
 });
