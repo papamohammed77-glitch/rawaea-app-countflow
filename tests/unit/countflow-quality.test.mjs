@@ -408,6 +408,40 @@ test("Counter UI translates role and hides device queue identifiers from the mem
   assert.match(counter, /friendlyErrorMessage\(x\.sync_error\)/);
 });
 
+
+test("Counter barcode camera exposes accessible states, safe permission errors and automatic stream cleanup", () => {
+  const counter = read("countflow.html");
+  assert.ok(counter.includes('id="cameraStage"'), "Missing bounded camera preview container");
+  assert.ok(counter.includes('id="cameraStatus" data-state="idle" role="status" aria-live="polite"'), "Camera status must be announced accessibly");
+  assert.ok(counter.includes('aria-controls="video" aria-expanded="false"'), "Camera toggle must expose its controlled preview and initial state");
+  assert.ok(counter.includes('playsinline muted aria-label="معاينة كاميرا قراءة الباركود"'), "Camera preview must be inline and muted");
+  assert.match(counter, /function setCameraState\(state,message\)/);
+  assert.match(counter, /if\(!window\.isSecureContext\)/);
+  assert.match(counter, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(counter, /window\.BarcodeDetector\.getSupportedFormats/);
+  assert.match(counter, /cameraStarting=true/);
+  assert.match(counter, /attempt!==cameraAttemptId\|\|document\.hidden/);
+  assert.match(counter, /openedStream\.getTracks\(\)\.forEach\(track=>track\.stop\(\)\)/);
+  assert.match(counter, /async function scanFrame\(\)[\s\S]*?finally\{[\s\S]*?if\(stream&&!document\.hidden\)requestAnimationFrame\(scanFrame\)/);
+  assert.match(counter, /function cameraStop\(message='تم إيقاف الكاميرا\.'\)/);
+  assert.match(counter, /video\.pause\(\);video\.srcObject=null/);
+  assert.match(counter, /document\.hidden&&\(stream\|\|cameraStarting\)\)cameraStop\(/);
+  assert.match(counter, /b\.dataset\.tab!=='count'&&\(stream\|\|cameraStarting\)\)cameraStop\(/);
+  assert.match(counter, /addEventListener\('pagehide',\(\)=>cameraStop\(/);
+  assert.match(counter, /now-lastCameraFrameAt<200|now-lastScanFrameAt<200/);
+  assert.doesNotMatch(counter, /count_shelf_images|captureShelf/i, "Barcode UX must not activate the separate shelf-photo path");
+
+  const start = counter.indexOf("function cameraErrorMessage(error)");
+  const end = counter.indexOf("\\n}", start) + 2;
+  assert.ok(start >= 0 && end > start, "Missing camera permission error mapper");
+  const cameraErrorMessage = vm.runInNewContext("(" + counter.slice(start, end).trim() + ")");
+  assert.match(cameraErrorMessage({ name: "NotAllowedError" }), /إذن الكاميرا/);
+  assert.match(cameraErrorMessage({ name: "NotFoundError" }), /كاميرا متاحة/);
+  assert.match(cameraErrorMessage({ name: "NotReadableError" }), /تطبيق آخر/);
+  assert.match(cameraErrorMessage({ name: "OverconstrainedError" }), /الكاميرا الخلفية/);
+  assert.match(cameraErrorMessage({ name: "UnknownError" }), /الباركود يدوياً/);
+});
+
 test("operation importer does not throw when a staging RPC succeeds and keeps completion text valid", () => {
   const admin = read("countflow-admin.html");
   assert.match(admin, /if\(error\)\{console\.warn\('Operation import staging failed',error\);throw new Error\(/);
