@@ -1,3 +1,51 @@
+## LVE-2026-11-25-780 — تصحيح عدّ وحدات القياس واستكمال تسليم Admin UI
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**المستودع:** papamohammed77-glitch/rawaea-app-countflow — **الفرع:** main  
+**آخر التزام كود تم التحقق منه:** `b956e375b02fb8aafb0eff64fbf12db6069bfb0c`  
+**تغييرا المرحلة:** `00b70123cbc3aebd569aef3c2a24d353d7f1cfb5` ثم `b956e375b02fb8aafb0eff64fbf12db6069bfb0c`  
+**التقرير:** `Reports/LVE-2026-11-25-780_UI_OVERHAUL_CONTINUATION.md`  
+**GitHub Actions:** [Run 45680621762 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45680621762)  
+**Production SHA parity:** PASS — `b956e375b02fb8aafb0eff64fbf12db6069bfb0c`  
+**Service Worker:** `countflow-sw-20261125-8`  
+**الحالة:** READY WITH LIMITATIONS / CODE + CI + PRODUCTION SHELL PARITY PASS / AUTHENTICATED ADMIN ACCEPTANCE OPEN
+
+### الحكم التنفيذي
+عولج تضخيم عدد الوحدات البديلة في ثلاث قوائم Admin. كان كائن metadata الخاص بفئة الوحدة ودقة الكسور محفوظاً داخل مصفوفة `units`، لكن القوائم كانت تحسب `units.length` مباشرة. أصبحت تستخدم `productUnitRows()` لاستبعاد metadata مع الإبقاء على الوحدات الفعلية. لا تغيير في السجلات أو العقود أو الحسابات أو الصلاحيات.
+
+### الملفات والالتزامات
+- `countflow-admin.html`: Blob `389aa640502044c9271316992611274a81b611ed` ← `4cd9ce7d66a94d6629f6100c14abe128f2b55654`.
+- `countflow-sw.js`: Blob `e56f080d7197312957f1cc0f88288bbd289540aa` ← `704155bdbbdb34b862c737d100ace08e5492ebd2`; الإصدار 8.
+- `tests/unit/countflow-quality.test.mjs`: Blob `3f29f49aa5469cb37a962c27ba6af7af5df24742` ← `d978f57395e72569576050fba6b419b32b2f9a77`.
+- Node tests: **91/91 PASS**. Deno, Pages build, Playwright **3/3 PASS**.
+- Pages Production يطابق `b956e375b02fb8aafb0eff64fbf12db6069bfb0c` وفق Run 45680621762. هذا فحص للغلاف العام، وليس قبول Admin الداخلي المصادق.
+
+### قاعدة البيانات والسلامة — SELECT ONLY
+- `count_clients=0`, `count_catalog_products=0`, `count_client_products=0`.
+- `count_products=41,000`, `count_projects=1`, `count_sessions=1`.
+- `count_import_batches=1`, `count_import_rows=90,000`.
+- RLS enabled في **33/33** جدولاً من جداول CountFlow ذات البادئة `count_`.
+- دفعة QA90K `f799c5c1-b766-4712-b74f-c0bb19836ddc` ما زالت `committing`، accepted 41,000، rejected 0، completed_at NULL. لم يتم تعديلها.
+
+### فجوة مفتوحة مثبتة
+واجهة Counter تتحقق من دقة الكسور، لكن `count_record_entry` و`counting_private.record_recount_entry` لا يفرضان `decimal_precision` خادمياً. لا RPC/Migration/DDL أو بيانات اختبار حية في هذه المرحلة؛ حوكمة CountFlow تتطلب موافقة منفصلة لتلك التغييرات.
+
+### تعليمات الاستكمال
+- لا تعِد أعمال LVE-765/772/775/776/778/779 المنفذة على main.
+- نفذ قبولاً بصرياً مصادقاً لصفحات Admin الداخلية على الكمبيوتر والهاتف، قراءة فقط أولاً.
+- أغلق فجوة الدقة الخادمية في مهمة مستقلة بعد استيفاء بوابة الموافقة.
+- لا تلمس دفعة QA90K، ولا PR #6، ولا أي فرع غير main أو أي مستودع خارج CountFlow.
+
+### الأدلة وحدود القبول
+- CODE VERIFIED: source hashes والاختبارات الثلاثة.
+- DATABASE VERIFIED: counts وRLS وحالة الدفعة أعلاه.
+- DEPLOYED ARTIFACT VERIFIED: Pages SHA parity.
+- AUTHENTICATED RUNTIME: UNKNOWN / OPEN.
+- SERVER-SIDE DECIMAL PRECISION: CONFIRMED GAP.
+- **Readiness: READY WITH LIMITATIONS.**
+
+---
+
 ## LVE-2026-11-25-779 — بروتوكول منظور المستخدم، ودليل العملاء، وتوحيد الأصناف
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
