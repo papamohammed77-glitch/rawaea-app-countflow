@@ -1,3 +1,42 @@
+## LVE-2026-11-25-781 — نظام بيانات الأصناف متعدد الوحدات والباركود
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**Repository:** papamohammed77-glitch/rawaea-app-countflow — **Branch:** main  
+**HEAD عند تثبيت التقرير:** `902a68a9fffb9e918b6775e73a36b2550ffd1073`  
+**التقرير:** `Reports/LVE-2026-11-25-781_ITEM_MASTER_DATA_SYSTEM.md`  
+**CI المطابق:** Run 45697943916 — failure  
+**Service Worker:** `countflow-sw-20261125-8`  
+**الحالة:** BLOCKED — CI/SOURCE EVIDENCE INCOMPLETE
+
+### القرار المعماري
+لم تُنشأ الجداول المقترحة في النص المرفق بأسماء `count_products_master` و`count_product_units` و`count_project_products`. استُخدمت كيانات CountFlow الحالية: `count_catalog_products` / `count_client_products` / `count_products`، مع الحفاظ على الفصل Global / Client / Project، وعدم نقل أرصدة أو تاريخ عد بين المؤسسات والتكليفات.
+
+### المنفذ
+- تحقق GS1 لـ EAN8 / UPC-A / EAN13 / GTIN14، مع تمييز CODE128 وCFI الداخلي وحماية الأكواد التاريخية.
+- UOM متعدد مع معامل تحويل وباركود اختياري مستقل لكل وحدة، ومنع التكرار عبر النطاقات.
+- فرض دقة الكسور على خادم Postgres من خلال trigger `count_entries`، لا في واجهة Counter فقط.
+- تحرير الصنف العالمي في أربع خطوات: الأساسية، الوحدات، الصورة، المتقدم.
+- مسارات حفظ النوع/الباركود/الوحدات في Global / Client / Project.
+- استيراد Global CSV/XLSX على دفعات 500 صف عبر `count_upsert_catalog_products_chunk`، مع limit 90,000، checksum ورقم صف لإنتاج CFI حتمي وإعادة تشغيل آمنة.
+- بحث Counter في باركودات وحدات التعبئة، مع حفظ الرمز الممسوح في دليل العد.
+
+### الترحيلات
+- `20261125223000_countflow_item_master_barcode_uom_integrity_v1.sql`
+- `20261125203100_countflow_item_master_helper_acl_v1.sql`
+تم تطبيقهما سابقاً في `rawaea-staging`؛ لا تعِد تشغيلهما. تحقق من migration ledger قبل أي تعديل لاحق.
+
+### حدود القبول
+- لا استيراد فعلي 90K للدليل العالمي في هذه الجولة.
+- لا قبول بصري مصادق لداخل Admin/Client حتى الآن.
+- لم يتم توليد/فتح XLSX فعلي من جلسة مالك.
+- الأداء 90K/التزامن العالي غير مقاس.
+- QA batch `f799c5c1-b766-4712-b74f-c0bb19836ddc` لم تُمس وتظل `committing`، 90,000 rows، 41,000 accepted، 0 rejected، completed_at NULL.
+- سياسة التسعير UNKNOWN.
+
+**التفاصيل:** راجع تقرير LVE-781.  
+
+---
+
 ## LVE-2026-11-25-780 — تصحيح عدّ وحدات القياس واستكمال تسليم Admin UI
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
