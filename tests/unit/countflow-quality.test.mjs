@@ -1244,3 +1244,10 @@ test("CountFlow separates global master, client mapping and project roster witho
  assert.doesNotMatch(admin,/from\('count_catalog_products'\)\.delete/);
  assert.doesNotMatch(admin,/from\('count_client_products'\)\.delete/);
 });
+
+test("CountFlow client mapping reset and attach actions provide guarded feedback", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /clientProductReset'\)\.onclick=resetClientProductForm/);
+  assert.match(admin, /state\.project\.client_id!==id/);
+  assert.match(admin, /catch\(error\)\{fail\('تعذر إدراج الصنف في ملف التكليف',error\);\}/);
+});
