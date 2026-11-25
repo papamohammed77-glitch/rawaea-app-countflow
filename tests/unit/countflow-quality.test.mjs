@@ -713,7 +713,7 @@ test("Admin product UoM editor validates and persists conversion factors", () =>
   assert.match(admin, /function readProductUnits\(baseUnit(?:,primaryBarcode=null)?\)/);
   assert.match(admin, /factor_to_base:factor/);
   assert.match(admin, /factor<=0\|\|factor>1000000000/);
-  assert.match(admin, /const units=getUnitMetaFields\('unit',readProductUnits\(baseUnit\)\)/);
+  assert.match(admin, /const units=getUnitMetaFields\('unit',readProductUnits\(baseUnit(?:,barcode)?\)\)/);
   assert.match(admin, /base_unit:baseUnit,units,expected_qty:/);
   assert.doesNotMatch(admin, /insert\(\{\.\.\.row,units:\[\],is_active:true\}\)/);
 });
@@ -1500,7 +1500,7 @@ test("Admin product unit summaries exclude precision metadata from alternate-uni
  assert.equal(helpers.productUnitRows(saved).length, 1);
  assert.equal(helpers.productUnitRows(saved)[0].name, "case");
  const sw = read("countflow-sw.js");
- assert.match(sw, /countflow-sw-20261125-8/);
+ assert.match(sw, /countflow-sw-20261125-9/);
 });
 
 test("Global catalogue importer handlers are defined and use bounded owner RPC batches", () => {
