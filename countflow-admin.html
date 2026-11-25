@@ -2299,7 +2299,6 @@ function isClientCodeUniqueConflict(error){
  async function openClientModal(client=null){
   if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
   if(!window.Swal||typeof window.Swal.fire!=='function')return notify('تعذر تحميل نافذة العميل الآمنة؛ لم يتم فتح نموذج التعديل.',true);
-  if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
   let proposedCode=client?.code||'';
   if(!client){try{proposedCode=await generateNextClientCode();}catch(error){return fail('تعذر تجهيز كود العميل التلقائي',error);}}
   const edit=!!client, currency=client?.default_currency||'EGP',timezone=client?.default_timezone||'Africa/Cairo',status=client?.status||'active';
@@ -2337,12 +2336,17 @@ function isClientCodeUniqueConflict(error){
    }else{
     payload.status='active';payload.created_by=state.user.id;
     let created=null,lastError=null;
+    if(!/^CLIENT-[0-9]{6,}$/i.test(String($('cfClientCode').value||'')))code='';
+    else code=String($('cfClientCode').value).trim().toUpperCase();
     for(let attempt=0;attempt<5;attempt++){
-     code=await generateNextClientCode();payload.code=code;
+     if(!code)code=await generateNextClientCode();
+     $('cfClientCode').value=code;payload.code=code;
      const result=await db.from('count_clients').insert(payload).select('id').single();
      if(!result.error){created=result.data;break;}
      lastError=result.error;
      if(!isClientCodeUniqueConflict(result.error))throw result.error;
+     code='';
+     if(attempt<4){code=await generateNextClientCode();$('cfClientCode').value=code;}
     }
     if(!created)throw new Error('تعذر تخصيص كود عميل فريد بعد عدة محاولات متزامنة. أعد الحفظ مرة أخرى. '+(lastError?.message||''));
     clientId=created.id;

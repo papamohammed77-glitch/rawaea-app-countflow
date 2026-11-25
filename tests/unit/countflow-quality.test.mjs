@@ -867,8 +867,8 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
 test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 12);
-  assert.equal(new Set(navTabs).size, 12);
+  assert.equal(navTabs.length, 11);
+  assert.equal(new Set(navTabs).size, 11);
   assert.match(admin, /class="nav-group"/);
   assert.match(admin, /class="nav-group-title"/);
   assert.match(admin, /data-icon="gauge-high"/);
@@ -948,12 +948,12 @@ test("Admin exposes a modal operation creator, stable catalogue and distinct eng
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
   assert.ok(navTabs.includes("projects") && navTabs.includes("sessions") && navTabs.includes("operations"));
-  assert.ok(navTabs.includes("clients") && navTabs.includes("catalog"));
+  assert.ok(navTabs.includes("clients") && navTabs.includes("products"));
   assert.ok(admin.includes('id="newOperationButton"'), "Missing dedicated create-operation action");
   assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
   assert.match(admin, /id="operationCreateModal"/);
   assert.match(admin, /id="sessionTeam"[^>]*multiple/);
-  assert.ok(admin.includes("كتالوج أصناف الجهة / التكليف"), "The client/engagement catalogue must persist across sessions");
+  assert.ok(admin.includes("أصناف ملف التكليف") && admin.includes("دليل الأصناف"), "The client/engagement catalogue must persist across sessions");
   assert.ok(admin.includes("لا تُحذف أصنافه عند إغلاق أي جلسة جرد"), "Catalogue persistence rule must be explicit");
   assert.ok(admin.includes("ملف التكليف المحدد"), "Sessions must be scoped to the selected engagement");
   assert.ok(admin.includes("سجل عمليات الجرد — جميع ملفات التكليف"), "Operations register must cover all visible engagements");
@@ -1282,7 +1282,7 @@ test("CountFlow separates global master, client mapping and project roster witho
  assert.match(admin,/id="catalogGlobalView"/);
  assert.match(admin,/id="catalogClientView"/);
  assert.match(admin,/id="tab-products"/);
- assert.match(admin,/كتالوج أصناف الجهة \/ التكليف/);
+ assert.match(admin,/أصناف ملف التكليف/);
  assert.match(admin,/is_active:!p\.is_active/);
  assert.doesNotMatch(admin,/from\('count_catalog_products'\)\.delete/);
  assert.doesNotMatch(admin,/from\('count_client_products'\)\.delete/);
@@ -1328,6 +1328,7 @@ test("Client codes are generated sequentially, read-only in the modal and collis
  assert.match(admin,/padStart\(6,'0'\)/);
  assert.match(admin,/function isClientCodeUniqueConflict\(error\)/);
  assert.match(admin,/isClientCodeUniqueConflict\(result\.error\)/);
+ assert.match(admin,/\$\(\x27cfClientCode\x27\)\.value=code/);
  assert.match(admin,/attempt<5/);
  assert.match(admin,/id="cfClientCode" readonly required maxlength="40"/);
  assert.match(admin,/يولّد النظام الكود التسلسلي التالي تلقائياً/);
