@@ -432,7 +432,7 @@ test("Counter barcode camera exposes accessible states, safe permission errors a
   assert.doesNotMatch(counter, /count_shelf_images|captureShelf/i, "Barcode UX must not activate the separate shelf-photo path");
 
   const start = counter.indexOf("function cameraErrorMessage(error)");
-  const end = counter.indexOf("\\n}", start) + 2;
+  const end = counter.indexOf("async function cameraStart()", start);
   assert.ok(start >= 0 && end > start, "Missing camera permission error mapper");
   const cameraErrorMessage = vm.runInNewContext("(" + counter.slice(start, end).trim() + ")");
   assert.match(cameraErrorMessage({ name: "NotAllowedError" }), /إذن الكاميرا/);
