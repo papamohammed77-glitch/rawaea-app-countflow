@@ -825,7 +825,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('roleTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>المشروع</th><th>الدور الحالي</th><th>الدور الجديد</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+rows.map(m=>{
    const p=state.projects.find(v=>v.id===m.project_id),self=state.user?.id===m.user_id;
    const options=state.roles.filter(r=>r.scope==='project'&&r.is_active&&(r.is_system||r.client_id===state.clientId)).map(r=>'<option value="'+esc(r.id)+'" '+(m.role_id===r.id?'selected':'')+'>'+esc(r.name)+'</option>').join('');
-   return '<tr><td><b>'+esc(m.display_name)+'</b><span class="sub">'+esc(m.username)+'</span></td><td>'+esc(p?.name||'تكليف')+'</td><td>'+esc(roleName(m.role,m.role_id))+'</td><td><select id="roleSelect-'+m.id+'" data-role-select="'+m.id+'" '+(self?'disabled':'')+'>'+options+'</select></td><td>'+clientStatusPill(m.status)+'</td><td>'+(self?'الحساب الحالي':'<button type="button" class="soft" data-save-role="'+m.id+'">حفظ الدور</button>')+'</td></tr>';
+   return '<tr><td><b>'+esc(m.display_name)+'</b><span class="sub">'+esc(m.username)+'</span></td><td>'+esc(p?.name||'تكليف')+'</td><td>'+esc(roleName(m.role,m.role_id))+'</td><td><select id="roleSelect-'+m.id+'" data-role-select="'+m.id+'" '+(self?'disabled':'')+'>'+options+'</select></td><td>'+statusPill(m.status)+'</td><td>'+(self?'الحساب الحالي':'<button type="button" class="soft" data-save-role="'+m.id+'">حفظ الدور</button>')+'</td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات مطابقة في نطاق العميل الحالي.</div>';
   $('roleTable').querySelectorAll('[data-save-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveRole));
  }

@@ -1390,3 +1390,17 @@ test("Client and manager status labels use customer lifecycle language instead o
  assert.match(admin,/clientStatusPill\(m\.status\)/);
  assert.match(admin,/active:'نشط',suspended:'موقوف',archived:'مؤرشف',paused:'معلق',removed:'أزيل'/);
 });
+
+
+test("Client lifecycle labels remain isolated from project-member status rendering", () => {
+ const admin=read("countflow-admin.html");
+ const roleStart=admin.indexOf("function renderRoles()");
+ const roleEnd=admin.indexOf("async function reloadMemberViews",roleStart);
+ assert.ok(roleStart>=0&&roleEnd>roleStart);
+ assert.match(admin.slice(roleStart,roleEnd),/statusPill\(m\.status\)/);
+ assert.doesNotMatch(admin.slice(roleStart,roleEnd),/clientStatusPill/);
+ const clientStart=admin.indexOf("async function loadClientDirectory()");
+ const clientEnd=admin.indexOf("function openClientModal",clientStart);
+ assert.ok(clientStart>=0&&clientEnd>clientStart);
+ assert.match(admin.slice(clientStart,clientEnd),/clientStatusPill\(c\.status\)/);
+});
