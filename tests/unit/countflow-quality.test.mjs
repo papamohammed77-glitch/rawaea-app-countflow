@@ -1170,7 +1170,8 @@ test("Platform owner custom-role scope is explicitly selected and client adminis
   assert.match(admin, /id="roleClientScope"/);
   assert.match(admin, /state\.platformOwner\?state\.roleClientId:state\.clientId/);
   assert.match(admin, /roleClientScope'\)\?\.addEventListener\('change'/);
-  assert.match(admin, /roleClientScope'\)\.value=x\.data\.id/);
+  assert.match(admin, /state\.roleClientId=clientId/);
+  assert.match(admin, /if\(!client\)\{await loadRoleCatalog\(\);if\(\$\('roleClientScope'\)\)\$\('roleClientScope'\)\.value=clientId;await loadCatalog\(\);\}/);
   assert.match(admin, /r\.client_id===\(state\.roleClientId\|\|state\.clientId\)/);
 });
 
@@ -1378,4 +1379,14 @@ test("Client directory responsive styles preserve mobile access to search, filte
  assert.match(admin,/@media\(max-width:560px\)\{\.cf-client-summary/);
  assert.match(admin,/cf-client-manager-list/);
  assert.match(admin,/cf-client-pagination/);
+});
+
+
+test("Client and manager status labels use customer lifecycle language instead of count-session workflow labels", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/function clientStatusLabel\(status\)/);
+ assert.match(admin,/function clientStatusPill\(status\)/);
+ assert.match(admin,/clientStatusPill\(c\.status\)/);
+ assert.match(admin,/clientStatusPill\(m\.status\)/);
+ assert.match(admin,/active:'نشط',suspended:'موقوف',archived:'مؤرشف',paused:'معلق',removed:'أزيل'/);
 });
