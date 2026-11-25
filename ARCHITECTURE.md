@@ -1,3 +1,7 @@
+# بروتوكول التنفيذ الإلزامي للمساعدين
+
+على كل مساعد/وكيل قبل التعديل قراءة [AGENTS.md](./AGENTS.md) و[بروتوكول هندسة المنتج من منظور المستخدم](./USER_FIRST_ENGINEERING_PROTOCOL.md)، إضافة إلى استعادة نقطة الاستكمال من \`CURRENT_STATE.md\`. البروتوكول يفرض تحليل الرحلة كما يراها المستخدم وتقليل الإدخال اليدوي وتوحيد التنقل عند ترابط المهام، مع الإبقاء على فصل البيانات والصلاحيات. لا تلغي هذه القواعد قيود السلامة والحوكمة أدناه.
+
 # CountFlow — Architecture & Operating Model
 
 **Scope:** standalone repository `papamohammed77-glitch/rawaea-app-countflow`; application HTML, Core, Service Worker, Functions, SQL and tests are rooted in this repository.  

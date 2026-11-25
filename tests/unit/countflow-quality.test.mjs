@@ -1138,13 +1138,21 @@ test("Platform owner-only client administration, licensing and audit remain hidd
   assert.match(admin, /قائمة البريد أدناه مخصصة للإشعارات فقط/);
 });
 
-test("Admin keeps operation register, per-file sessions, project catalog and global catalogue as distinct scopes", () => {
+test("Admin keeps operation register and project-scoped product data distinct inside one unified product navigation", () => {
   const admin = read("countflow-admin.html");
   assert.match(admin, /سجل عمليات الجرد — جميع ملفات التكليف/);
   assert.match(admin, /جلسات الجرد داخل ملف التكليف المحدد/);
-  assert.match(admin, /دليل الأصناف الدائم/);
-  assert.match(admin, /كتالوج أصناف الجهة \/ التكليف/);
+  assert.match(admin, /دليل الأصناف/);
+  assert.match(admin, /أصناف ملف التكليف/);
   assert.match(admin, /id="sideToggle"/);
+  assert.equal((admin.match(/data-tab="products"/g)||[]).length,1);
+  assert.doesNotMatch(admin,/data-tab="catalog"/);
+  assert.doesNotMatch(admin,/<section id="tab-catalog"/);
+  assert.equal((admin.match(/<section id="tab-products"/g)||[]).length,1);
+  for(const view of ['global','client','project'])assert.match(admin,new RegExp('data-catalog-view="'+view+'"'));
+  assert.match(admin,/id="projectProductsView"/);
+  assert.match(admin,/id="projectProductsContent"/);
+  assert.match(admin,/function switchCatalogView\(view\)/);
 });
 
 test("Admin script declarations remain syntactically unique after UI refactors", () => {
@@ -1311,16 +1319,29 @@ test("Admin client directory reads the complete client contact schema and client
  assert.match(admin,/\.eq\('count_roles\.scope','client'\)/);
 });
 
-test("Client create and edit modal preserves immutable codes and updates only existing CountFlow client columns", () => {
+test("Client codes are generated sequentially, read-only in the modal and collision-safe on concurrent creation", () => {
  const admin=read("countflow-admin.html");
- assert.match(admin,/function openClientModal\(client=null\)/);
+ assert.match(admin,/async function generateNextClientCode\(\)/);
+ assert.match(admin,/from\('count_clients'\)\.select\('code'\)/);
+ assert.match(admin,/\.range\(offset,offset\+size-1\)/);
+ assert.match(admin,/CLIENT-/);
+ assert.match(admin,/padStart\(6,'0'\)/);
+ assert.match(admin,/function isClientCodeUniqueConflict\(error\)/);
+ assert.match(admin,/isClientCodeUniqueConflict\(result\.error\)/);
+ assert.match(admin,/attempt<5/);
+ assert.match(admin,/id="cfClientCode" readonly required maxlength="40"/);
+ assert.match(admin,/يولّد النظام الكود التسلسلي التالي تلقائياً/);
+ assert.doesNotMatch(admin,/cfClientCode" required maxlength="40" pattern=/);
+ assert.doesNotMatch(admin,/from\('count_clients'\)\.delete/);
+});
+test("Client create and edit modal preserves immutable identity and updates only existing CountFlow columns", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/async function openClientModal\(client=null\)/);
  assert.match(admin,/function saveClientModal\(event,client\)/);
  assert.match(admin,/payload=\{name,industry:/);
  assert.match(admin,/db\.from\('count_clients'\)\.update\(payload\)\.eq\('id',client\.id\)/);
- assert.match(admin,/payload\.code=code;payload\.status='active';payload\.created_by=state\.user\.id/);
- assert.match(admin,/id="cfClientCode" required maxlength="40" pattern=/);
- assert.match(admin,/الكود ثابت بعد إنشاء العميل/);
- assert.doesNotMatch(admin,/from\('count_clients'\)\.delete/);
+ assert.match(admin,/code=client\?\.code/);
+ assert.match(admin,/payload\.status='active';payload\.created_by=state\.user\.id/);
 });
 
 test("Client create and update actions are recorded in the client audit log without swallowing audit failures", () => {
@@ -1403,4 +1424,13 @@ test("Client lifecycle labels remain isolated from project-member status renderi
  const clientEnd=admin.indexOf("function openClientModal",clientStart);
  assert.ok(clientStart>=0&&clientEnd>clientStart);
  assert.match(admin.slice(clientStart,clientEnd),/clientStatusPill\(c\.status\)/);
+});
+
+
+test("All assistants are governed by the user-first engineering protocol and preserve CountFlow product scope boundaries", () => {
+ const protocol=read("USER_FIRST_ENGINEERING_PROTOCOL.md");
+ const agents=read("AGENTS.md");
+ for(const phrase of ["ضع نفسك مكان المستخدم","تقليل العبء الذهني","count_catalog_products","count_client_products","count_products","تعارض Unique","UNKNOWN"])assert.ok(protocol.includes(phrase), "Missing protocol principle: "+phrase);
+ assert.match(agents,/USER_FIRST_ENGINEERING_PROTOCOL/);
+ assert.match(agents,/CURRENT_STATE\.md/);
 });

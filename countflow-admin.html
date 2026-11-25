@@ -147,7 +147,7 @@
 .cf-catalog-custom-units{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}.cf-checkline{display:flex;gap:9px;align-items:flex-start;font-size:12px;font-weight:800}.cf-catalog-editor-panel{min-height:220px}
 #globalProductPanel-image input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
 @media(max-width:780px){.cf-catalog-search-row{grid-template-columns:1fr 1fr}.cf-catalog-search-row .field:first-child{grid-column:1/-1}.cf-catalog-scope-panel{grid-template-columns:1fr}}
-@media(max-width:520px){.cf-catalog-search-row{grid-template-columns:1fr}.cf-catalog-search-row .field:first-child{grid-column:auto}.cf-catalog-tabs,.cf-catalog-editor-tabs{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.cf-catalog-search-row{grid-template-columns:1fr}.cf-catalog-search-row .field:first-child{grid-column:auto}.cf-catalog-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.cf-catalog-tab{padding:8px 5px;font-size:11px}.cf-catalog-editor-tabs{display:grid;grid-template-columns:1fr 1fr}}
 
 
 /* Client directory — searchable, paginated and responsive */
@@ -221,7 +221,7 @@
      <div class="nav-group-title">الرئيسية</div>
      <button class="nav active" data-tab="overview" data-icon="gauge-high">نظرة عامة</button>
     </div>
-    <div class="nav-group" data-owner-only><div class="nav-group-title">إدارة العملاء</div><button class="nav" data-tab="clients" data-icon="building">العملاء ومديروهم</button></div>
+    <div class="nav-group" data-owner-only><div class="nav-group-title">إدارة العملاء</div><button class="nav" data-tab="clients" data-icon="building">دليل العملاء</button></div>
     <div class="nav-group"><div class="nav-group-title">العمليات والتكليفات</div>
      <button class="nav" data-tab="projects" data-icon="folder-open">ملفات التكليف</button>
      <button class="nav" data-tab="operations" data-icon="clipboard-list">سجل العمليات</button>
@@ -229,7 +229,7 @@
     </div>
     <div class="nav-group">
      <div class="nav-group-title">البيانات المرجعية</div>
-     <button class="nav" data-tab="products" data-icon="boxes-stacked">أصناف ملف التكليف</button><button class="nav" data-tab="catalog" data-icon="barcode">الأصناف العالمية</button>
+     <button class="nav" data-tab="products" data-icon="boxes-stacked">الأصناف</button>
      <button class="nav" data-tab="locations" data-icon="location-dot">المواقع</button>
     </div>
     <div class="nav-group">
@@ -346,7 +346,7 @@
     </section>
 <section id="tab-clients" class="section" data-owner-only>
  <div class="headrow">
-  <div><h2>العملاء ومديروهم</h2><p class="hint">دليل الجهات المسجلة ومديري حساباتها. إنشاء العملاء ومديريهم وإدارة حالاتهم متاح لمالك المنصة فقط.</p></div>
+  <div><h2>دليل العملاء</h2><p class="hint">دليل الجهات المسجلة ومديري حساباتها. إنشاء العملاء ومديريهم وإدارة حالاتهم متاح لمالك المنصة فقط.</p></div>
   <div class="actions">
    <button id="clientRefresh" class="soft" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> تحديث</button>
    <button id="clientAdd" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> عميل جديد</button>
@@ -385,9 +385,9 @@
       <div class="cf-grid-2"><label><input id="showExpectedQuantity" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="captureImages" type="checkbox" checked> السماح بالصور</label><label><input id="requireImages" type="checkbox"> إلزام الصور</label><label><input id="allowUnknownProducts" type="checkbox"> قبول الأصناف غير المعروفة</label></div>
       <div class="actions"><button class="primary">إنشاء ملف التكليف والعملية الأولى</button></div><p class="hint">إنشاء العملية لا يسجل كميات ولا ينشئ حركة مخزون.</p>
      </form></div><div class="panel"><h3>ملفات التكليف</h3><div id="projectList" class="empty">جار التحميل…</div></div></div></section>
-    <section id="tab-catalog" class="section">
-     <div class="headrow"><div><h2>دليل الأصناف الدائم</h2><p class="hint">سجل الصنف مرة واحدة. استخدمه عبر المؤسسات والتكليفات المتكررة دون إعادة إدخاله أو حذفه بعد الجرد.</p></div></div>
-     <div class="cf-catalog-tabs" id="catalogViewTabs"><button type="button" class="cf-catalog-tab active" data-catalog-view="global">الأصناف العالمية</button><button type="button" class="cf-catalog-tab" data-catalog-view="client">أصناف المؤسسة ومواءماتها</button></div>
+    <section id="tab-products" class="section">
+     <div class="headrow"><div><h2>دليل الأصناف</h2><p class="hint">واجهة واحدة لإدارة بيانات الأصناف، مع فصل واضح بين التعريف العالمي ومواءمة المؤسسة وأصناف ملف التكليف.</p></div></div>
+     <div class="cf-catalog-tabs" id="catalogViewTabs" role="tablist" aria-label="نطاق دليل الأصناف"><button type="button" class="cf-catalog-tab active" data-catalog-view="global" role="tab" aria-selected="true">الدليل العالمي</button><button type="button" class="cf-catalog-tab" data-catalog-view="client" role="tab" aria-selected="false">مواءمات المؤسسة</button><button type="button" class="cf-catalog-tab" data-catalog-view="project" role="tab" aria-selected="false">أصناف التكليف</button></div>
      <div id="catalogGlobalView">
       <div class="panel cf-catalog-toolbar"><div class="cf-catalog-search-row">
        <div class="field"><label for="catalogSearch">بحث بالاسم أو SKU أو الباركود</label><input id="catalogSearch" placeholder="ابحث عن صنف…"></div>
@@ -418,26 +418,8 @@
        <div class="panel"><h3>أصناف المؤسسة المسجلة</h3><div class="toolbar"><input id="clientCatalogSearch" placeholder="بحث داخل أصناف المؤسسة"></div><div id="clientCatalogTable" class="tablewrap"><div class="empty">اختر المؤسسة لعرض أصنافها.</div></div></div>
       </div>
      </div>
-     <div id="catalogProductEditor" class="hidden">
-      <div class="headrow"><div><h2 id="globalProductFormTitle">إضافة صنف عالمي</h2><p class="hint">بيانات رئيسية ثابتة قابلة لإعادة الاستخدام.</p></div><button id="globalProductCancel" class="soft" type="button">العودة إلى الدليل</button></div>
-      <form id="globalProductForm"><input id="globalProductId" type="hidden">
-       <div class="cf-catalog-editor-tabs"><button type="button" class="active" data-global-product-tab="basic">البيانات الأساسية</button><button type="button" data-global-product-tab="units">الوحدات والتحويل</button><button type="button" data-global-product-tab="image">الصورة</button></div>
-       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-basic"><div class="fields">
-        <div class="field"><label for="globalSku">SKU العالمي</label><input id="globalSku" maxlength="100"></div>
-        <div class="field"><label for="globalBarcode">الباركود الدولي (نصي)</label><input id="globalBarcode" inputmode="text" maxlength="120" placeholder="يحفظ الأصفار الأولى كما هي"></div>
-        <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
-        <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
-        <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120"></div>
-        <div class="field"><label for="globalBaseUnit">وحدة الأساس</label><input id="globalBaseUnit" required maxlength="40" placeholder="قطعة، كجم، لتر…"></div>
-       </div></div>
-       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-units"><h3>الوحدات والتحويل</h3><p class="hint">مثال: كرتونة = 12 قطعة، جرام = 0.001 كجم. لا تكرر الوحدة الأساسية كوحدة بديلة.</p><div id="globalProductUnitsEditor" class="product-unit-list"></div><button id="addGlobalProductUnit" class="soft" type="button">إضافة وحدة بديلة</button></div>
-       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-image"><h3>صورة الصنف</h3><p class="hint">الصورة تحفظ في Storage الخاص، ولا يُحفظ رابط العرض المؤقت داخل السجل.</p><div class="field"><label for="globalImageFile">JPEG / PNG / WEBP حتى 5MB</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div><div id="globalImageCurrent" class="hint"></div></div>
-       <div class="panel"><div class="actions"><button id="globalProductSave" class="primary" type="submit">إضافة إلى الدليل الدائم</button><button id="globalProductNext" class="soft" type="button">التالي</button><button id="globalProductCancelBottom" class="soft" type="button">إلغاء</button></div></div>
-      </form>
-     </div>
-    </section>
-    <section id="tab-products" class="section">
-     <div class="headrow"><h2>كتالوج أصناف الجهة / التكليف</h2><span class="pill" id="productCount">0 صنف</span></div>
+     <div id="projectProductsView" class="hidden"><div id="projectProductScopeNotice" class="empty hidden" role="status">اختر ملف تكليف من المحدد أعلى النظام لعرض أصنافه واستيرادها أو تحريرها.</div><div id="projectProductsContent">
+     <div class="headrow"><h2>أصناف ملف التكليف</h2><span class="pill" id="productCount">0 صنف</span></div>
      <p class="hint">هذا سجل الأصناف الدائم داخل ملف التكليف؛ لا تُحذف أصنافه عند إغلاق أي جلسة جرد. تُربط كل عملية جرد بجلسة مستقلة وتستخدم أصناف الجهة المعتمدة.</p>
      <div class="panel">
       <h3>استيراد الأصناف من Excel / CSV</h3>
@@ -463,6 +445,23 @@
        <div class="field full"><label for="productImageFile">رفع صورة الصنف من الجهاز (JPEG / PNG · حتى 1MiB لتضمينها في Excel)</label><input id="productImageFile" type="file" accept="image/jpeg,image/png"><div id="productImagePreview" class="product-image-preview hidden"><img id="productImagePreviewImg" alt="معاينة صورة الصنف"><div class="grow"><b id="productImagePreviewTitle">صورة الصنف</b><p id="productImagePreviewNote" class="hint">تُحفظ الصورة داخل مساحة CountFlow الخاصة بهذا التكليف.</p><button type="button" id="clearProductImage" class="danger">إزالة الصورة</button></div></div></div>
       </div><div class="actions"><button class="primary">حفظ الصنف</button><button type="button" id="productCancel" class="soft">إلغاء</button></div></form></div>
       <div class="panel"><h3>الأصناف المسجلة</h3><div class="toolbar"><input id="productSearch" placeholder="بحث بالكود أو الاسم أو الباركود"></div><div id="productTable" class="tablewrap"><div class="empty">لا توجد أصناف بعد.</div></div><div id="productPager" class="actions"></div></div>
+     </div>
+    </div></div><div id="catalogProductEditor" class="hidden">
+      <div class="headrow"><div><h2 id="globalProductFormTitle">إضافة صنف عالمي</h2><p class="hint">بيانات رئيسية ثابتة قابلة لإعادة الاستخدام.</p></div><button id="globalProductCancel" class="soft" type="button">العودة إلى الدليل</button></div>
+      <form id="globalProductForm"><input id="globalProductId" type="hidden">
+       <div class="cf-catalog-editor-tabs"><button type="button" class="active" data-global-product-tab="basic">البيانات الأساسية</button><button type="button" data-global-product-tab="units">الوحدات والتحويل</button><button type="button" data-global-product-tab="image">الصورة</button></div>
+       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-basic"><div class="fields">
+        <div class="field"><label for="globalSku">SKU العالمي</label><input id="globalSku" maxlength="100"></div>
+        <div class="field"><label for="globalBarcode">الباركود الدولي (نصي)</label><input id="globalBarcode" inputmode="text" maxlength="120" placeholder="يحفظ الأصفار الأولى كما هي"></div>
+        <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
+        <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
+        <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120"></div>
+        <div class="field"><label for="globalBaseUnit">وحدة الأساس</label><input id="globalBaseUnit" required maxlength="40" placeholder="قطعة، كجم، لتر…"></div>
+       </div></div>
+       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-units"><h3>الوحدات والتحويل</h3><p class="hint">مثال: كرتونة = 12 قطعة، جرام = 0.001 كجم. لا تكرر الوحدة الأساسية كوحدة بديلة.</p><div id="globalProductUnitsEditor" class="product-unit-list"></div><button id="addGlobalProductUnit" class="soft" type="button">إضافة وحدة بديلة</button></div>
+       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-image"><h3>صورة الصنف</h3><p class="hint">الصورة تحفظ في Storage الخاص، ولا يُحفظ رابط العرض المؤقت داخل السجل.</p><div class="field"><label for="globalImageFile">JPEG / PNG / WEBP حتى 5MB</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div><div id="globalImageCurrent" class="hint"></div></div>
+       <div class="panel"><div class="actions"><button id="globalProductSave" class="primary" type="submit">إضافة إلى الدليل الدائم</button><button id="globalProductNext" class="soft" type="button">التالي</button><button id="globalProductCancelBottom" class="soft" type="button">إلغاء</button></div></div>
+      </form>
      </div>
     </section>
     <section id="tab-roles" class="section"><div class="headrow"><div><h2>إدارة الأدوار والصلاحيات</h2><p class="hint">الأدوار النظامية للقراءة فقط؛ تُنشأ الأدوار المخصصة داخل العميل وتُمنح صلاحيات المشروع فقط.</p></div></div><div class="cf-role-stat-grid"><div class="stat"><small>الأدوار النظامية</small><strong id="roleSystemCount">0</strong></div><div class="stat"><small>الأدوار المخصصة</small><strong id="roleCustomCount">0</strong></div><div class="stat"><small>الأدوار المخصصة المسندة</small><strong id="roleUsedCount">0</strong></div><div class="stat"><small>الأدوار المخصصة غير المستخدمة</small><strong id="roleUnusedCount">0</strong></div></div><div class="panel" data-owner-only><h3>العميل المستهدف لإدارة الأدوار</h3><div class="field"><label for="roleClientScope">نطاق الأدوار المخصصة</label><select id="roleClientScope"><option value="">اختر العميل</option></select><p class="hint">مالك المنصة فقط: اختر العميل الذي تريد إدارة أدواره المخصصة. يتولى مدير العميل إدارة أدوار عميله فقط.</p></div></div><div class="panel"><h3>الأدوار النظامية — للقراءة فقط</h3><div id="systemRoleList" class="tablewrap"></div></div><div class="panel">
@@ -2091,9 +2090,23 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  function renderCatalogUnitEditor(containerId,units=[]){const el=$(containerId);if(!el)return;const list=Array.isArray(units)?units.map(u=>({name:String(u?.name||''),factor_to_base:String(u?.factor_to_base??u?.conversion_factor??u?.factor??'')})):[];el.innerHTML=(list.length?list:[{name:'',factor_to_base:''}]).map(u=>'<div class="product-unit-row" data-catalog-unit-row><div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name value="'+esc(u.name)+'" maxlength="40"></div><div class="field"><label>كم تعادل من وحدة الأساس؟</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001" value="'+esc(u.factor_to_base)+'"></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button></div>').join('');el.querySelectorAll('[data-catalog-unit-remove]').forEach(b=>b.onclick=()=>{b.closest('[data-catalog-unit-row]')?.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(containerId,[]);});}
  function readCatalogUnits(containerId,baseUnit){const el=$(containerId);if(!el)throw new Error('محرر الوحدات غير متاح.');const out=[],seen=new Set(),base=String(baseUnit||'').trim().toLocaleLowerCase();for(const row of el.querySelectorAll('[data-catalog-unit-row]')){const name=row.querySelector('[data-catalog-unit-name]').value.trim(),raw=row.querySelector('[data-catalog-unit-factor]').value.trim();if(!name&&!raw)continue;if(!name||!raw)throw new Error('أكمل اسم الوحدة البديلة ومعامل التحويل معاً.');const key=name.toLocaleLowerCase(),factor=Number(raw);if(key===base)throw new Error('الوحدة البديلة يجب أن تختلف عن وحدة الأساس.');if(seen.has(key))throw new Error('لا تكرر اسم الوحدة البديلة.');if(!Number.isFinite(factor)||factor<=0||factor>1000000000)throw new Error('معامل التحويل يجب أن يكون رقماً موجباً وصالحاً.');seen.add(key);out.push({name,factor_to_base:factor});}return out;}
  function switchGlobalProductTab(tab){const keys=['basic','units','image'];if(!keys.includes(tab))tab='basic';document.querySelectorAll('[data-global-product-tab]').forEach(b=>b.classList.toggle('active',b.dataset.globalProductTab===tab));keys.forEach(k=>$('globalProductPanel-'+k)?.classList.toggle('hidden',k!==tab));}
- function switchCatalogView(view){state.catalogView=view==='client'?'client':'global';$('catalogGlobalView').classList.toggle('hidden',state.catalogView!=='global');$('catalogClientView').classList.toggle('hidden',state.catalogView!=='client');$('catalogProductEditor').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');document.querySelectorAll('[data-catalog-view]').forEach(b=>b.classList.toggle('active',b.dataset.catalogView===state.catalogView));if(state.catalogView==='client')refreshClientCatalogPermission().then(()=>Promise.all([loadCatalogMappingOptions(''),loadClientCatalogMappings()])).catch(e=>fail('تعذر تحميل أصناف المؤسسة',e));else loadCatalog().catch(e=>fail('تعذر تحميل الدليل',e));}
- function openGlobalProductEditor(product=null){if(!state.platformOwner)return notify('إدارة الأصناف العالمية للمالك فقط.',true);const p=product||null;$('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';$('globalCategory').value=p?.category||'';$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';$('globalImageCurrent').textContent=p?.image_storage_path?'توجد صورة مرتبطة بهذا الصنف.':'لا توجد صورة مرتبطة.';renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);$('globalProductFormTitle').textContent=p?'تعديل بيانات الصنف العالمي':'إضافة صنف عالمي جديد';$('globalProductSave').textContent=p?'حفظ التعديلات':'إضافة إلى الدليل الدائم';$('catalogGlobalView').classList.add('hidden');$('catalogClientView').classList.add('hidden');$('catalogViewTabs').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');switchGlobalProductTab('basic');window.scrollTo({top:0,behavior:'smooth'});}
- function closeGlobalProductEditor(){$('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('catalogClientView').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');document.querySelectorAll('[data-catalog-view]').forEach(b=>b.classList.toggle('active',b.dataset.catalogView==='global'));state.catalogView='global';$('globalProductForm').reset();$('globalProductId').value='';$('globalProductSave').textContent='إضافة إلى الدليل الدائم';renderCatalogUnitEditor('globalProductUnitsEditor',[]);}
+ function switchCatalogView(view){
+  const allowed=['global','client','project'];state.catalogView=allowed.includes(view)?view:'global';
+  $('catalogGlobalView').classList.toggle('hidden',state.catalogView!=='global');
+  $('catalogClientView').classList.toggle('hidden',state.catalogView!=='client');
+  $('projectProductsView').classList.toggle('hidden',state.catalogView!=='project');
+  $('projectProductScopeNotice').classList.toggle('hidden',!!state.project);
+  $('projectProductsContent').classList.toggle('hidden',!state.project);
+  $('catalogProductEditor').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');
+  document.querySelectorAll('[data-catalog-view]').forEach(b=>{const active=b.dataset.catalogView===state.catalogView;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+  if(state.catalogView==='client')refreshClientCatalogPermission().then(()=>Promise.all([loadCatalogMappingOptions(''),loadClientCatalogMappings()])).catch(e=>fail('تعذر تحميل مواءمات المؤسسة',e));
+  else if(state.catalogView==='project'){
+   renderProductImportSessions();
+   if(state.project)loadProductsPage(1,$('productSearch')?.value.trim()||'').catch(e=>fail('تعذر تحميل أصناف ملف التكليف',e));
+  }else loadCatalog().catch(e=>fail('تعذر تحميل الدليل العالمي',e));
+ }
+ function openGlobalProductEditor(product=null){if(!state.platformOwner)return notify('إدارة الأصناف العالمية للمالك فقط.',true);const p=product||null;$('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';$('globalCategory').value=p?.category||'';$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';$('globalImageCurrent').textContent=p?.image_storage_path?'توجد صورة مرتبطة بهذا الصنف.':'لا توجد صورة مرتبطة.';renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);$('globalProductFormTitle').textContent=p?'تعديل بيانات الصنف العالمي':'إضافة صنف عالمي جديد';$('globalProductSave').textContent=p?'حفظ التعديلات':'إضافة إلى الدليل الدائم';$('catalogGlobalView').classList.add('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');switchGlobalProductTab('basic');window.scrollTo({top:0,behavior:'smooth'});}
+ function closeGlobalProductEditor(){$('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');document.querySelectorAll('[data-catalog-view]').forEach(b=>b.classList.toggle('active',b.dataset.catalogView==='global'));state.catalogView='global';$('globalProductForm').reset();$('globalProductId').value='';$('globalProductSave').textContent='إضافة إلى الدليل الدائم';renderCatalogUnitEditor('globalProductUnitsEditor',[]);}
  async function loadCatalogMappingOptions(term=''){const clientId=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!clientId){$('clientProductCatalog').innerHTML='<option value="">اختر المؤسسة أولاً</option>';return;}let q=db.from('count_catalog_products').select('id,name,canonical_sku,barcode,base_unit,units,is_active').eq('is_active',true).order('name').limit(80);const value=String(term||'').trim().replace(/[%,().]/g,' ').slice(0,90);if(value)q=q.or(['name','canonical_sku','barcode'].map(k=>k+'.ilike.%'+value+'%').join(','));const {data,error}=await q;if(error)throw error;state.catalogOptionProducts=data||[];$('clientProductCatalog').innerHTML=state.catalogOptionProducts.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'—')+'</option>').join('')||'<option value="">لا توجد أصناف مطابقة</option>';}
  function resetClientProductForm(){$('clientProductForm').reset();$('clientProductImagePath').value='';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');$('clientProductUnit').value='';renderCatalogUnitEditor('clientProductUnitsEditor',[]);}
  function appendCatalogUnitRow(id){const el=$(id);if(!el)return;const row=document.createElement('div');row.className='product-unit-row';row.dataset.catalogUnitRow='';row.innerHTML='<div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name maxlength="40"></div><div class="field"><label>كم تعادل من وحدة الأساس؟</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001"></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button>';el.appendChild(row);row.querySelector('[data-catalog-unit-remove]').onclick=()=>{row.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(id,[]);};}
@@ -2208,9 +2221,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const sortKeys=['created_at','code','name','industry','status'];const sort=sortKeys.includes(state.clientSort)?state.clientSort:'created_at';
    let managerClientIds=[];
    if(term){
-    const managers=await db.from('count_client_members').select('client_id,count_roles!inner(role_key,scope)').eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').or('display_name.ilike.%'+term+'%,username.ilike.%'+term+'%').limit(1000);
-    if(managers.error)throw managers.error;
-    managerClientIds=[...new Set((managers.data||[]).map(m=>m.client_id).filter(Boolean))];
+    const matchedClientIds=new Set();let managerOffset=0;const managerPageSize=500;
+    while(true){
+     const managers=await db.from('count_client_members').select('client_id,count_roles!inner(role_key,scope)').eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').or('display_name.ilike.%'+term+'%,username.ilike.%'+term+'%').order('client_id',{ascending:true}).order('id',{ascending:true}).range(managerOffset,managerOffset+managerPageSize-1);
+     if(managers.error)throw managers.error;
+     const managerPage=managers.data||[];for(const m of managerPage)if(m.client_id)matchedClientIds.add(m.client_id);
+     if(managerPage.length<managerPageSize)break;managerOffset+=managerPageSize;
+    }
+    managerClientIds=[...matchedClientIds];
    }
    let q=db.from('count_clients').select('id,code,name,industry,contact_name,contact_email,contact_phone,default_timezone,default_currency,status,created_at',{count:'exact'}).order(sort,{ascending:state.clientSortAsc}).order('id',{ascending:true});
    if(status!=='all')q=q.eq('status',status);
@@ -2224,8 +2242,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    state.clientDirectoryRows=data||[];state.clientDirectoryTotal=Number(count||0);
    const clientIds=state.clientDirectoryRows.map(c=>c.id);
    if(clientIds.length){
-    const m=await db.from('count_client_members').select('id,client_id,user_id,role_id,display_name,username,status,created_at,count_roles!inner(role_key,name,scope)').in('client_id',clientIds).eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').order('created_at',{ascending:false}).limit(500);
-    if(m.error)throw m.error;state.clientDirectoryManagers=m.data||[];
+    const managerRows=[];let managerOffset=0;const managerPageSize=500;
+    while(true){
+     const m=await db.from('count_client_members').select('id,client_id,user_id,role_id,display_name,username,status,created_at,count_roles!inner(role_key,name,scope)').in('client_id',clientIds).eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').order('created_at',{ascending:false}).order('id',{ascending:true}).range(managerOffset,managerOffset+managerPageSize-1);
+     if(m.error)throw m.error;
+     const managerPage=m.data||[];managerRows.push(...managerPage);
+     if(managerPage.length<managerPageSize)break;managerOffset+=managerPageSize;
+    }
+    state.clientDirectoryManagers=managerRows;
    }else state.clientDirectoryManagers=[];
    const managerByClient=new Map();
    for(const m of state.clientDirectoryManagers){if(!managerByClient.has(m.client_id))managerByClient.set(m.client_id,[]);managerByClient.get(m.client_id).push(m);}
@@ -2250,14 +2274,39 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    $('clientPageNext').onclick=()=>{if(state.clientDirectoryPage<pages){state.clientDirectoryPage++;loadClientDirectory().catch(e=>fail('تعذر تحميل صفحة العملاء',e));}};
   }finally{host.removeAttribute('aria-busy');}
  }
- function openClientModal(client=null){
+ async function generateNextClientCode(){
+  if(!state.platformOwner)throw new Error('توليد أكواد العملاء متاح لمالك المنصة فقط.');
+  const existing=new Set();let offset=0;const size=500;
+  while(true){
+   const {data,error}=await db.from('count_clients').select('code').order('code',{ascending:true}).range(offset,offset+size-1);
+   if(error)throw error;
+   const rows=data||[];
+   for(const row of rows){const code=String(row.code||'').trim();if(/^CLIENT-[0-9]+$/i.test(code))existing.add(code.toUpperCase());}
+   if(rows.length<size)break;offset+=size;
+  }
+  let max=0;
+  for(const code of existing){const match=code.match(/^CLIENT-([0-9]+)$/);if(match)max=Math.max(max,Number(match[1])||0);}
+  let next=max+1,candidate='';
+  do{candidate='CLIENT-'+String(next++).padStart(6,'0');}while(existing.has(candidate));
+  return candidate;
+}
+function isClientCodeUniqueConflict(error){
+  if(!error||String(error.code||'')!=='23505')return false;
+  const detail=[error.message,error.details,error.hint,error.constraint].filter(Boolean).join(' ').toLowerCase();
+  return detail.includes('count_clients_code_uq')||detail.includes('count_clients.code')||/key\s*\(code\)/.test(detail);
+}
+
+ async function openClientModal(client=null){
   if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
   if(!window.Swal||typeof window.Swal.fire!=='function')return notify('تعذر تحميل نافذة العميل الآمنة؛ لم يتم فتح نموذج التعديل.',true);
+  if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
+  let proposedCode=client?.code||'';
+  if(!client){try{proposedCode=await generateNextClientCode();}catch(error){return fail('تعذر تجهيز كود العميل التلقائي',error);}}
   const edit=!!client, currency=client?.default_currency||'EGP',timezone=client?.default_timezone||'Africa/Cairo',status=client?.status||'active';
   const option=(value,label,current)=>'<option value="'+value+'" '+(current===value?'selected':'')+'>'+label+'</option>';
   const html='<div class="cf-client-modal"><div class="cf-client-modal-head"><div><b>'+(edit?'تعديل بيانات العميل':'إضافة عميل جديد')+'</b><small>'+(edit?'تحديث بيانات الجهة دون تغيير سجلها أو علاقاتها.':'إنشاء سجل جهة دائم يمكن ربط ملفات تكليف متعددة به.')+'</small></div><span class="pill">'+(edit?'تحرير':'سجل جديد')+'</span></div>'+
    '<form id="cfClientForm" class="fields" autocomplete="off">'+
-    '<div class="field"><label for="cfClientCode">كود العميل *</label><input id="cfClientCode" required maxlength="40" pattern="[A-Za-z0-9_-]{2,40}" '+(edit?'readonly':'')+' value="'+esc(client?.code||'')+'" placeholder="مثال: CLIENT-001"><small class="hint">'+(edit?'الكود ثابت بعد إنشاء العميل.':'أحرف إنجليزية وأرقام وشرطة فقط؛ يحفظ بحروف كبيرة.')+'</small></div>'+
+    '<div class="field"><label for="cfClientCode">كود العميل (تلقائي)</label><input id="cfClientCode" readonly required maxlength="40" value="'+esc(proposedCode)+'" dir="ltr"><small class="hint">'+(edit?'الكود معرّف ثابت لا يتغير بعد إنشاء العميل.':'يولّد النظام الكود التسلسلي التالي تلقائياً عند الحفظ؛ لا تحتاج إلى إدخاله أو تعديله.')+'</small></div>'+
     '<div class="field"><label for="cfClientName">اسم العميل *</label><input id="cfClientName" required minlength="2" maxlength="160" value="'+esc(client?.name||'')+'" placeholder="اسم المؤسسة أو الشركة"></div>'+
     '<div class="field"><label for="cfClientIndustry">النشاط</label><input id="cfClientIndustry" maxlength="120" value="'+esc(client?.industry||'')+'" placeholder="توزيع، تجزئة، تصنيع…"></div>'+
     '<div class="field"><label for="cfClientContact">مسؤول التواصل</label><input id="cfClientContact" maxlength="120" value="'+esc(client?.contact_name||'')+'"></div>'+
@@ -2278,17 +2327,25 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   event.preventDefault();if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
   const form=event.currentTarget;setBusy(form,true);
   try{
-   const code=$('cfClientCode').value.trim().toUpperCase(),name=$('cfClientName').value.trim();
-   if(!/^[A-Z0-9_-]{2,40}$/.test(code))throw new Error('كود العميل يجب أن يتكون من 2 إلى 40 حرفاً أو رقماً أو شرطة.');
+   const name=$('cfClientName').value.trim();
    if(name.length<2)throw new Error('اسم العميل يجب ألا يقل عن حرفين.');
    const payload={name,industry:$('cfClientIndustry').value.trim()||null,contact_name:$('cfClientContact').value.trim()||null,contact_email:$('cfClientEmail').value.trim()||null,contact_phone:$('cfClientPhone').value.trim()||null,default_timezone:$('cfClientTimezone').value,default_currency:$('cfClientCurrency').value};
-   let clientId=client?.id||null;
+   let clientId=client?.id||null,code=client?.code||'';
    if(client){
     payload.status=$('cfClientStatus').value;
     const result=await db.from('count_clients').update(payload).eq('id',client.id).select('id').single();if(result.error)throw result.error;
    }else{
-    payload.code=code;payload.status='active';payload.created_by=state.user.id;
-    const result=await db.from('count_clients').insert(payload).select('id').single();if(result.error)throw result.error;clientId=result.data.id;
+    payload.status='active';payload.created_by=state.user.id;
+    let created=null,lastError=null;
+    for(let attempt=0;attempt<5;attempt++){
+     code=await generateNextClientCode();payload.code=code;
+     const result=await db.from('count_clients').insert(payload).select('id').single();
+     if(!result.error){created=result.data;break;}
+     lastError=result.error;
+     if(!isClientCodeUniqueConflict(result.error))throw result.error;
+    }
+    if(!created)throw new Error('تعذر تخصيص كود عميل فريد بعد عدة محاولات متزامنة. أعد الحفظ مرة أخرى. '+(lastError?.message||''));
+    clientId=created.id;
     state.clientId=clientId;state.roleClientId=clientId;state.catalogClientId=clientId;
    }
    const auditError=await writeClientAudit(clientId,client?'client.updated':'client.created','client',clientId,{code,changed_fields:Object.keys(payload).filter(k=>k!=='created_by')});
@@ -2705,7 +2762,7 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
   }catch(err){fail('تعذر إنشاء العملية',err);}
   finally{setBusy(f,false);}
  });
- document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')renderProductImportSessions();if(b.dataset.tab==='catalog')loadCatalog().catch(e=>fail('تعذر تحميل الكتالوج',e));}));
+ document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')switchCatalogView(state.catalogView||'global');}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
 
