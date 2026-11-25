@@ -1,3 +1,93 @@
+## LVE-2026-11-25-773 — تصحيح نطاق التنفيذ وإغلاق فشل CI مع تدقيق مصدر قاعدة staging
+
+**Last Verified Event:** 25 نوفمبر 2026 (Africa/Cairo).  
+**Repository:** `papamohammed77-glitch/rawaea-app-countflow` — المستودع المستقل الوحيد لـCountFlow لدى المالك (GitHub repo ID `1465922459`؛ لا يوجد مستودع CountFlow فرعي أو fork مكرر ضمن قائمة مستودعات المالك).  
+**Branch / PR:** `work/lve-765-admin-ui-final-mainline` / PR #8 OPEN / UNMERGED.  
+**Verified HEAD:** `2badf5d4b8fd5f246487072f2d0055a3cfbf71fa`.  
+**Test correction commit:** `2badf5d4b8fd5f246487072f2d0055a3cfbf71fa` — غيّر اختباراً واحداً في ملف الاختبارات القائم فقط.  
+**CI:** [Run 45529173627 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45529173627).  
+**Cloudflare Preview:** https://41688f43.rawaea-app-countflow.pages.dev
+
+### نتيجة تصحيح الخطأ والاختبارات
+
+- فشل Run `45526863090` بسبب assertion ثابت قديم في اختبار Service Worker كان يتوقع إصدار `countflow-sw-20261124-1` بينما الملف الفعلي يحمل `countflow-sw-20261125-1`.
+- تم تعديل assertion ليقبل صيغة إصدار مؤرخة `countflow-sw-YYYYMMDD-N`؛ لم يتغير أي ملف تطبيق في هذا التصحيح.
+- Run `45529173627` على HEAD أعلاه: **67/67 Node tests PASS، 0 FAIL، 0 SKIPPED**.
+- Deno check لوظيفتي Edge الموجودة: PASS.
+- allowlisted Cloudflare Pages build: PASS.
+- Playwright في CI: **2 PASS / 1 SKIPPED** لاختبارات واجهة الدخول العامة فقط؛ اختبار مطابقة Production SHA تخطّى لأنه فرع غير main. هذا ليس اختبار E2E مصادقاً لكل الأدوار، ولا يثبت دورة عمل فعلية داخل Admin/Counter/Supervisor/Control.
+- Cloudflare Preview على نفس HEAD: deploy success، immutable URL أعلاه. النشر Preview فقط، لا Production.
+- تحليل JavaScript الداخلي في Admin وفحوص العقد الثابتة الـ12 من تنفيذ LVE-772 السابق ظلت ناجحة عند الفحص؛ لم تُعد كتابة تطبيق Admin في هذا التصحيح.
+
+### تصحيح فهم المستودع والملفات
+
+- CountFlow مشروع مستقل بحسب معمارية المشروع وسجلات LVE-768؛ وجود مستودع واحد مستقل لا يعني إنشاء مستودع فرعي داخل ERP.
+- فحص شجرة Git للرأس `2badf5d` أعاد 133 مدخلاً، دون أي Git submodule mode `160000` ودون `.gitmodules`. لم يُعثر على مستودع Git متداخل داخل المستودع.
+- لا يوجد مستودع CountFlow ثانٍ أو نسخة Fork لدى المالك. لذلك لم أحذف المستودع المستقل الصحيح أو أغيّر هيكل المشروع.
+- PR #8 يجمع 21 ملفاً وتاريخ commits يضم نطاقات LVE-765 وLVE-768 وLVE-772؛ هذا أوسع من حدود مهمة Overview وحدها. لم أحذف تطبيق Control أو ملفات Supervisor/Counter أو Edge أو migrations على نحو انتقائي؛ لأن هذه المكونات لها تكاملات مسجلة في staging، وحذف الملفات وحده لا يعكس آثار قاعدة البيانات أو يثبت سلامة التطبيقات. هذا الجمع يمثل **مشكلة نطاق/تجميع PR** يجب عدم تمريرها إلى main دون فصل ومراجعة آمنين.
+- في تصحيح LVE-773 لم يتم إنشاء مستودع أو فرع أو ملف جديد أو مجلد فرعي. التعديل البرمجي الوحيد كان في ملف الاختبارات الموجود `tests/unit/countflow-quality.test.mjs`؛ والتحديثان التوثيقيان محصوران في هذا الملف و`Reports/LVE-772_ADMIN_OVERVIEW_CHANGESET_20261125.md`.
+
+### تدقيق rawaea-staging — قراءة فقط
+
+المشروع: `hfzznsiprnwkpayskzhu` (`rawaea-staging`). لم تُنفذ في LVE-773 أي DDL أو DML أو RLS/GRANT أو RPC أو Auth أو Storage أو Edge write.
+
+الأعداد الحالية التي أعادتها استعلامات SELECT:
+| الجدول | الصفوف |
+|---|---:|
+| count_clients | 0 |
+| count_catalog_products | 0 |
+| count_catalog_product_identifiers | 0 |
+| count_client_products | 0 |
+| count_client_members | 0 |
+| count_client_audit_log | 0 |
+| count_roles | 4 |
+| count_permissions | 28 |
+| count_role_permissions | 52 |
+| count_projects | 1 |
+| count_sessions | 1 |
+| count_members | 4 |
+| count_products | 41,000 |
+| count_entries | 0 |
+| count_assignments | 0 |
+| count_reconciliation_runs | 0 |
+| count_reconciliation_lines | 0 |
+| count_exports | 0 |
+| count_import_batches | 1 |
+| count_import_rows | 90,000 |
+
+جميع عضويات `count_members` الأربع لديها `role_id`. لا توجد حتى الآن مواءمات بين الأصناف الحالية والكتالوج العالمي (`client_product_id` غير معيّن في 41,000 صف)، كما أن المشروع الحالي `QA 90K Import Verification` ما زال `client_id = NULL`. لذلك لا يجوز وصف نموذج Tenant/Client والكتالوج الموحد بأنه مقبول تشغيلياً بالكامل اعتماداً على وجود واجهات أو وظائف فقط.
+
+**دفعة QA المحمية:** `f799c5c1-b766-4712-b74f-c0bb19836ddc` — `qa-90000-products.csv`: 90,000 إجمالي، 41,000 مقبول، 0 مرفوض، `committing`، و`completed_at = NULL`. لم تُستأنف أو توقف أو تحذف أو تكرر أو تعدّل. بقيت سجلات العد والإسناد والتسوية والتصدير صفراً؛ لم يتم توليد حركات اختبار لإثبات الكود.
+
+### فجوة حرجة: مخطط staging غير متطابق مع ملفات Git
+
+وجدت في `supabase_migrations.schema_migrations` تسعة إصدارات مطبقة بعد نقطة LVE-769، لكن لا توجد لها ملفات SQL مقابلة في شجرة Git الحالية:
+
+| Version | Migration |
+|---|---|
+| `20261124194925` | `countflow_rbac_custom_role_guard_and_operation_policy_fix_v1` |
+| `20261124195207` | `countflow_catalog_image_isolation_control_view_rls_and_fk_indexes_v1` |
+| `20261124195257` | `countflow_client_admin_isolation_audit_and_atomic_dynamic_permissions_v1` |
+| `20261124200322` | `countflow_catalog_image_link_upsert_role_permission_and_admin_provision_fix_v1` |
+| `20261124200430` | `countflow_dynamic_role_permissions_in_field_rpc_and_recount_v1` |
+| `20261124200647` | `countflow_hide_platform_owner_activity_from_client_audit_v1` |
+| `20261124201102` | `countflow_role_permission_rpc_column_least_privilege_fix_v1` |
+| `20261124201132` | `countflow_client_product_upsert_narrow_definer_rpc_v2` |
+| `20261124201230` | `countflow_new_tenant_operation_catalog_column_grants_v1` |
+
+جميع الصفوف التسعة في سجل migrations تعرض `rollback_count = 0`. بعض statements تعرف دوالاً تحتوي أوامر INSERT/UPDATE/DELETE تُنفذ عند استدعاء الدالة؛ وجود نص تلك الأوامر في تعريف الدالة لا يثبت أنها نفذت كـBusiness DML أثناء تطبيق migration. لا توجد أدلة على أن هذه الأوامر أنشأت حركات تشغيلية في هذا التدقيق.
+
+**المعالجة الآمنة الحالية:** لم أحذف migration metadata، ولم أسقط دوالاً أو جداول أو سياسات، ولم أنشئ ملفات SQL بديلة أو أختلق rollback. عكس هذه التغييرات دون نص المصدر الكامل، وفهم التبعيات، وخطة استرجاع قابلة للتحقق قد يسبب تعطيل صلاحيات أو كسر التطبيقات. تبقى هذه الفجوة مانعاً صريحاً لأي دمج أو ترقية Production إلى أن يُستعاد مصدر migrations المطابق وتُراجع تبعياته عبر مسار مصرح وآمن.
+
+### بوابات الدمج والإنتاج
+
+- PR #8 ما زال OPEN / UNMERGED؛ الرأس `2badf5d` يسبق/يتباعد عن `main` بـ81 commit مقابل 9 commits خلفه، وGitHub يعرض `mergeable=false`. لا دمج ولا rebase تلقائي.
+- لا يوجد نشر Production أو تعديل في مشروع ERP/SMART ERP.
+- **غير مثبت:** اختبار مصادق بشري لجميع الأدوار، E2E للعمليات بعد تسجيل الدخول، التقاط كاميرا/باركود فعلي، Offline/Sync ميداني، أو XLSX حقيقي مفتوح ومراجع. لا تُحوّل نتائج login-shell العامة إلى ادعاء E2E كامل.
+- **القرار:** `READY WITH LIMITATIONS` لتصحيح الاختبار وبناء Preview فقط؛ `NOT READY TO MERGE / NOT READY FOR PRODUCTION` بسبب انحراف ملفات migrations، اتساع PR، وعدم اكتمال E2E المصادق.
+
+---
+
 ## LVE-2026-11-25-772 — إعادة بناء لوحة النظرة العامة في Admin
 
 **Last Verified Event:** 25 نوفمبر 2026 (Africa/Cairo).  
