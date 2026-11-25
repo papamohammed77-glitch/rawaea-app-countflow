@@ -278,3 +278,39 @@
 
 **قرار المرحلة:** READY WITH LIMITATIONS.  
 **المطلوب من المالك لاحقاً:** مراجعة Preview المصادق عليه وإعطاء إشارة المرحلة التالية.
+
+
+---
+
+## ملحق تدقيقي — LVE-773 (25 نوفمبر 2026): تصحيح CI وحدود التنفيذ وفجوة staging
+
+### أ. تصحيح اختبار الانحدار
+
+كان GitHub Actions run `45526863090` يفشل في اختبار واحد من 67، لأن اختبار Service Worker ثبت إصداراً قديماً حرفياً `countflow-sw-20261124-1`. كان المصدر الفعلي قد رُفع إلى `countflow-sw-20261125-1` في تغيير سابق. تم إصلاح assertion في الملف القائم `tests/unit/countflow-quality.test.mjs` ليتحقق من نمط build مؤرخ `countflow-sw-YYYYMMDD-N` بدلاً من رقم ثابت.
+
+- Commit: `2badf5d4b8fd5f246487072f2d0055a3cfbf71fa`.
+- GitHub Actions [45529173627](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45529173627): **SUCCESS** على هذا الرأس.
+- Node: **67/67 PASS، 0 FAIL، 0 SKIPPED**.
+- Deno Check: PASS.
+- Pages allowlist build: PASS.
+- Playwright: **2 PASS / 1 SKIPPED** لاختبارات login shell العامة فقط؛ اختبار Production SHA parity تخطّى على فرع العمل. لم تُشغل اختبارات تسجيل الدخول المصادق بالأدوار، ولا يجوز عدّ هذه النتيجة E2E كاملاً.
+- Cloudflare Preview: https://41688f43.rawaea-app-countflow.pages.dev — نشر Preview ناجح على commit `2badf5d`. لا نشر Production.
+
+### ب. مراجعة خطأ المستودع/الملفات
+
+CountFlow مستودع مستقل واحد حسب معمارية المشروع، ولا يوجد دليل على مستودع فرعي متداخل: شجرة Git ذات 133 مدخلاً لا تحتوي gitlinks أو `.gitmodules`. كما لم يظهر مستودع CountFlow آخر أو fork ضمن مستودعات المالك. لم يتم حذف المستودع المستقل، لأن ذلك سيخلط الفصل المعماري المقصود بين CountFlow وERP.
+
+لكن PR #8 يضم 21 ملفاً من مراحل سابقة متعددة (LVE-765/LVE-768/LVE-772)، بينما كان ChangeSet الخاص بـLVE-772 محصوراً في Overview والملفات الموجودة التي تسجل الاختبار والحالة والتقرير. لم يتم حذف ملفات التطبيقات/Edge/SQL التي أضيفت في مراحل سابقة على نحو أعمى؛ فهي مرتبطة بتغييرات staging. فصل PR إلى تغييرات أصغر مطلب قبل الدمج، لكن لا يجوز تحقيقه عبر إسقاط migrations مطبقة أو حذف مصدر دون مسار عكس.
+
+### ج. تدقيق staging وفجوة المصدر
+
+تم تنفيذ SELECT فقط على `rawaea-staging` (`hfzznsiprnwkpayskzhu`). لا DDL/DML أو تغييرات RLS/GRANT أو Auth/Storage/Edge في هذا التصحيح. الأعداد: 1 project، 1 session، 4 members، 41,000 products، 90,000 import rows؛ count_entries/assignments/reconciliation/exports كلها صفر. دفعة `f799c5c1-b766-4712-b74f-c0bb19836ddc` ما زالت `committing` (90,000/41,000/0 rejected) ولم تُمس.
+
+توجد تسعة migration versions من `20261124194925` إلى `20261124201230` في سجل staging دون ملفات SQL مقابلة في Git؛ كل سجل يعرض `rollback_count=0`. لا دليل من هذا الفحص على تنفيذ Business DML من داخل أجسام الدوال؛ ولا يمكن استنتاج ذلك من وجود نص INSERT/UPDATE/DELETE في تعريفاتها. لم يتم عكس هذه migrations أو حذفها أو إعادة إنشائها، لأن ذلك غير قابل للتحقق الآمن حالياً. انحراف مصدر المخطط هذا مانع دمج قائم.
+
+### د. الحدود والقرار
+
+لا يوجد اختبار مصادق فعلي لكل الأدوار أو تجربة كاميرا/Offline/Sync أو XLSX فعلي مفتوح في هذه الجولة. يبقى PR #8 OPEN/UNMERGED، وGitHub يعرض `mergeable=false` مع 81 commit ahead و9 behind. لا دمج أو rebase أو Production deployment.
+
+**الحالة:** `READY WITH LIMITATIONS` لتصحيح الاختبار وPreview؛ `NOT READY TO MERGE / PRODUCTION` إلى حين تسوية source/migration drift وفصل PR بأمان واجتياز E2E المصادق. لا تُحذف دفعة QA ولا تُنشأ حركات عد/تسوية/تصدير اصطناعية.
+
