@@ -2,12 +2,13 @@
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
 **المستودع:** papamohammed77-glitch/rawaea-app-countflow — **الفرع:** main  
-**آخر التزام برمجي تم التحقق منه:** 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b  
+**آخر التزام برمجي تم التحقق منه:** 2c1fff2363a7bab656056fcd4b48702c9f548c3b  
 **التقرير:** Reports/LVE-2026-11-25-778_ADMIN_CLIENT_DIRECTORY_UX.md  
-**GitHub Actions:** Run 45661891730 — SUCCESS  
+**GitHub Actions:** Run 45663060290 — SUCCESS  
 **Service Worker:** countflow-sw-20261125-6
 
 ### ما تم تنفيذه
+- عزل مترجم حالة العميل عن حالة أعضاء التكليف: حالات أعضاء المشروع تستمر على statusPill العام؛ دليل العميل ومديروه يستخدمون clientStatusPill، مع اختبار انحدار يمنع تسرب الترجمة بين التبويبات.
 - استبدال نماذج العميل ومديره الثابتة بدليل عملاء ذي مؤشرات وModal تحرير.
 - بحث متعدد الحقول يشمل اسم العميل وكوده ونشاطه وبيانات الاتصال واسم مستخدم/اسم مدير العميل.
 - مرشح حالة، وفرز خادمي، وترقيم 25 سجلاً للصفحة باستخدام range وcount exact.
@@ -22,14 +23,15 @@
 - 060e89622d50cfa96aa83d64c52d9a8a510a1267 — feat(admin): complete client and manager directory UX
 - e8fb9a217d1f29b17d54fcc862c05a3d4b63e484 — fix(admin): select new client in role scope after create
 - 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b — fix(admin): align client lifecycle labels and role-scope test
+- 2c1fff2363a7bab656056fcd4b48702c9f548c3b — fix(admin): isolate client status labels from project members
 - الملفات البرمجية المعدلة: countflow-admin.html، countflow-sw.js، tests/unit/countflow-quality.test.mjs.
 
 ### التحقق
-- Node: 84 PASS / 0 FAIL / 0 SKIPPED.
+- Node: 85 PASS / 0 FAIL / 0 SKIPPED.
 - Deno type-check لوظيفتي Edge الحاليتين: PASS.
 - Cloudflare Pages allowlisted build: PASS.
 - Playwright production login shell: 3/3 PASS.
-- Pages Production SHA parity مع 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b: PASS.
+- Pages Production SHA parity مع 2c1fff2363a7bab656056fcd4b48702c9f548c3b: PASS.
 - JavaScript inline parse: PASS.
 - لا معرفات HTML ثابتة مكررة.
 - لا حذف مادي للعميل أو العضوية ضمن التغيير.

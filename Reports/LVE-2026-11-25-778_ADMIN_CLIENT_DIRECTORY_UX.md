@@ -4,7 +4,7 @@
 **التاريخ:** 25 نوفمبر 2026 — Africa/Cairo  
 **المستودع:** papamohammed77-glitch/rawaea-app-countflow  
 **الفرع:** main  
-**آخر التزام برمجي تم التحقق منه:** 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b  
+**آخر التزام برمجي تم التحقق منه:** 2c1fff2363a7bab656056fcd4b48702c9f548c3b  
 **ملف النظام الأم:** countflow-admin.html  
 **Service Worker:** countflow-sw-20261125-6  
 **Supabase:** rawaea-staging — hfzznsiprnwkpayskzhu  
@@ -297,6 +297,9 @@ Blob SHA المرجعي:
 
 ## 7. الملفات والالتزامات
 
+تم إصلاح أثر جانبي رُصد في التدقيق النهائي: أعيد statusPill العام إلى جدول أعضاء التكليف، وحُصر clientStatusPill في دليل العميل ومديريه، وأضيف اختبار انحدار يثبت الفصل بين النطاقين.
+
+
 ### الالتزامات البرمجية
 
 | Commit | الوصف |
@@ -304,6 +307,7 @@ Blob SHA المرجعي:
 | 060e89622d50cfa96aa83d64c52d9a8a510a1267 | بناء دليل العملاء والمديرين، Modal، البحث والترقيم وإجراءات المدير |
 | e8fb9a217d1f29b17d54fcc862c05a3d4b63e484 | مزامنة تحديد العميل الجديد مع نطاق إدارة الأدوار |
 | 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b | تصحيح وصف دورة حياة العميل ومواءمة اختبار نطاق الأدوار |
+| 2c1fff2363a7bab656056fcd4b48702c9f548c3b | عزل مترجم حالة العميل عن حالات أعضاء التكليف مع اختبار انحدار |
 
 ### ملفات تغيير التنفيذ
 
@@ -321,15 +325,15 @@ Blob SHA المرجعي:
 
 ### GitHub Actions
 
-**Run:** 45661891730 — SUCCESS  
-**Commit:** 9396347d9ac465ceb9cc90a1d70849b1f80b1f4b  
-**الرابط:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45661891730
+**Run:** 45663060290 — SUCCESS  
+**Commit:** 2c1fff2363a7bab656056fcd4b48702c9f548c3b  
+**الرابط:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45663060290
 
 نتائج Job source-and-streaming-tests:
 
 | بوابة الاختبار | النتيجة |
 |---|---|
-| Node unit tests | 84 PASS / 0 FAIL / 0 SKIPPED |
+| Node unit tests | 85 PASS / 0 FAIL / 0 SKIPPED |
 | Deno type-check — counting-export-session وcounting-provision-member | PASS |
 | Cloudflare Pages allowlisted build | PASS |
 | Playwright discovery | PASS |
@@ -339,7 +343,7 @@ Blob SHA المرجعي:
 
 نجح اختبار Playwright الذي يقارن build-info.json في Cloudflare Pages Production مع أحدث SHA على main، وأكد السجل:
 
-9396347d9ac465ceb9cc90a1d70849b1f80b1f4b
+2c1fff2363a7bab656056fcd4b48702c9f548c3b
 
 كما اجتاز اختبارا واجهة الدخول العامة RTL على الهاتف والشاشة العامة.
 
@@ -454,8 +458,8 @@ Blob SHA المرجعي:
 - Admin: https://github.com/papamohammed77-glitch/rawaea-app-countflow/blob/main/countflow-admin.html
 - Unit tests: https://github.com/papamohammed77-glitch/rawaea-app-countflow/blob/main/tests/unit/countflow-quality.test.mjs
 - Service Worker: https://github.com/papamohammed77-glitch/rawaea-app-countflow/blob/main/countflow-sw.js
-- Successful GitHub Actions: https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45661891730
-- Code commit: https://github.com/papamohammed77-glitch/rawaea-app-countflow/commit/9396347d9ac465ceb9cc90a1d70849b1f80b1f4b
+- Successful GitHub Actions: https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45663060290
+- Code commit: https://github.com/papamohammed77-glitch/rawaea-app-countflow/commit/2c1fff2363a7bab656056fcd4b48702c9f548c3b
 - LVE-777 camera report: https://github.com/papamohammed77-glitch/rawaea-app-countflow/blob/main/Reports/LVE-2026-11-25-777_COUNTER_CAMERA_UX.md
 - Rawaea reference file SHA: 00456494de918b36fc6792bef302319a9f65605d — قراءة فقط.
 - Supabase: rawaea-staging / hfzznsiprnwkpayskzhu — استعلامات قراءة فقط.
