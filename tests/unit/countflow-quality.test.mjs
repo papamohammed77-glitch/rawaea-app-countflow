@@ -1192,3 +1192,21 @@ test("Admin overview launch action opens the existing operation-create workflow 
   assert.match(admin, /reconcileMs:30000/);
   assert.match(admin, /state\.overviewRealtimeStatus=status/);
 });
+
+test("Admin overview keeps the first screen simple and moves advanced analytics behind closed details", () => {
+  const admin = read("countflow-admin.html");
+  const start = admin.indexOf('<section id="tab-overview"');
+  const end = admin.indexOf('<section id="tab-clients"', start);
+  assert.ok(start >= 0 && end > start, "Admin overview section must remain present");
+  const overview = admin.slice(start, end);
+  assert.match(overview, /<details class="cf-overview-advanced" id="overviewAdvancedFilters">/);
+  assert.match(overview, /<details class="cf-overview-more" id="overviewMoreDetails">/);
+  assert.doesNotMatch(overview, /<details[^>]*\sopen(?:=|\s|>)/, "Optional details must start collapsed");
+  assert.match(overview, /id="overviewNewOperation"/);
+  assert.match(overview, /id="overviewProjectFilter"/);
+  for (const id of ["overviewTotalOperations", "overviewActiveOperations", "overviewEntryEvents", "overviewCoverage", "overviewStatusChart", "overviewRecentActivity"]) {
+    assert.ok(overview.includes('id="' + id + '"'), "Missing essential dashboard element: " + id);
+  }
+  assert.doesNotMatch(overview, /COUNTING OPERATIONS INTELLIGENCE|صورة تشغيلية موحّدة/);
+  assert.match(overview, /تابع عمليات الجرد وحالة التنفيذ من مكان واحد/);
+});
