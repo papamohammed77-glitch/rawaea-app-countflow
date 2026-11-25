@@ -1435,3 +1435,27 @@ test("All assistants are governed by the user-first engineering protocol and pre
  assert.match(agents,/USER_FIRST_ENGINEERING_PROTOCOL/);
  assert.match(agents,/CURRENT_STATE\.md/);
 });
+
+
+test("CountFlow product units preserve measurement class and decimal precision without turning metadata into a selectable unit", () => {
+ const admin=read("countflow-admin.html");
+ const start=admin.indexOf("const CF_UNIT_CLASSES=");
+ const end=admin.indexOf("function renderCatalogUnitEditor",start);
+ assert.ok(start>=0&&end>start,"Missing unit metadata helpers");
+ const source=admin.slice(start,end);
+ const helpers=vm.runInNewContext("(()=>{"+source+";return {inferProductUnitClass,defaultProductUnitPrecision,productUnitRows,readProductUnitMeta,withProductUnitMeta}})()");
+ assert.equal(helpers.inferProductUnitClass("كجم"),"mass");
+ assert.equal(helpers.inferProductUnitClass("جرام"),"mass");
+ assert.equal(helpers.inferProductUnitClass("قطعة"),"count");
+ assert.equal(helpers.inferProductUnitClass("لتر"),"volume");
+ assert.equal(helpers.defaultProductUnitPrecision("count"),0);
+ assert.equal(helpers.defaultProductUnitPrecision("mass"),3);
+ const weighted=helpers.withProductUnitMeta([{name:"جرام",factor_to_base:0.001}], "mass", 3);
+ assert.equal(helpers.productUnitRows(weighted).length,1);
+ assert.equal(helpers.readProductUnitMeta(weighted,"كجم").unit_class,"mass");
+ assert.equal(helpers.readProductUnitMeta(weighted,"كجم").decimal_precision,3);
+ assert.equal(helpers.productUnitRows(weighted).some(row=>row._countflow_unit_meta),false);
+ const legacy=helpers.readProductUnitMeta([{name:"كرتونة",factor_to_base:12}],"قطعة");
+ assert.equal(legacy.unit_class,"count");
+ assert.equal(legacy.inferred,true);
+});
