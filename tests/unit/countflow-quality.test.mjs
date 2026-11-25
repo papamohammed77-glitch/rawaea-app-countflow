@@ -1210,3 +1210,37 @@ test("Admin overview keeps the first screen simple and moves advanced analytics 
   assert.doesNotMatch(overview, /COUNTING OPERATIONS INTELLIGENCE|صورة تشغيلية موحّدة/);
   assert.match(overview, /تابع عمليات الجرد وحالة التنفيذ من مكان واحد/);
 });
+
+test("CountFlow global catalogue stores unit conversion and preserves barcodes as text", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="globalProductUnitsEditor"/);
+ assert.match(admin,/readCatalogUnits\('globalProductUnitsEditor',base\)/);
+ assert.match(admin,/base_unit:base,units,updated_by:state\.user\.id/);
+ assert.match(admin,/input id="globalBarcode" inputmode="text"/);
+ assert.match(admin,/data-sort-catalog="canonical_sku"/);
+ assert.match(admin,/id="catalogCategoryFilter"/);
+ assert.match(admin,/count_catalog_products'\)\.select\('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path'/);
+});
+
+test("CountFlow institution mapping stores client-specific unit overrides and stays client-scoped", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="catalogClientScope"/);
+ assert.match(admin,/id="clientProductUnitsEditor"/);
+ assert.match(admin,/p_base_unit_override:base,p_units_override:units/);
+ assert.match(admin,/p_client_id:client,p_catalog_product_id:cat/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.match(admin,/eq\('client_id',id\)/);
+ assert.match(admin,/state\.project\.client_id!==id/);
+ assert.match(admin,/count_attach_catalog_product/);
+});
+
+test("CountFlow separates global master, client mapping and project roster without physical catalog deletion", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="catalogGlobalView"/);
+ assert.match(admin,/id="catalogClientView"/);
+ assert.match(admin,/id="tab-products"/);
+ assert.match(admin,/كتالوج أصناف الجهة \/ التكليف/);
+ assert.match(admin,/is_active:!p\.is_active/);
+ assert.doesNotMatch(admin,/from\('count_catalog_products'\)\.delete/);
+ assert.doesNotMatch(admin,/from\('count_client_products'\)\.delete/);
+});
