@@ -1459,3 +1459,15 @@ test("CountFlow product units preserve measurement class and decimal precision w
  assert.equal(legacy.unit_class,"count");
  assert.equal(legacy.inferred,true);
 });
+
+
+test("Imported product units keep the dimension class and precision metadata in the existing units JSON field", () => {
+ const admin=read("countflow-admin.html");
+ const start=admin.indexOf("function normalizeProductImportRow(");
+ const end=admin.indexOf("\n }",start)+3;
+ assert.ok(start>=0&&end>start);
+ const source=admin.slice(start,end);
+ assert.match(source,/unit_class/);
+ assert.match(source,/decimal_precision/);
+ assert.match(source,/withProductUnitMeta\(units,unitClass,decimalPrecision\)/);
+});
