@@ -1,3 +1,46 @@
+## LVE-2026-11-25-774 — توحيد CountFlow داخل المستودع المعتمد main
+
+**Last Verified Event:** 25 نوفمبر 2026 (Africa/Cairo).  
+**Canonical repository:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**Canonical branch:** `main`.  
+**Baseline before consolidation:** `2ddb76447949532c342ff2e755e049b1927aacef` (LVE-771؛ إصلاح Admin bootstrap 403 محفوظ).  
+**Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`.  
+**Pages Production origin:** `https://rawaea-app-countflow.pages.dev` (إعداد main auto-deploy موثق في DEPLOYMENT).
+
+### ما تم توحيده في main
+- نقل Admin المطوّر من فرع LVE-765/LVE-772، مع الحفاظ على الإسقاط الآمن للمشاريع: `id, client_id, name, code, status, created_at, updated_at`؛ لا `created_by` ولا `select('*')`. منح عمود `client_id` موجود ضمن ملف migration مستعاد.
+- إضافة شاشة `countflow-control.html` للمراجع بصلاحية قراءة فقط وربطها ببوابة الدخول وقائمة النشر المسموح وService Worker.
+- نقل تحسينات المشرف والإسناد والاستعراض التفصيلي، مع تحديثات Counter غير المتعلقة بالكاميرا.
+- نقل وظيفتي `counting-export-session` و`counting-provision-member` بعقود Tenant/Role، مع اختبارات المصدر التي تغطيها.
+- تحديث `scripts/build-pages.sh` ليضم Control فقط ضمن ملفات الويب؛ لا ينسخ SQL أو Functions أو Tests إلى Pages.
+- إضافة تقارير LVE-765 Admin وLVE-768 وLVE-769 وLVE-772 داخل `Reports/` القائمة.
+- إضافة 16 ملف SQL مستعاداً من سجل الإصدارات الفعلي إلى `database/migrations/`؛ أرقام الملفات تطابق أرقام الإصدارات. لا migration أُعيد تشغيلها.
+- تحديث README وDEPLOYMENT وREADME الترحيلات ومسارات اختبارات SQL. لا submodules أو مستودعات أو مجلدات جذر إضافية.
+
+### نتائج الاختبارات المرجعية قبل النقل
+- فرع المصدر الذي نُقلت منه الشيفرة اجتاز GitHub Actions على commit `3af2a022bc576345a2f1bcde6eb8bb39d4b8507f`: Node **67/67 PASS**، Deno PASS، Pages allowlist build PASS، Playwright العام 2 PASS / 1 SKIPPED.
+- هذه نتيجة فرع المصدر قبل النقل؛ يلزم انتظار CI على SHA `main` الجديد وعدم استبدالها بادعاء نجاح main قبل ظهور نتيجته.
+- E2E المصادق للأدوار الأربعة، والكاميرا، وOffline/Sync على أجهزة فعلية، وفتح XLSX وفحص الصور ما زالت غير مثبتة.
+
+### حد الكاميرا والخصوصية
+- أُعيدت ملفات SQL الخاصة بسجل صور الرفوف إلى مجلد migrations لأنها مطبقة بالفعل في staging.
+- لم يُنقل كود واجهة Camera MVP من PR #6 إلى صفحات main؛ حاوية `shelf-images` عامة، أي إن من يملك رابط الكائن يستطيع قراءته. سجل `count_shelf_images` لم يحتوِ صفوفاً في فحص القراءة الأخير. لا تُنشر ميزة الرفع/العرض قبل تحويل مسارها إلى خصوصية متسقة وروابط موقعة والتحقق المصادق.
+
+### السلامة وحالة البيانات
+- لم ينفذ هذا التوحيد أي DDL أو DML أو RLS/GRANT أو RPC أو Auth أو Storage أو Edge deployment.
+- لم تُنشأ سجلات عد أو إسناد أو تسوية أو تصدير تجريبية.
+- دفعة QA `f799c5c1-b766-4712-b74f-c0bb19836ddc` (`qa-90000-products.csv`) محفوظة دون تدخل: 90,000 صف، 41,000 مقبول، 0 مرفوض، `committing`، و`completed_at=NULL`. لا تستأنفها أو توقفها أو تحذفها أو تكررها.
+- بيانات CountFlow كما في آخر فحص قراءة فقط: 1 مشروع، 1 جلسة، 4 أعضاء، 41,000 صنف؛ `count_entries` و`count_assignments` والتسويات والتصديرات = صفر.
+
+### سياسة المستودعات والتنظيف
+- CountFlow لديه مستودع واحد معتمد: هذا المستودع فقط. لا Git submodules أو مستودع CountFlow متداخل.
+- المستودعات الأخرى لدى المالك `erp-frontend` و`rawaie-erp-New` و`rawaie-erp-review` لم تُعدّل؛ سجلاتها تخص ERP/حوكمة/مراجعة وليست مستودعات CountFlow بديلة. لا تحذفها لمجرد أنها ليست مستودع CountFlow.
+- احتُفظ بفروع العمل للتدقيق التاريخي؛ لا تحذف الفروع أو المستودعات قبل قبول المالك للنشر ومراجعة الاعتماديات.
+- PR #8 صار superseded من حيث الملفات المنقولة؛ لا تدمجه. PR #6 للكاميرا يبقى مؤجلاً حتى إغلاق فجوة خصوصية الصور.
+
+**Readiness:** توحيد المصدر إلى main؛ CI/Pages على SHA الجديد قيد التحقق. القبول التشغيلي/E2E الكامل غير مكتمل، وميزة صور الرفوف محجوبة.
+
+---
 ## LVE-2026-11-24-771 — Admin bootstrap 403 / count_projects SELECT projection fix
 
 **Last Verified Event:** 24 November 2026 (Africa/Cairo).  

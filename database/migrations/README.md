@@ -247,3 +247,33 @@ Read-only live verification:
 - No Storage metadata tables were written; file operations must use Storage API.
 
 Open end-to-end gate: authenticated image upload, Admin thumbnail, Counter thumbnail and Client Balance XLSX embedded-image verification. The available browser connector is read-only and there is no Storage upload API action in the current tool set. Do not insert into storage.objects directly. Keep this phase open and do not merge/deploy until those E2E checks pass.
+
+---
+
+## 2026-11-25 — LVE-774: استعادة مصادر الترحيلات المطبقة إلى main
+
+تمت قراءة سجل `supabase_migrations.schema_migrations` في `rawaea-staging` فقط، واستعادة 16 ملف SQL إلى `database/migrations/` بأرقام الإصدارات الفعلية المسجلة. نُقلت نصوص `statements[1]` كما أعادها السجل؛ جميعها تحوي statement واحدة و`rollback_count=0`.
+
+- `20261123211241_countflow_shelf_image_camera_mvp_v1.sql`
+- `20261123211841_countflow_shelf_image_integrity_and_cleanup_v1.sql`
+- `20261124182140_countflow_auditor_read_only_control_scope_v1.sql`
+- `20261124182507_countflow_auditor_evidence_read_v1.sql`
+- `20261124183136_countflow_control_safe_reconciliation_views_and_owner_realtime_redaction_v1.sql`
+- `20261124184201_countflow_hide_owner_actor_columns_from_clients_v1.sql`
+- `20261124184611_countflow_hide_owner_actor_audit_columns_v1.sql`
+- `20261124194925_countflow_rbac_custom_role_guard_and_operation_policy_fix_v1.sql`
+- `20261124195207_countflow_catalog_image_isolation_control_view_rls_and_fk_indexes_v1.sql`
+- `20261124195257_countflow_client_admin_isolation_audit_and_atomic_dynamic_permissions_v1.sql`
+- `20261124200322_countflow_catalog_image_link_upsert_role_permission_and_admin_provision_fix_v1.sql`
+- `20261124200430_countflow_dynamic_role_permissions_in_field_rpc_and_recount_v1.sql`
+- `20261124200647_countflow_hide_platform_owner_activity_from_client_audit_v1.sql`
+- `20261124201102_countflow_role_permission_rpc_column_least_privilege_fix_v1.sql`
+- `20261124201132_countflow_client_product_upsert_narrow_definer_rpc_v2.sql`
+- `20261124201230_countflow_new_tenant_operation_catalog_column_grants_v1.sql`
+
+### ضوابط الاستعادة
+- هذه الملفات توثق ترحيلات مطبقة بالفعل؛ لم تُنفذ خلال LVE-774 ولم يحدث أي DDL/DML أو تعديل صلاحيات.
+- طوابع الخمسة ملفات الخاصة بـControl وRBAC أصبحت مطابقة لقيم `version` في سجل Supabase؛ تم تحديث مسارات الاختبار إلى الأسماء المعتمدة.
+- ملف Camera integrity استُعيد من نص سجل Supabase الفعلي؛ كود واجهة الكاميرا لم يُنقل إلى صفحات main بسبب كون `shelf-images` عاماً، وبسبب بقاء اختبار التصوير المصادق مفتوحاً.
+- لا تعِد تشغيل هذه الملفات على `rawaea-staging` أو أي بيئة. تحقق من سجل الإصدار قبل أي إجراء مستقبلي.
+- هذه الاستعادة تغلق فجوة مصادر إصدارات 2026-11-23/24 المذكورة هنا، ولا تدّعي أن كل تاريخ CountFlow الأقدم صار baseline قابلاً لإعادة الإنشاء؛ الأرشيف التاريخي السابق يظل مرجعاً مستقلاً.

@@ -602,7 +602,7 @@ test("Client Balance workbook image anchors and right-to-left layout reference t
 });
 
 
-test("Admin bootstrap requires the confirmed platform owner, not a supervisor membership", () => {
+test("Admin bootstrap isolates the confirmed platform owner from scoped client administrators", () => {
   const admin = read("countflow-admin.html");
   assert.match(admin, /function isPlatformOwner\(user\)/);
   assert.match(admin, /toLowerCase\(\)==='owner@rawaea\.com'&&Boolean\(user\?\.email_confirmed_at\)/);
@@ -611,9 +611,14 @@ test("Admin bootstrap requires the confirmed platform owner, not a supervisor me
   assert.ok(start >= 0 && end > start);
   const bootstrap = admin.slice(start, end);
   assert.match(bootstrap, /db\.auth\.getUser\(\)/);
-  assert.match(bootstrap, /if\(!isPlatformOwner\(state\.user\)\)/);
+  assert.match(bootstrap, /state\.platformOwner=isPlatformOwner\(state\.user\)/);
+  assert.match(bootstrap, /if\(state\.platformOwner\)/);
+  assert.match(bootstrap, /from\('count_client_members'\)/);
+  assert.match(bootstrap, /count_roles\(role_key,scope\)/);
+  assert.match(bootstrap, /count_has_client_permission/);
+  assert.match(bootstrap, /client\.read/);
   assert.match(bootstrap, /db\.auth\.signOut\(\)/);
-  assert.doesNotMatch(bootstrap, /role==='supervisor'|status==='active'/);
+  assert.doesNotMatch(bootstrap, /platform\.license\.manage/);
 });
 
 test("Admin operations keep the institution name and engagement code visible", () => {
@@ -663,7 +668,7 @@ test("Admin can reuse an existing confirmed Auth account without requesting or c
   assert.match(admin, /دون تغيير كلمة مروره/);
   assert.match(admin, /error\.context\?\.clone\?\.\(\)\.json\(\)/);
   const provision = read("functions/counting-provision-member/index.ts");
-  assert.match(provision, /if \(password.length < 10\) return reply\(\{ error: "PASSWORD_REQUIRED_FOR_NEW_ACCOUNT" \}/);
+  assert.match(provision, /if \(password.length < 10\) throw new Error\("PASSWORD_REQUIRED_FOR_NEW_ACCOUNT"\)/);
   assert.match(provision, /existing_password_changed: false/);
   assert.match(provision, /if \(!authUser.email_confirmed_at\)/);
 });
@@ -825,8 +830,318 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
   assert.doesNotMatch(migration, /ALTER\s+TABLE\s+public\.count_products\s+ADD\s+COLUMN\s+image_url/i);
 });
 
+test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
+  const admin = read("countflow-admin.html");
+  const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(navTabs.length, 12);
+  assert.equal(new Set(navTabs).size, 12);
+  assert.match(admin, /class="nav-group"/);
+  assert.match(admin, /class="nav-group-title"/);
+  assert.match(admin, /data-icon="gauge-high"/);
+  assert.match(admin, /font-awesome\/7\.3\.1\/css\/all\.min\.css/);
+  assert.match(admin, /sweetalert2@11\.26\.25\/dist\/sweetalert2\.all\.min\.js/);
+  assert.match(admin, /confirmButtonColor:'#dc2626'/);
+  assert.match(admin, /async function confirmAction\(/);
+  assert.match(admin, /async function promptReason\(/);
+  assert.match(admin, /inputValidator:value=>String\(value\|\|''\)\.trim\(\)\.length<10/);
+  assert.doesNotMatch(admin, /\b(?:window\.)?confirm\s*\(/);
+  assert.doesNotMatch(admin, /\b(?:window\.)?prompt\s*\(/);
+  assert.match(admin, /\.tablewrap thead th\{position:sticky;top:0/);
+  assert.match(admin, /#memberTable thead th,#roleTable thead th/);
+  assert.match(admin, /#operationsTable thead th,#auditTable thead th/);
+  assert.match(admin, /#productVirtualScroller thead th/);
+  assert.match(admin, /async function withTableSkeletons\(/);
+  for (const target of ["projectList", "memberTable", "roleTable", "locationTable", "sessionTable", "productTable", "operationsTable", "auditTable"]) {
+    assert.ok(admin.includes("['" + target + "'"), "Missing skeleton loading target: " + target);
+  }
+  assert.match(admin, /new MutationObserver\(/);
+  assert.match(admin, /button\.prepend\(icon\)/);
+});
 
-test("Admin project bootstrap selects only columns readable by authenticated users", () => {
+test("Client-balance XLSX excludes products without a complete counted result at every reconciliation location", () => {
+  const exporter = read("functions/counting-export-session/index.ts");
+  const helperStart = exporter.indexOf("function hasCompleteClientCountResult(");
+  const helperEnd = exporter.indexOf("\n}", helperStart) + 2;
+  assert.ok(helperStart >= 0 && helperEnd > helperStart, "Missing complete-count predicate");
+  const hasCompleteClientCountResult = vm.runInNewContext("(" + exporter.slice(helperStart, helperEnd).trim() + ")");
+  assert.equal(hasCompleteClientCountResult([]), false, "A catalogue product without reconciliation lines is not a counted result");
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: null, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: undefined, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 4, result_status: "counted" }, { counted_quantity: null, result_status: "not_counted" }]), false);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 4, result_status: "counted" }, { counted_quantity: 2, result_status: "variance" }]), true);
+  assert.equal(hasCompleteClientCountResult([{ counted_quantity: 0, result_status: "matched" }]), true, "An explicitly counted zero must be retained");
+
+  const branchStart = exporter.indexOf('if (scope === "client_balance") {');
+  const branchEnd = exporter.indexOf("    // Count the large relations", branchStart);
+  const branch = exporter.slice(branchStart, branchEnd);
+  assert.match(branch, /const clientProducts=products\.filter\(\(product:any\)=>hasCompleteClientCountResult\(/);
+  assert.match(branch, /clientProductIds\.has\(row\.product_id\)/);
+  assert.ok(branch.includes("const clientCountEntries=countEntries.filter((entry:any)=>clientProductIds.has(entry.product_id))"), "Count events must be scoped to delivered products");
+  assert.match(branch, /count_events:clientCountEntries\.length/);
+  assert.ok(branch.includes("committedImportRows.filter((item:any)=>clientProductIds.has(item.product_id))"), "Import exception details must be scoped to delivered products");
+  assert.match(branch, /for\(const product of clientProducts\)/);
+  assert.match(branch, /row_count:clientProducts\.length/);
+  assert.match(branch, /incomplete_products_excluded:excludedUncountedProductCount/);
+  assert.doesNotMatch(branch, /for\(const product of products\)\{/);
+});
+
+test("Supervisor live rows open a paginated, filtered, read-only count detail view with realtime refresh", () => {
+  const supervisor = read("Countflow-supervisor.html");
+  assert.ok(supervisor.includes('id="entryDetailModal"'), "Missing accessible count detail dialog");
+  assert.ok(supervisor.includes('role="dialog" aria-modal="true"'), "Detail view must be announced as a modal dialog");
+  assert.ok(supervisor.includes('data-entry-product="'), "Live count rows must expose a product drilldown target");
+  assert.match(supervisor, /async function openEntryDetails\(productId,productName\)/);
+  assert.match(supervisor, /async function loadEntryDetailPage\(quiet=false\)/);
+  assert.ok(supervisor.includes(".eq('session_id',sessionId).eq('product_id',productId)"), "Detail query must stay inside the selected session and product");
+  assert.ok(supervisor.includes(".range(from,from+entryDetailState.pageSize-1)"), "Detail results must be paginated");
+  assert.ok(supervisor.includes("entryDetailLocation"), "Location filter is required");
+  assert.ok(supervisor.includes("entryDetailMember"), "Team-member filter is required");
+  assert.ok(supervisor.includes("count_entry_images"), "Count evidence metadata must be included");
+  assert.ok(supervisor.includes("createSignedUrls(paths,3600)"), "Evidence links must use temporary signed URLs");
+  assert.ok(supervisor.includes("row?.product_id===entryDetailState.productId"), "Realtime events for the open product must refresh the detail table");
+  assert.ok(supervisor.includes("entryDetailNext"), "Detail pagination must expose a next-page control");
+
+  assert.ok(supervisor.includes("requestToken!==entryDetailState.requestToken"), "Newer filter results must supersede stale responses");
+  assert.ok(supervisor.includes("entryDetailSearchTimer=setTimeout"), "Detail search must debounce input");
+  assert.match(supervisor, /font-awesome\/7\.3\.1\/css\/all\.min\.css/);
+  assert.match(supervisor, /sweetalert2@11\.26\.25\/dist\/sweetalert2\.all\.min\.js/);
+  assert.match(supervisor, /async function confirmSupervisorAction\(/);
+  assert.ok(supervisor.includes("confirmButtonColor:'#dc2626'"), "Supervisor confirmations must be red and explicit");
+  assert.doesNotMatch(supervisor, /confirm\(/, "Read-only drilldown must not trigger native mutation confirmations");
+});
+
+test("Admin exposes a modal operation creator, stable catalogue and distinct engagement/session/operation scopes", () => {
+  const admin = read("countflow-admin.html");
+  const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
+  assert.ok(navTabs.includes("projects") && navTabs.includes("sessions") && navTabs.includes("operations"));
+  assert.ok(navTabs.includes("clients") && navTabs.includes("catalog"));
+  assert.ok(admin.includes('id="newOperationButton"'), "Missing dedicated create-operation action");
+  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
+  assert.match(admin, /id="operationCreateModal"/);
+  assert.match(admin, /id="sessionTeam"[^>]*multiple/);
+  assert.ok(admin.includes("كتالوج أصناف الجهة / التكليف"), "The client/engagement catalogue must persist across sessions");
+  assert.ok(admin.includes("لا تُحذف أصنافه عند إغلاق أي جلسة جرد"), "Catalogue persistence rule must be explicit");
+  assert.ok(admin.includes("ملف التكليف المحدد"), "Sessions must be scoped to the selected engagement");
+  assert.ok(admin.includes("سجل عمليات الجرد — جميع ملفات التكليف"), "Operations register must cover all visible engagements");
+});
+
+test("Control requires an active auditor membership and is strictly read-only", () => {
+  const control = read("countflow-control.html");
+  assert.match(control, /eq\('role','auditor'\)\.eq\('status','active'\)/);
+  assert.match(control, /async function acceptUser\(user\)/);
+  assert.ok(control.includes("countflow:project:"+ "'+project.id"), "Control must subscribe only to its authorized project topic");
+  assert.ok(control.includes("countflow:session:"+ "'+id"), "Control must subscribe to the selected session topic");
+  assert.ok(control.includes("config:{private:true}"), "Control realtime channels must be private");
+  assert.ok(control.includes("count_control_reconciliation_runs"), "Control must read the safe reconciliation run projection");
+  assert.ok(control.includes("count_control_reconciliation_lines"), "Control must read paginated reconciliation detail");
+  assert.ok(control.includes("from('counting-evidence').createSignedUrls(paths,3600)"), "Evidence must use expiring private signed URLs");
+  assert.ok(control.includes("from('counting-product-images').createSignedUrls(productPaths,3600)"), "Product images must use private signed URLs");
+  assert.match(control, /\.range\(from,from\+state\.pageSize-1\)/);
+  assert.doesNotMatch(control, /\.from\([^)]*\)\.(?:insert|update|upsert|delete)\(/, "Control must not write to CountFlow tables");
+  assert.doesNotMatch(control, /count_audit_log|count_exports|count_platform_settings/, "Control must not read owner administration or license data");
+});
+
+test("Control portal, Pages build, and Service Worker include the separate reviewer app", () => {
+  const portal = read("index.html");
+  const build = read("scripts/build-pages.sh");
+  const sw = read("countflow-sw.js");
+  assert.ok(portal.includes('href="./countflow-admin.html"'));
+  assert.ok(portal.includes('href="./Countflow-supervisor.html"'));
+  assert.ok(portal.includes('href="./countflow.html"'));
+  assert.ok(portal.includes('href="./countflow-control.html"'));
+  assert.ok(build.includes('"$SCRIPT_DIR/countflow-control.html"'), "Pages build must publish Control");
+  assert.ok(build.includes("Countflow-supervisor.html countflow-control.html countflow-core.js"));
+  assert.ok(sw.includes("'./countflow-control.html'"), "Service Worker shell must precache Control");
+  assert.match(sw, /var CF_SW_BUILD = 'countflow-sw-\d{8}-\d+';/, "Service Worker cache must carry a dated build version");
+});
+
+test("Control reconciliation views omit owner identity and are gated by active project authorization", () => {
+  const migration = read("database/migrations/20261124183136_countflow_control_safe_reconciliation_views_and_owner_realtime_redaction_v1.sql");
+  const runsView = migration.slice(migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_runs"), migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_lines"));
+  const linesView = migration.slice(migration.indexOf("CREATE OR REPLACE VIEW public.count_control_reconciliation_lines"), migration.indexOf("REVOKE ALL ON public.count_control_reconciliation_runs"));
+  assert.match(runsView, /counting_private\.is_auditor\(project_id\)/);
+  assert.match(linesView, /counting_private\.is_auditor\(project_id\)/);
+  assert.doesNotMatch(runsView, /created_by|approved_by/);
+  assert.doesNotMatch(linesView, /created_by|approved_by/);
+  assert.ok(migration.includes("v_session_new.created_by:=NULL"));
+  assert.ok(migration.includes("v_run_new.approved_by:=NULL"));
+  assert.ok(migration.includes("v_run_new.metadata:='{}'::jsonb"));
+  assert.ok(migration.includes("v_alert_new.acknowledged_by:=NULL"));
+  assert.ok(migration.includes("v_recount_new.reviewed_by:=NULL"));
+});
+
+test("Auditor evidence storage remains private and grants read only to registered project evidence", () => {
+  const migration = read("database/migrations/20261124182507_countflow_auditor_evidence_read_v1.sql");
+  assert.ok(migration.includes("bucket_id = 'counting-evidence'"));
+  assert.ok(migration.includes("counting_private.is_platform_owner()"));
+  assert.ok(migration.includes("counting_private.is_auditor"));
+  assert.ok(migration.includes("FROM public.count_entry_images"));
+  assert.ok(migration.includes("NOT counting_private.is_platform_owner_actor(i.uploaded_by)"));
+  assert.doesNotMatch(migration, /CREATE POLICY|FOR INSERT|FOR UPDATE|FOR DELETE/);
+});
+
+test("Control team monitor reads realtime presence, device status, current location and pending sync queue", () => {
+  const control = read("countflow-control.html");
+  assert.ok(control.includes("from('count_presence')"), "Live presence must be read from the session scope");
+  assert.ok(control.includes("from('count_devices')"), "Registered device state must be read from the project scope");
+  assert.ok(control.includes("pending_queue_count"), "Pending offline queue count must be visible");
+  assert.ok(control.includes("current_location_id"), "Current field location must be visible");
+  assert.ok(control.includes("device_label,platform,app_version,status,last_seen_at"), "Device model and version must be displayed");
+  assert.ok(control.includes("Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()])"), "Realtime refresh must refresh all live Control panels");
+  assert.ok(control.includes("document.hidden&&state.session"), "Background tabs must not run unnecessary polling");
+});
+
+test("authenticated clients cannot select platform-owner identity columns from projects or sessions", () => {
+  const migration = read("database/migrations/20261124184201_countflow_hide_owner_actor_columns_from_clients_v1.sql");
+  assert.match(migration, /REVOKE SELECT ON TABLE public\.count_projects FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /GRANT SELECT \(id,name,code,status,created_at,updated_at\)[\s\S]*ON TABLE public\.count_projects TO authenticated/);
+  assert.match(migration, /REVOKE SELECT ON TABLE public\.count_sessions FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /id,project_id,name,status,started_at,closed_at,created_at,updated_at,[\s\S]*sync_barrier_version,queue_barrier_action,queue_barrier_run_id,queue_barrier_requested_at/);
+  assert.match(migration, /ON TABLE public\.count_sessions TO authenticated/);
+  assert.doesNotMatch(migration, /GRANT SELECT ON TABLE public\.count_projects TO authenticated/);
+  assert.doesNotMatch(migration, /GRANT SELECT ON TABLE public\.count_sessions TO authenticated/);
+
+  const admin = read("countflow-admin.html");
+  const counter = read("countflow.html");
+  const supervisor = read("Countflow-supervisor.html");
+  const control = read("countflow-control.html");
+  assert.ok(admin.includes("count_projects').select('id,client_id,name,code,status,created_at,updated_at')"));
+  assert.doesNotMatch(admin, /count_projects'\)\.select\([^)]*created_by/);
+  assert.ok(admin.includes("count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at"));
+  assert.ok(counter.includes("count_projects').select('id,name,code,status,created_at,updated_at')"));
+  assert.ok(counter.includes("count_sessions').select('id,project_id,name,status,started_at,closed_at,created_at,updated_at"));
+  assert.ok(supervisor.includes("fetchAllRows('count_projects','id,name,code,status,created_at,updated_at'"));
+  assert.ok(control.includes("count_projects').select('id,name,code,status,created_at'"));
+  assert.doesNotMatch([admin,counter,supervisor,control].join("\\n"), /count_projects'\)\.select\('\*'\)|count_sessions'\)\.select\('\*'\)/);
+});
+
+test("Supervisor lists only active supervisor project scopes and deletes one assignment row by ID", () => {
+  const supervisor = read("Countflow-supervisor.html");
+  assert.ok(supervisor.includes("supervisorMemberships=supervisors"), "Active supervisor memberships must be retained as the authorization scope");
+  assert.ok(supervisor.includes(".filter(x=>x.role==='supervisor'&&x.status==='active').map(x=>x.project_id)"), "Only active supervisor project IDs may be loaded");
+  assert.ok(supervisor.includes("fetchAllRows('count_projects','id,name,code,status,created_at,updated_at',[{op:'in',key:'id',value:allowedProjectIds}])"), "Project visibility in the UI must match supervisor memberships");
+  assert.ok(supervisor.includes("data-remove-assignment=\"'+x.id+'\""), "The action must carry one assignment primary key");
+  assert.ok(supervisor.includes(".delete().eq('id',b.dataset.removeAssignment).eq('session_id',session.id)"), "The delete must target one assignment row and stay session-scoped");
+  assert.doesNotMatch(supervisor, /\.delete\(\)\.eq\('session_id',session\.id\)\.eq\('member_id',b\.dataset\.removeAssignment\)/, "Do not delete all assignment rows for the same member in a session");
+});
+
+test("other owner actor columns remain inaccessible while operational columns stay readable", () => {
+  const migration = read("database/migrations/20261124184611_countflow_hide_owner_actor_audit_columns_v1.sql");
+  const restricted = [
+    ["count_presence", "queue_resolved_by"],
+    ["count_devices", "revoked_by"],
+    ["count_recount_tasks", "created_by"],
+    ["count_recount_tasks", "reviewed_by"],
+    ["count_reconciliation_runs", "created_by"],
+    ["count_reconciliation_runs", "approved_by"],
+    ["count_reconciliation_runs", "metadata"]
+  ];
+  for (const [table, column] of restricted) {
+    assert.ok(migration.includes("REVOKE SELECT ON TABLE public." + table + " FROM PUBLIC, anon, authenticated"));
+    assert.match(migration, new RegExp("GRANT SELECT \\([\\s\\S]*?\\) ON TABLE public\\." + table + " TO authenticated"));
+    assert.ok(!new RegExp("GRANT SELECT \\([^)]*\\b" + column + "\\b[^)]*\\) ON TABLE public\\." + table).test(migration), "Restricted owner column must not be granted: " + table + "." + column);
+  }
+});
+
+
+test("Admin operation creation is a dedicated modal with project scope and team assignment", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="operationCreateModal"/);
+  assert.match(admin, /id="sessionProject"/);
+  assert.match(admin, /id="sessionTeam"[^>]*multiple/);
+  assert.match(admin, /async function openOperationCreateModal\(\)/);
+  assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
+  assert.match(admin, /from\('count_assignments'\)\.upsert\(assignmentRows,\{onConflict:'session_id,member_id,location_id'\}\)/);
+  assert.match(admin, /branch_location_id:\$\('sessionBranch'\)\.value\|\|null/);
+  assert.doesNotMatch(admin, /newOperationButton'\)\.onclick=\(\)=>\{[\s\S]{0,300}sessionForm'\)\.scrollIntoView/);
+  assert.equal((admin.match(/id="sessionForm"/g) || []).length, 1);
+  assert.equal((admin.match(/id="sessionTable"/g) || []).length, 1);
+});
+
+test("Admin overview uses live operation analytics and user-visible filters, without sample KPI data", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /from\('count_operation_overview'\)/);
+  assert.match(admin, /async function loadAdminOverview\(\)/);
+  assert.match(admin, /function renderAdminOverview\(\)/);
+  for (const id of ["overviewProjectFilter", "overviewStatusFilter", "overviewFrom", "overviewTo", "overviewTotalOperations", "overviewEntryEvents", "overviewCoverage", "overviewStatusChart", "overviewPerformanceChart"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing overview element: " + id);
+  }
+  assert.match(admin, /loadAdminOverview\(\)\.catch/);
+});
+
+test("Global catalogue keeps stable products and exposes owner-only edit and deactivate rather than delete", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="globalProductId"/);
+  assert.match(admin, /data-edit-catalog=/);
+  assert.match(admin, /data-catalog-state=/);
+  assert.match(admin, /async function toggleCatalogProduct\(id\)/);
+  assert.match(admin, /is_active:!p\.is_active/);
+  assert.match(admin, /ستظل بياناته وروابطه التاريخية محفوظة/);
+  assert.doesNotMatch(admin, /from\('count_catalog_products'\)\.delete/);
+});
+
+test("Admin roles and memberships have search, usage metrics, system-role read-only and scope filters", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="systemRoleList"/);
+  assert.match(admin, /id="customRoleSearch"/);
+  assert.match(admin, /const roleClientId=state\.platformOwner\?state\.roleClientId:state\.clientId/);
+  assert.match(admin, /eq\(\x27client_id\x27,roleClientId\)/);
+  assert.match(admin, /payload=\{client_id:\(state\.platformOwner\?state\.roleClientId:state\.clientId\)/);
+  assert.match(admin, /data-clone-custom-role=/);
+  assert.match(admin, /نظامي — للقراءة فقط/);
+  assert.match(admin, /لا يمكن حذف الدور لأنه مرتبط بعضوية واحدة أو أكثر/);
+  for (const id of ["memberTotalCount", "memberActiveCount", "memberPausedCount", "memberProjectFilter", "memberStatusFilter"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing membership management element: " + id);
+  }
+});
+
+test("Platform owner-only client administration, licensing and audit remain hidden as complete navigation surfaces", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /<section id="tab-clients" class="section" data-owner-only>/);
+  assert.match(admin, /<section id="tab-license" class="section" data-owner-only>/);
+  assert.match(admin, /<div class="nav-group" data-owner-only>/);
+  assert.match(admin, /data-tab="license"[^>]*data-owner-only/);
+  assert.match(admin, /قائمة البريد أدناه مخصصة للإشعارات فقط/);
+});
+
+test("Admin keeps operation register, per-file sessions, project catalog and global catalogue as distinct scopes", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /سجل عمليات الجرد — جميع ملفات التكليف/);
+  assert.match(admin, /جلسات الجرد داخل ملف التكليف المحدد/);
+  assert.match(admin, /قاعدة الأصناف العالمية/);
+  assert.match(admin, /كتالوج أصناف الجهة \/ التكليف/);
+  assert.match(admin, /id="sideToggle"/);
+});
+
+test("Admin script declarations remain syntactically unique after UI refactors", () => {
+  const admin = read("countflow-admin.html");
+  assert.doesNotMatch(admin, /function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*function\s+\1/);
+  assert.doesNotMatch(admin, /async\s+function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*async\s+function\s+\1/);
+});
+
+test("Admin member role reassignment requires the database team-management permission and protects the last supervisor", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /rpc\('count_can_manage_project_members'/);
+  assert.match(admin, /state\.memberManageProjects=new Set\(permissionChecks\.filter/);
+  assert.match(admin, /data-save-member-role=/);
+  assert.match(admin, /async function saveMemberRole\(memberId\)/);
+  assert.match(admin, /state\.memberManageProjects\?\.has\(member\.project_id\)/);
+  assert.match(admin, /count_members'\)\.update\(\{role:role\.role_key,role_id:role\.id\}\)/);
+  assert.match(admin, /لا يمكن تغيير دور آخر مشرف نشط/);
+  assert.match(admin, /لا يمكن تغيير دور حسابك الحالي/);
+});
+
+test("Platform owner custom-role scope is explicitly selected and client administrators remain client-bound", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /id="roleClientScope"/);
+  assert.match(admin, /state\.platformOwner\?state\.roleClientId:state\.clientId/);
+  assert.match(admin, /roleClientScope'\)\?\.addEventListener\('change'/);
+  assert.match(admin, /roleClientScope'\)\.value=x\.data\.id/);
+  assert.match(admin, /r\.client_id===\(state\.roleClientId\|\|state\.clientId\)/);
+});
+
+ 
+test("Admin project bootstrap selects only authenticated-readable project columns", () => {
   const admin = read("countflow-admin.html");
   const queryLine = admin.split(String.fromCharCode(10)).find(line =>
     line.includes("db.from('count_projects').select(")
@@ -836,7 +1151,44 @@ test("Admin project bootstrap selects only columns readable by authenticated use
   const selectEnd = queryLine.indexOf("')", selectStart);
   assert.ok(selectEnd > selectStart, "project query must use an explicit select list");
   const projection = queryLine.slice(selectStart, selectEnd);
-  assert.equal(projection, "id,name,code,status,created_at");
+  assert.equal(projection, "id,client_id,name,code,status,created_at,updated_at");
   assert.equal(projection.includes("created_by"), false);
   assert.equal(projection.includes("*"), false);
+});
+
+test("Admin overview uses the safe aggregate view and weighted measured coverage", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /db\.from\('count_operation_overview'\)/);
+  assert.match(admin, /const productCoverage=activeProductTotal>0\?Math\.min\(100,countedProductTotal\/activeProductTotal\*100\):null/);
+  assert.match(admin, /overviewCoverageCaption/);
+  assert.match(admin, /overviewRecentActivity/);
+  assert.match(admin, /overviewPerformanceChart/);
+  assert.match(admin, /count_entries/);
+  assert.doesNotMatch(admin, /chart\.js|Chart\.js/i);
+});
+
+test("Admin overview does not report percentages when the measurement denominator is absent", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /activeProductTotal>0\?Math\.min\(100,countedProductTotal\/activeProductTotal\*100\):null/);
+  assert.match(admin, /totalLocationPositions>0\?Math\.min\(100,countedLocationTotal\/totalLocationPositions\*100\):null/);
+  assert.match(admin, /overviewCoverage'\)\.textContent=percent\(productCoverage\)/);
+  assert.match(admin, /overviewLocationCoverage'\)\.textContent=percent\(locationCoverage\)/);
+});
+
+test("Admin overview keeps operational navigation and responsive executive dashboard surfaces", () => {
+  const admin = read("countflow-admin.html");
+  for (const id of ["overviewNewOperation","overviewRefresh","overviewProjectFilter","overviewStatusFilter","overviewFrom","overviewTo","overviewReset","overviewStatusChart","overviewRecentActivity","overviewPerformanceChart","projectSummary","recentSessions"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing Admin overview element: " + id);
+  }
+  assert.match(admin, /cf-overview-kpis/);
+  assert.match(admin, /@media\(max-width:520px\)\{\.cf-overview-hero/);
+  assert.match(admin, /data-open-overview-operation/);
+});
+
+test("Admin overview launch action opens the existing operation-create workflow and Realtime subscribes to count entries", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /overviewNewOperation'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
+  assert.match(admin, /'count_sessions','count_members','count_entries'/);
+  assert.match(admin, /reconcileMs:30000/);
+  assert.match(admin, /state\.overviewRealtimeStatus=status/);
 });

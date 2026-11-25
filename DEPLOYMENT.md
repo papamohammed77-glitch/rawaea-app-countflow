@@ -10,6 +10,7 @@
 - النظام الأم: `/countflow-admin.html`.
 - تطبيق المندوب: `/countflow.html`.
 - لوحة المشرف: `/Countflow-supervisor.html`.
+- Control للمراقب/المراجع (قراءة فقط): `/countflow-control.html`.
 - Supabase: المشروع `rawaea-staging` فقط (`hfzznsiprnwkpayskzhu`).
 
 ## إعداد Cloudflare Pages — الحالة الحية
@@ -20,14 +21,14 @@
 - Build command المعتمد في هذا الدليل: `bash scripts/build-pages.sh`.
 - Build output directory المعتمد في هذا الدليل: `dist`.
 - آخر مطابقة موثقة لـCloudflare Production بعد LVE-763: commit `f26b8b6c0e91bfe626e997e2f654cf6df2905516`، main CI run `45232321254`، واختبارات Production Playwright **3/3 PASS** شملت مطابقة SHA الدقيقة وواجهات RTL على الهاتف. شملت نسخة الويب شريط Gamification للمندوب وتبويب إنجازاتي.
-- لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح الصفحات الثلاث على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
+- لا تنشئ مشروع Pages ثانياً. عند تحديث main، راقب سجل Production حتى يكتمل النشر التلقائي، ثم افتح صفحات Admin وCounter وSupervisor وControl على نطاق Pages الإنتاجي وتأكد من عدم وجود أخطاء تحميل أو stale assets.
 - لا تستخدم `erp-frontend` أو `companies/company-1` أو `rawaea-erp.pages.dev` كجذر أو alias أو redirect.
 
-ينشئ `scripts/build-pages.sh` مجلد `dist` من قائمة سماح من عشرة ملفات: أربع صفحات HTML، ملفات Core/SW/manifest/icon الأربعة، `_headers` و`build-info.json` الذي يسجل SHA المصدر. لا ينسخ `database/` أو `functions/` أو `tests/` أو ملفات Markdown أو SQL أو TypeScript إلى المخرجات العامة.
+ينشئ `scripts/build-pages.sh` مجلد `dist` من قائمة سماح من أحد عشر ملفاً: خمس صفحات HTML (بوابة الدخول والتطبيقات الأربعة)، وملفات Core/SW/manifest/icon الأربعة، `_headers` و`build-info.json` الذي يسجل SHA المصدر. لا ينسخ `database/` أو `functions/` أو `tests/` أو ملفات Markdown أو SQL أو TypeScript إلى المخرجات العامة.
 
 ## أصول PWA وOffline
 
-- `countflow-core.js` هو النواة المستقلة للتطبيقات الثلاثة، ويثبت عميل Supabase على مشروع CountFlow فقط.
+- `countflow-core.js` هو النواة المستقلة للتطبيقات الأربعة، ويثبت عميل Supabase على مشروع CountFlow فقط.
 - `countflow-sw.js` يخزن أغلفة التطبيقات والملفات الثابتة ومكتبات CDN المعتمدة لتوفير إمكانية فتح الواجهة بعد تحميلها أول مرة.
 - طلبات Supabase Auth وREST وStorage وEdge Functions تظل Network-only ولا تدخل Cache Storage.
 - Service Worker لا يفرض إعادة تحميل قسرية على تبويبات العمل المفتوحة عند تحديثه.

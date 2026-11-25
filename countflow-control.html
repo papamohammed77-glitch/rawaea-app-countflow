@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#102b3f">
+<link rel="manifest" href="./manifest.webmanifest"><title>CountFlow Control — المراقب والمراجع</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./countflow-core.js"></script>
+<style>
+:root{--navy:#102b3f;--teal:#087e80;--ink:#172b3b;--muted:#647789;--line:#dfe8ee;--bg:#f2f6f9;--blue:#2563eb;--green:#15803d;--amber:#b45309;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:11px;padding:10px 14px;font-weight:800}.primary{background:var(--navy);color:#fff}.soft{background:#e8f1f6;color:var(--navy)}.outline{background:#fff;border:1px solid var(--line);color:var(--ink)}.hidden{display:none!important}.muted{color:var(--muted)}.small{font-size:12px}
+.top{background:linear-gradient(115deg,#102b3f,#17576a);color:#fff;position:sticky;top:0;z-index:20;padding:14px clamp(14px,3vw,34px);display:flex;align-items:center;justify-content:space-between;gap:14px;box-shadow:0 6px 24px #102b3f22}.brand{display:flex;gap:12px;align-items:center}.brand-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#ffffff1c;font-size:20px}.brand small{color:#d4edf2}.top-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.top-actions button{background:#ffffff18;color:#fff;border:1px solid #ffffff2c}
+.wrap{max-width:1600px;margin:auto;padding:20px clamp(12px,2vw,26px) 60px}.login{max-width:480px;margin:9vh auto;background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 18px 55px #102b3f12}.login h1{margin:0 0 6px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--muted);font-weight:800}.field input,.field select{width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff}.notice{padding:13px 14px;border-radius:13px;background:#eff6ff;color:#1e40af;font-size:13px;line-height:1.7}.error{color:var(--red);min-height:20px;font-size:13px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.filters{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) minmax(170px,1fr) auto;gap:9px;align-items:end}.filters input,.filters select{min-width:0;width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.panel{background:#fff;border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 4px 16px #102b3f08;margin-bottom:14px}.panel h2,.panel h3{margin:0 0 12px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.kpi{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;min-width:0}.kpi-label{font-size:12px;color:var(--muted);font-weight:800}.kpi-value{font-size:26px;font-weight:950;margin-top:5px;overflow-wrap:anywhere}.kpi i{color:var(--teal);margin-left:6px}
+.table-scroll{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;white-space:nowrap}th,td{padding:11px 10px;text-align:right;border-bottom:1px solid #edf1f4;font-size:13px}th{position:sticky;top:0;background:#f5f8fa;color:#526779;z-index:1}tbody tr:hover{background:#f6fbfd}
+.pill{display:inline-flex;align-items:center;padding:4px 9px;border-radius:99px;background:#eaf5f5;color:#087e80;font-size:11px;font-weight:900}.pill.active{background:#e8f7ee;color:#166534}.pill.paused{background:#fff5dd;color:#92400e}.pill.review{background:#eff6ff;color:#1d4ed8}.empty{padding:28px;text-align:center;color:var(--muted)}.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.pager-actions{display:flex;gap:7px}.thumb{width:42px;height:42px;border:1px solid var(--line);border-radius:9px;object-fit:cover;background:#f8fafc}.link{color:#1d4ed8;text-decoration:none;font-weight:800}.link:hover{text-decoration:underline}.tag{font-size:11px;color:#526779;background:#f0f4f7;border-radius:7px;padding:3px 6px}.session-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.session-card{border:1px solid var(--line);border-radius:13px;padding:12px;cursor:pointer;background:#fff;text-align:right}.session-card.selected{border-color:#2563eb;box-shadow:0 0 0 2px #2563eb1c;background:#f8fbff}.session-card:hover{border-color:#8ab5d8}.live-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800}.dot{width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block}.split{display:grid;grid-template-columns:minmax(250px,350px) minmax(0,1fr);gap:14px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;max-width:min(92vw,560px);padding:12px 17px;border-radius:12px;background:var(--navy);color:#fff;box-shadow:0 10px 30px #102b3f35}.toast.bad{background:#9f2630}
+@media(max-width:900px){.split{grid-template-columns:1fr}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.top{align-items:flex-start}.brand small{display:block}.top-actions button{font-size:11px;padding:8px}.filters{grid-template-columns:1fr}.session-grid{grid-template-columns:1fr}.wrap{padding-top:12px}.kpi-value{font-size:22px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><div class="brand-icon"><i class="fa-solid fa-tower-broadcast"></i></div><div><b>CountFlow Control</b><br><small>المراقب / المراجع · شاشة المتابعة اللحظية</small></div></div><div class="top-actions"><span id="userName" class="small"></span><button id="logout" type="button" class="hidden"><i class="fa-solid fa-right-from-bracket"></i> خروج</button></div></header>
+<main class="wrap">
+<section id="loginPanel" class="login">
+ <div class="brand" style="margin-bottom:18px"><div class="brand-icon" style="background:#e8f1f6;color:var(--navy)"><i class="fa-solid fa-eye"></i></div><div><h1>دخول المراقب / المراجع</h1><small class="muted">قراءة ومراجعة فقط · لا توجد أدوات تعديل أو توزيع</small></div></div>
+ <div class="field"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username"></div><div class="field"><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password"></div>
+ <button id="loginButton" type="button" class="primary" style="width:100%">تسجيل الدخول</button><p id="loginError" class="error" role="alert" aria-live="assertive"></p>
+ <div class="notice">تظهر هنا الجهات وعمليات الجرد المصرح لك بمراجعتها. المراجع يستطيع الاطلاع على نتائج العد والصور والتنبيهات وحالة الفريق، ولا يستطيع تسجيل كميات أو تعديل الإسنادات أو إدارة الحسابات.</div>
+</section>
+<section id="noAccessPanel" class="panel hidden"><h2><i class="fa-solid fa-lock"></i> لا توجد صلاحية مراجعة</h2><p class="muted">هذا التطبيق مخصص لعضوية «مراجع / مدقق» النشطة فقط. اطلب من مدير الجهة إسناد الدور الصحيح إلى حسابك.</p><button id="noAccessLogout" class="soft" type="button">تسجيل الخروج</button></section>
+<section id="appPanel" class="hidden">
+ <div class="bar"><div><h2 style="margin:0">مركز مراقبة عمليات الجرد</h2><small class="muted">الضغط على العملية يفتح بياناتها الحية مهما تعددت الصفوف والنتائج</small></div><div><span id="realtimeState" class="live-status"><span class="dot"></span> اتصال المتابعة</span> <button id="refreshAll" class="soft" type="button"><i class="fa-solid fa-rotate"></i> تحديث</button></div></div>
+ <section class="panel">
+  <div class="filters">
+   <div class="field" style="margin:0"><label for="projectSelect">الجهة / ملف التكليف</label><select id="projectSelect"></select></div>
+   <div class="field" style="margin:0"><label for="sessionSearch">بحث في العمليات</label><input id="sessionSearch" type="search" placeholder="اسم العملية أو حالتها"></div>
+   <div class="field" style="margin:0"><label for="sessionStatus">الحالة</label><select id="sessionStatus"><option value="">كل الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+   <button id="reloadSessions" class="soft" type="button">عرض العمليات</button>
+  </div>
+  <div class="pager"><span id="sessionCount" class="muted small">—</span><div class="pager-actions"><button id="sessionPrev" class="outline" disabled type="button">السابق</button><button id="sessionNext" class="outline" disabled type="button">التالي</button></div></div>
+  <div id="sessionRows" class="session-grid" style="margin-top:10px"><div class="empty">اختر جهة لعرض عملياتها.</div></div>
+ </section>
+ <section id="sessionMonitor" class="hidden">
+  <div class="panel">
+   <div class="bar"><div><h2 id="selectedSessionName" style="margin:0">—</h2><small id="selectedSessionMeta" class="muted">—</small></div><span id="selectedSessionStatus" class="pill">—</span></div>
+   <div class="kpis">
+    <div class="kpi"><div class="kpi-label"><i class="fa-solid fa-list-check"></i> أحداث العد</div><div id="kpiEvents" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label"><i class="fa-solid fa-box"></i> أصناف لها تسجيلات (عينة أول 1000)</div><div id="kpiProducts" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label"><i class="fa-solid fa-location-dot"></i> مواقع ضمن الجهة</div><div id="kpiLocations" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label"><i class="fa-solid fa-users"></i> أعضاء الفريق</div><div id="kpiMembers" class="kpi-value">—</div></div>
+   </div>
+  </div>
+  <div class="panel">
+   <div class="bar"><div><h3 style="margin:0">المزامنة اللحظية لنتائج العد</h3><small class="muted">كل نتيجة تظهر بعددها ووحدتها وموقعها ومندوبها، دون تجميع يخفي التفاصيل</small></div><span class="tag" id="entryResultCount">—</span></div>
+   <div class="filters">
+    <div class="field" style="margin:0"><label for="productSearch">الصنف / الباركود / SKU</label><input id="productSearch" type="search" placeholder="ابحث عن صنف"></div>
+    <div class="field" style="margin:0"><label for="locationFilter">الفرع / القسم / الرف</label><select id="locationFilter"><option value="">كل المواقع</option></select></div>
+    <div class="field" style="margin:0"><label for="memberFilter">عضو الفريق</label><select id="memberFilter"><option value="">كل الأعضاء</option></select></div>
+    <button id="clearEntryFilters" class="outline" type="button">مسح الفلاتر</button>
+   </div>
+   <div class="table-scroll"><table><thead><tr><th>التاريخ والوقت</th><th>الصنف</th><th>الباركود / SKU</th><th>الموقع</th><th>المندوب</th><th>الكمية</th><th>الوحدة</th><th>كمية الأساس</th><th>الجولة / المراجعة</th><th>الصورة / الدليل</th><th>ملاحظة</th></tr></thead><tbody id="entryRows"><tr><td colspan="11" class="empty">اختر عملية جرد لمشاهدة البيانات.</td></tr></tbody></table></div>
+   <div class="pager"><span id="entryPageInfo" class="muted small">—</span><div class="pager-actions"><button id="entryPrev" class="outline" type="button" disabled>السابق</button><button id="entryNext" class="outline" type="button" disabled>التالي</button></div></div>
+  </div>
+<section class="panel" id="reconPanel">
+   <div class="bar"><div><h3 style="margin:0"><i class="fa-solid fa-scale-balanced"></i> نتائج التسوية والمراجعة</h3><small id="reconMeta" class="muted">آخر جولة للعملية المحددة</small></div><span id="reconStatus" class="pill">—</span></div>
+   <div class="kpis">
+    <div class="kpi"><div class="kpi-label">المواقع المتوقعة</div><div id="reconExpected" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">المواقع المعدودة</div><div id="reconCounted" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">مواقع بها فروقات</div><div id="reconVariance" class="kpi-value">—</div></div>
+    <div class="kpi"><div class="kpi-label">مواقع لم تُعدّ</div><div id="reconUncounted" class="kpi-value">—</div></div>
+   </div>
+   <div class="table-scroll"><table><thead><tr><th>SKU</th><th>الصنف</th><th>الموقع</th><th>الوحدة</th><th>الدفترية</th><th>المعدود</th><th>الفرق</th><th>الفرق %</th><th>عمليات العد</th><th>عدد العدادين</th><th>الحالة</th></tr></thead><tbody id="reconRows"><tr><td colspan="11" class="empty">اختر عملية لمشاهدة نتائج التسوية.</td></tr></tbody></table></div>
+   <div class="pager"><span id="reconPageInfo" class="muted small">—</span><div class="pager-actions"><button id="reconPrev" class="outline" type="button" disabled>السابق</button><button id="reconNext" class="outline" type="button" disabled>التالي</button></div></div>
+  </section>
+    <div class="split">
+   <section class="panel"><h3><i class="fa-solid fa-people-group"></i> حالة الفريق</h3><div class="table-scroll"><table><thead><tr><th>العضو</th><th>الدور</th><th>العضوية</th><th>الحضور</th><th>الجهاز / المنصة</th><th>الموقع الحالي / المزامنة</th><th>آخر نشاط</th></tr></thead><tbody id="teamRows"></tbody></table></div></section>
+   <section class="panel"><h3><i class="fa-solid fa-bell"></i> التنبيهات</h3><div id="alertRows" class="small muted">لا توجد تنبيهات.</div></section>
+  </div>
+ </section>
+</section>
+</main><div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<script>
+(()=> {
+ 'use strict';
+ const CF=window.CF_Core;
+ if(!CF||typeof CF.createClient!=='function'){document.getElementById('loginError').textContent='تعذر تحميل خدمات CountFlow الأساسية.';return}
+ const sb=CF.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const $=id=>document.getElementById(id);
+ const state={user:null,memberships:[],projects:[],project:null,sessions:[],session:null,locations:[],members:[],presence:[],devices:[],sessionPage:0,entryPage:0,reconPage:0,pageSize:100,totalEntries:0,totalReconLines:0,reconRun:null,detailLoading:false,projectChannel:null,sessionChannel:null,pollTimer:null,refreshTimer:null,searchTimer:null,requestToken:0};
+ const labels={planned:'مخططة',active:'قيد التنفيذ',paused:'متوقفة مؤقتاً',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة',activeMember:'نشط',pausedMember:'موقوف مؤقتاً',removed:'مسحوبة',open:'مفتوح',acknowledged:'تم الاطلاع',resolved:'تم الحل',critical:'حرج',high:'مرتفع',medium:'متوسط',low:'منخفض'};
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const status=v=>labels[v]||v||'—';
+ function toast(message,bad=false){$('toast').textContent=message;$('toast').classList.toggle('bad',!!bad);$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),3600)}
+ function friendly(error){const msg=String(error?.message||error||'');if(/network|fetch|timeout|503|502/i.test(msg))return 'تعذر الاتصال بالخدمة. سيعاد تحديث الشاشة عند عودة الاتصال.';if(/permission|row.level|policy|not allowed/i.test(msg))return 'ليس لديك صلاحية قراءة هذه البيانات.';return 'تعذر تحميل البيانات. أعد المحاولة.'}
+ async function rows(table,columns,filters,order,pageSize=500){const all=[];let offset=0;while(true){let q=sb.from(table).select(columns);for(const f of filters||[])q=q[f.op](f.column,f.value);q=q.order(order||'id',{ascending:true}).range(offset,offset+pageSize-1);const {data,error}=await q;if(error)throw error;const page=data||[];all.push(...page);if(page.length<pageSize)return all;offset+=pageSize}}
+ function stopRealtime(){clearInterval(state.pollTimer);clearTimeout(state.refreshTimer);if(state.projectChannel)sb.removeChannel(state.projectChannel).catch(()=>{});if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});state.projectChannel=null;state.sessionChannel=null}
+ function scheduleRefresh(){clearTimeout(state.refreshTimer);state.refreshTimer=setTimeout(()=>{if(!document.hidden&&state.session)Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))},450)}
+ function subscribePrivate(topic){return sb.channel(topic,{config:{private:true}}).on('broadcast',{event:'*'},scheduleRefresh).subscribe(status=>{$('realtimeState').innerHTML=status==='SUBSCRIBED'?'<span class="dot"></span> مزامنة مباشرة':'<span class="dot" style="background:#d97706"></span> تحديث دوري'})}
+ async function signOut(){stopRealtime();await sb.auth.signOut();state.user=null;$('appPanel').classList.add('hidden');$('noAccessPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden');$('logout').classList.add('hidden')}
+ async function acceptUser(user){
+  state.user=user;
+  const {data:members,error}=await sb.from('count_members').select('id,project_id,display_name,username,role,status').eq('user_id',user.id).eq('role','auditor').eq('status','active').order('created_at',{ascending:true});
+  if(error)throw error;
+  state.memberships=members||[];
+  if(!state.memberships.length){$('loginPanel').classList.add('hidden');$('appPanel').classList.add('hidden');$('noAccessPanel').classList.remove('hidden');return}
+  const ids=[...new Set(state.memberships.map(x=>x.project_id))];
+  const {data:projects,error:projectError}=await sb.from('count_projects').select('id,name,code,status,created_at').in('id',ids).order('created_at',{ascending:false});
+  if(projectError)throw projectError;
+  state.projects=projects||[];
+  $('userName').textContent=state.memberships[0].display_name||user.email||'مراجع';
+  $('loginPanel').classList.add('hidden');$('noAccessPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');$('logout').classList.remove('hidden');
+  $('projectSelect').innerHTML=state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
+  if(!state.projects.length){$('sessionRows').innerHTML='<div class="empty">لا توجد جهات نشطة مرتبطة بعضويتك.</div>';return}
+  await chooseProject(state.projects[0].id);
+ }
+ async function authenticate(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session)await acceptUser(data.session.user)}catch(e){$('loginError').textContent=friendly(e)}}
+ async function loadProjectResources(){
+  const id=state.project.id;
+  const [members,locations]=await Promise.all([
+   rows('count_members','id,user_id,display_name,username,role,status,last_seen_at,created_at',[{op:'eq',column:'project_id',value:id}],'display_name'),
+   rows('count_locations','id,code,name,location_type,parent_id,sort_order',[{op:'eq',column:'project_id',value:id}],'sort_order')
+  ]);
+  state.members=(members||[]).filter(m=>!['owner','platform_owner'].includes(m.role));
+  state.locations=locations||[];
+  $('locationFilter').innerHTML='<option value="">كل المواقع</option>'+state.locations.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
+  $('memberFilter').innerHTML='<option value="">كل الأعضاء</option>'+state.members.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.display_name)+' · '+esc(x.username||'')+'</option>').join('');
+  $('kpiLocations').textContent=state.locations.length.toLocaleString('ar-EG');
+  $('kpiMembers').textContent=state.members.length.toLocaleString('ar-EG');
+  renderTeam();
+ }
+ function renderTeam(){
+  const presenceMap=Object.fromEntries(state.presence.map(x=>[x.member_id,x]));
+  const deviceMap={};for(const d of state.devices){if(!deviceMap[d.member_id]||String(d.last_seen_at||'')>String(deviceMap[d.member_id].last_seen_at||''))deviceMap[d.member_id]=d}
+  const locationMap=Object.fromEntries(state.locations.map(x=>[x.id,(x.code?x.code+' · ':'')+x.name]));
+  $('teamRows').innerHTML=state.members.length?state.members.map(m=>{
+   const p=presenceMap[m.id]||{},d=deviceMap[m.id]||{};
+   const presenceLabel=p.presence_state==='online'?'متصل':p.presence_state==='idle'?'غير نشط':p.presence_state==='offline'?'غير متصل':p.presence_state||'لا توجد نبضة';
+   const queue=Number(p.pending_queue_count||0);
+   return '<tr><td><b>'+esc(m.display_name)+'</b><div class="muted small">'+esc(m.username||'')+'</div></td><td>'+esc(m.role==='counter'?'مسؤول جرد':m.role==='supervisor'?'مشرف الجرد':'مراجع')+'</td><td><span class="pill '+(m.status==='active'?'active':'paused')+'">'+esc(status(m.status))+'</span></td><td><span class="pill '+(p.presence_state==='online'?'active':'')+'">'+esc(presenceLabel)+'</span></td><td>'+esc(d.device_label||'—')+'<div class="muted small">'+esc(d.platform||'')+' '+esc(d.app_version||'')+'</div></td><td>'+esc(locationMap[p.current_location_id]||'—')+(queue?'<div class="muted small">عمليات تنتظر المزامنة: '+queue.toLocaleString('ar-EG')+'</div>':'')+'</td><td>'+esc((p.last_seen_at||m.last_seen_at)?new Date(p.last_seen_at||m.last_seen_at).toLocaleString('ar-EG'):'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="7" class="empty">لا يوجد أعضاء.</td></tr>';
+}
+ async function chooseProject(id){const project=state.projects.find(p=>p.id===id);if(!project)return;stopRealtime();state.project=project;state.session=null;state.sessions=[];state.sessionPage=0;$('sessionMonitor').classList.add('hidden');await Promise.all([loadProjectResources(),loadSessions()]);state.projectChannel=subscribePrivate('countflow:project:'+project.id);state.pollTimer=setInterval(()=>{if(!document.hidden&&state.session)Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))},15000)}
+ async function loadSessions(){
+  if(!state.project)return;const size=50,from=state.sessionPage*size,term=$('sessionSearch').value.trim().replace(/[%,().]/g,' ').slice(0,80);
+  let q=sb.from('count_sessions').select('id,project_id,name,status,created_at,started_at,closed_at',{count:'exact'}).eq('project_id',state.project.id);
+  if($('sessionStatus').value)q=q.eq('status',$('sessionStatus').value);if(term)q=q.ilike('name','%'+term+'%');
+  const {data,error,count}=await q.order('created_at',{ascending:false}).range(from,from+size-1);if(error)throw error;state.sessions=data||[];
+  $('sessionCount').textContent=Number(count||0).toLocaleString('ar-EG')+' عملية';const pages=Math.max(1,Math.ceil(Number(count||0)/size));
+  $('sessionPrev').disabled=state.sessionPage<=0;$('sessionNext').disabled=state.sessionPage+1>=pages;
+  $('sessionRows').innerHTML=state.sessions.length?state.sessions.map(s=>'<button type="button" class="session-card '+(state.session?.id===s.id?'selected':'')+'" data-session="'+esc(s.id)+'"><div class="bar" style="margin:0"><b>'+esc(s.name)+'</b><span class="pill '+(s.status==='active'?'active':s.status==='review'?'review':s.status==='paused'?'paused':'')+'">'+esc(status(s.status))+'</span></div><div class="muted small">إنشاء '+new Date(s.created_at).toLocaleString('ar-EG')+' · '+(s.started_at?'بدء '+new Date(s.started_at).toLocaleString('ar-EG'):'لم يبدأ التنفيذ')+'</div></button>').join(''):'<div class="empty">لا توجد عمليات تطابق البحث.</div>';
+ }
+ async function openSession(id){
+  const session=state.sessions.find(x=>x.id===id);if(!session)return;
+  if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});
+  state.session=session;state.entryPage=0;state.requestToken++;$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';
+  $('selectedSessionName').textContent=session.name;$('selectedSessionMeta').textContent=state.project.name+' · '+state.project.code+' · '+new Date(session.created_at).toLocaleString('ar-EG');$('selectedSessionStatus').textContent=status(session.status);$('sessionMonitor').classList.remove('hidden');
+  $('sessionRows').querySelectorAll('[data-session]').forEach(b=>b.classList.toggle('selected',b.dataset.session===id));
+  state.sessionChannel=subscribePrivate('countflow:session:'+id);
+  await Promise.all([refreshMonitor(false),loadAlerts(),loadSessionTeam()]);
+ }
+ async function findProductIds(term){
+  const safe=term.replace(/[%(),.]/g,' ').replace(/\s+/g,' ').trim().slice(0,80);if(!safe)return null;
+  const {data,error}=await sb.from('count_products').select('id').eq('project_id',state.project.id).or('sku.ilike.%'+safe+'%,barcode.ilike.%'+safe+'%,name.ilike.%'+safe+'%').limit(250);
+  if(error)throw error;return (data||[]).map(x=>x.id);
+ }
+ async function refreshMonitor(quiet=false){
+  if(!state.session||state.detailLoading)return;state.detailLoading=true;const sessionId=state.session.id,projectId=state.project.id,token=++state.requestToken;
+  try{
+   const {count,error}=await sb.from('count_entries').select('id',{count:'exact',head:true}).eq('session_id',sessionId);if(error)throw error;
+   $('kpiEvents').textContent=Number(count||0).toLocaleString('ar-EG');$('entryResultCount').textContent=Number(count||0).toLocaleString('ar-EG')+' حدث';
+   const {data:sample,error:sampleError}=await sb.from('count_entries').select('product_id').eq('session_id',sessionId).limit(1000);
+   if(!sampleError)$('kpiProducts').textContent=new Set((sample||[]).map(x=>x.product_id)).size.toLocaleString('ar-EG')+(Number(count||0)>1000?'+':'');
+   await Promise.all([loadEntryPage(token),loadReconciliation()]);
+   if(state.project?.id!==projectId||state.session?.id!==sessionId)return;
+  }catch(e){console.warn('Control monitor refresh failed',e);if(!quiet)toast(friendly(e),true)}finally{state.detailLoading=false}
+ }
+ async function loadEntryPage(token){
+  const sessionId=state.session.id,projectId=state.project.id,from=state.entryPage*state.pageSize,term=String($('productSearch').value||'').trim();
+  let ids=null;if(term){ids=await findProductIds(term);if(!ids.length){state.totalEntries=0;$('entryRows').innerHTML='<tr><td colspan="11" class="empty">لا توجد أصناف تطابق البحث.</td></tr>';$('entryPageInfo').textContent='0 نتيجة';$('entryPrev').disabled=true;$('entryNext').disabled=true;return}}
+  let q=sb.from('count_entries').select('id,product_id,member_id,location_id,quantity,unit,unit_factor_to_base,base_quantity,counted_at,scan_code,note,count_round,revision',{count:'exact'}).eq('session_id',sessionId).eq('project_id',projectId).order('counted_at',{ascending:false});
+  if(ids)q=q.in('product_id',ids);if($('locationFilter').value)q=q.eq('location_id',$('locationFilter').value);if($('memberFilter').value)q=q.eq('member_id',$('memberFilter').value);
+  const {data,error,count}=await q.range(from,from+state.pageSize-1);if(error)throw error;if(token!==state.requestToken||state.session?.id!==sessionId)return;
+  const entries=data||[];state.totalEntries=Number(count||0);const productIds=[...new Set(entries.map(x=>x.product_id))],locationIds=[...new Set(entries.map(x=>x.location_id).filter(Boolean))];
+  const [products,locations]=await Promise.all([
+   productIds.length?sb.from('count_products').select('id,sku,barcode,name,category,base_unit,image_url').eq('project_id',projectId).in('id',productIds):Promise.resolve({data:[],error:null}),
+   locationIds.length?sb.from('count_locations').select('id,code,name,location_type,parent_id').eq('project_id',projectId).in('id',locationIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(products.error)throw products.error;if(locations.error)throw locations.error;if(token!==state.requestToken||state.session?.id!==sessionId)return;
+  const productMap=Object.fromEntries((products.data||[]).map(x=>[x.id,x])),locationMap={...Object.fromEntries(state.locations.map(x=>[x.id,x])),...Object.fromEntries((locations.data||[]).map(x=>[x.id,x]))},memberMap=Object.fromEntries(state.members.map(x=>[x.id,x]));
+  let evidence=[],signedEvidence={},signedProduct={};
+  if(entries.length){
+   const {data:images,error:imageError}=await sb.from('count_entry_images').select('entry_id,storage_path,mime_type,caption').in('entry_id',entries.map(x=>x.id));
+   if(imageError)console.warn('Control evidence metadata unavailable',imageError);evidence=images||[];
+   const paths=[...new Set(evidence.map(x=>x.storage_path).filter(Boolean))];
+   if(paths.length){const {data:urls,error:urlError}=await sb.storage.from('counting-evidence').createSignedUrls(paths,3600);if(urlError)console.warn('Evidence signing failed',urlError);for(const x of urls||[])if(x.path&&x.signedUrl)signedEvidence[x.path]=x.signedUrl}
+   const productPaths=[...new Set((products.data||[]).map(x=>x.image_url).filter(x=>x&&x.startsWith(projectId+'/products/')))];
+   if(productPaths.length){const {data:urls,error:urlError}=await sb.storage.from('counting-product-images').createSignedUrls(productPaths,3600);if(urlError)console.warn('Product image signing failed',urlError);for(const x of urls||[])if(x.path&&x.signedUrl)signedProduct[x.path]=x.signedUrl}
+  }
+  if(token!==state.requestToken||state.session?.id!==sessionId)return;
+  const proofMap={};for(const x of evidence)(proofMap[x.entry_id]??=[]).push(x);
+  const locationPath=id=>{if(!id)return 'موقع غير محدد';const chain=[],seen=new Set();let node=locationMap[id];while(node&&!seen.has(node.id)){seen.add(node.id);chain.unshift(node);node=node.parent_id?locationMap[node.parent_id]:null}return chain.map(x=>(x.code?x.code+' · ':'')+x.name).join(' / ')||'موقع'};
+  $('entryRows').innerHTML=entries.length?entries.map(e=>{
+   const p=productMap[e.product_id]||{},m=memberMap[e.member_id]||{},photos=proofMap[e.id]||[],proof=photos.map(x=>signedEvidence[x.storage_path]?'<a class="link" target="_blank" rel="noopener" href="'+esc(signedEvidence[x.storage_path])+'">عرض الدليل</a>':'').filter(Boolean).join(' · ')||'—';
+   const pic=signedProduct[p.image_url]?'<a target="_blank" rel="noopener" href="'+esc(signedProduct[p.image_url])+'"><img class="thumb" src="'+esc(signedProduct[p.image_url])+'" alt="صورة الصنف"></a>':(p.image_url&&/^https:\/\//i.test(p.image_url)?'<a class="link" target="_blank" rel="noopener" href="'+esc(p.image_url)+'">صورة الصنف</a>':'—');
+   return '<tr><td>'+new Date(e.counted_at).toLocaleString('ar-EG')+'</td><td><div style="display:flex;gap:8px;align-items:center">'+pic+'<div><b>'+esc(p.name||'صنف بدون اسم')+'</b><div class="muted small">'+esc(p.category||'بدون تصنيف')+' · '+esc(p.base_unit||e.unit)+'</div></div></div></td><td>'+esc(p.barcode||e.scan_code||'—')+'<div class="muted small">'+esc(p.sku||'')+'</div></td><td>'+esc(locationPath(e.location_id))+'</td><td>'+esc(m.display_name||'—')+'</td><td><b>'+Number(e.quantity).toLocaleString('ar-EG')+'</b></td><td>'+esc(e.unit)+'</td><td>'+((e.base_quantity===null||e.base_quantity===undefined)?'—':Number(e.base_quantity).toLocaleString('ar-EG'))+'</td><td>'+Number(e.count_round||1)+' / '+Number(e.revision||1)+'</td><td>'+proof+'</td><td>'+esc(e.note||'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="11" class="empty">لا توجد نتائج عد مطابقة للفلاتر.</td></tr>';
+  const pages=Math.max(1,Math.ceil(state.totalEntries/state.pageSize));$('entryPageInfo').textContent='صفحة '+(state.entryPage+1)+' من '+pages+' · '+state.totalEntries.toLocaleString('ar-EG')+' نتيجة';$('entryPrev').disabled=state.entryPage<=0;$('entryNext').disabled=state.entryPage+1>=pages;
+ }
+ async function loadReconciliation(){
+  if(!state.session)return;
+  const sessionId=state.session.id,projectId=state.project.id;
+  const {data:runs,error}=await sb.from('count_control_reconciliation_runs')
+   .select('id,run_number,status,expected_rows,counted_rows,matched_rows,variance_rows,uncounted_rows,total_expected,total_counted,created_at,computed_at,approved_at,entry_count_snapshot')
+   .eq('session_id',sessionId).eq('project_id',projectId)
+   .order('run_number',{ascending:false}).limit(1);
+  if(error)throw error;
+  if(state.session?.id!==sessionId)return;
+  state.reconRun=(runs||[])[0]||null;state.reconPage=0;
+  if(!state.reconRun){
+   $('reconMeta').textContent='لم تُنشأ جولة تسوية لهذه العملية بعد.';
+   $('reconStatus').textContent='لا توجد جولة';
+   ['reconExpected','reconCounted','reconVariance','reconUncounted'].forEach(id=>$(id).textContent='—');
+   $('reconRows').innerHTML='<tr><td colspan="11" class="empty">ستظهر نتائج التسوية هنا بعد تنفيذها من النظام الأم.</td></tr>';
+   $('reconPageInfo').textContent='—';$('reconPrev').disabled=true;$('reconNext').disabled=true;return;
+  }
+  const run=state.reconRun;
+  $('reconMeta').textContent='الجولة رقم '+run.run_number+' · احتساب '+(run.computed_at?new Date(run.computed_at).toLocaleString('ar-EG'):'—')+' · '+(run.approved_at?'اعتماد '+new Date(run.approved_at).toLocaleString('ar-EG'):'لم تعتمد بعد');
+  $('reconStatus').textContent=status(run.status);
+  $('reconExpected').textContent=Number(run.expected_rows||0).toLocaleString('ar-EG');
+  $('reconCounted').textContent=Number(run.counted_rows||0).toLocaleString('ar-EG');
+  $('reconVariance').textContent=Number(run.variance_rows||0).toLocaleString('ar-EG');
+  $('reconUncounted').textContent=Number(run.uncounted_rows||0).toLocaleString('ar-EG');
+  await loadReconciliationLines();
+ }
+ async function loadReconciliationLines(){
+  if(!state.reconRun||!state.session)return;
+  const sessionId=state.session.id,runId=state.reconRun.id,from=state.reconPage*state.pageSize;
+  let q=sb.from('count_control_reconciliation_lines')
+   .select('id,product_id,location_id,product_sku,product_name,location_path,unit,expected_quantity,counted_quantity,variance_quantity,variance_percent,counted_events,counter_count,result_status,expected_scope',{count:'exact'})
+   .eq('run_id',runId).eq('session_id',sessionId).order('location_path',{ascending:true});
+  if($('locationFilter').value)q=q.eq('location_id',$('locationFilter').value);
+  const {data,error,count}=await q.range(from,from+state.pageSize-1);if(error)throw error;
+  if(state.session?.id!==sessionId||state.reconRun?.id!==runId)return;
+  const lines=data||[];state.totalReconLines=Number(count||0);
+  const statusLabel=v=>({matched:'مطابق',variance:'فرق',not_counted:'غير معدود',unexpected:'غير متوقع',pending:'قيد المراجعة'})[v]||v||'—';
+  $('reconRows').innerHTML=lines.length?lines.map(x=>{
+   return '<tr><td>'+esc(x.product_sku||'—')+'</td><td><b>'+esc(x.product_name||'—')+'</b></td><td>'+esc(x.location_path||'موقع غير محدد')+'</td><td>'+esc(x.unit||'—')+'</td><td>'+((x.expected_quantity===null||x.expected_quantity===undefined)?'—':Number(x.expected_quantity).toLocaleString('ar-EG'))+'</td><td>'+((x.counted_quantity===null||x.counted_quantity===undefined)?'—':Number(x.counted_quantity).toLocaleString('ar-EG'))+'</td><td><b>'+((x.variance_quantity===null||x.variance_quantity===undefined)?'—':Number(x.variance_quantity).toLocaleString('ar-EG'))+'</b></td><td>'+((x.variance_percent===null||x.variance_percent===undefined)?'—':Number(x.variance_percent).toLocaleString('ar-EG',{maximumFractionDigits:2})+'%')+'</td><td>'+Number(x.counted_events||0).toLocaleString('ar-EG')+'</td><td>'+Number(x.counter_count||0).toLocaleString('ar-EG')+'</td><td><span class="pill">'+esc(statusLabel(x.result_status))+'</span></td></tr>';
+  }).join(''):'<tr><td colspan="11" class="empty">لا توجد أسطر تسوية مطابقة.</td></tr>';
+  const pages=Math.max(1,Math.ceil(state.totalReconLines/state.pageSize));
+  $('reconPageInfo').textContent='صفحة '+(state.reconPage+1)+' من '+pages+' · '+state.totalReconLines.toLocaleString('ar-EG')+' موقع';
+  $('reconPrev').disabled=state.reconPage<=0;$('reconNext').disabled=state.reconPage+1>=pages;
+ }
+ async function loadSessionTeam(){
+  if(!state.session||!state.project)return;
+  const sessionId=state.session.id,projectId=state.project.id;
+  const [presenceResult,deviceResult]=await Promise.all([
+   sb.from('count_presence').select('member_id,device_id,presence_state,current_location_id,last_seen_at,pending_queue_count,queue_reported_at').eq('session_id',sessionId),
+   sb.from('count_devices').select('member_id,device_id,device_label,platform,app_version,status,last_seen_at').eq('project_id',projectId).order('last_seen_at',{ascending:false})
+  ]);
+  if(presenceResult.error)throw presenceResult.error;
+  if(deviceResult.error)throw deviceResult.error;
+  if(state.session?.id!==sessionId)return;
+  state.presence=presenceResult.data||[];state.devices=deviceResult.data||[];
+  renderTeam();
+ }
+ async function loadAlerts(){if(!state.session)return;const {data,error}=await sb.from('count_alerts').select('id,alert_type,severity,status,title,created_at,details').eq('session_id',state.session.id).order('created_at',{ascending:false}).limit(50);if(error)throw error;$('alertRows').innerHTML=(data||[]).length?(data||[]).map(a=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(a.title)+'</b> <span class="pill">'+esc(status(a.severity))+'</span><div class="muted small">'+esc(a.alert_type)+' · '+esc(status(a.status))+' · '+new Date(a.created_at).toLocaleString('ar-EG')+'</div></div>').join(''):'لا توجد تنبيهات في العملية المحددة.'}
+ async function safeOpenSession(id){try{await openSession(id);await loadAlerts()}catch(e){toast(friendly(e),true)}}
+ async function openSession(id){const s=state.sessions.find(x=>x.id===id);if(!s)return;if(state.sessionChannel)sb.removeChannel(state.sessionChannel).catch(()=>{});state.session=s;state.entryPage=0;state.requestToken++;$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';$('selectedSessionName').textContent=s.name;$('selectedSessionMeta').textContent=state.project.name+' · '+state.project.code+' · '+new Date(s.created_at).toLocaleString('ar-EG');$('selectedSessionStatus').textContent=status(s.status);$('sessionMonitor').classList.remove('hidden');$('sessionRows').querySelectorAll('[data-session]').forEach(b=>b.classList.toggle('selected',b.dataset.session===id));state.sessionChannel=subscribePrivate('countflow:session:'+id);await Promise.all([refreshMonitor(false),loadAlerts()])}
+ $('loginButton').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){$('loginError').textContent='أدخل البريد الإلكتروني وكلمة المرور.';return}try{const {data,error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;await acceptUser(data.user)}catch(e){$('loginError').textContent=friendly(e)}};
+ $('logout').onclick=signOut;$('noAccessLogout').onclick=signOut;
+ $('projectSelect').onchange=()=>chooseProject($('projectSelect').value).catch(e=>toast(friendly(e),true));
+ $('reloadSessions').onclick=()=>{state.sessionPage=0;loadSessions().catch(e=>toast(friendly(e),true))};
+ $('sessionStatus').onchange=()=>{state.sessionPage=0;loadSessions().catch(e=>toast(friendly(e),true))};
+ $('sessionSearch').oninput=()=>{state.sessionPage=0;clearTimeout(loadSessions.timer);loadSessions.timer=setTimeout(()=>loadSessions().catch(e=>toast(friendly(e),true)),250)};
+ $('sessionPrev').onclick=()=>{if(state.sessionPage>0){state.sessionPage--;loadSessions().catch(e=>toast(friendly(e),true))}};
+ $('sessionNext').onclick=()=>{state.sessionPage++;loadSessions().catch(e=>toast(friendly(e),true))};
+ $('refreshAll').onclick=()=>loadSessions().then(()=>{if(state.session)return Promise.all([refreshMonitor(true),loadAlerts()])}).catch(e=>toast(friendly(e),true));
+ $('entryPrev').onclick=()=>{if(state.entryPage>0){state.entryPage--;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))}};
+ $('entryNext').onclick=()=>{if((state.entryPage+1)*state.pageSize<state.totalEntries){state.entryPage++;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))}};
+ $('reconPrev').onclick=()=>{if(state.reconPage>0){state.reconPage--;loadReconciliationLines().catch(e=>toast(friendly(e),true))}};
+ $('reconNext').onclick=()=>{if((state.reconPage+1)*state.pageSize<state.totalReconLines){state.reconPage++;loadReconciliationLines().catch(e=>toast(friendly(e),true))}};
+ const reloadEntries=()=>{state.entryPage=0;const t=++state.requestToken;loadEntryPage(t).catch(e=>toast(friendly(e),true))};
+ $('locationFilter').onchange=()=>{reloadEntries();loadReconciliationLines().catch(e=>console.warn(e))};$('memberFilter').onchange=reloadEntries;
+ $('productSearch').oninput=()=>{clearTimeout(state.searchTimer);state.searchTimer=setTimeout(reloadEntries,300)};
+ $('clearEntryFilters').onclick=()=>{$('productSearch').value='';$('locationFilter').value='';$('memberFilter').value='';reloadEntries()};
+ $('sessionRows').addEventListener('click',event=>{const b=event.target.closest('[data-session]');if(b)safeOpenSession(b.dataset.session)});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.session){Promise.all([refreshMonitor(true),loadAlerts(),loadSessionTeam()]).catch(e=>console.warn(e))}});
+ authenticate();
+})();
+</script>
+</body></html>
