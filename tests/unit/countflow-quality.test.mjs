@@ -1483,3 +1483,22 @@ test("Counter applies product-specific decimal precision and blocks quantities w
  assert.match(counter,/هذا الصنف لا يقبل الكسور/);
  assert.match(counter,/Math\.abs\(scaled-Math\.round\(scaled\)\)>1e-7/);
 });
+
+
+test("Admin product unit summaries exclude precision metadata from alternate-unit counts", () => {
+ const admin = read("countflow-admin.html");
+ // Engagement, global catalog, and client mapping lists must count selectable UoM rows only.
+ assert.match(admin, /const units=productUnitRows\\(Array\\.isArray\\(x\\.units\\)\\?x\\.units:\\[\\]\\),unitSummary=/);
+ assert.match(admin, /const units=productUnitRows\\(Array\\.isArray\\(p\\.units\\)\\?p\\.units:\\[\\]\\),actions=/);
+ assert.match(admin, /units=productUnitRows\\(Array\\.isArray\\(p\\.units_override\\)\\?p\\.units_override:\\(Array\\.isArray\\(c\\.units\\)\\?c\\.units:\\[\\]\\)\\),actions=/);
+ const start = admin.indexOf("const CF_UNIT_CLASSES=");
+ const end = admin.indexOf("function renderCatalogUnitEditor", start);
+ assert.ok(start >= 0 && end > start, "Missing CountFlow UoM metadata helpers");
+ const helperSource = admin.slice(start, end);
+ const helpers = vm.runInNewContext("(()=>{" + helperSource + ";return {productUnitRows,withProductUnitMeta}})()");
+ const saved = helpers.withProductUnitMeta([{name:"case",factor_to_base:12}], "count", 0);
+ assert.equal(helpers.productUnitRows(saved).length, 1);
+ assert.equal(helpers.productUnitRows(saved)[0].name, "case");
+ const sw = read("countflow-sw.js");
+ assert.match(sw, /countflow-sw-20261125-8/);
+});
