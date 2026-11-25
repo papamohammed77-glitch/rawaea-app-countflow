@@ -1,3 +1,77 @@
+## LVE-2026-11-25-779 — بروتوكول منظور المستخدم، ودليل العملاء، وتوحيد الأصناف
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**المستودع:** papamohammed77-glitch/rawaea-app-countflow — **الفرع:** main  
+**نقطة الأساس:** \`bf488c8c987c647cbf315d495ac22ca8bc8c6f7d\`  
+**آخر التزام برمجي اجتاز CI:** \`c58888a6fa1362594aea081d2d5d0b1f824691d2\`  
+**التقرير:** \`Reports/LVE-2026-11-25-779_USER_FIRST_CLIENT_PRODUCT_DIRECTORY.md\`  
+**GitHub Actions:** [Run 45668767858 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45668767858)  
+**Service Worker:** \`countflow-sw-20261125-7\`  
+**الحالة:** CODE IMPLEMENTED / CI PASS / PUBLIC SHELL PARITY PASS / AUTHENTICATED UI ACCEPTANCE OPEN
+
+### الحكم التنفيذي
+أضيف بروتوكول دائم يلزم جميع المساعدين والوكلاء بتصميم الرحلة من منظور المستخدم وتحليل المصدر الفعلي قبل التعديل. دُمج دليل الأصناف في مدخل تنقل واحد بثلاثة نطاقات منفصلة، وأصبح كود العميل مولداً تلقائياً ومتتابعاً، مع احتفاظه بالمعاينة الظاهرة ومعالجة تعارض Unique. أزيلت حدود 500/1000 الثابتة من جلب مديري العملاء واستبدلت بصفحات متتابعة.
+
+### البروتوكول الحاكم
+- \`USER_FIRST_ENGINEERING_PROTOCOL.md\`: البروتوكول الملزم لتصميم رحلة المستخدم، تقليل الإدخال اليدوي، جمع نقاط التنقل المتصلة، وإبقاء الكيانات والصلاحيات منفصلة.
+- \`AGENTS.md\`: يلزم كل مساعد/وكيل بقراءة البروتوكول وCURRENT_STATE والكود والعقود قبل العمل.
+- تم ربطه في \`ARCHITECTURE.md\` و\`README.md\`.
+- البروتوكول تابع للحوكمة الأمنية؛ لا يلغي منع تغييرات Supabase أو الكتابة الحية دون موافقة منفصلة.
+
+### دليل العملاء
+- تغير اسم التنقل وعنوان القسم إلى «دليل العملاء».
+- كود العميل يولد تلقائياً بصيغة \`CLIENT-000001\` وما يليها، ويظهر للقراءة فقط.
+- generator يقرأ أكواد العملاء على صفحات خادمية 500، ويأخذ أعلى suffix.
+- عند تعارض Unique يُعاد توليد الكود وتحديث القيمة المرئية للمستخدم، حتى 5 محاولات.
+- تحرير العميل لا يغير الكود الثابت بعد الإنشاء.
+- جلب أسماء/عضويات المديرين والبحث عن المديرين أصبح بصفحات \`range()\` حجمها 500 دون \`limit(500/1000)\` يقتطع النتائج.
+- لم تتغير واجهة Edge أو حسابات Auth أو مخطط العملاء.
+
+### الأصناف
+- مدخل رئيسي واحد فقط: \`data-tab="products"\` بعنوان «الأصناف».
+- قسم داخلي «الدليل العالمي» — \`count_catalog_products\`.
+- قسم داخلي «مواءمات المؤسسة» — \`count_client_products\`.
+- قسم داخلي «أصناف التكليف» — \`count_products\`.
+- نُقل محتوى أصناف ملف التكليف واستيراد Excel/CSV إلى نفس التبويب، مع رسالة نطاق واضحة عند عدم اختيار تكليف.
+- لم تُدمج الجداول أو الصلاحيات. ربط الصنف بالتكليف يظل عبر RPC الحالية \`count_attach_catalog_product\`.
+- مرجع UX: ERP \`RW_Items\` كما هو موثق في LVE-776؛ Blob SHA للمرجع \`00456494de918b36fc6792bef302319a9f65605d\`. لم يُعدل ERP.
+
+### تحقق Supabase — SELECT فقط
+- RLS enabled على: count_clients, count_client_members, count_client_audit_log, count_catalog_products, count_client_products, count_products.
+- \`count_clients.code\` لا يملك Sequence أو Default؛ يوجد Unique index \`count_clients_code_uq\`.
+- عدد سجلات العملاء في rawaea-staging لحظة القراءة: 0؛ لذلك أول كود هناك CLIENT-000001. لا يثبت ذلك عدد سجلات الإنتاج.
+- تأكدت قيود تفرد مواءمة الصنف لكل مؤسسة وتفرد صنف المشروع ضمن project_id.
+- استعلام عام أحصى 65 جدولاً في public دون RLS؛ تم تسجيل ذلك كمخاطر تتطلب مراجعة مالك منفصلة، دون تعديل.
+- لا DDL/DML/Migration/RLS/GRANT/RPC/Trigger/Edge deploy أو كتابة تجريبية.
+
+### الالتزامات والملفات
+- \`218fd473cd7256e3d62cafecf48122f325f13850\` — توحيد الأصناف، مولد الكود، وبروتوكول المساعدين.
+- \`c58888a6fa1362594aea081d2d5d0b1f824691d2\` — تصحيح توقعات الاختبارات وتحسين معاينة الكود وإعادة المحاولة.
+- countflow-admin.html SHA: \`a2ab1b2074ce21217c669da93c178208587be39f\`.
+- tests/unit/countflow-quality.test.mjs SHA: \`da09c4c89427111f3c629c8ed182ee601d77c1fc\`.
+- USER_FIRST_ENGINEERING_PROTOCOL.md SHA: \`62bc9acf753e5e34942838054d9f43ccbc185711\`.
+- AGENTS.md SHA: \`811d64189e79f443e4669c380450129098ce7e55\`.
+- countflow-sw.js SHA: \`e56f080d7197312957f1cc0f88288bbd289540aa\`.
+
+### التحقق
+- Node: **87 PASS / 0 FAIL / 0 SKIPPED**.
+- Deno type-check لوظيفتي Edge الحاليتين: PASS.
+- Cloudflare Pages allowlisted build: PASS.
+- Playwright discovery: PASS.
+- Playwright production login shell: **3/3 PASS**.
+- Pages Production SHA parity مع \`c58888a\`: PASS.
+- هذه الاختبارات لا تثبت قبول الصفحات الداخلية بعد تسجيل الدخول.
+
+### القبول المفتوح والمخاطر
+- القبول البصري المصادق لحساب المالك على العميل والمديرين ونطاقات الأصناف: OPEN.
+- القبول بمدير مؤسسة والتحقق من حدود مواءماته: OPEN.
+- حالة بيانات العملاء في Production غير معلومة من استعلام staging.
+- اختبار إدراج عميل فعلي/تصادم متزامن يحتاج موافقة كتابة منفصلة.
+- مراجعة الـ65 جدول public بلا RLS مهمة أمنية مستقلة.
+- لا تعتبر LVE-779 مغلقة تشغيلياً قبل القبول المصادق، رغم نجاح CI.
+
+---
+
 ## LVE-2026-11-25-778 — استكمال دليل العملاء ومديريهم في Admin
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
