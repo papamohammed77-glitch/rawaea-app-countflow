@@ -1108,7 +1108,7 @@ test("Admin keeps operation register, per-file sessions, project catalog and glo
   const admin = read("countflow-admin.html");
   assert.match(admin, /سجل عمليات الجرد — جميع ملفات التكليف/);
   assert.match(admin, /جلسات الجرد داخل ملف التكليف المحدد/);
-  assert.match(admin, /قاعدة الأصناف العالمية/);
+  assert.match(admin, /دليل الأصناف الدائم/);
   assert.match(admin, /كتالوج أصناف الجهة \/ التكليف/);
   assert.match(admin, /id="sideToggle"/);
 });
