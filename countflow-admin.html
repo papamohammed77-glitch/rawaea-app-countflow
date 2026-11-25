@@ -373,7 +373,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -1365,11 +1365,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    $('kMembers').textContent=members.filter(x=>x.status==='active').length;
    $('kSessions').textContent=sessions.length;
    renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
-   await loadAdminOverview().catch(e=>{
-    console.warn('[CountFlow Admin] dashboard query failed',e);
-    $('overviewStatusChart').textContent='تعذر تحميل مؤشرات التحليل. تحقق من صلاحية قراءة العرض أو أعد المحاولة.';
-    $('overviewPerformanceChart').textContent='تعذر تحميل بيانات الأداء.';
-   });
+   await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard query failed',e));
   });
  }
 
@@ -1479,7 +1475,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('overviewRecentActivity').innerHTML=activity.length?activity.map(item=>'<div class="cf-overview-activity-item"><span class="cf-overview-activity-icon"><i class="fa-solid fa-barcode" aria-hidden="true"></i></span><div class="cf-overview-activity-main"><b>'+esc(item.operation_name||'عملية غير مسماة')+'</b><small>'+esc(item.project_name||'')+' · '+new Date(item.last_counted_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'})+'</small></div><div class="cf-overview-activity-meta"><b>'+fmt(item.entry_events)+'</b> حدث عدّ</div></div>').join(''):'<div class="empty">'+(state.overviewError?'تعذر تحميل النشاط من قاعدة البيانات.':'لم يُسجل نشاط عدّ ضمن العمليات المعروضة بعد.')+'</div>';
 
   if(!state.overviewError&&state.overviewLoadedAt){
-   $('overviewConnectionState').textContent='مزامنة العمليات مفعّلة · تحديث دوري كل 30 ثانية';
+   const realtimeStatus=state.overviewRealtimeStatus;
+   $('overviewConnectionState').textContent=realtimeStatus==='SUBSCRIBED'?'مزامنة آنية متصلة · مراجعة دورية كل 30 ثانية':realtimeStatus==='POLLING'?'تحديث دوري كل 30 ثانية':'المزامنة الآنية غير مؤكدة · المراجعة الدورية مستمرة';
   }
  }
 
@@ -1520,10 +1517,25 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   clearTimeout(state.globalRefreshTimer);state.globalRefreshTimer=setTimeout(()=>loadGlobalOperations().catch(e=>fail('تعذر تحديث العمليات العامة',e)),450);
  }
  function subscribeGlobalRealtime(){
-  stopGlobalRealtime();if(!state.projects.length||!state.user)return;
+  stopGlobalRealtime();
+  if(!state.projects.length||!state.user){state.overviewRealtimeStatus='IDLE';return;}
   const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
-  state.globalChannel=window.CF_Core.watchPostgresChanges(db,{channelName:'countflow-admin-global-'+state.user.id,filters,onInvalidate:scheduleGlobalRefresh,reconcileMs:30000,onStatus:status=>{if(status==='SUBSCRIBED')scheduleGlobalRefresh();}});
-  if(!state.globalChannel)state.globalPollTimer=setInterval(()=>{if(!document.hidden)loadGlobalOperations().catch(e=>console.warn('[CountFlow Admin] polling refresh failed',e));},30000);
+  state.globalChannel=window.CF_Core.watchPostgresChanges(db,{
+   channelName:'countflow-admin-global-'+state.user.id,
+   filters,onInvalidate:scheduleGlobalRefresh,reconcileMs:30000,
+   onStatus:status=>{
+    state.overviewRealtimeStatus=status;
+    const label=$('overviewConnectionState');
+    if(label&&!state.overviewError){
+     label.textContent=status==='SUBSCRIBED'?'مزامنة آنية متصلة · مراجعة دورية كل 30 ثانية':(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'?'القناة الآنية غير متصلة · المراجعة الدورية مستمرة':'جارٍ الاتصال بالمزامنة الآنية…');
+    }
+    if(status==='SUBSCRIBED')scheduleGlobalRefresh();
+   }
+  });
+  if(!state.globalChannel){
+   state.overviewRealtimeStatus='POLLING';
+   state.globalPollTimer=setInterval(()=>{if(!document.hidden)loadGlobalOperations().catch(e=>console.warn('[CountFlow Admin] polling refresh failed',e));},30000);
+  }
  }
  function renderRecent(){ $('recentSessions').innerHTML=state.sessions.slice(0,6).map(x=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(x.name)+'</b><span style="float:left">'+statusPill(x.status)+'</span><div class="sub muted">'+date(x.created_at)+'</div></div>').join('')||'<div class="empty">لا توجد جلسات بعد.</div>'; }
  async function loadLicenseSettings(){
@@ -2222,6 +2234,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
 
  $('newOperationButton').onclick=()=>{activateTab('operations');openOperationCreateModal();};
 $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تحديث مؤشرات الأداء')).catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));
+ $('overviewNewOperation').onclick=()=>{activateTab('operations');openOperationCreateModal();};
  ['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
  $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');renderAdminOverview();};
  $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
