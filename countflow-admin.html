@@ -44,6 +44,27 @@
 .cf-filter-grid input,.cf-filter-grid select{width:100%;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
 @media(max-width:900px){.cf-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-chart-row{grid-template-columns:1fr}.cf-role-stat-grid,.cf-member-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.cf-analytics-grid{grid-template-columns:1fr 1fr}.cf-modal-wide .fields{grid-template-columns:1fr}.cf-filter-grid{grid-template-columns:1fr}.cf-chart-item{grid-template-columns:minmax(85px,1fr) minmax(70px,1.4fr) 34px}}
+
+/* LVE-772 — Admin overview executive dashboard */
+.cf-overview{--cf-blue:#2563eb;--cf-green:#059669;--cf-violet:#7c3aed;--cf-teal:#0f766e;--cf-slate:#475569}
+.cf-overview-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap;padding:26px 28px;margin:4px 0 16px;border-radius:24px;background:radial-gradient(circle at 8% 12%,rgba(96,165,250,.23),transparent 30%),linear-gradient(118deg,#0f172a 0%,#172554 55%,#1d4ed8 100%);color:#fff;box-shadow:0 18px 48px rgba(15,23,42,.14)}
+.cf-overview-brand{min-width:260px;flex:1}.cf-overview-eyebrow{display:inline-flex;align-items:center;gap:8px;color:#bfdbfe;font-size:10px;font-weight:900;letter-spacing:.12em}.cf-overview-hero h2{margin:9px 0 5px;font-size:clamp(20px,2.2vw,27px);font-weight:900;line-height:1.5}.cf-overview-hero p{max-width:740px;margin:0;color:#dbeafe;font-size:13px;line-height:1.9}
+.cf-overview-meta{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin-top:16px;color:#bfdbfe;font-size:11px}.cf-overview-live{display:inline-flex;gap:7px;align-items:center}.cf-live-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.14)}
+.cf-overview-hero-actions{display:flex;gap:8px;flex-wrap:wrap}.cf-overview-hero-actions button{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:10px 14px;border-radius:12px;font-size:12px}.cf-overview-hero-button{background:#fff;color:#1d4ed8}.cf-overview-hero-refresh{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.23)}
+.cf-overview-filter-panel{padding:13px 15px 10px;margin-bottom:16px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}.cf-overview-filter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.cf-overview-filter-heading b{display:block;font-size:13px}.cf-overview-filter-heading small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.cf-overview-reset{padding:7px 10px;background:#f1f5f9;color:#475569;font-size:11px;border-radius:9px}.cf-overview-filter-panel .cf-analytics-toolbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;border:0;background:transparent;padding:10px 0 0;margin:0}.cf-overview-filter-panel .field{min-width:0;margin:0}.cf-overview-filter-panel .field label{font-size:11px}.cf-overview-filter-panel .field input,.cf-overview-filter-panel .field select{width:100%;padding:9px 10px;font-size:12px}
+.cf-overview-section-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:18px 2px 10px}.cf-overview-section-heading h3{font-size:16px;margin:0;font-weight:900}.cf-overview-section-heading p{font-size:11px;color:var(--muted);margin:3px 0 0}.cf-overview-unit{font-size:10px;color:#475569;background:#f1f5f9;padding:6px 9px;border-radius:999px}
+.cf-overview-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.cf-overview-kpi{min-width:0;position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 17px;box-shadow:var(--shadow)}.cf-overview-kpi:after{content:"";position:absolute;width:82px;height:82px;left:-22px;bottom:-40px;border-radius:50%;background:var(--tone,#2563eb);opacity:.07}.cf-overview-kpi .cf-kpi-top{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:11px;font-weight:800}.cf-overview-kpi .cf-kpi-top i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tone-bg,#eff6ff);color:var(--tone,#2563eb);font-size:15px}.cf-overview-kpi strong{display:block;font-size:30px;line-height:1.3;margin:10px 0 3px;font-weight:950;font-variant-numeric:tabular-nums;color:#111827}.cf-overview-kpi small{font-size:10px;color:#64748b}.cf-overview-kpi.tone-blue{--tone:#2563eb;--tone-bg:#eff6ff}.cf-overview-kpi.tone-green{--tone:#059669;--tone-bg:#ecfdf5}.cf-overview-kpi.tone-violet{--tone:#7c3aed;--tone-bg:#f5f3ff}.cf-overview-kpi.tone-teal{--tone:#0f766e;--tone-bg:#f0fdfa}
+.cf-overview-secondary-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}.cf-overview-secondary-kpis article{display:flex;align-items:center;gap:10px;min-width:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px}.cf-secondary-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:#f1f5f9;color:#475569}.cf-overview-secondary-kpis small{display:block;font-size:10px;color:var(--muted)}.cf-overview-secondary-kpis strong{display:block;margin-top:3px;font-size:18px;font-weight:900;color:#172033;font-variant-numeric:tabular-nums}
+.cf-overview-project-heading{margin-top:20px}.cf-overview-project-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.cf-overview-project-kpis article{padding:10px 13px;background:#f8fafc;border:1px solid #e9eef4;border-radius:13px}.cf-overview-project-kpis small{display:block;font-size:10px;color:var(--muted)}.cf-overview-project-kpis strong{display:block;font-size:20px;margin-top:3px;font-weight:900}
+.cf-overview-analytics-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:13px;margin-top:14px}.cf-overview-chart-panel{min-width:0;margin:0;padding:16px}.cf-overview-panel-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.cf-overview-panel-heading h3{font-size:14px;margin:0;font-weight:900}.cf-overview-panel-heading small{display:block;margin-top:3px;color:var(--muted);font-size:10px;line-height:1.7}.cf-overview-panel-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#eff6ff;color:#2563eb}
+.cf-overview-status-chart{display:flex;align-items:center;justify-content:center;gap:22px;min-height:175px}.cf-overview-donut{width:156px;height:156px;flex:0 0 156px;border-radius:50%;display:grid;place-items:center;position:relative}.cf-overview-donut:before{content:"";position:absolute;inset:15px;border-radius:50%;background:#fff}.cf-overview-donut-center{position:relative;z-index:1;text-align:center}.cf-overview-donut-center strong{display:block;font-size:27px;font-weight:950;line-height:1.15}.cf-overview-donut-center small{font-size:10px;color:var(--muted)}.cf-overview-legend{display:grid;gap:9px;min-width:125px;flex:1}.cf-overview-legend-item{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}.cf-overview-legend-label{display:flex;align-items:center;gap:7px;color:#475569}.cf-overview-swatch{width:9px;height:9px;flex:0 0 9px;border-radius:3px}.cf-overview-legend-item b{font-size:11px;font-variant-numeric:tabular-nums}
+.cf-overview-activity-list{display:grid;gap:0}.cf-overview-activity-item{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #eef2f6}.cf-overview-activity-item:last-child{border-bottom:0}.cf-overview-activity-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#eff6ff;color:#2563eb}.cf-overview-activity-main{min-width:0}.cf-overview-activity-main b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.cf-overview-activity-main small{display:block;margin-top:3px;color:var(--muted);font-size:10px}.cf-overview-activity-meta{text-align:left;font-size:10px;color:#475569;white-space:nowrap}.cf-overview-activity-meta b{display:block;font-size:12px;color:#172033}
+.cf-overview-performance-panel{margin-top:13px;padding:16px;min-width:0}.cf-overview-performance-table{min-width:0}.cf-overview-performance-table .tablewrap{max-height:430px}.cf-overview-performance-table table{min-width:760px}.cf-overview-performance-table thead th{position:sticky;top:0;background:#f8fafc;z-index:2}.cf-overview-operation-button{background:#eff6ff;color:#1d4ed8;padding:6px 9px;font-size:10px;border-radius:8px;font-weight:900}.cf-overview-progress-cell{display:flex;align-items:center;gap:8px;min-width:130px}.cf-overview-progress-track{height:8px;flex:1;min-width:55px;background:#e8eef5;border-radius:99px;overflow:hidden}.cf-overview-progress-track span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#10b981)}.cf-overview-progress-cell b{min-width:43px;font-size:11px;font-variant-numeric:tabular-nums}
+.cf-overview-project-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:13px}.cf-overview-project-details>.panel{margin:0;padding:15px}.cf-overview-quicklinks{margin-top:13px;padding:15px}.cf-overview-links{display:flex;gap:9px;flex-wrap:wrap}.cf-overview-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 11px;border-radius:10px;background:#f8fafc;border:1px solid #e8edf3;font-size:11px}
+@media(max-width:1050px){.cf-overview-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-overview-filter-panel .cf-analytics-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-overview-secondary-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.cf-overview-hero{padding:19px}.cf-overview-analytics-grid,.cf-overview-project-details{grid-template-columns:1fr}.cf-overview-status-chart{justify-content:flex-start;gap:18px}.cf-overview-donut{width:132px;height:132px;flex-basis:132px}.cf-overview-donut:before{inset:13px}.cf-overview-donut-center strong{font-size:23px}}
+@media(max-width:520px){.cf-overview-hero{align-items:stretch}.cf-overview-hero-actions{display:grid;grid-template-columns:1fr 1fr}.cf-overview-filter-panel .cf-analytics-toolbar{grid-template-columns:1fr 1fr}.cf-overview-kpis{gap:8px}.cf-overview-kpi{padding:13px}.cf-overview-kpi strong{font-size:25px}.cf-overview-secondary-kpis{gap:7px}.cf-overview-secondary-kpis article{padding:9px}.cf-overview-project-kpis{gap:7px}.cf-overview-project-kpis article{padding:9px}.cf-overview-status-chart{gap:10px}.cf-overview-donut{width:112px;height:112px;flex-basis:112px}.cf-overview-donut:before{inset:11px}.cf-overview-legend{gap:7px}.cf-overview-legend-item{font-size:10px}.cf-overview-links a{width:100%}}
+
 </style>
 </head>
 <body>
@@ -101,32 +122,59 @@
     </div>
    </aside>
    <main class="content">
-    <section id="tab-overview" class="section active">
-     <div class="cf-hero"><div><h2 id="welcomeTitle">مركز قيادة عمليات الجرد</h2><p>مؤشرات تشغيلية مباشرة من عمليات الجرد والعدّ المسجلة — دون بيانات افتراضية.</p></div><div class="statusline" style="color:#dbeafe"><span class="dot"></span><span>مؤشرات حية من قاعدة CountFlow</span></div></div>
-     <div class="cf-analytics-toolbar">
-      <div class="field"><label for="overviewProjectFilter">ملف التكليف</label><select id="overviewProjectFilter"><option value="">جميع ملفات التكليف المتاحة</option></select></div>
-      <div class="field"><label for="overviewStatusFilter">حالة العملية</label><select id="overviewStatusFilter"><option value="">جميع الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
-      <div class="field"><label for="overviewFrom">بداية التنفيذ من</label><input id="overviewFrom" type="date"></div>
-      <div class="field"><label for="overviewTo">بداية التنفيذ إلى</label><input id="overviewTo" type="date"></div>
-      <button id="overviewReset" class="soft" type="button">إعادة ضبط المرشحات</button>
-      <button id="overviewRefresh" class="primary" type="button">تحديث المؤشرات</button>
+    
+    <section id="tab-overview" class="section active cf-overview">
+     <div class="cf-overview-hero">
+      <div class="cf-overview-brand">
+       <span class="cf-overview-eyebrow"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> COUNTING OPERATIONS INTELLIGENCE</span>
+       <h2 id="welcomeTitle">لوحة التحكم · مركز قيادة الجرد</h2>
+       <p>صورة تشغيلية موحّدة للأعمال المسجلة، وحركة العد، وتغطية الأصناف والمواقع عبر عملياتك المصرّح بها.</p>
+       <div class="cf-overview-meta"><span class="cf-overview-live"><i class="cf-live-dot"></i><span id="overviewConnectionState">مؤشرات من قاعدة CountFlow</span></span><span id="overviewLastUpdated">لم يتم تحديث المؤشرات بعد</span></div>
+      </div>
+      <div class="cf-overview-hero-actions">
+       <button id="overviewNewOperation" class="cf-overview-hero-button" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد</button>
+       <button id="overviewRefresh" class="cf-overview-hero-refresh" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> تحديث المؤشرات</button>
+      </div>
      </div>
-     <div class="cf-analytics-grid">
-      <div class="cf-analytics-card"><small>عمليات الجرد الظاهرة</small><strong id="overviewTotalOperations">0</strong><div class="sub">ضمن نطاق صلاحيات حسابك</div></div>
-      <div class="cf-analytics-card"><small>عمليات قيد التنفيذ</small><strong id="overviewActiveOperations">0</strong><div class="sub">الحالة التشغيلية الحالية</div></div>
-      <div class="cf-analytics-card"><small>حركات العد المسجلة</small><strong id="overviewEntryEvents">0</strong><div class="sub">إجمالي أحداث العد للعمليات المعروضة</div></div>
-      <div class="cf-analytics-card"><small>متوسط تغطية الأصناف</small><strong id="overviewCoverage">0%</strong><div class="sub">متوسط نسبة الأصناف المعدودة لكل عملية</div></div>
+     <div class="cf-overview-filter-panel">
+      <div class="cf-overview-filter-heading"><div><b>نطاق التحليل</b><small>تتغير جميع المؤشرات والرسوم وفق المرشحات المحددة</small></div><button id="overviewReset" class="cf-overview-reset" type="button"><i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> إعادة ضبط</button></div>
+      <div class="cf-analytics-toolbar">
+       <div class="field"><label for="overviewProjectFilter">ملف التكليف</label><select id="overviewProjectFilter"><option value="">جميع ملفات التكليف المتاحة</option></select></div>
+       <div class="field"><label for="overviewStatusFilter">حالة العملية</label><select id="overviewStatusFilter"><option value="">جميع الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+       <div class="field"><label for="overviewFrom">من تاريخ البداية المخططة</label><input id="overviewFrom" type="date"></div>
+       <div class="field"><label for="overviewTo">إلى تاريخ البداية المخططة</label><input id="overviewTo" type="date"></div>
+      </div>
      </div>
-     <div class="grid"><div class="stat"><small>ملفات التكليف</small><strong id="kProjects">0</strong></div><div class="stat"><small>أصناف الملف المحدد</small><strong id="kProducts">0</strong></div><div class="stat"><small>أعضاء الفريق النشطون</small><strong id="kMembers">0</strong></div><div class="stat"><small>جلسات الجرد المسجلة</small><strong id="kSessions">0</strong></div></div>
-     <div class="cf-chart-row">
-      <div class="panel"><h3>توزيع العمليات حسب الحالة</h3><div id="overviewStatusChart" class="cf-chart-list"><div class="empty">جار تحميل المؤشرات…</div></div></div>
-      <div class="panel"><h3>الأداء حسب العملية</h3><div id="overviewPerformanceChart" class="tablewrap"><div class="empty">جار تحميل المؤشرات…</div></div></div>
+     <div class="cf-overview-section-heading"><div><h3>مؤشرات الأداء الرئيسية</h3><p>الأرقام التالية محسوبة من ملخص العمليات المعروض، وليست بيانات تقديرية.</p></div><span class="cf-overview-unit">تحديث مباشر ومصالحة دورية</span></div>
+     <div class="cf-overview-kpis">
+      <article class="cf-overview-kpi tone-blue"><div class="cf-kpi-top"><span>إجمالي العمليات</span><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></div><strong id="overviewTotalOperations">0</strong><small>العمليات ضمن المرشحات الحالية</small></article>
+      <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>عمليات قيد التنفيذ</span><i class="fa-solid fa-play-circle" aria-hidden="true"></i></div><strong id="overviewActiveOperations">0</strong><small>عمليات حالتها التشغيلية نشطة</small></article>
+      <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أحداث العد المسجلة</span><i class="fa-solid fa-barcode" aria-hidden="true"></i></div><strong id="overviewEntryEvents">0</strong><small>إجمالي أحداث العد في العمليات</small></article>
+      <article class="cf-overview-kpi tone-teal"><div class="cf-kpi-top"><span>تغطية الأصناف</span><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div><strong id="overviewCoverage">—</strong><small id="overviewCoverageCaption">نسبة موزونة من الأصناف التي سُجل لها عدّ</small></article>
      </div>
-     <div class="split">
-      <div class="panel"><h3>حالة ملف التكليف المحدد</h3><div id="projectSummary" class="empty">اختر تكليفاً أو سجّل تكليفك الأول.</div></div>
-      <div class="panel"><h3>آخر الجلسات في التكليف المحدد</h3><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></div>
+     <div class="cf-overview-secondary-kpis">
+      <article><span class="cf-secondary-icon"><i class="fa-solid fa-check-double" aria-hidden="true"></i></span><div><small>عمليات مكتملة</small><strong id="overviewCompletedTotal">0</strong></div></article>
+      <article><span class="cf-secondary-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></span><div><small>إسنادات نشطة</small><strong id="overviewAssignmentsTotal">0</strong></div></article>
+      <article><span class="cf-secondary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div><small>تغطية المواقع</small><strong id="overviewLocationCoverage">—</strong></div></article>
+      <article><span class="cf-secondary-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><div><small>آخر نشاط عدّ</small><strong id="overviewLastActivity">—</strong></div></article>
      </div>
-     <div class="panel"><h3>مساحات التشغيل</h3><div class="actions"><a class="link" href="./Countflow-supervisor.html">مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html">واجهة العدّ الميداني</a><a class="link" href="./countflow-control.html">Control — المراقبة والمراجعة للقراءة فقط</a></div><p class="hint">سجل العمليات يعرض جميع عمليات الجرد المسموح لك بها، بينما تعرض جلسات الجرد تفاصيل التكليف المختار. لوحة المشرف للمراقبة الحية وإسناد الفريق والمواقع.</p></div>
+     <div class="cf-overview-section-heading cf-overview-project-heading"><div><h3>ملخص ملفات التكليف</h3><p>بيانات الملف النشط المحدد في مساحة العمل أدناه.</p></div></div>
+     <div class="cf-overview-project-kpis">
+      <article><small>ملفات التكليف</small><strong id="kProjects">0</strong></article>
+      <article><small>أصناف الملف المحدد</small><strong id="kProducts">0</strong></article>
+      <article><small>أعضاء الفريق النشطون</small><strong id="kMembers">0</strong></article>
+      <article><small>جلسات الملف المحدد</small><strong id="kSessions">0</strong></article>
+     </div>
+     <div class="cf-overview-analytics-grid">
+      <section class="panel cf-overview-chart-panel"><div class="cf-overview-panel-heading"><div><h3>توزيع العمليات حسب الحالة</h3><small>حجم كل حالة من إجمالي العمليات الظاهرة</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span></div><div id="overviewStatusChart" class="cf-overview-status-chart" aria-live="polite"><div class="empty">جار تحميل مؤشرات الحالات…</div></div></section>
+      <section class="panel cf-overview-chart-panel"><div class="cf-overview-panel-heading"><div><h3>أحدث حركة تشغيلية</h3><small>آخر وقت سُجل فيه عدّ لكل عملية</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-wave-square" aria-hidden="true"></i></span></div><div id="overviewRecentActivity" class="cf-overview-activity-list" aria-live="polite"><div class="empty">جار تحميل النشاط…</div></div></section>
+     </div>
+     <section class="panel cf-overview-performance-panel"><div class="cf-overview-panel-heading"><div><h3>أداء العمليات وتغطية الأصناف</h3><small>ترتيب العمليات حسب نسبة الأصناف التي سُجل لها عدّ، مع إتاحة فتح تفاصيل العملية</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span></div><div id="overviewPerformanceChart" class="cf-overview-performance-table" aria-live="polite"><div class="empty">جار تحميل بيانات الأداء…</div></div></section>
+     <div class="cf-overview-project-details">
+      <section class="panel"><div class="cf-overview-panel-heading"><div><h3>حالة ملف التكليف المحدد</h3><small>ملخص الفريق والأصناف والمواقع المرتبطة بالملف</small></div></div><div id="projectSummary" class="empty">اختر تكليفاً أو سجّل تكليفك الأول.</div></section>
+      <section class="panel"><div class="cf-overview-panel-heading"><div><h3>آخر الجلسات في التكليف المحدد</h3><small>آخر الجلسات المرتبطة بالملف الحالي</small></div></div><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></section>
+     </div>
+     <section class="panel cf-overview-quicklinks"><div class="cf-overview-panel-heading"><div><h3>مساحات التشغيل</h3><small>انتقل إلى التطبيق المتخصص دون نقل صلاحياته إلى النظام الأم</small></div></div><div class="cf-overview-links"><a class="link" href="./Countflow-supervisor.html"><i class="fa-solid fa-people-group" aria-hidden="true"></i> مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html"><i class="fa-solid fa-barcode" aria-hidden="true"></i> واجهة العدّ الميداني</a><a class="link" href="./countflow-control.html"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> Control — المراقبة والمراجعة للقراءة فقط</a></div></section>
     </section><section id="tab-clients" class="section" data-owner-only><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
      <div class="split"><div class="panel"><h3>إضافة عميل</h3><form id="clientForm"><div class="fields">
       <div class="field"><label for="clientCode">كود العميل</label><input id="clientCode" required maxlength="40"></div><div class="field"><label for="clientName">اسم العميل</label><input id="clientName" required maxlength="160"></div>
@@ -325,7 +373,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,overviewRows:[],project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -1324,45 +1372,119 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    });
   });
  }
+
  async function loadAdminOverview(){
-  const ids=state.projects.map(p=>p.id);
-  if(!ids.length){state.overviewRows=[];renderAdminOverview();return;}
-  const rows=[];let offset=0,pageSize=500;
-  while(true){
-   const {data,error}=await db.from('count_operation_overview')
-    .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at')
-    .in('project_id',ids).order('planned_start_at',{ascending:false}).range(offset,offset+pageSize-1);
-   if(error)throw error;
-   const page=data||[];rows.push(...page);if(page.length<pageSize)break;
-   offset+=pageSize;if(rows.length>10000)throw new Error('تجاوز سجل العمليات حد القراءة الآمن 10,000 صف؛ استخدم المرشحات.');
+  const requestToken=(state.overviewRequestToken||0)+1;state.overviewRequestToken=requestToken;
+  const projectIds=state.projects.map(p=>p.id).filter(Boolean);
+  if(!projectIds.length){
+   state.overviewRows=[];state.overviewLoadedAt=Date.now();state.overviewError=null;
+   renderAdminOverview();return;
   }
-  state.overviewRows=rows;renderAdminOverview();
+  try{
+   const rows=[];let offset=0;const pageSize=500,maxRows=10000;
+   while(true){
+    const {data,error}=await db.from('count_operation_overview')
+     .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at')
+     .in('project_id',projectIds).order('planned_start_at',{ascending:false}).range(offset,offset+pageSize-1);
+    if(error)throw error;
+    const page=data||[];rows.push(...page);
+    if(rows.length>maxRows)throw new Error('تجاوز عدد العمليات حد القراءة الآمن 10,000 صف؛ استخدم مرشح ملف التكليف لتضييق النطاق.');
+    if(page.length<pageSize)break;
+    offset+=pageSize;
+   }
+   if(requestToken!==state.overviewRequestToken)return;
+   state.overviewRows=rows;state.overviewLoadedAt=Date.now();state.overviewError=null;
+   renderAdminOverview();
+  }catch(error){
+   if(requestToken===state.overviewRequestToken){state.overviewError=String(error?.message||error||'تعذر تحميل المؤشرات');renderAdminOverview();}
+   throw error;
+  }
  }
  function renderAdminOverview(){
-  const statusNames={planned:'مخططة',active:'قيد التنفيذ',paused:'متوقفة',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة'};
+  const statusNames={active:'قيد التنفيذ',planned:'مخططة',paused:'متوقفة مؤقتاً',review:'قيد المراجعة',completed:'مكتملة',cancelled:'ملغاة',other:'حالات أخرى'};
+  const statusColors={active:'#16a34a',planned:'#2563eb',paused:'#d97706',review:'#7c3aed',completed:'#0f766e',cancelled:'#dc2626',other:'#64748b'};
   const projectFilter=$('overviewProjectFilter')?.value||'',statusFilter=$('overviewStatusFilter')?.value||'';
   const from=$('overviewFrom')?.value||'',to=$('overviewTo')?.value||'';
-  const rows=(state.overviewRows||[]).filter(x=>{
-   const day=String(x.planned_start_at||'').slice(0,10);
-   return (!projectFilter||x.project_id===projectFilter)&&(!statusFilter||x.operation_status===statusFilter)&&(!from||(day&&day>=from))&&(!to||(day&&day<=to));
+  const rows=(state.overviewRows||[]).filter(item=>{
+   const plannedDay=String(item.planned_start_at||'').slice(0,10);
+   return (!projectFilter||item.project_id===projectFilter)&&(!statusFilter||item.operation_status===statusFilter)&&(!from||(plannedDay&&plannedDay>=from))&&(!to||(plannedDay&&plannedDay<=to));
   });
-  const num=x=>Number(x||0),fmt=x=>num(x).toLocaleString('en-US');
-  const coverage=x=>num(x.active_products)>0?Math.max(0,Math.min(100,num(x.counted_products)/num(x.active_products)*100)):0;
+  const number=value=>Number.isFinite(Number(value))?Number(value):0;
+  const fmt=value=>number(value).toLocaleString('ar-EG');
+  const percent=value=>value==null?'—':number(value).toFixed(1)+'%';
+  const sum=(list,key)=>list.reduce((total,item)=>total+number(item[key]),0);
+  const countedProductTotal=sum(rows,'counted_products');
+  const activeProductTotal=sum(rows,'active_products');
+  const countedLocationTotal=sum(rows,'counted_locations');
+  const totalLocationPositions=sum(rows,'location_count');
+  const productCoverage=activeProductTotal>0?Math.min(100,countedProductTotal/activeProductTotal*100):null;
+  const locationCoverage=totalLocationPositions>0?Math.min(100,countedLocationTotal/totalLocationPositions*100):null;
+  const totalEntries=sum(rows,'entry_events');
+  const activeOperations=rows.filter(x=>x.operation_status==='active').length;
+  const completedOperations=rows.filter(x=>x.operation_status==='completed').length;
+  const activeAssignments=sum(rows,'active_assignments');
   $('overviewTotalOperations').textContent=fmt(rows.length);
-  $('overviewActiveOperations').textContent=fmt(rows.filter(x=>x.operation_status==='active').length);
-  $('overviewEntryEvents').textContent=fmt(rows.reduce((a,x)=>a+num(x.entry_events),0));
-  $('overviewCoverage').textContent=(rows.length?rows.reduce((a,x)=>a+coverage(x),0)/rows.length:0).toFixed(1)+'%';
+  $('overviewActiveOperations').textContent=fmt(activeOperations);
+  $('overviewEntryEvents').textContent=fmt(totalEntries);
+  $('overviewCoverage').textContent=percent(productCoverage);
+  $('overviewCoverageCaption').textContent=activeProductTotal>0?fmt(countedProductTotal)+' من '+fmt(activeProductTotal)+' صنفاً عبر العمليات الظاهرة':'لا توجد قائمة أصناف نشطة تسمح بحساب التغطية';
+  $('overviewCompletedTotal').textContent=fmt(completedOperations);
+  $('overviewAssignmentsTotal').textContent=fmt(activeAssignments);
+  $('overviewLocationCoverage').textContent=percent(locationCoverage);
+  const lastActivity=rows.map(x=>x.last_counted_at).filter(Boolean).sort((a,b)=>new Date(b)-new Date(a))[0]||null;
+  $('overviewLastActivity').textContent=lastActivity?new Date(lastActivity).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}):'—';
+  $('overviewLastActivity').title=lastActivity?new Date(lastActivity).toLocaleString('ar-EG'):'لا يوجد نشاط عدّ مسجل';
+  $('overviewLastUpdated').textContent=state.overviewLoadedAt?'آخر تحديث: '+new Date(state.overviewLoadedAt).toLocaleString('ar-EG'):'لم يتم تحديث المؤشرات بعد';
+
   const statusOrder=['active','planned','paused','review','completed','cancelled'];
-  const counts=statusOrder.map(k=>({key:k,label:statusNames[k],count:rows.filter(x=>x.operation_status===k).length})).filter(x=>x.count>0);
-  const maxCount=Math.max(1,...counts.map(x=>x.count));
-  $('overviewStatusChart').innerHTML=counts.length?counts.map(x=>'<div class="cf-chart-item"><span>'+esc(x.label)+'</span><div class="cf-bar-track"><div class="cf-bar-fill" style="width:'+(x.count/maxCount*100).toFixed(1)+'%"></div></div><b>'+fmt(x.count)+'</b></div>').join(''):'<div class="empty">لا توجد عمليات ضمن المرشحات المختارة.</div>';
-  const ranked=[...rows].sort((a,b)=>coverage(b)-coverage(a)||num(b.entry_events)-num(a.entry_events)).slice(0,12);
-  $('overviewPerformanceChart').innerHTML=ranked.length?'<table><thead><tr><th>العملية / التكليف</th><th>الحالة</th><th>أحداث العد</th><th>الأصناف</th><th>التغطية</th></tr></thead><tbody>'+ranked.map(x=>{
-   const pct=coverage(x);
-   return '<tr><td><b>'+esc(x.operation_name||'عملية غير مسماة')+'</b><span class="sub">'+esc(x.project_name||'')+' · '+esc(x.project_code||'')+'</span></td><td>'+statusPill(x.operation_status)+'</td><td>'+fmt(x.entry_events)+'</td><td>'+fmt(x.counted_products)+' / '+fmt(x.active_products)+'</td><td><div class="row"><div class="cf-progress"><span style="width:'+pct.toFixed(1)+'%"></span></div><b>'+pct.toFixed(1)+'%</b></div></td></tr>';
-  }).join('')+'</tbody></table>':'<div class="empty">لا توجد عمليات لعرض أدائها.</div>';
+  const statusCounts=statusOrder.map(key=>({key,label:statusNames[key],count:rows.filter(x=>x.operation_status===key).length})).filter(x=>x.count>0);
+  const knownCount=statusCounts.reduce((total,item)=>total+item.count,0);
+  const otherCount=Math.max(0,rows.length-knownCount);
+  if(otherCount)statusCounts.push({key:'other',label:statusNames.other,count:otherCount});
+  if(state.overviewError){
+   $('overviewConnectionState').textContent='تعذر تحديث المؤشرات؛ تُعرض آخر قراءة ناجحة إن وجدت';
+   $('overviewStatusChart').innerHTML='<div class="empty" role="alert">تعذر تحميل ملخص الحالات. تحقق من الاتصال والصلاحية ثم أعد المحاولة.</div>';
+  }else if(!rows.length){
+   $('overviewConnectionState').textContent='لا توجد عمليات ضمن نطاق المرشحات';
+   $('overviewStatusChart').innerHTML='<div class="empty">لا توجد عمليات ضمن المرشحات المحددة.</div>';
+  }else{
+   const total=statusCounts.reduce((n,item)=>n+item.count,0);
+   let cursor=0;
+   const stops=statusCounts.map(item=>{
+    const start=cursor;cursor+=item.count/total*100;
+    return statusColors[item.key]+' '+start.toFixed(2)+'% '+cursor.toFixed(2)+'%';
+   });
+   const gradient='conic-gradient('+(stops.length?stops.join(', '):'#e2e8f0 0% 100%')+')';
+   const legend=statusCounts.map(item=>'<div class="cf-overview-legend-item"><span class="cf-overview-legend-label"><i class="cf-overview-swatch" style="background:'+statusColors[item.key]+'"></i>'+esc(item.label)+'</span><b>'+fmt(item.count)+'</b></div>').join('');
+   $('overviewStatusChart').innerHTML='<div class="cf-overview-donut" role="img" aria-label="توزيع '+fmt(total)+' عملية حسب الحالة" style="background:'+gradient+'"><div class="cf-overview-donut-center"><strong>'+fmt(total)+'</strong><small>عملية</small></div></div><div class="cf-overview-legend">'+legend+'</div>';
+  }
+
+  const ranked=[...rows].sort((a,b)=>{
+   const ac=number(a.active_products)>0?number(a.counted_products)/number(a.active_products):-1;
+   const bc=number(b.active_products)>0?number(b.counted_products)/number(b.active_products):-1;
+   return bc-ac||number(b.entry_events)-number(a.entry_events);
+  }).slice(0,12);
+  $('overviewPerformanceChart').innerHTML=state.overviewError&&!state.overviewRows?.length?'<div class="empty" role="alert">لا تتوفر بيانات أداء مؤكدة حالياً.</div>':ranked.length?'<div class="tablewrap"><table><thead><tr><th>العملية / ملف التكليف</th><th>الحالة</th><th>أحداث العد</th><th>الأصناف التي سُجل لها عدّ</th><th>نسبة الأصناف</th><th>آخر نشاط</th><th>فتح</th></tr></thead><tbody>'+ranked.map(item=>{
+   const denominator=number(item.active_products),numerator=number(item.counted_products);
+   const pct=denominator>0?Math.min(100,numerator/denominator*100):null;
+   const last=item.last_counted_at?new Date(item.last_counted_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}):'—';
+   return '<tr><td><b>'+esc(item.operation_name||'عملية غير مسماة')+'</b><span class="sub">'+esc(item.project_name||'')+' · '+esc(item.project_code||'')+'</span></td><td>'+statusPill(item.operation_status)+'</td><td>'+fmt(item.entry_events)+'</td><td>'+fmt(numerator)+' / '+fmt(denominator)+'</td><td><div class="cf-overview-progress-cell"><div class="cf-overview-progress-track"><span style="width:'+(pct==null?0:pct).toFixed(1)+'%"></span></div><b>'+percent(pct)+'</b></div></td><td>'+last+'</td><td><button type="button" class="cf-overview-operation-button" data-open-overview-operation="'+esc(item.session_id)+'" '+(!item.session_id?'disabled':'')+'>فتح العملية</button></td></tr>';
+  }).join('')+'</tbody></table></div>':'<div class="empty">لا توجد عمليات لعرض أدائها.</div>';
+  $('overviewPerformanceChart').querySelectorAll('[data-open-overview-operation]').forEach(button=>button.addEventListener('click',()=>{
+   const id=button.dataset.openOverviewOperation;
+   if(id)selectOperation(id);
+  }));
+
+  const activity=[...rows].filter(item=>item.last_counted_at).sort((a,b)=>new Date(b.last_counted_at)-new Date(a.last_counted_at)).slice(0,6);
+  $('overviewRecentActivity').innerHTML=activity.length?activity.map(item=>'<div class="cf-overview-activity-item"><span class="cf-overview-activity-icon"><i class="fa-solid fa-barcode" aria-hidden="true"></i></span><div class="cf-overview-activity-main"><b>'+esc(item.operation_name||'عملية غير مسماة')+'</b><small>'+esc(item.project_name||'')+' · '+new Date(item.last_counted_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'})+'</small></div><div class="cf-overview-activity-meta"><b>'+fmt(item.entry_events)+'</b> حدث عدّ</div></div>').join(''):'<div class="empty">'+(state.overviewError?'تعذر تحميل النشاط من قاعدة البيانات.':'لم يُسجل نشاط عدّ ضمن العمليات المعروضة بعد.')+'</div>';
+
+  if(!state.overviewError&&state.overviewLoadedAt){
+   $('overviewConnectionState').textContent='مزامنة العمليات مفعّلة · تحديث دوري كل 30 ثانية';
+  }
  }
- function renderGlobalOperations(){ function renderGlobalOperations(){
+
+ function renderGlobalOperations(){
+
   const all=state.allSessions||[];
   $('kActiveOperations').textContent=all.filter(x=>x.status==='active').length;
   $('kPendingOperations').textContent=all.filter(x=>['planned','paused'].includes(x.status)).length;
@@ -1399,7 +1521,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  function subscribeGlobalRealtime(){
   stopGlobalRealtime();if(!state.projects.length||!state.user)return;
-  const filters=[];state.projects.forEach(p=>['count_sessions','count_members'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
+  const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
   state.globalChannel=window.CF_Core.watchPostgresChanges(db,{channelName:'countflow-admin-global-'+state.user.id,filters,onInvalidate:scheduleGlobalRefresh,reconcileMs:30000,onStatus:status=>{if(status==='SUBSCRIBED')scheduleGlobalRefresh();}});
   if(!state.globalChannel)state.globalPollTimer=setInterval(()=>{if(!document.hidden)loadGlobalOperations().catch(e=>console.warn('[CountFlow Admin] polling refresh failed',e));},30000);
  }
