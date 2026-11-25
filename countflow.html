@@ -7,7 +7,21 @@
 <style>
 :root{--navy:#111827;--teal:#2563eb;--mint:#eff6ff;--ink:#111827;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--white:#fff;--red:#dc2626;--amber:#b45309;--shadow:0 8px 30px rgba(15,23,42,.05)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Cairo",system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:13px;padding:12px 16px;font-weight:700;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}button:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.primary{background:var(--teal);color:white}.dark{background:var(--navy);color:white}.soft{background:var(--mint);color:var(--teal)}.danger{background:#fff0f0;color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}
-header{background:linear-gradient(120deg,#111827,#1e40af);color:white;padding:17px max(16px,calc((100vw - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:5}header small{opacity:.7}main{max-width:1080px;margin:auto;padding:18px 14px 100px}.panel{background:white;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}.login{max-width:420px;margin:9vh auto}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:13px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;min-width:0}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.grow{flex:1}.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f6fafb;border-radius:14px;padding:13px}.stat b{display:block;font-size:22px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;background:#e8eef1;color:#4d626f}.tabs button.active{background:var(--navy);color:white}.scanbox{background:#102b3f;border-radius:20px;padding:16px;color:white}.scanbox input{background:white;border:0;border-radius:13px;padding:15px;width:100%;font-size:18px}.product{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0}.product img{width:58px;height:58px;object-fit:cover;border-radius:12px;background:#edf2f4}.qty{display:flex;gap:8px;align-items:center}.qty input{width:115px;text-align:center;font-size:24px;font-weight:800;padding:10px;border:1px solid var(--line);border-radius:12px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#102b3f;color:white;padding:12px 18px;border-radius:30px;z-index:20;box-shadow:var(--shadow);max-width:90vw}.sync{font-size:12px;color:#c8e8df}.sync.off{color:#ffd8a1}.camera{width:100%;max-height:290px;background:#081923;border-radius:14px;object-fit:cover}.itemtitle{font-weight:800}.tag{font-size:11px;padding:4px 8px;border-radius:20px;background:#eaf5f2;color:#087e80}
+header{background:linear-gradient(120deg,#111827,#1e40af);color:white;padding:17px max(16px,calc((100vw - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:5}header small{opacity:.7}main{max-width:1080px;margin:auto;padding:18px 14px 100px}.panel{background:white;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}.login{max-width:420px;margin:9vh auto}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:13px;color:var(--muted);font-weight:700}.field input,.field select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;min-width:0}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.grow{flex:1}.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f6fafb;border-radius:14px;padding:13px}.stat b{display:block;font-size:22px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;background:#e8eef1;color:#4d626f}.tabs button.active{background:var(--navy);color:white}.scanbox{background:linear-gradient(120deg,#111827 0%,#172554 56%,#1e40af 100%);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:17px;color:#fff;box-shadow:0 12px 34px rgba(15,23,42,.12)}
+.scanbox-header{align-items:center;gap:12px}.scanbox-header b{display:block;font-size:16px;font-weight:900}.scanbox-header small{display:block;margin-top:3px;color:#dbeafe;font-size:11px;line-height:1.7}
+.scanbox .scan-input-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}.scanbox .scan-input-wrap input{min-width:0;background:#fff;border:1px solid #dbeafe;border-radius:12px;padding:13px 14px;width:100%;font-size:17px;color:#111827}
+.camera-toggle{background:#fff;color:#1d4ed8;border:1px solid rgba(255,255,255,.65);min-height:42px;padding:9px 13px;white-space:nowrap}.camera-toggle[aria-expanded="true"]{background:#dbeafe;color:#1e3a8a}.camera-toggle:disabled{opacity:.7}
+.camera-stage{position:relative;overflow:hidden;margin-top:13px;border:1px solid rgba(255,255,255,.2);border-radius:16px;background:#081923;min-height:120px}
+.camera-stage .camera{display:block;width:100%;max-height:min(54vh,380px);aspect-ratio:16/9;object-fit:cover;background:#081923}
+.camera-frame{position:absolute;inset:20% 20%;border:2px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(8,25,35,.12);pointer-events:none}
+.camera-status{display:flex;align-items:flex-start;gap:8px;min-height:35px;margin:11px 0 0;padding:9px 11px;border:1px solid rgba(219,234,254,.22);border-radius:12px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:11px;line-height:1.7}
+.camera-status:before{content:"";display:block;flex:0 0 8px;width:8px;height:8px;margin-top:5px;border-radius:50%;background:#94a3b8}
+.camera-status[data-state="active"]:before{background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.14)}
+.camera-status[data-state="starting"]:before{background:#fbbf24}
+.camera-status[data-state="error"]:before,.camera-status[data-state="unsupported"]:before{background:#fca5a5}
+.scan-input-row{display:grid;gap:7px;margin-top:12px}.scan-input-row label{font-size:11px;font-weight:800;color:#dbeafe}.scan-guidance{display:block;margin-top:9px;color:#dbeafe;font-size:11px;line-height:1.8}
+@media(max-width:600px){.scanbox{padding:14px;border-radius:18px}.scanbox-header{align-items:flex-start}.scanbox-header b{font-size:14px}.scanbox .scan-input-wrap input{font-size:16px;padding:12px}.camera-toggle{padding:9px 10px;font-size:12px}.camera-frame{inset:23% 12%}}
+@media(prefers-reduced-motion:reduce){.camera-stage,.camera-toggle{transition:none}}.product{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0}.product img{width:58px;height:58px;object-fit:cover;border-radius:12px;background:#edf2f4}.qty{display:flex;gap:8px;align-items:center}.qty input{width:115px;text-align:center;font-size:24px;font-weight:800;padding:10px;border:1px solid var(--line);border-radius:12px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#102b3f;color:white;padding:12px 18px;border-radius:30px;z-index:20;box-shadow:var(--shadow);max-width:90vw}.sync{font-size:12px;color:#c8e8df}.sync.off{color:#ffd8a1}.camera{width:100%;max-height:290px;background:#081923;border-radius:14px;object-fit:cover}.itemtitle{font-weight:800}.tag{font-size:11px;padding:4px 8px;border-radius:20px;background:#eaf5f2;color:#087e80}
 @media(max-width:600px){main{padding:12px 10px 100px}.panel{padding:14px;border-radius:16px}.statgrid{grid-template-columns:repeat(3,1fr)}.stat b{font-size:18px}header{padding:13px}.qty input{width:90px}}
 .loc-nav{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--white)}.loc-nav-top{display:flex;flex-direction:column;gap:4px}.loc-nav-label{font-size:10px;color:var(--muted);font-weight:800;margin-top:7px}.loc-nav-path{font-size:12px;font-weight:900;line-height:1.8;overflow-wrap:anywhere}.loc-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}.loc-chip{border:1px solid var(--line);border-radius:999px;padding:7px 11px;background:var(--white);font-size:11px;font-weight:800;white-space:nowrap;color:var(--text)}.loc-chip.active{border-color:var(--teal);background:var(--mint);color:var(--teal)}.loc-empty{font-size:11px;color:var(--muted);padding:5px 0}.gamification-summary{border-color:#dbeafe;background:linear-gradient(135deg,#fff 0%,#f8fbff 100%);padding:16px}
 .gamification-heading{display:flex;align-items:center;gap:12px}
@@ -63,7 +77,21 @@ header{background:linear-gradient(120deg,#111827,#1e40af);color:white;padding:17
  </div>
  <div class="tabs"><button class="active" data-tab="count">الجرد</button><button data-tab="recounts">مهام إعادة العد</button><button data-tab="history">سجلّي</button><button data-tab="account">حسابي</button><button data-tab="achievements">إنجازاتي</button></div>
 <div id="tab-count">
-<div class="scanbox"><div class="row"><b class="grow">المسح الفوري</b><button class="soft" id="cameraBtn">فتح الكاميرا</button></div><video id="video" class="camera hidden" playsinline></video><div class="row" style="margin-top:10px"><input id="barcode" placeholder="امسح الباركود أو اكتب الكود..." autocomplete="off"><button class="primary" id="findBtn">بحث</button></div><small style="opacity:.7">امسح كود الموقع أولاً ثم الأصناف؛ تكرار مسح الصنف يزيد الكمية تلقائياً، واحفظه قبل الانتقال لصنف آخر.</small>
+<div class="scanbox" aria-labelledby="scanHeading">
+ <div class="row scanbox-header">
+  <div class="grow"><b id="scanHeading">المسح الفوري</b><small>امسح كود الموقع أولاً، ثم باركود الصنف. ويمكنك استخدام قارئ خارجي أو إدخال الرمز يدوياً.</small></div>
+  <button class="camera-toggle" id="cameraBtn" type="button" aria-controls="video" aria-expanded="false">فتح الكاميرا</button>
+ </div>
+ <div class="camera-stage hidden" id="cameraStage">
+  <video id="video" class="camera" playsinline muted aria-label="معاينة كاميرا قراءة الباركود"></video>
+  <span class="camera-frame" aria-hidden="true"></span>
+ </div>
+ <p class="camera-status" id="cameraStatus" data-state="idle" role="status" aria-live="polite">الكاميرا متوقفة. يمكنك استخدام قارئ باركود خارجي أو إدخال الرمز يدوياً.</p>
+ <div class="scan-input-row">
+  <label for="barcode">باركود الصنف أو الموقع</label>
+  <div class="scan-input-wrap"><input id="barcode" placeholder="امسح الباركود أو اكتب الكود..." autocomplete="off" inputmode="text"><button class="primary" id="findBtn" type="button">بحث</button></div>
+ </div>
+ <small class="scan-guidance">تكرار مسح الصنف يزيد الكمية تلقائياً. احفظ الصنف الحالي قبل الانتقال إلى صنف آخر.</small>
 <div class="loc-nav">
  <div class="loc-nav-top"><span class="loc-nav-label">الموقع النشط</span><strong id="locBreadcrumb" class="loc-nav-path">لم يتم تحديد موقع</strong></div>
  <span class="loc-nav-label">المواقع في المستوى نفسه</span><div id="locSiblings" class="loc-chips"><span class="loc-empty">اختر موقعاً لعرض المواقع المجاورة</span></div>
@@ -391,13 +419,105 @@ function handleMemberBroadcast(msg){
  }
 }
 let memberChannel=null;async function subscribe(){await sb.realtime.setAuth();if(memberChannel)await sb.removeChannel(memberChannel);memberChannel=sb.channel('countflow:member:'+member.id,{config:{private:true}}).on('broadcast',{event:'UPDATE'},handleMemberBroadcast).on('broadcast',{event:'INSERT'},handleMemberBroadcast).subscribe(s=>{$('syncState').textContent=s==='SUBSCRIBED'?'● اتصال مستقر':'● جارٍ استعادة الاتصال';$('syncState').classList.toggle('off',s!=='SUBSCRIBED')})}
-async function cameraStart(){if(!('BarcodeDetector'in window)){toast('المتصفح لا يدعم مسح الكاميرا؛ استخدم قارئ الباركود');return}try{detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});lastCameraCode='';lastCameraSeen=0;lastScanFrameAt=0;$('video').srcObject=stream;$('video').classList.remove('hidden');await $('video').play();scanFrame()}catch(e){console.warn('Counter camera failed',e);toast('تعذر تشغيل الكاميرا. تحقق من صلاحية استخدامها ثم أعد المحاولة.',true)}}
-let scanning=false,lastCameraCode='',lastCameraSeen=0,lastScanFrameAt=0;async function scanFrame(){if(!stream||scanning)return;const now=Date.now();if(now-lastScanFrameAt<200){requestAnimationFrame(scanFrame);return}lastScanFrameAt=now;scanning=true;try{const codes=await detector.detect($('video'));if(codes.length){const code=String(codes[0].rawValue||'').trim();lastCameraSeen=now;if(code&&code!==lastCameraCode){lastCameraCode=code;$('barcode').value=code;await findProduct()}}else if(lastCameraCode&&now-lastCameraSeen>800){lastCameraCode=''}}catch(e){}scanning=false;if(stream)requestAnimationFrame(scanFrame)}
-function cameraStop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;lastCameraCode='';lastCameraSeen=0;lastScanFrameAt=0;$('video').classList.add('hidden')}
+let scanning=false,lastCameraCode='',lastCameraSeen=0,lastScanFrameAt=0,cameraStarting=false,cameraAttemptId=0,cameraScanErrors=0;
+function setCameraState(state,message){
+ const labels={idle:'فتح الكاميرا',starting:'جارٍ فتح الكاميرا…',active:'إيقاف الكاميرا',error:'إعادة المحاولة',unsupported:'غير مدعومة'};
+ const btn=$('cameraBtn'),status=$('cameraStatus');
+ if(btn){btn.textContent=labels[state]||labels.idle;btn.disabled=state==='starting'||state==='unsupported';btn.setAttribute('aria-expanded',String(state==='active'))}
+ if(status){status.dataset.state=state;status.textContent=message||'الكاميرا متوقفة. يمكنك استخدام قارئ باركود خارجي أو إدخال الرمز يدوياً.'}
+}
+function cameraErrorMessage(error){
+ const name=String(error?.name||'');
+ if(['NotAllowedError','PermissionDeniedError','SecurityError'].includes(name))return 'لم يُسمح بالوصول إلى الكاميرا. راجع إذن الكاميرا للموقع من إعدادات المتصفح ثم أعد المحاولة.';
+ if(['NotFoundError','DevicesNotFoundError'].includes(name))return 'لم يتم العثور على كاميرا متاحة في هذا الجهاز.';
+ if(['NotReadableError','TrackStartError','AbortError'].includes(name))return 'الكاميرا مستخدمة من تطبيق آخر أو تعذر تشغيلها. أغلق التطبيقات التي تستخدم الكاميرا ثم أعد المحاولة.';
+ if(['OverconstrainedError','ConstraintNotSatisfiedError'].includes(name))return 'تعذر تشغيل الكاميرا الخلفية المطلوبة. جرّب متصفحاً أو جهازاً آخر، أو استخدم قارئ باركود خارجياً.';
+ if(name==='NotSupportedError')return 'هذا المتصفح لا يدعم تشغيل كاميرا قراءة الباركود.';
+ return 'تعذر تشغيل الكاميرا. تحقق من صلاحيتها ثم أعد المحاولة أو أدخل الباركود يدوياً.';
+}
+async function cameraStart(){
+ if(stream||cameraStarting)return;
+ if(!window.isSecureContext){setCameraState('unsupported','يلزم فتح CountFlow عبر اتصال آمن HTTPS لاستخدام الكاميرا. يمكنك إدخال الباركود يدوياً.');return}
+ if(!('BarcodeDetector'in window)){setCameraState('unsupported','المتصفح لا يدعم قراءة الباركود بالكاميرا. استخدم قارئاً خارجياً أو أدخل الرمز يدوياً.');return}
+ if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){setCameraState('unsupported','الوصول إلى الكاميرا غير متاح في هذا المتصفح أو الجهاز. استخدم قارئاً خارجياً أو الإدخال اليدوي.');return}
+ cameraStarting=true;
+ const attempt=++cameraAttemptId;
+ cameraScanErrors=0;
+ setCameraState('starting','جارٍ طلب إذن الكاميرا وتجهيز قارئ الباركود…');
+ let openedStream=null;
+ try{
+  const requestedFormats=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code'];
+  let formats=requestedFormats;
+  if(typeof window.BarcodeDetector.getSupportedFormats==='function'){
+   const availableFormats=await window.BarcodeDetector.getSupportedFormats();
+   if(Array.isArray(availableFormats))formats=requestedFormats.filter(format=>availableFormats.includes(format));
+  }
+  if(attempt!==cameraAttemptId||document.hidden)return;
+  if(!formats.length){setCameraState('unsupported','الكاميرا متاحة، لكن المتصفح لا يدعم صيغ الباركود المطلوبة. استخدم قارئاً خارجياً أو الإدخال اليدوي.');return}
+  detector=new window.BarcodeDetector({formats});
+  openedStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+  if(attempt!==cameraAttemptId||document.hidden){openedStream.getTracks().forEach(track=>track.stop());return}
+  stream=openedStream;
+  $('video').srcObject=stream;
+  $('cameraStage').classList.remove('hidden');
+  await $('video').play();
+  if(attempt!==cameraAttemptId||document.hidden){cameraStop('تم إيقاف الكاميرا لأن التطبيق لم يعد في الواجهة.');return}
+  setCameraState('active','الكاميرا تعمل. وجّه الباركود داخل الإطار؛ ويمكنك إيقافها في أي وقت.');
+  scanFrame();
+ }catch(error){
+  if(attempt!==cameraAttemptId){if(openedStream)openedStream.getTracks().forEach(track=>track.stop());return}
+  const message=cameraErrorMessage(error);
+  console.warn('Counter camera failed',error);
+  cameraStop(message);
+  setCameraState('error',message);
+  toast(message,true);
+ }finally{
+  if(attempt===cameraAttemptId){
+   cameraStarting=false;
+   if(!stream&&$('cameraStatus').dataset.state==='starting')setCameraState('idle','تعذر بدء الكاميرا. يمكنك إعادة المحاولة أو إدخال الباركود يدوياً.');
+  }
+ }
+}
+async function scanFrame(){
+ if(!stream||scanning||document.hidden)return;
+ const now=Date.now();
+ if(now-lastScanFrameAt<200){requestAnimationFrame(scanFrame);return}
+ lastScanFrameAt=now;
+ scanning=true;
+ try{
+  const codes=await detector.detect($('video'));
+  cameraScanErrors=0;
+  if(codes.length){
+   const code=String(codes[0].rawValue||'').trim();
+   lastCameraSeen=now;
+   if(code&&code!==lastCameraCode){lastCameraCode=code;$('barcode').value=code;await findProduct()}
+  }else if(lastCameraCode&&now-lastCameraSeen>800){lastCameraCode=''}
+ }catch(error){
+  cameraScanErrors++;
+  if(cameraScanErrors===3){console.warn('Counter barcode detection failed',error);setCameraState('active','الكاميرا تعمل، لكن تعذرت قراءة الرمز حالياً. حسّن الإضاءة وثبّت الرمز أو استخدم الإدخال اليدوي.')}
+ }finally{
+  scanning=false;
+  if(stream&&!document.hidden)requestAnimationFrame(scanFrame);
+ }
+}
+function cameraStop(message='تم إيقاف الكاميرا.'){
+ cameraAttemptId++;
+ cameraStarting=false;
+ scanning=false;
+ const activeStream=stream;
+ stream=null;
+ if(activeStream)activeStream.getTracks().forEach(track=>track.stop());
+ const video=$('video');
+ if(video){video.pause();video.srcObject=null}
+ $('cameraStage').classList.add('hidden');
+ detector=null;
+ lastCameraCode='';lastCameraSeen=0;lastScanFrameAt=0;cameraScanErrors=0;
+ setCameraState('idle',message);
+}
 $('loginBtn').onclick=async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginError').textContent=friendlyErrorMessage(error);return}user=data.user;await boot()};
 $('findBtn').onclick=findProduct;$('locSiblings').addEventListener('click',handleLocationNavClick);$('locChildren').addEventListener('click',handleLocationNavClick);$('location').addEventListener('change',renderLocationNavigation);$('barcode').addEventListener('keydown',e=>{if(e.key==='Enter')findProduct()});$('saveBtn').onclick=saveCount;$('cameraBtn').onclick=()=>stream?cameraStop():cameraStart();$('minus').onclick=()=> $('quantity').value=Math.max(0,Number($('quantity').value)-1);$('plus').onclick=()=> $('quantity').value=Number($('quantity').value)+1;$('syncBtn').onclick=syncQueue;$('logoutBtn').onclick=async()=>{cameraStop();await sb.auth.signOut();location.reload()};
-document.addEventListener('visibilitychange',async()=>{const ok=await touchPresence(document.hidden?'idle':'online');if(ok){await queueCount();if(!document.hidden)await refreshGamification({quiet:true})}});window.addEventListener('online',()=>{$('syncState').textContent='● اتصال مباشر';$('syncState').classList.remove('off');touchPresence('online').then(async ok=>{if(ok){await queueCount();await syncQueue();if(session?.status==='active'&&member?.status==='active')$('saveBtn').disabled=false}})});window.addEventListener('offline',()=>{$('syncState').textContent='● وضع دون اتصال';$('syncState').classList.add('off')});
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));['count','recounts','history','account','achievements'].forEach(x=>$('tab-'+x).classList.toggle('hidden',x!==b.dataset.tab));if(b.dataset.tab==='history')loadHistory();if(b.dataset.tab==='recounts')loadRecountTasks();if(b.dataset.tab==='achievements')refreshGamification({quiet:true})});
+document.addEventListener('visibilitychange',async()=>{if(document.hidden&&(stream||cameraStarting))cameraStop('تم إيقاف الكاميرا تلقائياً عند إخفاء التطبيق.');const ok=await touchPresence(document.hidden?'idle':'online');if(ok){await queueCount();if(!document.hidden)await refreshGamification({quiet:true})}});window.addEventListener('pagehide',()=>cameraStop('تم إيقاف الكاميرا عند مغادرة التطبيق.'));window.addEventListener('online',()=>{$('syncState').textContent='● اتصال مباشر';$('syncState').classList.remove('off');touchPresence('online').then(async ok=>{if(ok){await queueCount();await syncQueue();if(session?.status==='active'&&member?.status==='active')$('saveBtn').disabled=false}})});window.addEventListener('offline',()=>{$('syncState').textContent='● وضع دون اتصال';$('syncState').classList.add('off')});
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!=='count'&&(stream||cameraStarting))cameraStop('تم إيقاف الكاميرا عند مغادرة تبويب الجرد.');document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));['count','recounts','history','account','achievements'].forEach(x=>$('tab-'+x).classList.toggle('hidden',x!==b.dataset.tab));if(b.dataset.tab==='history')loadHistory();if(b.dataset.tab==='recounts')loadRecountTasks();if(b.dataset.tab==='achievements')refreshGamification({quiet:true})});
 $('refreshRecounts').onclick=loadRecountTasks;
 boot().catch(e=>console.error(e));
 })();
