@@ -1,3 +1,49 @@
+## LVE-2026-11-25-772 — إعادة بناء لوحة النظرة العامة في Admin
+
+**Last Verified Event:** 25 نوفمبر 2026 (Africa/Cairo).  
+**Phase:** المرحلة التنفيذية الأولى — تبويب النظرة العامة فقط.  
+**Repository:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**Branch:** `work/lve-765-admin-ui-final-mainline`.  
+**PR:** #8 OPEN / UNMERGED — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/8  
+**Final source/test head at phase report:** `0a13985b3221e2dfb094e26263e547e7f026163e`.  
+**Execution report:** `Reports/LVE-772_ADMIN_OVERVIEW_CHANGESET_20261125.md`.  
+**Cloudflare Preview:** https://da85830b.rawaea-app-countflow.pages.dev  
+**Branch Preview:** https://work-lve-765-admin-ui-final.rawaea-app-countflow.pages.dev
+
+### ما تم تنفيذه
+- إعادة بناء واجهة `tab-overview` بواجهة RTL متجاوبة تتضمن Hero، نطاق تحليل، KPI رئيسية وثانوية، توزيع الحالات، أحدث نشاط، جدول أداء العمليات، ملخص الملف والجلسات، وروابط التطبيقات التشغيلية.
+- إضافة زر منفصل لإنشاء عملية جرد يفتح مسار الإنشاء الموجود `openOperationCreateModal()` ولا ينشئ مسار بيانات جديداً.
+- اعتماد `count_operation_overview` كمصدر مجمع وحيد لمؤشرات لوحة النظرة العامة؛ القراءة مقسمة إلى صفحات 500 صف ومحددة بحد 10,000 عملية.
+- اعتماد معدل تغطية موزون: مجموع الأصناف المعدودة ÷ مجموع الأصناف النشطة ضمن العمليات المعروضة. عند غياب المقام تعرض الواجهة `—` ولا تعرض نسبة مصطنعة.
+- إظهار تغطية المواقع، عدد الإسنادات النشطة، العمليات المكتملة، وآخر نشاط عدّ متاح.
+- توصيل تحديثات `count_entries` إلى قناة Admin الحالية مع مصالحة دورية كل 30 ثانية وإظهار حالة الاتصال الفعلية.
+- إزالة تكرار تعريف `renderGlobalOperations` الذي تسبب سابقاً في SyntaxError.
+- إبطال نسخة Service Worker القديمة عبر `countflow-sw-20261125-1`.
+- إضافة اختبارات مصدرية لعقد لوحة المؤشرات، الإسقاط المسموح لجدول المشاريع، احتساب النسب دون افتراضات، زر الإنشاء وRealtime.
+
+### حالة التحقق
+- **Source code:** CONFIRMED — الملف `countflow-admin.html` تم تحديثه، والسكريبت الداخلي اجتاز فحص التحليل النحوي في جلسة التنفيذ.
+- **Contract checks:** CONFIRMED — 12 فحصاً ثابتاً موجهاً لعناصر لوحة النظرة العامة، المصدر المجمع، الاحتساب، الاشتراك الآني، وعدم بقاء تعريف الدالة المكرر؛ جميعها PASS.
+- **Unit test source:** CONFIRMED — الملف يحتوي على 67 اختباراً. لم تسجل هذه المرحلة نتيجة تنفيذ 67/67؛ لا تُعامل أعداد الاختبارات المكتوبة على أنها اختبارات ناجحة.
+- **GitHub Actions:** UNKNOWN / PENDING — run `45526460646` على `0a13985b3221e2dfb094e26263e547e7f026163e` بقي بحالة `pending` دون Jobs في آخر قراءة؛ لا يوجد ادعاء بنجاح CI.
+- **Cloudflare Preview artifact:** CONFIRMED — Cloudflare check على `0a13985b3221e2dfb094e26263e547e7f026163e` أعاد `Deployed successfully`، وقدم Preview URL أعلاه.
+- **Authenticated runtime / owner visual acceptance:** UNVERIFIED — لم يتم تسجيل دخول مالك مصادق في متصفح المستخدم أو إجراء قبول بصري بشري.
+- **Production:** UNCHANGED — لا دمج PR ولا نشر Production.
+- **Supabase:** UNCHANGED — لم تُنفذ DDL أو DML أو RLS أو GRANT أو RPC أو Edge Function أو Storage mutations.
+
+### بيانات يجب الحفاظ عليها
+دفعة الاستيراد `f799c5c1-b766-4712-b74f-c0bb19836ddc` (`qa-90000-products.csv`) بقيت `committing`: 90,000 صف، 41,000 مقبول، صفر مرفوض، وبدون `completed_at`. لم يتم استكمالها أو إيقافها أو حذفها أو تكرارها أو تعديلها. لم تنشأ سجلات عدّ أو تسويات أو صادرات أو مستخدمين تجريبيين.
+
+### حدود المرحلة وما يليها
+- هذه المرحلة تغلق نطاق **Admin / Overview UI** فقط، ولا تغلق بقية فجوات المنتج أو قواعد البيانات.
+- PR #8 يبقى OPEN / UNMERGED. الفرع متفرع عن baseline سابق ومتأخر عن `main` بتسعة commits في آخر مقارنة؛ لا تنفذ دمجاً أو إعادة تأسيس تلقائية. راجع LVE-771 في main قبل أي ترقية.
+- يلزم الحصول على نتيجة CI فعلية ثم قبول بصري/تشغيلي للمالك قبل إعلان READY بلا تحفظات.
+- لا تبدأ تعديل تبويبات أخرى أو Counter أو Supervisor أو Control أو Supabase حتى إشارة المالك للمرحلة التالية.
+
+**Readiness:** READY WITH LIMITATIONS — تنفيذ واجهة المرحلة الأولى وتوليد Preview مؤكدان؛ CI والقبول البصري المصادق ما زالا غير مؤكدين.
+
+---
+
 ## LVE-2026-11-24-769 — CountFlow contract discovery (latest read-only event)
 
 **Last Verified Event:** 24 November 2026 (Africa/Cairo), report commit `fcdefc66f442ed52bb9ecffefb2d84568baf98c4`.  
