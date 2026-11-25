@@ -2293,7 +2293,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const auditError=await writeClientAudit(clientId,client?'client.updated':'client.created','client',clientId,{code,changed_fields:Object.keys(payload).filter(k=>k!=='created_by')});
    window.Swal.close();
    await loadClients();
-   if(!client){await loadRoleCatalog();await loadCatalog();}
+   if(!client){await loadRoleCatalog();if($('roleClientScope'))$('roleClientScope').value=clientId;await loadCatalog();}
    notify(client?'تم تحديث بيانات العميل مع الاحتفاظ بعلاقاته.':'تم إنشاء العميل. يمكنك الآن ربط مدير العميل.');
    if(auditError)notify('تم حفظ العميل، لكن تعذر تسجيل حدث التدقيق: '+friendlyErrorMessage(auditError),true);
   }catch(error){fail('تعذر حفظ بيانات العميل',error);}
