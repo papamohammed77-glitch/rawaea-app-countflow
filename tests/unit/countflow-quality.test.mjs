@@ -1135,7 +1135,52 @@ test("Platform owner custom-role scope is explicitly selected and client adminis
   const admin = read("countflow-admin.html");
   assert.match(admin, /id="roleClientScope"/);
   assert.match(admin, /state\.platformOwner\?state\.roleClientId:state\.clientId/);
-  assert.match(admin, /roleClientScope'\)\.addEventListener\('change'/);
+  assert.match(admin, /roleClientScope'\)\?\.addEventListener\('change'/);
   assert.match(admin, /roleClientScope'\)\.value=x\.data\.id/);
   assert.match(admin, /r\.client_id===\(state\.roleClientId\|\|state\.clientId\)/);
+});
+
+ 
+test("Admin project bootstrap selects only authenticated-readable project columns", () => {
+  const admin = read("countflow-admin.html");
+  const queryLine = admin.split(String.fromCharCode(10)).find(line =>
+    line.includes("db.from('count_projects').select(")
+  );
+  assert.ok(queryLine, "Admin must have an explicit count_projects projection");
+  const selectStart = queryLine.indexOf(".select('") + ".select('".length;
+  const selectEnd = queryLine.indexOf("')", selectStart);
+  assert.ok(selectEnd > selectStart, "project query must use an explicit select list");
+  const projection = queryLine.slice(selectStart, selectEnd);
+  assert.equal(projection, "id,client_id,name,code,status,created_at,updated_at");
+  assert.equal(projection.includes("created_by"), false);
+  assert.equal(projection.includes("*"), false);
+});
+
+test("Admin overview uses the safe aggregate view and weighted measured coverage", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /db\.from\('count_operation_overview'\)/);
+  assert.match(admin, /const productCoverage=activeProductTotal>0\?Math\.min\(100,countedProductTotal\/activeProductTotal\*100\):null/);
+  assert.match(admin, /overviewCoverageCaption/);
+  assert.match(admin, /overviewRecentActivity/);
+  assert.match(admin, /overviewPerformanceChart/);
+  assert.match(admin, /count_entries/);
+  assert.doesNotMatch(admin, /chart\.js|Chart\.js/i);
+});
+
+test("Admin overview does not report percentages when the measurement denominator is absent", () => {
+  const admin = read("countflow-admin.html");
+  assert.match(admin, /activeProductTotal>0\?Math\.min\(100,countedProductTotal\/activeProductTotal\*100\):null/);
+  assert.match(admin, /totalLocationPositions>0\?Math\.min\(100,countedLocationTotal\/totalLocationPositions\*100\):null/);
+  assert.match(admin, /overviewCoverage'\)\\.textContent=percent\(productCoverage\)/);
+  assert.match(admin, /overviewLocationCoverage'\)\\.textContent=percent\(locationCoverage\)/);
+});
+
+test("Admin overview keeps operational navigation and responsive executive dashboard surfaces", () => {
+  const admin = read("countflow-admin.html");
+  for (const id of ["overviewNewOperation","overviewRefresh","overviewProjectFilter","overviewStatusFilter","overviewFrom","overviewTo","overviewReset","overviewStatusChart","overviewRecentActivity","overviewPerformanceChart","projectSummary","recentSessions"]) {
+    assert.ok(admin.includes('id="' + id + '"'), "Missing Admin overview element: " + id);
+  }
+  assert.match(admin, /cf-overview-kpis/);
+  assert.match(admin, /@media\(max-width:520px\)\{\.cf-overview-hero/);
+  assert.match(admin, /data-open-overview-operation/);
 });
