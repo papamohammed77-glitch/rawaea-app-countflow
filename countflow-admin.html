@@ -1085,6 +1085,238 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }
   return 'sha256-chain-v1:'+Array.from(previous,v=>v.toString(16).padStart(2,'0')).join('');
  }
+ const globalCatalogImportFields=[
+  {key:'sku',label:'SKU / كود الصنف',aliases:['sku','code','item_code','product_code','canonical_sku','كود الصنف','كود','رمز الصنف']},
+  {key:'barcode',label:'الباركود الأساسي',aliases:['barcode','bar_code','ean','upc','gtin','باركود','الباركود']},
+  {key:'name',label:'اسم الصنف (مطلوب)',aliases:['name','item_name','product_name','اسم الصنف','الصنف','الاسم']},
+  {key:'brand',label:'العلامة التجارية',aliases:['brand','manufacturer','العلامة التجارية','الماركة']},
+  {key:'category',label:'التصنيف',aliases:['category','group','الفئة','التصنيف']},
+  {key:'base_unit',label:'وحدة الأساس (مطلوبة)',aliases:['base_unit','unit','uom','الواحدة','الوحدة','وحدة القياس']},
+  {key:'units',label:'الوحدات البديلة ومعاملاتها',aliases:['units','unit_options','الوحدات','وحدات التعبئة']},
+  {key:'unit_class',label:'فئة القياس',aliases:['unit_class','measurement_class','فئة الوحدة','نوع القياس']},
+  {key:'decimal_precision',label:'دقة الكمية',aliases:['decimal_precision','quantity_precision','دقة الكمية','المنازل العشرية']},
+  {key:'item_kind',label:'نوع الصنف',aliases:['item_kind','product_kind','نوع الصنف']},
+  {key:'barcode_type',label:'نوع الباركود',aliases:['barcode_type','symbology','نوع الباركود']}
+ ];
+ function globalCatalogImportValue(row,key){
+  const header=state.globalCatalogImport.mapping?.[key];
+  return header&&Object.prototype.hasOwnProperty.call(row,header)?row[header]:'';
+ }
+ function renderGlobalCatalogImportMapping(){
+  const g=state.globalCatalogImport,host=$('globalCatalogImportMapping'),headers=g.headers||[];
+  if(!headers.length)throw new Error('لم يتم العثور على عناوين أعمدة في الملف.');
+  g.mapping=g.mapping||{};
+  for(const field of globalCatalogImportFields){
+   if(!Object.prototype.hasOwnProperty.call(g.mapping,field.key)){
+    const aliases=field.aliases.map(x=>String(x).trim().toLocaleLowerCase());
+    g.mapping[field.key]=headers.find(h=>aliases.includes(String(h).trim().toLocaleLowerCase()))||'';
+   }
+  }
+  host.classList.remove('hidden');
+  host.innerHTML='<div class="panel" style="box-shadow:none;margin:0;padding:12px"><b>مطابقة أعمدة الملف مع الدليل العالمي</b><p class="hint">اسم الصنف ووحدة الأساس إلزاميان. SKU والباركود اختياريان؛ عند غيابهما يُنشأ SKU داخلي ثابت من بصمة الملف ورقم الصف. لا ينشئ هذا المسار أرصدة أو حركات جرد أو قيوداً مالية.</p><div class="fields">'+globalCatalogImportFields.map(f=>'<div class="field"><label>'+esc(f.label)+'</label><select data-global-catalog-import-map="'+f.key+'"><option value="">— تجاهل الحقل —</option>'+headers.map(h=>'<option value="'+esc(h)+'" '+(g.mapping[f.key]===h?'selected':'')+'>'+esc(h)+'</option>').join('')+'</select></div>').join('')+'</div></div>';
+  host.querySelectorAll('[data-global-catalog-import-map]').forEach(select=>select.onchange=()=>{
+   g.mapping[select.dataset.globalCatalogImportMap]=select.value;
+   $('globalCatalogImportCommit').disabled=!!g.busy||!g.mapping.name||!g.mapping.base_unit;
+  });
+  $('globalCatalogImportCommit').disabled=!!g.busy||!g.mapping.name||!g.mapping.base_unit;
+ }
+ function renderGlobalCatalogImportPreview(){
+  const g=state.globalCatalogImport,headers=g.headers||[],rows=(g.sample||[]).slice(0,8);
+  const sample=rows.length?'<div class="tablewrap"><table><thead><tr>'+headers.slice(0,8).map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.slice(0,8).map(h=>'<td>'+esc(String(r[h]??'').slice(0,80))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'';
+  $('globalCatalogImportPreviewText').innerHTML='<b>معاينة الملف: '+Number(g.count||0).toLocaleString('en-US')+' صف</b><span class="sub"> أول ورقة / أول 8 صفوف للمعاينة · '+headers.length+' عمود</span>'+sample;
+ }
+ function resetGlobalCatalogImport(){
+  const g=state.globalCatalogImport;
+  if(g?.busy)return notify('لا يمكن إلغاء الملف أثناء تنفيذ دفعة؛ انتظر اكتمال الاستدعاء الحالي.',true);
+  state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+  $('globalCatalogImportFile').value='';
+  $('globalCatalogImportMapping').classList.add('hidden');
+  $('globalCatalogImportMapping').innerHTML='';
+  $('globalCatalogImportPreviewText').textContent='';
+  $('globalCatalogImportProgress').textContent='لم يبدأ الاستيراد';
+  $('globalCatalogImportProgressFill').style.width='0%';
+  $('globalCatalogImportErrors').innerHTML='';
+  $('globalCatalogImportCommit').disabled=true;
+  $('globalCatalogImportPreview').disabled=false;
+  $('globalCatalogImportReset').disabled=false;
+ }
+ async function previewGlobalCatalogImport(){
+  if(!state.platformOwner)return notify('استيراد الدليل العالمي متاح لمالك المنصة فقط.',true);
+  const file=$('globalCatalogImportFile').files?.[0];
+  if(!file)return notify('اختر ملف CSV أو XLSX أولاً.',true);
+  if(state.globalCatalogImport?.busy)return;
+  const previewButton=$('globalCatalogImportPreview'),commitButton=$('globalCatalogImportCommit'),resetButton=$('globalCatalogImportReset');
+  previewButton.disabled=true;commitButton.disabled=true;resetButton.disabled=true;
+  $('globalCatalogImportProgress').textContent='جار فحص بنية الملف وقراءة عينة من الصفوف…';
+  $('globalCatalogImportErrors').innerHTML='';
+  try{
+   const parsed=await parseProductImportFile(file);
+   if(!parsed.count)throw new Error('لا توجد صفوف بيانات قابلة للقراءة.');
+   if(parsed.count>90000)throw new Error('الحد الأقصى للدليل العالمي 90,000 صف في الملف الواحد.');
+   const ext=(file.name.split('.').pop()||'').toLowerCase();
+   if(!['csv','xlsx','xls'].includes(ext))throw new Error('امتداد الملف غير مدعوم. استخدم CSV أو XLSX.');
+   state.globalCatalogImport={file,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext==='csv'?'csv':'xlsx',parseErrors:Number(parsed.parseErrors||0),stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+   renderGlobalCatalogImportMapping();
+   renderGlobalCatalogImportPreview();
+   $('globalCatalogImportProgress').textContent=(parsed.streaming?'تم فحص الملف دون تحميل جميع صفوفه إلى الذاكرة. ':'تمت قراءة الملف. ')+Number(parsed.count).toLocaleString('en-US')+' صف؛ راجع مطابقة الأعمدة قبل الاستيراد.';
+   if(parsed.parseErrors)$('globalCatalogImportProgress').textContent+=' أخطاء تحليل CSV المتجاوزة في المعاينة: '+parsed.parseErrors;
+  }catch(error){
+   state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+   $('globalCatalogImportPreviewText').textContent='';
+   $('globalCatalogImportMapping').classList.add('hidden');
+   $('globalCatalogImportProgress').textContent='تعذرت المعاينة: '+friendlyErrorMessage(error);
+   fail('تعذرت معاينة ملف الدليل العالمي',error);
+  }finally{
+   previewButton.disabled=false;resetButton.disabled=false;
+   commitButton.disabled=!state.globalCatalogImport.count||!state.globalCatalogImport.mapping.name||!state.globalCatalogImport.mapping.base_unit;
+  }
+ }
+ function normalizeGlobalCatalogImportRow(row,index,sourceRowNumber=null,checksum=''){
+  const value=key=>String(globalCatalogImportValue(row,key)??'').trim();
+  const rowNumber=Number(sourceRowNumber||row.__countflowRowNumber||index+2);
+  const name=value('name'),baseUnit=value('base_unit');
+  if(!name)throw new Error('اسم الصنف مطلوب.');
+  if(name.length>240)throw new Error('اسم الصنف يتجاوز 240 حرفاً.');
+  if(!baseUnit)throw new Error('وحدة الأساس مطلوبة.');
+  if(baseUnit.length>40)throw new Error('اسم وحدة الأساس يتجاوز 40 حرفاً.');
+  let sku=value('sku')||null,barcode=value('barcode')||null;
+  if(sku&&sku.length>100)throw new Error('SKU يتجاوز 100 حرف.');
+  if(barcode&&barcode.length>120)throw new Error('الباركود يتجاوز 120 حرفاً.');
+  const unitClassRaw=value('unit_class'),unitClass=['count','mass','volume','length','area','other'].includes(unitClassRaw)?unitClassRaw:inferProductUnitClass(baseUnit);
+  const precisionRaw=value('decimal_precision'),decimalPrecision=precisionRaw===''?defaultProductUnitPrecision(unitClass):Number(precisionRaw);
+  let itemKind=value('item_kind').toUpperCase(),barcodeType=barcode?cfResolveBarcodeType(barcode,value('barcode_type')||'AUTO'):'INTERNAL';
+  const deterministic='CFI-'+String(checksum||'IMPORT').replace(/[^A-F0-9]/gi,'').slice(-12).toUpperCase().padStart(12,'0')+'-'+String(rowNumber).padStart(7,'0');
+  if(!sku)sku=deterministic;
+  if(!itemKind)itemKind=unitClass==='mass'?'WEIGHED':(barcode?'BARCODED':'NO_BARCODE');
+  if(!['BARCODED','WEIGHED','NO_BARCODE'].includes(itemKind))throw new Error('نوع الصنف غير مدعوم.');
+  if(itemKind==='WEIGHED'&&unitClass!=='mass')throw new Error('الصنف الوزني يجب أن يستخدم فئة قياس الوزن.');
+  if(itemKind==='BARCODED'&&(!barcode||barcodeType==='INTERNAL'))throw new Error('الصنف المحدد كصنف بباركود يحتاج باركوداً خارجياً صالحاً.');
+  if(itemKind==='NO_BARCODE'&&barcode&&barcodeType!=='INTERNAL')throw new Error('الصنف بدون باركود لا يقبل رمزاً خارجياً.');
+  const parsedUnits=cfParseUnitRows(value('units'));
+  if(!Array.isArray(parsedUnits)||parsedUnits.length>50)throw new Error('عدد الوحدات البديلة يجب ألا يتجاوز 50 وحدة.');
+  const seenNames=new Set(),seenCodes=new Set();if(barcode)seenCodes.add(barcode.toLocaleLowerCase());
+  const units=parsedUnits.map(entry=>{
+   if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('صيغة إحدى الوحدات البديلة غير صحيحة.');
+   const unitName=String(entry.name??'').trim(),factor=Number(entry.factor_to_base??entry.conversion_factor??entry.factor);
+   if(!unitName||unitName.length>40)throw new Error('اسم الوحدة البديلة مطلوب ولا يتجاوز 40 حرفاً.');
+   const key=normalizeUnitName(unitName);
+   if(key===normalizeUnitName(baseUnit)||seenNames.has(key))throw new Error('الوحدة البديلة مكررة أو تطابق وحدة الأساس.');
+   if(!Number.isFinite(factor)||factor<=0||factor>1000000000)throw new Error('معامل تحويل الوحدة البديلة غير صالح.');
+   const unit={name:unitName,factor_to_base:factor},unitBarcode=String(entry.barcode??'').trim();
+   if(unitBarcode){
+    if(unitBarcode.length>120)throw new Error('باركود الوحدة البديلة أطول من الحد المسموح.');
+    const codeKey=unitBarcode.toLocaleLowerCase();
+    if(seenCodes.has(codeKey))throw new Error('باركود الصنف أو إحدى وحداته مكرر.');
+    seenCodes.add(codeKey);unit.barcode=unitBarcode;unit.barcode_type=cfResolveBarcodeType(unitBarcode,entry.barcode_type||'AUTO');
+   }
+   seenNames.add(key);return unit;
+  });
+  const brand=value('brand'),category=value('category');
+  if(brand.length>120)throw new Error('اسم العلامة التجارية يتجاوز 120 حرفاً.');
+  if(category.length>120)throw new Error('اسم التصنيف يتجاوز 120 حرفاً.');
+  return {_row_number:rowNumber,canonical_sku:sku,barcode:barcode||null,name,brand:brand||null,category:category||null,base_unit:baseUnit,units:withProductUnitMeta(units,unitClass,decimalPrecision,{item_kind:itemKind,barcode_type:barcodeType})};
+ }
+ function renderGlobalCatalogImportErrors(){
+  const errors=state.globalCatalogImport?.stats?.errors||[];
+  $('globalCatalogImportErrors').innerHTML=errors.length?'<table><thead><tr><th>صف المصدر</th><th>SKU</th><th>الباركود</th><th>سبب الرفض</th></tr></thead><tbody>'+errors.map(e=>'<tr><td>'+Number(e.row_number||0)+'</td><td>'+esc(e.sku||'')+'</td><td>'+esc(e.barcode||'')+'</td><td>'+esc(e.error||'تعذر قبول الصف')+'</td></tr>').join('')+'</tbody></table>':'';
+ }
+ function updateGlobalCatalogImportProgress(){
+  const g=state.globalCatalogImport,stats=g.stats||{},total=Math.max(0,Number(g.count||0)),processed=Math.min(total,Number(stats.processed||0)),percent=total?Math.min(100,Math.round(processed/total*100)):0;
+  $('globalCatalogImportProgressFill').style.width=percent+'%';
+  $('globalCatalogImportProgress').textContent='المعالجة '+processed.toLocaleString('en-US')+' / '+total.toLocaleString('en-US')+' · أضيف '+Number(stats.inserted||0).toLocaleString('en-US')+' · حُدث '+Number(stats.updated||0).toLocaleString('en-US')+' · رُفض '+Number(stats.rejected||0).toLocaleString('en-US');
+  renderGlobalCatalogImportErrors();
+ }
+ async function commitGlobalCatalogChunk(rows){
+  if(!rows.length)return;
+  const {data,error}=await db.rpc('count_upsert_catalog_products_chunk',{p_rows:rows});
+  if(error)throw error;
+  if(!data||typeof data!=='object')throw new Error('استجابة RPC لاستيراد الدليل غير صالحة.');
+  const stats=state.globalCatalogImport.stats;
+  stats.processed+=rows.length;stats.inserted+=Number(data.inserted||0);stats.updated+=Number(data.updated||0);stats.rejected+=Number(data.rejected||0);
+  for(const item of (Array.isArray(data.errors)?data.errors:[])){
+   if(stats.errors.length>=120)break;
+   stats.errors.push({row_number:item.row_number,sku:item.sku,barcode:item.barcode,error:item.error||'رفض الخادم الصف'});
+  }
+  updateGlobalCatalogImportProgress();
+ }
+ async function commitGlobalCatalogImport(){
+  if(!state.platformOwner)return notify('استيراد الدليل العالمي متاح لمالك المنصة فقط.',true);
+  const g=state.globalCatalogImport,file=$('globalCatalogImportFile').files?.[0];
+  if(g.busy)return;
+  if(!g.file||!file||file!==g.file)return notify('الملف الحالي تغير؛ أعد معاينته قبل الاستيراد.',true);
+  if(!g.mapping?.name||!g.mapping?.base_unit)return notify('اربط عمود اسم الصنف ووحدة الأساس أولاً.',true);
+  if(g.count<1||g.count>90000)return notify('عدد الصفوف خارج الحد التشغيلي 1–90,000.',true);
+  g.busy=true;g.stats={processed:0,inserted:0,updated:0,rejected:0,errors:[]};
+  const controls=['globalCatalogImportPreview','globalCatalogImportCommit','globalCatalogImportReset'];
+  controls.forEach(id=>$(id).disabled=true);
+  $('globalCatalogImportFile').disabled=true;
+  $('globalCatalogImportProgress').textContent='جار حساب بصمة الملف وتجهيز الاستيراد…';
+  $('globalCatalogImportErrors').innerHTML='';
+  let pending=[],rowIndex=0,parseErrors=0;
+  const recordLocalError=(row,rowNumber,error)=>{
+   const stats=state.globalCatalogImport.stats;stats.processed++;stats.rejected++;
+   if(stats.errors.length<120)stats.errors.push({row_number:rowNumber,sku:String(globalCatalogImportValue(row,'sku')||''),barcode:String(globalCatalogImportValue(row,'barcode')||''),error:error?.message||String(error)});
+   updateGlobalCatalogImportProgress();
+  };
+  const acceptRow=(row,sourceRowNumber)=>{
+   try{pending.push(normalizeGlobalCatalogImportRow(row,rowIndex,sourceRowNumber,g.checksum));}
+   catch(error){recordLocalError(row,sourceRowNumber,error);}
+   rowIndex++;
+  };
+  const flush=async()=>{if(!pending.length)return;const rows=pending;pending=[];await commitGlobalCatalogChunk(rows);};
+  try{
+   g.checksum=await hashFileInChunks(file);
+   if(g.sourceFormat==='csv'){
+    await new Promise((resolve,reject)=>{
+     let chain=Promise.resolve(),sourceRowNumber=2,settled=false;
+     const failParse=error=>{if(settled)return;settled=true;reject(error);};
+     Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+      step:(result,parser)=>{
+       const rowNumber=sourceRowNumber++;
+       if(result.errors?.length){parseErrors+=result.errors.length;recordLocalError(result.data||{},rowNumber,new Error('تعذر تحليل صف CSV: '+result.errors.map(x=>x.message).join('، ')));return;}
+       const row=result.data||{};if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
+       acceptRow(row,rowNumber);
+       if(pending.length>=500){
+        parser.pause();const chunk=pending;pending=[];
+        chain=chain.then(()=>commitGlobalCatalogChunk(chunk)).then(()=>parser.resume()).catch(error=>{parser.abort();failParse(error);});
+       }
+      },
+      complete:async()=>{
+       if(settled)return;
+       try{await chain;await flush();if(!rowIndex&&!state.globalCatalogImport.stats.rejected)throw new Error('لم يتم العثور على صفوف بيانات قابلة للقراءة.');settled=true;resolve();}
+       catch(error){failParse(error);}
+      },error:failParse});
+    });
+   }else if(g.sourceFormat==='xlsx'){
+    const parsed=await streamXlsxProductRows(file,async row=>{
+     const rowNumber=Number(row.__countflowRowNumber||rowIndex+2);
+     acceptRow(row,rowNumber);
+     if(pending.length>=500)await flush();
+    });
+    if(parsed.count!==g.count)throw new Error('تغير عدد صفوف XLSX بعد المعاينة. أعد معاينة الملف قبل الاستيراد.');
+    await flush();
+   }else{
+    const parsed=await parseProductImportFile(file),rows=parsed.rows||[];
+    if(parsed.count!==g.count||!rows.length)throw new Error('تعذر إعادة قراءة ملف XLS؛ أعد المعاينة.');
+    for(let i=0;i<rows.length;i++){acceptRow(rows[i],i+2);if(pending.length>=500)await flush();}
+    await flush();
+   }
+   if(rowIndex>g.count)throw new Error('عدد الصفوف أثناء الاستيراد تجاوز العدد الذي تمت معاينته.');
+   const stats=g.stats;
+   $('globalCatalogImportProgressFill').style.width='100%';
+   $('globalCatalogImportProgress').textContent='اكتمل فحص الملف · صفوف '+rowIndex.toLocaleString('en-US')+' · أضيف '+stats.inserted.toLocaleString('en-US')+' · حُدث '+stats.updated.toLocaleString('en-US')+' · رُفض '+stats.rejected.toLocaleString('en-US')+(parseErrors?' · أخطاء تحليل '+parseErrors:'');
+   renderGlobalCatalogImportErrors();
+   notify('اكتمل استيراد الدليل العالمي. الأرصدة وحركات الجرد لم تتغير.');
+   try{await loadCatalog();}catch(refreshError){fail('اكتمل الاستيراد لكن تعذر تحديث عرض الدليل',refreshError);}
+  }catch(error){
+   $('globalCatalogImportProgress').textContent='توقف الاستيراد عند '+Number(g.stats.processed||0).toLocaleString('en-US')+' صف. الدفعات التي قُبلت محفوظة؛ أعد تشغيل الملف نفسه لاستكمال/تحديث السجلات بأمان. '+friendlyErrorMessage(error);
+   fail('تعذر استكمال استيراد الدليل العالمي',error);
+  }finally{
+   g.busy=false;$('globalCatalogImportFile').disabled=false;
+   controls.forEach(id=>$(id).disabled=false);
+   $('globalCatalogImportCommit').disabled=!g.count||!g.mapping?.name||!g.mapping?.base_unit;
+  }
+ }
  function resetProductImport(){
   state.productImportRows=[];state.productImportRowCount=0;state.productImportHeaders=[];state.productImportMapping={};state.productImportMappingId=null;state.productImportFileName='';
   $('productImportFile').value='';$('productImportMapping').classList.add('hidden');$('productImportMapping').innerHTML='';
