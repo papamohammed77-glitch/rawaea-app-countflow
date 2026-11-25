@@ -65,6 +65,75 @@
 @media(max-width:760px){.cf-overview-hero{padding:19px}.cf-overview-analytics-grid,.cf-overview-project-details{grid-template-columns:1fr}.cf-overview-status-chart{justify-content:flex-start;gap:18px}.cf-overview-donut{width:132px;height:132px;flex-basis:132px}.cf-overview-donut:before{inset:13px}.cf-overview-donut-center strong{font-size:23px}}
 @media(max-width:520px){.cf-overview-hero{align-items:stretch}.cf-overview-hero-actions{display:grid;grid-template-columns:1fr 1fr}.cf-overview-filter-panel .cf-analytics-toolbar{grid-template-columns:1fr 1fr}.cf-overview-kpis{gap:8px}.cf-overview-kpi{padding:13px}.cf-overview-kpi strong{font-size:25px}.cf-overview-secondary-kpis{gap:7px}.cf-overview-secondary-kpis article{padding:9px}.cf-overview-project-kpis{gap:7px}.cf-overview-project-kpis article{padding:9px}.cf-overview-status-chart{gap:10px}.cf-overview-donut{width:112px;height:112px;flex-basis:112px}.cf-overview-donut:before{inset:11px}.cf-overview-legend{gap:7px}.cf-overview-legend-item{font-size:10px}.cf-overview-links a{width:100%}}
 
+
+/* LVE-775 — calmer overview: essentials first, detail on demand */
+.cf-overview-hero{align-items:center;padding:18px 20px;margin:4px 0 12px;border:1px solid var(--line);border-radius:18px;background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.cf-overview-eyebrow{color:#2563eb;letter-spacing:0;font-size:11px}
+.cf-overview-hero h2{margin:4px 0;font-size:21px;color:var(--ink)}
+.cf-overview-hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+.cf-overview-meta{gap:10px;margin-top:9px;color:var(--muted);font-size:10px}
+.cf-overview-live{gap:6px;padding:4px 8px;border-radius:99px;background:#f0fdf4;color:#166534}
+.cf-live-dot{width:7px;height:7px;box-shadow:none}
+.cf-overview-hero-actions{gap:7px}
+.cf-overview-hero-actions button{min-height:38px;padding:8px 12px;font-size:12px}
+.cf-overview-hero-button{background:#2563eb;color:#fff}
+.cf-overview-hero-refresh{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.cf-overview-filter-panel{padding:12px 14px;margin-bottom:11px;border-radius:15px;box-shadow:none}
+.cf-overview-primary-filter{display:flex;align-items:flex-end;gap:10px}
+.cf-overview-primary-filter .field{flex:1;min-width:0;max-width:440px}
+.cf-overview-primary-filter .field label{font-size:11px}
+.cf-overview-primary-filter .field select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cf-overview-reset{min-height:38px;padding:8px 11px;white-space:nowrap}
+.cf-overview-advanced{margin-top:9px;padding-top:8px;border-top:1px solid #eef2f6}
+.cf-overview-advanced>summary,.cf-overview-more>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;color:#475569;font-size:12px;font-weight:800;user-select:none}
+.cf-overview-advanced>summary::-webkit-details-marker,.cf-overview-more>summary::-webkit-details-marker{display:none}
+.cf-overview-advanced>summary span{margin-inline-start:auto;color:#94a3b8;font-size:10px;font-weight:600}
+.cf-overview-advanced[open]>summary,.cf-overview-more[open]>summary{color:#1d4ed8}
+.cf-overview-advanced-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px 0 2px}
+.cf-overview-advanced-fields .field{min-width:0}
+.cf-overview-advanced-fields input,.cf-overview-advanced-fields select{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cf-overview-section-heading{margin:14px 2px 8px}
+.cf-overview-section-heading h3{font-size:15px}
+.cf-overview-kpis{gap:10px}
+.cf-overview-kpi{padding:14px 15px;border-radius:15px;box-shadow:none}
+.cf-overview-kpi .cf-kpi-top{font-size:11px}
+.cf-overview-kpi .cf-kpi-top i{width:30px;height:30px;border-radius:9px}
+.cf-overview-kpi strong{font-size:27px;margin:8px 0 0}
+.cf-overview-kpi small{display:block;margin-top:4px;font-size:10px;line-height:1.5}
+.cf-overview-analytics-grid{gap:10px;margin-top:11px}
+.cf-overview-chart-panel{padding:14px;border-radius:15px;box-shadow:none}
+.cf-overview-panel-heading{align-items:center;margin-bottom:9px}
+.cf-overview-panel-heading h3{font-size:13px}
+.cf-overview-panel-icon{width:30px;height:30px;border-radius:9px}
+.cf-overview-status-chart{min-height:145px;gap:16px}
+.cf-overview-donut{width:132px;height:132px;flex-basis:132px}
+.cf-overview-more{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:15px;background:#fff}
+.cf-overview-more-content{padding-top:5px}
+.cf-overview-more-content>.cf-overview-section-heading{margin-top:13px}
+.cf-overview-more-content>.panel{box-shadow:none}
+.cf-overview-more .cf-overview-quicklinks{margin-top:12px;padding:12px}
+.cf-overview-more .cf-overview-links a{padding:8px 10px}
+@media(max-width:760px){
+ .cf-overview-hero{align-items:flex-start;padding:15px}
+ .cf-overview-hero-actions{width:100%}
+ .cf-overview-hero-actions button{flex:1}
+ .cf-overview-primary-filter{align-items:stretch}
+ .cf-overview-primary-filter .field{max-width:none}
+ .cf-overview-advanced-fields{grid-template-columns:1fr}
+ .cf-overview-analytics-grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+ .cf-overview-hero-actions{display:flex;grid-template-columns:none}
+ .cf-overview-hero-actions button{justify-content:center}
+ .cf-overview-primary-filter{flex-direction:column}
+ .cf-overview-reset{align-self:flex-start}
+ .cf-overview-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cf-overview-kpi{padding:11px}
+ .cf-overview-kpi strong{font-size:23px}
+ .cf-overview-status-chart{min-height:125px;gap:12px}
+ .cf-overview-donut{width:112px;height:112px;flex-basis:112px}
+}
+
 </style>
 </head>
 <body>
@@ -126,56 +195,98 @@
     <section id="tab-overview" class="section active cf-overview">
      <div class="cf-overview-hero">
       <div class="cf-overview-brand">
-       <span class="cf-overview-eyebrow"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> COUNTING OPERATIONS INTELLIGENCE</span>
-       <h2 id="welcomeTitle">لوحة التحكم · مركز قيادة الجرد</h2>
-       <p>صورة تشغيلية موحّدة للأعمال المسجلة، وحركة العد، وتغطية الأصناف والمواقع عبر عملياتك المصرّح بها.</p>
-       <div class="cf-overview-meta"><span class="cf-overview-live"><i class="cf-live-dot"></i><span id="overviewConnectionState">مؤشرات من قاعدة CountFlow</span></span><span id="overviewLastUpdated">لم يتم تحديث المؤشرات بعد</span></div>
+       <span class="cf-overview-eyebrow"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> لوحة التحكم</span>
+       <h2 id="welcomeTitle">نظرة عامة</h2>
+       <p>تابع عمليات الجرد وحالة التنفيذ من مكان واحد.</p>
+       <div class="cf-overview-meta">
+        <span class="cf-overview-live"><i class="cf-live-dot" aria-hidden="true"></i><span id="overviewConnectionState">جارٍ تحديث البيانات</span></span>
+        <span id="overviewLastUpdated">آخر تحديث —</span>
+       </div>
       </div>
       <div class="cf-overview-hero-actions">
        <button id="overviewNewOperation" class="cf-overview-hero-button" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد</button>
-       <button id="overviewRefresh" class="cf-overview-hero-refresh" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> تحديث المؤشرات</button>
+       <button id="overviewRefresh" class="cf-overview-hero-refresh" type="button" aria-label="تحديث المؤشرات" title="تحديث المؤشرات"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span>تحديث</span></button>
       </div>
      </div>
+
      <div class="cf-overview-filter-panel">
-      <div class="cf-overview-filter-heading"><div><b>نطاق التحليل</b><small>تتغير جميع المؤشرات والرسوم وفق المرشحات المحددة</small></div><button id="overviewReset" class="cf-overview-reset" type="button"><i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> إعادة ضبط</button></div>
-      <div class="cf-analytics-toolbar">
-       <div class="field"><label for="overviewProjectFilter">ملف التكليف</label><select id="overviewProjectFilter"><option value="">جميع ملفات التكليف المتاحة</option></select></div>
-       <div class="field"><label for="overviewStatusFilter">حالة العملية</label><select id="overviewStatusFilter"><option value="">جميع الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
-       <div class="field"><label for="overviewFrom">من تاريخ البداية المخططة</label><input id="overviewFrom" type="date"></div>
-       <div class="field"><label for="overviewTo">إلى تاريخ البداية المخططة</label><input id="overviewTo" type="date"></div>
+      <div class="cf-overview-primary-filter">
+       <div class="field">
+        <label for="overviewProjectFilter">ملف التكليف</label>
+        <select id="overviewProjectFilter"><option value="">جميع ملفات التكليف</option></select>
+       </div>
+       <button id="overviewReset" class="cf-overview-reset" type="button"><i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> مسح التصفية</button>
       </div>
+      <details class="cf-overview-advanced" id="overviewAdvancedFilters">
+       <summary><i class="fa-solid fa-sliders" aria-hidden="true"></i> تصفية متقدمة <span>اختياري</span></summary>
+       <div class="cf-overview-advanced-fields">
+        <div class="field"><label for="overviewStatusFilter">حالة العملية</label><select id="overviewStatusFilter"><option value="">جميع الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+        <div class="field"><label for="overviewFrom">من تاريخ البداية</label><input id="overviewFrom" type="date"></div>
+        <div class="field"><label for="overviewTo">إلى تاريخ البداية</label><input id="overviewTo" type="date"></div>
+       </div>
+      </details>
      </div>
-     <div class="cf-overview-section-heading"><div><h3>مؤشرات الأداء الرئيسية</h3><p>الأرقام التالية محسوبة من ملخص العمليات المعروض، وليست بيانات تقديرية.</p></div><span class="cf-overview-unit">تحديث مباشر ومصالحة دورية</span></div>
+
+     <div class="cf-overview-section-heading"><div><h3>ملخص العمليات</h3></div></div>
      <div class="cf-overview-kpis">
-      <article class="cf-overview-kpi tone-blue"><div class="cf-kpi-top"><span>إجمالي العمليات</span><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></div><strong id="overviewTotalOperations">0</strong><small>العمليات ضمن المرشحات الحالية</small></article>
-      <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>عمليات قيد التنفيذ</span><i class="fa-solid fa-play-circle" aria-hidden="true"></i></div><strong id="overviewActiveOperations">0</strong><small>عمليات حالتها التشغيلية نشطة</small></article>
-      <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أحداث العد المسجلة</span><i class="fa-solid fa-barcode" aria-hidden="true"></i></div><strong id="overviewEntryEvents">0</strong><small>إجمالي أحداث العد في العمليات</small></article>
-      <article class="cf-overview-kpi tone-teal"><div class="cf-kpi-top"><span>تغطية الأصناف</span><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div><strong id="overviewCoverage">—</strong><small id="overviewCoverageCaption">نسبة موزونة من الأصناف التي سُجل لها عدّ</small></article>
+      <article class="cf-overview-kpi tone-blue"><div class="cf-kpi-top"><span>إجمالي العمليات</span><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></div><strong id="overviewTotalOperations">0</strong></article>
+      <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>قيد التنفيذ</span><i class="fa-solid fa-play-circle" aria-hidden="true"></i></div><strong id="overviewActiveOperations">0</strong></article>
+      <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أحداث العد</span><i class="fa-solid fa-barcode" aria-hidden="true"></i></div><strong id="overviewEntryEvents">0</strong></article>
+      <article class="cf-overview-kpi tone-teal"><div class="cf-kpi-top"><span>تغطية الأصناف</span><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div><strong id="overviewCoverage">—</strong><small id="overviewCoverageCaption">نسبة الأصناف التي سُجل لها عدّ</small></article>
      </div>
-     <div class="cf-overview-secondary-kpis">
-      <article><span class="cf-secondary-icon"><i class="fa-solid fa-check-double" aria-hidden="true"></i></span><div><small>عمليات مكتملة</small><strong id="overviewCompletedTotal">0</strong></div></article>
-      <article><span class="cf-secondary-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></span><div><small>إسنادات نشطة</small><strong id="overviewAssignmentsTotal">0</strong></div></article>
-      <article><span class="cf-secondary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div><small>تغطية المواقع</small><strong id="overviewLocationCoverage">—</strong></div></article>
-      <article><span class="cf-secondary-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><div><small>آخر نشاط عدّ</small><strong id="overviewLastActivity">—</strong></div></article>
-     </div>
-     <div class="cf-overview-section-heading cf-overview-project-heading"><div><h3>ملخص ملفات التكليف</h3><p>بيانات الملف النشط المحدد في مساحة العمل أدناه.</p></div></div>
-     <div class="cf-overview-project-kpis">
-      <article><small>ملفات التكليف</small><strong id="kProjects">0</strong></article>
-      <article><small>أصناف الملف المحدد</small><strong id="kProducts">0</strong></article>
-      <article><small>أعضاء الفريق النشطون</small><strong id="kMembers">0</strong></article>
-      <article><small>جلسات الملف المحدد</small><strong id="kSessions">0</strong></article>
-     </div>
+
      <div class="cf-overview-analytics-grid">
-      <section class="panel cf-overview-chart-panel"><div class="cf-overview-panel-heading"><div><h3>توزيع العمليات حسب الحالة</h3><small>حجم كل حالة من إجمالي العمليات الظاهرة</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span></div><div id="overviewStatusChart" class="cf-overview-status-chart" aria-live="polite"><div class="empty">جار تحميل مؤشرات الحالات…</div></div></section>
-      <section class="panel cf-overview-chart-panel"><div class="cf-overview-panel-heading"><div><h3>أحدث حركة تشغيلية</h3><small>آخر وقت سُجل فيه عدّ لكل عملية</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-wave-square" aria-hidden="true"></i></span></div><div id="overviewRecentActivity" class="cf-overview-activity-list" aria-live="polite"><div class="empty">جار تحميل النشاط…</div></div></section>
+      <section class="panel cf-overview-chart-panel">
+       <div class="cf-overview-panel-heading"><div><h3>حالة العمليات</h3></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span></div>
+       <div id="overviewStatusChart" class="cf-overview-status-chart" aria-live="polite"><div class="empty">جارٍ تحميل البيانات…</div></div>
+      </section>
+      <section class="panel cf-overview-chart-panel">
+       <div class="cf-overview-panel-heading"><div><h3>آخر نشاط</h3></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-wave-square" aria-hidden="true"></i></span></div>
+       <div id="overviewRecentActivity" class="cf-overview-activity-list" aria-live="polite"><div class="empty">جارٍ تحميل النشاط…</div></div>
+      </section>
      </div>
-     <section class="panel cf-overview-performance-panel"><div class="cf-overview-panel-heading"><div><h3>أداء العمليات وتغطية الأصناف</h3><small>ترتيب العمليات حسب نسبة الأصناف التي سُجل لها عدّ، مع إتاحة فتح تفاصيل العملية</small></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span></div><div id="overviewPerformanceChart" class="cf-overview-performance-table" aria-live="polite"><div class="empty">جار تحميل بيانات الأداء…</div></div></section>
-     <div class="cf-overview-project-details">
-      <section class="panel"><div class="cf-overview-panel-heading"><div><h3>حالة ملف التكليف المحدد</h3><small>ملخص الفريق والأصناف والمواقع المرتبطة بالملف</small></div></div><div id="projectSummary" class="empty">اختر تكليفاً أو سجّل تكليفك الأول.</div></section>
-      <section class="panel"><div class="cf-overview-panel-heading"><div><h3>آخر الجلسات في التكليف المحدد</h3><small>آخر الجلسات المرتبطة بالملف الحالي</small></div></div><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></section>
-     </div>
-     <section class="panel cf-overview-quicklinks"><div class="cf-overview-panel-heading"><div><h3>مساحات التشغيل</h3><small>انتقل إلى التطبيق المتخصص دون نقل صلاحياته إلى النظام الأم</small></div></div><div class="cf-overview-links"><a class="link" href="./Countflow-supervisor.html"><i class="fa-solid fa-people-group" aria-hidden="true"></i> مراقبة التنفيذ وإدارة التوزيع</a><a class="link" href="./countflow.html"><i class="fa-solid fa-barcode" aria-hidden="true"></i> واجهة العدّ الميداني</a><a class="link" href="./countflow-control.html"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> Control — المراقبة والمراجعة للقراءة فقط</a></div></section>
-    </section><section id="tab-clients" class="section" data-owner-only><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
+
+     <details class="cf-overview-more" id="overviewMoreDetails">
+      <summary><i class="fa-solid fa-chart-column" aria-hidden="true"></i> عرض تفاصيل إضافية</summary>
+      <div class="cf-overview-more-content">
+       <div class="cf-overview-section-heading"><div><h3>مؤشرات إضافية</h3></div></div>
+       <div class="cf-overview-secondary-kpis">
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-check-double" aria-hidden="true"></i></span><div><small>عمليات مكتملة</small><strong id="overviewCompletedTotal">0</strong></div></article>
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></span><div><small>إسنادات نشطة</small><strong id="overviewAssignmentsTotal">0</strong></div></article>
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div><small>تغطية المواقع</small><strong id="overviewLocationCoverage">—</strong></div></article>
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><div><small>آخر نشاط عدّ</small><strong id="overviewLastActivity">—</strong></div></article>
+       </div>
+
+       <div class="cf-overview-section-heading cf-overview-project-heading"><div><h3>ملف التكليف المحدد</h3></div></div>
+       <div class="cf-overview-project-kpis">
+        <article><small>ملفات التكليف</small><strong id="kProjects">0</strong></article>
+        <article><small>الأصناف</small><strong id="kProducts">0</strong></article>
+        <article><small>أعضاء الفريق النشطون</small><strong id="kMembers">0</strong></article>
+        <article><small>الجلسات</small><strong id="kSessions">0</strong></article>
+       </div>
+
+       <section class="panel cf-overview-performance-panel">
+        <div class="cf-overview-panel-heading"><div><h3>أداء العمليات وتغطية الأصناف</h3></div><span class="cf-overview-panel-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span></div>
+        <div id="overviewPerformanceChart" class="cf-overview-performance-table" aria-live="polite"><div class="empty">جارٍ تحميل بيانات الأداء…</div></div>
+       </section>
+
+       <div class="cf-overview-project-details">
+        <section class="panel"><div class="cf-overview-panel-heading"><div><h3>ملخص ملف التكليف</h3></div></div><div id="projectSummary" class="empty">اختر ملف تكليف لعرض ملخصه.</div></section>
+        <section class="panel"><div class="cf-overview-panel-heading"><div><h3>آخر الجلسات</h3></div></div><div id="recentSessions" class="empty">لا توجد جلسات بعد.</div></section>
+       </div>
+
+       <section class="panel cf-overview-quicklinks">
+        <div class="cf-overview-panel-heading"><div><h3>التطبيقات المرتبطة</h3></div></div>
+        <div class="cf-overview-links">
+         <a class="link" href="./Countflow-supervisor.html"><i class="fa-solid fa-people-group" aria-hidden="true"></i> المشرف</a>
+         <a class="link" href="./countflow.html"><i class="fa-solid fa-barcode" aria-hidden="true"></i> العد الميداني</a>
+         <a class="link" href="./countflow-control.html"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> المراقبة والمراجعة</a>
+        </div>
+       </section>
+      </div>
+     </details>
+    </section>
+<section id="tab-clients" class="section" data-owner-only><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
      <div class="split"><div class="panel"><h3>إضافة عميل</h3><form id="clientForm"><div class="fields">
       <div class="field"><label for="clientCode">كود العميل</label><input id="clientCode" required maxlength="40"></div><div class="field"><label for="clientName">اسم العميل</label><input id="clientName" required maxlength="160"></div>
       <div class="field"><label for="clientIndustry">النشاط</label><input id="clientIndustry" maxlength="120"></div><div class="field"><label for="clientContact">مسؤول التواصل</label><input id="clientContact" maxlength="120"></div>
@@ -1471,12 +1582,12 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    if(id)selectOperation(id);
   }));
 
-  const activity=[...rows].filter(item=>item.last_counted_at).sort((a,b)=>new Date(b.last_counted_at)-new Date(a.last_counted_at)).slice(0,6);
+  const activity=[...rows].filter(item=>item.last_counted_at).sort((a,b)=>new Date(b.last_counted_at)-new Date(a.last_counted_at)).slice(0,4);
   $('overviewRecentActivity').innerHTML=activity.length?activity.map(item=>'<div class="cf-overview-activity-item"><span class="cf-overview-activity-icon"><i class="fa-solid fa-barcode" aria-hidden="true"></i></span><div class="cf-overview-activity-main"><b>'+esc(item.operation_name||'عملية غير مسماة')+'</b><small>'+esc(item.project_name||'')+' · '+new Date(item.last_counted_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'})+'</small></div><div class="cf-overview-activity-meta"><b>'+fmt(item.entry_events)+'</b> حدث عدّ</div></div>').join(''):'<div class="empty">'+(state.overviewError?'تعذر تحميل النشاط من قاعدة البيانات.':'لم يُسجل نشاط عدّ ضمن العمليات المعروضة بعد.')+'</div>';
 
   if(!state.overviewError&&state.overviewLoadedAt){
    const realtimeStatus=state.overviewRealtimeStatus;
-   $('overviewConnectionState').textContent=realtimeStatus==='SUBSCRIBED'?'مزامنة آنية متصلة · مراجعة دورية كل 30 ثانية':realtimeStatus==='POLLING'?'تحديث دوري كل 30 ثانية':'المزامنة الآنية غير مؤكدة · المراجعة الدورية مستمرة';
+   $('overviewConnectionState').textContent=realtimeStatus==='SUBSCRIBED'?'متصل':realtimeStatus==='POLLING'?'تحديث دوري':'حالة الاتصال غير مؤكدة';
   }
  }
 
