@@ -1171,8 +1171,8 @@ test("Admin overview does not report percentages when the measurement denominato
   const admin = read("countflow-admin.html");
   assert.match(admin, /activeProductTotal>0\?Math\.min\(100,countedProductTotal\/activeProductTotal\*100\):null/);
   assert.match(admin, /totalLocationPositions>0\?Math\.min\(100,countedLocationTotal\/totalLocationPositions\*100\):null/);
-  assert.match(admin, /overviewCoverage'\)\\.textContent=percent\(productCoverage\)/);
-  assert.match(admin, /overviewLocationCoverage'\)\\.textContent=percent\(locationCoverage\)/);
+  assert.match(admin, /overviewCoverage'\)\.textContent=percent\(productCoverage\)/);
+  assert.match(admin, /overviewLocationCoverage'\)\.textContent=percent\(locationCoverage\)/);
 });
 
 test("Admin overview keeps operational navigation and responsive executive dashboard surfaces", () => {
@@ -1187,8 +1187,8 @@ test("Admin overview keeps operational navigation and responsive executive dashb
 
 test("Admin overview launch action opens the existing operation-create workflow and Realtime subscribes to count entries", () => {
   const admin = read("countflow-admin.html");
-  assert.match(admin, /overviewNewOperation'\)\\.onclick=\\(\\)=>\\{activateTab\\('operations'\\);openOperationCreateModal\\(\\);\\}/);
+  assert.match(admin, /overviewNewOperation'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
   assert.match(admin, /'count_sessions','count_members','count_entries'/);
   assert.match(admin, /reconcileMs:30000/);
-  assert.match(admin, /state\\.overviewRealtimeStatus=status/);
+  assert.match(admin, /state\.overviewRealtimeStatus=status/);
 });
