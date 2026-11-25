@@ -1,3 +1,23 @@
+## LVE-2026-11-25-782 — إصلاح توقف تنقل CountFlow Admin
+
+**Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
+**Repository:** papamohammed77-glitch/rawaea-app-countflow — **Branch:** main  
+**HEAD الذي اجتاز CI:** \`e2ade95dda70d954e7aeb2466adf5db5484d8f1b\`  
+**الحالة:** RESOLVED — SOURCE AND CI VERIFIED  
+**التقرير:** \`Reports/LVE-2026-11-25-782_ADMIN_TAB_BOOT_FAILURE.md\`  
+**CI:** [Run #368](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45702250074) — SUCCESS  
+**الاختبارات:** 92 passed / 0 failed؛ Playwright production login shell: 3 passed  
+**Service Worker:** \`countflow-sw-20261125-9\`
+
+**السبب الجذري:** ربط أزرار الاستيراد العالمي في \`countflow-admin.html\` كان يستدعي \`previewGlobalCatalogImport\` و\`commitGlobalCatalogImport\` و\`resetGlobalCatalogImport\` دون تعريف أي منها. أدى ReferenceError أثناء تنفيذ IIFE إلى إيقاف التهيئة قبل تسجيل مستمعي تبويبات القائمة.
+
+**الإصلاح:** استعادة الدوال الثلاث ومسار التطبيع/المعاينة/الاستيراد المتدفق؛ استخدام RPC \`count_upsert_catalog_products_chunk\` الحالي بحد 500 صف و90,000 صف للملف؛ تحديث اختبارات توقيعات UOM القديمة؛ وإصدار Service Worker جديد لإبطال نسخة Shell المخزنة السابقة.
+
+**التحقق:** تعريف واحد لكل handler؛ ربط الأزرار قائم؛ CI وDeno وNode tests وبناء Pages وPlaywright نجحوا. التحقق البصري من جلسة Admin مصادق عليها ما زال بانتظار المالك.
+
+**سلامة البيانات:** لم تُنفذ أي عملية استيراد أو كتابة بيانات خلال الإصلاح، ولم تُلمس أرصدة العد أو دفعة QA90K المحمية، ولم تُعد تشغيل أي migration.
+
+---
 ## LVE-2026-11-25-781 — نظام بيانات الأصناف متعدد الوحدات والباركود
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
