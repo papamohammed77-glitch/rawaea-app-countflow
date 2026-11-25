@@ -11,7 +11,7 @@ function requireEnv(...values: string[]) {
 }
 
 test.describe("CountFlow supervisor", () => {
-  test("authenticates and exposes project controls and logout", async ({ page }) => {
+  test("authenticates and exposes monitoring, team assignment, and logout", async ({ page }) => {
     requireEnv(baseUrl, supervisorEmail, supervisorPassword);
     await page.goto("/Countflow-supervisor.html");
     await page.locator("#email").fill(supervisorEmail);
@@ -22,6 +22,8 @@ test.describe("CountFlow supervisor", () => {
     await expect(page.locator("#logout")).toBeVisible();
     await expect(page.locator("#app")).toBeVisible();
     await expect(page.locator("#tab-live")).toBeVisible();
+    await expect(page.locator("[data-tab]")).toHaveCount(2);
+    await expect(page.locator('[data-tab="team"]')).toBeVisible();
   });
 });
 
