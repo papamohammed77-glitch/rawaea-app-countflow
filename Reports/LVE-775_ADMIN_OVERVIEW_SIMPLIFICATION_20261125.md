@@ -47,3 +47,18 @@
 ## توجيه الاستكمال
 
 ابدأ من أعلى `CURRENT_STATE.md`، وتحقق من HEAD ونتيجة Actions الخاصة بهذا التغيير. لا توسع النطاق إلى التطبيقات الأخرى. بعد CI، راجع الشكل الفعلي من حساب المالك: اختبر فتح/إغلاق الفلاتر والتفاصيل، تغيير ملف التكليف، تحديث المؤشرات، وإنشاء عملية عبر المسار القائم دون اعتماد أو ترحيل بيانات تجريبية.
+
+## نتائج التحقق بعد التنفيذ
+
+**GitHub Actions:** [Run 45533832571 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45533832571)  
+**الرأس الذي اجتاز الاختبارات:** `d7e88201f2ec10f3a600687c6707e6d96d010061`.
+
+- Node Unit Tests: **68/68 PASS**، صفر إخفاق وصفر skipped.
+- Deno Type Check لوظيفتي Edge Function: PASS.
+- Cloudflare Pages allowlist build: PASS.
+- Playwright production login shell: **3/3 PASS**.
+- اختبار Playwright الأول أكد أن Pages Production يقدّم `build-info.json` المطابق تماماً لـ`d7e88201f2ec10f3a600687c6707e6d96d010061`.
+- نجاح Playwright يخص غلاف الدخول العام ومطابقة SHA؛ لا يُعد اختباراً مصادقاً لداخل Overview.
+
+**الحالة:** Code + automated CI + Production source parity = PASS.  
+**القبول البصري بعد تسجيل دخول المالك وفتح تفاصيل Overview على الكمبيوتر والهاتف = OPEN / لم يُنفذ.**
