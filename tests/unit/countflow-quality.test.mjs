@@ -1285,3 +1285,97 @@ test("CountFlow client mapping reset and attach actions provide guarded feedback
   assert.match(admin, /state\.project\.client_id!==id/);
   assert.match(admin, /catch\(error\)\{fail\('تعذر إدراج الصنف في ملف التكليف',error\);\}/);
 });
+
+
+test("Admin client directory uses searchable server-side pagination, status filtering and stable sorting", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="clientSearch"/);
+ assert.match(admin,/id="clientStatusFilter"/);
+ assert.match(admin,/id="clientPagination"/);
+ assert.match(admin,/clientDirectoryPageSize:25/);
+ assert.match(admin,/\.range\(\(page-1\)\*size,page\*size-1\)/);
+ assert.match(admin,/state\.clientSortAsc/);
+ assert.match(admin,/managerClientIds\.join\(','\)/);
+ assert.doesNotMatch(admin,/clientForm/);
+ assert.doesNotMatch(admin,/clientAdminForm/);
+ assert.doesNotMatch(admin,/clientAdminTarget/);
+});
+
+test("Admin client directory reads the complete client contact schema and client-scoped manager memberships", () => {
+ const admin=read("countflow-admin.html");
+ for(const field of ["contact_name","contact_email","contact_phone","default_timezone","default_currency"]) assert.ok(admin.includes(field));
+ assert.match(admin,/from\('count_client_members'\)\.select\('id,client_id,user_id,role_id,display_name,username,status,created_at,count_roles!inner\(role_key,name,scope\)'\)/);
+ assert.match(admin,/\.in\('client_id',clientIds\)/);
+ assert.match(admin,/\.eq\('count_roles\.role_key','client_admin'\)/);
+ assert.match(admin,/\.eq\('count_roles\.scope','client'\)/);
+});
+
+test("Client create and edit modal preserves immutable codes and updates only existing CountFlow client columns", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/function openClientModal\(client=null\)/);
+ assert.match(admin,/function saveClientModal\(event,client\)/);
+ assert.match(admin,/payload=\{name,industry:/);
+ assert.match(admin,/db\.from\('count_clients'\)\.update\(payload\)\.eq\('id',client\.id\)/);
+ assert.match(admin,/payload\.code=code;payload\.status='active';payload\.created_by=state\.user\.id/);
+ assert.match(admin,/id="cfClientCode" required maxlength="40" pattern=/);
+ assert.match(admin,/الكود ثابت بعد إنشاء العميل/);
+ assert.doesNotMatch(admin,/from\('count_clients'\)\.delete/);
+});
+
+test("Client create and update actions are recorded in the client audit log without swallowing audit failures", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/async function writeClientAudit\(clientId,action,entityType,entityId,details=\{\}\)/);
+ assert.match(admin,/from\('count_client_audit_log'\)\.insert/);
+ assert.match(admin,/client\?'client\.updated':'client\.created'/);
+ assert.match(admin,/if\(auditError\)notify\('تم حفظ العميل، لكن تعذر تسجيل حدث التدقيق/);
+});
+
+test("Client manager management uses the existing provisioning Edge action and never exposes cross-client membership rows", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/action:'create_client_admin',client_id:clientId,email,password,display_name:displayName,username/);
+ assert.match(admin,/async function openClientManagers\(clientId\)/);
+ assert.match(admin,/clientDirectoryManagers\.filter\(m=>m\.client_id===clientId\)/);
+ assert.match(admin,/membership_reused/);
+ assert.match(admin,/account_reused/);
+});
+
+test("Client manager profile editing is scoped by both member and client identifiers", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/from\('count_client_members'\)\.update\(\{display_name:displayName,username\}\)\.eq\('id',manager\.id\)\.eq\('client_id',clientId\)/);
+ assert.match(admin,/client_manager\.updated/);
+});
+
+test("Client manager suspension is reversible and never physically deletes an Auth membership", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/async function toggleClientManagerStatus\(client,manager\)/);
+ assert.match(admin,/const next=manager\.status==='active'\?'paused':'active'/);
+ assert.match(admin,/from\('count_client_members'\)\.update\(\{status:next\}\)\.eq\('id',manager\.id\)\.eq\('client_id',client\.id\)/);
+ assert.match(admin,/client_manager\.paused/);
+ assert.match(admin,/client_manager\.reactivated/);
+ assert.doesNotMatch(admin,/from\('count_client_members'\)\.delete/);
+});
+
+test("Client manager password reset delegates to the existing authenticated Edge Function action", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/action:'reset_password',member_type:'client',client_id:client\.id,member_id:manager\.id,new_password/);
+ assert.match(admin,/كلمة المرور يجب ألا تقل عن 10 أحرف/);
+});
+
+test("Client directory summary counts are read-only and distinguish active, suspended and active managers", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/async function loadClientDirectorySummary\(\)/);
+ assert.match(admin,/count:'exact',head:true/);
+ assert.match(admin,/clientSummaryTotal/);
+ assert.match(admin,/clientSummaryActive/);
+ assert.match(admin,/clientSummarySuspended/);
+ assert.match(admin,/clientSummaryManagers/);
+ assert.doesNotMatch(admin,/from\('count_client_members'\)\.insert/);
+});
+
+test("Client directory responsive styles preserve mobile access to search, filters, table and pagination", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/@media\(max-width:900px\)\{\.cf-client-summary/);
+ assert.match(admin,/@media\(max-width:560px\)\{\.cf-client-summary/);
+ assert.match(admin,/cf-client-manager-list/);
+ assert.match(admin,/cf-client-pagination/);
+});

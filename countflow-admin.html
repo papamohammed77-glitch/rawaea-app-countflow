@@ -149,6 +149,49 @@
 @media(max-width:780px){.cf-catalog-search-row{grid-template-columns:1fr 1fr}.cf-catalog-search-row .field:first-child{grid-column:1/-1}.cf-catalog-scope-panel{grid-template-columns:1fr}}
 @media(max-width:520px){.cf-catalog-search-row{grid-template-columns:1fr}.cf-catalog-search-row .field:first-child{grid-column:auto}.cf-catalog-tabs,.cf-catalog-editor-tabs{display:grid;grid-template-columns:1fr 1fr}}
 
+
+/* Client directory — searchable, paginated and responsive */
+.cf-client-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 14px}
+.cf-client-summary article{min-width:0;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.cf-client-summary small,.cf-client-summary span{display:block;color:var(--muted);font-size:11px;line-height:1.7}
+.cf-client-summary strong{display:block;margin:5px 0 1px;color:var(--navy);font-size:25px;font-variant-numeric:tabular-nums}
+.cf-client-directory{padding:15px}
+.cf-client-toolbar{display:grid;grid-template-columns:minmax(240px,1.5fr) minmax(160px,.65fr) auto;align-items:end;gap:10px;margin-bottom:12px}
+.cf-client-toolbar .field{min-width:0}
+.cf-client-toolbar input,.cf-client-toolbar select{width:100%;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.cf-client-filter-actions{display:flex;align-items:end}
+.cf-client-filter-actions button{white-space:nowrap}
+.cf-client-list-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 1px 10px}
+.cf-client-table{min-width:1120px}
+.cf-client-table thead th{position:sticky;top:0;z-index:5;background:#f8fafc}
+.cf-client-sort{padding:0;background:transparent;color:inherit;font-size:12px;font-weight:850;border-radius:0}
+.cf-client-sort:hover{transform:none;color:#2563eb}
+.cf-client-manager-cell{max-width:230px;white-space:normal;line-height:1.55}
+.cf-client-manager-cell b{display:block;font-size:12px}
+.cf-client-manager-cell .sub{overflow-wrap:anywhere}
+.cf-client-row-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cf-client-row-actions button{padding:7px 9px;border-radius:9px;font-size:11px}
+.cf-client-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-top:13px}
+.cf-client-pagination .actions{margin:0}
+.cf-client-modal{direction:rtl;text-align:right;color:var(--ink)}
+.cf-client-modal .cf-client-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;margin:-4px -4px 15px;border:1px solid var(--line);border-radius:13px;background:#f8fafc}
+.cf-client-modal .cf-client-modal-head b{font-size:15px}
+.cf-client-modal .cf-client-modal-head small{display:block;color:var(--muted);font-size:11px}
+.cf-client-modal .fields{gap:12px}
+.cf-client-modal .field input,.cf-client-modal .field select{width:100%;min-width:0;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.cf-client-modal .field textarea{width:100%;min-height:78px;padding:10px 11px;border:1px solid var(--line);border-radius:10px}
+.cf-client-modal .hint{margin-top:3px}
+.cf-client-manager-list{max-height:44vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.cf-client-manager-list table{min-width:650px}
+.cf-client-manager-list th{position:sticky;top:0;z-index:2}
+.cf-client-manager-actions{display:flex;gap:5px;flex-wrap:wrap}
+.cf-client-manager-actions button{padding:6px 8px;font-size:10px;border-radius:8px}
+.cf-client-manager-add{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 11px}
+.cf-client-readonly-note{padding:9px 11px;border-radius:10px;background:#f8fafc;color:var(--muted);font-size:11px;line-height:1.7}
+.cf-client-directory .empty{padding:30px 16px}
+@media(max-width:900px){.cf-client-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-client-toolbar{grid-template-columns:minmax(0,1fr) minmax(150px,.6fr)}.cf-client-filter-actions{grid-column:1/-1}.cf-client-filter-actions button{width:100%}}
+@media(max-width:560px){.cf-client-summary{gap:8px}.cf-client-summary article{padding:11px}.cf-client-summary strong{font-size:22px}.cf-client-toolbar{grid-template-columns:1fr}.cf-client-filter-actions{grid-column:auto}.cf-client-list-meta{align-items:flex-start}.cf-client-pagination{align-items:stretch}.cf-client-pagination .actions{width:100%}.cf-client-pagination .actions button{flex:1}}
+
 </style>
 </head>
 <body>
@@ -301,17 +344,32 @@
       </div>
      </details>
     </section>
-<section id="tab-clients" class="section" data-owner-only><div class="headrow"><div><h2>العملاء ومديروهم</h2><p class="hint">مالك المنصة فقط ينشئ العملاء ومديريهم. إدارة الترخيص منفصلة وخاصة بالمالك.</p></div></div>
-     <div class="split"><div class="panel"><h3>إضافة عميل</h3><form id="clientForm"><div class="fields">
-      <div class="field"><label for="clientCode">كود العميل</label><input id="clientCode" required maxlength="40"></div><div class="field"><label for="clientName">اسم العميل</label><input id="clientName" required maxlength="160"></div>
-      <div class="field"><label for="clientIndustry">النشاط</label><input id="clientIndustry" maxlength="120"></div><div class="field"><label for="clientContact">مسؤول التواصل</label><input id="clientContact" maxlength="120"></div>
-      <div class="field"><label for="clientEmail">بريد التواصل</label><input id="clientEmail" type="email"></div><div class="field"><label for="clientPhone">الهاتف</label><input id="clientPhone" maxlength="40"></div>
-      <div class="field"><label for="clientCurrency">العملة</label><select id="clientCurrency"><option value="EGP">EGP</option><option value="SAR">SAR</option><option value="AED">AED</option><option value="USD">USD</option></select></div>
-      <div class="field"><label for="clientTimezone">المنطقة الزمنية</label><select id="clientTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div></div><div class="actions"><button class="primary">حفظ العميل</button></div></form></div>
-      <div class="panel"><h3>إضافة مدير عميل</h3><form id="clientAdminForm"><div class="field"><label for="clientAdminTarget">العميل</label><select id="clientAdminTarget" required></select></div>
-       <div class="fields"><div class="field"><label for="clientAdminName">الاسم</label><input id="clientAdminName" required maxlength="120"></div><div class="field"><label for="clientAdminUsername">اسم المستخدم</label><input id="clientAdminUsername" required maxlength="100"></div><div class="field"><label for="clientAdminEmail">البريد</label><input id="clientAdminEmail" type="email" required></div><div class="field"><label for="clientAdminPassword">كلمة المرور الأولية</label><input id="clientAdminPassword" type="password" minlength="10" autocomplete="new-password"></div></div><div class="actions"><button class="primary">إنشاء / ربط مدير العميل</button></div><p class="hint">إعادة استخدام حساب Auth مؤكد لا تغير كلمة مروره.</p></form></div></div>
-     <div class="panel"><h3>العملاء المسجلون</h3><div id="clientList" class="tablewrap"></div></div></section>
-    <section id="tab-projects" class="section"><div class="headrow"><div><h2>ملفات التكليف ومشاريع العملاء</h2><p class="hint">ملف التكليف مساحة دائمة لأصناف العميل ومواقعه وأعضائه؛ تنشأ بداخله عمليات جرد متكررة دون إعادة إدخال الأصناف.</p></div></div>
+<section id="tab-clients" class="section" data-owner-only>
+ <div class="headrow">
+  <div><h2>العملاء ومديروهم</h2><p class="hint">دليل الجهات المسجلة ومديري حساباتها. إنشاء العملاء ومديريهم وإدارة حالاتهم متاح لمالك المنصة فقط.</p></div>
+  <div class="actions">
+   <button id="clientRefresh" class="soft" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> تحديث</button>
+   <button id="clientAdd" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> عميل جديد</button>
+  </div>
+ </div>
+ <div class="cf-client-summary" aria-label="ملخص دليل العملاء">
+  <article><small>إجمالي العملاء</small><strong id="clientSummaryTotal">0</strong><span>جميع الحالات</span></article>
+  <article><small>عملاء نشطون</small><strong id="clientSummaryActive">0</strong><span>متاحون للتكليفات الجديدة</span></article>
+  <article><small>موقوفون</small><strong id="clientSummarySuspended">0</strong><span>محفوظون دون حذف</span></article>
+  <article><small>مديرو عملاء نشطون</small><strong id="clientSummaryManagers">0</strong><span>حسابات إدارية مرتبطة</span></article>
+ </div>
+ <div class="panel cf-client-directory">
+  <div class="cf-client-toolbar">
+   <div class="field"><label for="clientSearch">البحث الذكي</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" maxlength="80" placeholder="اسم العميل، الكود، النشاط، الهاتف، البريد أو اسم المدير…"></div>
+   <div class="field"><label for="clientStatusFilter">حالة العميل</label><select id="clientStatusFilter"><option value="all">كل الحالات</option><option value="active">نشط</option><option value="suspended">موقوف</option><option value="archived">مؤرشف</option></select></div>
+   <div class="cf-client-filter-actions"><button id="clientClearFilters" class="soft" type="button">مسح البحث والمرشحات</button></div>
+  </div>
+  <div class="cf-client-list-meta"><span id="clientResultCount" class="hint" aria-live="polite">جار تحميل دليل العملاء…</span><span class="hint">النتائج محمّلة من قاعدة البيانات بصفحات، وليست قائمة محدودة داخل المتصفح.</span></div>
+  <div id="clientList" class="tablewrap" aria-live="polite" aria-busy="false"></div>
+  <div id="clientPagination" class="cf-client-pagination"></div>
+ </div>
+</section>
+<section id="tab-projects" class="section"><div class="headrow"><div><h2>ملفات التكليف ومشاريع العملاء</h2><p class="hint">ملف التكليف مساحة دائمة لأصناف العميل ومواقعه وأعضائه؛ تنشأ بداخله عمليات جرد متكررة دون إعادة إدخال الأصناف.</p></div></div>
      <div class="split"><div class="panel"><h3>إنشاء ملف تكليف والعملية الأولى</h3><form id="projectForm">
       <div class="field" data-owner-only><label for="projectClient">العميل</label><select id="projectClient" required><option value="">اختر العميل</option></select></div>
       <div class="fields">
@@ -540,7 +598,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogClientId:null,catalogOptionProducts:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],clientDirectoryRows:[],clientDirectoryManagers:[],clientDirectoryPage:1,clientDirectoryPageSize:25,clientDirectoryTotal:0,clientSort:'created_at',clientSortAsc:false,clientSearchTimer:null,roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogClientId:null,catalogOptionProducts:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -2102,14 +2160,225 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  }
  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);$('loginError').textContent='';try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;state.user=data.user;await bootstrap();}catch(err){console.error('Admin sign-in failed',err);showLogin(friendlyErrorMessage(err));}finally{setBusy(f,false);}});
  
- async function loadClients(){if(!state.user)return;let q=db.from('count_clients').select('id,code,name,industry,contact_email,default_timezone,default_currency,status,created_at').order('created_at',{ascending:false});if(!state.platformOwner&&state.clientId)q=q.eq('id',state.clientId);const {data,error}=await q.limit(300);if(error)throw error;state.clients=data||[];if(!state.clientId&&state.platformOwner&&state.clients.length)state.clientId=state.clients[0].id;
-  if($('projectClient'))$('projectClient').innerHTML='<option value="">اختر العميل</option>'+state.clients.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.clientId?'selected':'')+'>'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');
-  if($('clientAdminTarget'))$('clientAdminTarget').innerHTML=state.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');
+ async function loadClients(){
+  if(!state.user)return;
+  const rows=[];let offset=0;const pageSize=500;
+  while(true){
+   let q=db.from('count_clients').select('id,code,name,industry,contact_name,contact_email,contact_phone,default_timezone,default_currency,status,created_at').order('created_at',{ascending:false}).order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   if(!state.platformOwner&&state.clientId)q=q.eq('id',state.clientId);
+   const {data,error}=await q;if(error)throw error;
+   const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+  }
+  state.clients=rows;
+  if(!state.clientId&&state.platformOwner&&state.clients.length)state.clientId=state.clients[0].id;
+  const activeClients=state.clients.filter(c=>c.status==='active');
+  if($('projectClient'))$('projectClient').innerHTML='<option value="">اختر العميل</option>'+activeClients.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.clientId?'selected':'')+'>'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');
   if(!state.catalogClientId)state.catalogClientId=state.clientId||state.clients[0]?.id||null;
   if($('catalogClientScope')){$('catalogClientScope').innerHTML='<option value="">اختر المؤسسة</option>'+state.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');if(state.catalogClientId)$('catalogClientScope').value=state.catalogClientId;}
-
-  if($('clientList'))$('clientList').innerHTML=state.clients.length?'<table><thead><tr><th>العميل</th><th>الكود</th><th>النشاط</th><th>العملة</th><th>الحالة</th></tr></thead><tbody>'+state.clients.map(c=>'<tr><td>'+esc(c.name)+'<span class="sub">'+esc(c.contact_email||'')+'</span></td><td>'+esc(c.code)+'</td><td>'+esc(c.industry||'—')+'</td><td>'+esc(c.default_currency)+'</td><td>'+statusPill(c.status)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لا يوجد عملاء بعد.</div>';
+  if($('clientList')&&state.platformOwner){await loadClientDirectorySummary();await loadClientDirectory();}
  }
+ function clientById(id){return state.clients.find(c=>c.id===id)||state.clientDirectoryRows.find(c=>c.id===id)||null;}
+ function clientStatusLabel(status){return ({active:'نشط',suspended:'موقوف',archived:'مؤرشف',paused:'معلق',removed:'أزيل'})[String(status||'').toLowerCase()]||statusName(status);}
+ async function writeClientAudit(clientId,action,entityType,entityId,details={}){
+  const {error}=await db.from('count_client_audit_log').insert({client_id:clientId,actor_id:state.user.id,action,entity_type:entityType,entity_id:entityId||null,details});
+  return error||null;
+ }
+ async function loadClientDirectorySummary(){
+  const [all,active,suspended,managerRows]=await Promise.all([
+   db.from('count_clients').select('id',{count:'exact',head:true}),
+   db.from('count_clients').select('id',{count:'exact',head:true}).eq('status','active'),
+   db.from('count_clients').select('id',{count:'exact',head:true}).eq('status','suspended'),
+   db.from('count_client_members').select('id,count_roles!inner(role_key,scope)',{count:'exact',head:true}).eq('status','active').eq('count_roles.role_key','client_admin').eq('count_roles.scope','client')
+  ]);
+  for(const [label,result] of [['العملاء',all],['العملاء النشطون',active],['العملاء الموقوفون',suspended],['مديرو العملاء',managerRows]])if(result.error)throw new Error(label+': '+result.error.message);
+  $('clientSummaryTotal').textContent=Number(all.count||0).toLocaleString('ar-EG');
+  $('clientSummaryActive').textContent=Number(active.count||0).toLocaleString('ar-EG');
+  $('clientSummarySuspended').textContent=Number(suspended.count||0).toLocaleString('ar-EG');
+  $('clientSummaryManagers').textContent=Number(managerRows.count||0).toLocaleString('ar-EG');
+ }
+ async function loadClientDirectory(){
+  if(!state.user||!state.platformOwner)return;
+  const host=$('clientList');if(!host)return;
+  host.setAttribute('aria-busy','true');
+  try{
+   const rawTerm=$('clientSearch')?.value||'';
+   const term=rawTerm.trim().replace(/[%,().]/g,' ').replace(/["'\\]/g,' ').replace(/\s+/g,' ').slice(0,80).trim();
+   const status=$('clientStatusFilter')?.value||'all';
+   const sortKeys=['created_at','code','name','industry','status'];const sort=sortKeys.includes(state.clientSort)?state.clientSort:'created_at';
+   let managerClientIds=[];
+   if(term){
+    const managers=await db.from('count_client_members').select('client_id,count_roles!inner(role_key,scope)').eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').or('display_name.ilike.%'+term+'%,username.ilike.%'+term+'%').limit(1000);
+    if(managers.error)throw managers.error;
+    managerClientIds=[...new Set((managers.data||[]).map(m=>m.client_id).filter(Boolean))];
+   }
+   let q=db.from('count_clients').select('id,code,name,industry,contact_name,contact_email,contact_phone,default_timezone,default_currency,status,created_at',{count:'exact'}).order(sort,{ascending:state.clientSortAsc}).order('id',{ascending:true});
+   if(status!=='all')q=q.eq('status',status);
+   if(term){
+    const clientFields=['name','code','industry','contact_name','contact_email','contact_phone'].map(k=>k+'.ilike.%'+term+'%').join(',');
+    const filters=managerClientIds.length?[clientFields,'id.in.('+managerClientIds.join(',')+')'].join(','):clientFields;
+    q=q.or(filters);
+   }
+   const page=Math.max(1,Number(state.clientDirectoryPage)||1),size=state.clientDirectoryPageSize||25;
+   const {data,error,count}=await q.range((page-1)*size,page*size-1);if(error)throw error;
+   state.clientDirectoryRows=data||[];state.clientDirectoryTotal=Number(count||0);
+   const clientIds=state.clientDirectoryRows.map(c=>c.id);
+   if(clientIds.length){
+    const m=await db.from('count_client_members').select('id,client_id,user_id,role_id,display_name,username,status,created_at,count_roles!inner(role_key,name,scope)').in('client_id',clientIds).eq('count_roles.role_key','client_admin').eq('count_roles.scope','client').order('created_at',{ascending:false}).limit(500);
+    if(m.error)throw m.error;state.clientDirectoryManagers=m.data||[];
+   }else state.clientDirectoryManagers=[];
+   const managerByClient=new Map();
+   for(const m of state.clientDirectoryManagers){if(!managerByClient.has(m.client_id))managerByClient.set(m.client_id,[]);managerByClient.get(m.client_id).push(m);}
+   const headers=[['code','الكود'],['name','اسم العميل'],['industry','النشاط'],['contact_name','مسؤول التواصل'],['status','الحالة'],['created_at','تاريخ التسجيل']];
+   const headerHtml=headers.map(([key,label])=>'<th><button type="button" class="cf-client-sort" data-client-sort="'+key+'">'+label+(sort===key?(state.clientSortAsc?' ↑':' ↓'):' ↕')+'</button></th>').join('');
+   host.innerHTML=state.clientDirectoryRows.length
+    ?'<table class="cf-client-table"><thead><tr>'+headerHtml+'<th>مدير العميل</th><th>التواصل والتهيئة</th><th>إجراءات</th></tr></thead><tbody>'+state.clientDirectoryRows.map(c=>{
+      const managers=managerByClient.get(c.id)||[];
+      const managerHtml=managers.length?managers.map(m=>'<div><b>'+esc(m.display_name||'مدير دون اسم')+'</b><span class="sub" dir="auto">@'+esc(m.username||'—')+' · '+esc(clientStatusLabel(m.status))+'</span></div>').join(''):'<span class="pill warn">لم يُعيّن مدير</span>';
+      const contact=[c.contact_email,c.contact_phone].filter(Boolean).map(esc).join('<br>');
+      const actions='<div class="cf-client-row-actions"><button type="button" class="soft" data-client-edit="'+esc(c.id)+'">فتح / تعديل</button><button type="button" class="primary" data-client-managers="'+esc(c.id)+'">المديرون ('+managers.length+')</button></div>';
+      return '<tr><td><b>'+esc(c.code)+'</b></td><td><b>'+esc(c.name)+'</b><span class="sub">'+esc(c.default_currency||'EGP')+' · '+esc(c.default_timezone||'—')+'</span></td><td>'+esc(c.industry||'—')+'</td><td>'+esc(c.contact_name||'—')+'</td><td>'+statusPill(c.status)+'</td><td>'+date(c.created_at)+'</td><td class="cf-client-manager-cell">'+managerHtml+'</td><td>'+(contact||'<span class="muted">غير مسجل</span>')+'</td><td>'+actions+'</td></tr>';
+     }).join('')+'</tbody></table>'
+    :'<div class="empty"><b>لا توجد نتائج مطابقة</b><p class="hint">غيّر عبارة البحث أو حالة العميل، أو أنشئ عميلاً جديداً.</p></div>';
+   host.querySelectorAll('[data-client-sort]').forEach(b=>b.onclick=()=>{const key=b.dataset.clientSort;if(state.clientSort===key)state.clientSortAsc=!state.clientSortAsc;else{state.clientSort=key;state.clientSortAsc=true;}state.clientDirectoryPage=1;loadClientDirectory().catch(e=>fail('تعذر ترتيب دليل العملاء',e));});
+   host.querySelectorAll('[data-client-edit]').forEach(b=>b.onclick=()=>{const c=state.clientDirectoryRows.find(x=>x.id===b.dataset.clientEdit);if(c)openClientModal(c);});
+   host.querySelectorAll('[data-client-managers]').forEach(b=>b.onclick=()=>openClientManagers(b.dataset.clientManagers));
+   const pages=Math.max(1,Math.ceil(state.clientDirectoryTotal/size));
+   $('clientResultCount').textContent='عرض '+(state.clientDirectoryTotal?(page-1)*size+1:0)+'–'+Math.min(page*size,state.clientDirectoryTotal)+' من '+state.clientDirectoryTotal.toLocaleString('ar-EG')+' عميل';
+   $('clientPagination').innerHTML='<span class="hint">الصفحة '+page+' من '+pages+' · '+size+' سجلاً في الصفحة</span><div class="actions"><button id="clientPagePrev" class="soft" type="button" '+(page<=1?'disabled':'')+'>السابق</button><button id="clientPageNext" class="soft" type="button" '+(page>=pages?'disabled':'')+'>التالي</button></div>';
+   $('clientPagePrev').onclick=()=>{if(state.clientDirectoryPage>1){state.clientDirectoryPage--;loadClientDirectory().catch(e=>fail('تعذر تحميل صفحة العملاء',e));}};
+   $('clientPageNext').onclick=()=>{if(state.clientDirectoryPage<pages){state.clientDirectoryPage++;loadClientDirectory().catch(e=>fail('تعذر تحميل صفحة العملاء',e));}};
+  }finally{host.removeAttribute('aria-busy');}
+ }
+ function openClientModal(client=null){
+  if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
+  if(!window.Swal||typeof window.Swal.fire!=='function')return notify('تعذر تحميل نافذة العميل الآمنة؛ لم يتم فتح نموذج التعديل.',true);
+  const edit=!!client, currency=client?.default_currency||'EGP',timezone=client?.default_timezone||'Africa/Cairo',status=client?.status||'active';
+  const option=(value,label,current)=>'<option value="'+value+'" '+(current===value?'selected':'')+'>'+label+'</option>';
+  const html='<div class="cf-client-modal"><div class="cf-client-modal-head"><div><b>'+(edit?'تعديل بيانات العميل':'إضافة عميل جديد')+'</b><small>'+(edit?'تحديث بيانات الجهة دون تغيير سجلها أو علاقاتها.':'إنشاء سجل جهة دائم يمكن ربط ملفات تكليف متعددة به.')+'</small></div><span class="pill">'+(edit?'تحرير':'سجل جديد')+'</span></div>'+
+   '<form id="cfClientForm" class="fields" autocomplete="off">'+
+    '<div class="field"><label for="cfClientCode">كود العميل *</label><input id="cfClientCode" required maxlength="40" pattern="[A-Za-z0-9_-]{2,40}" '+(edit?'readonly':'')+' value="'+esc(client?.code||'')+'" placeholder="مثال: CLIENT-001"><small class="hint">'+(edit?'الكود ثابت بعد إنشاء العميل.':'أحرف إنجليزية وأرقام وشرطة فقط؛ يحفظ بحروف كبيرة.')+'</small></div>'+
+    '<div class="field"><label for="cfClientName">اسم العميل *</label><input id="cfClientName" required minlength="2" maxlength="160" value="'+esc(client?.name||'')+'" placeholder="اسم المؤسسة أو الشركة"></div>'+
+    '<div class="field"><label for="cfClientIndustry">النشاط</label><input id="cfClientIndustry" maxlength="120" value="'+esc(client?.industry||'')+'" placeholder="توزيع، تجزئة، تصنيع…"></div>'+
+    '<div class="field"><label for="cfClientContact">مسؤول التواصل</label><input id="cfClientContact" maxlength="120" value="'+esc(client?.contact_name||'')+'"></div>'+
+    '<div class="field"><label for="cfClientEmail">بريد التواصل</label><input id="cfClientEmail" type="email" maxlength="254" value="'+esc(client?.contact_email||'')+'"></div>'+
+    '<div class="field"><label for="cfClientPhone">هاتف التواصل</label><input id="cfClientPhone" type="tel" maxlength="40" value="'+esc(client?.contact_phone||'')+'"></div>'+
+    '<div class="field"><label for="cfClientCurrency">العملة الافتراضية</label><select id="cfClientCurrency">'+option('EGP','EGP — جنيه مصري',currency)+option('SAR','SAR — ريال سعودي',currency)+option('AED','AED — درهم إماراتي',currency)+option('USD','USD — دولار أمريكي',currency)+'</select></div>'+
+    '<div class="field"><label for="cfClientTimezone">المنطقة الزمنية</label><select id="cfClientTimezone">'+option('Africa/Cairo','القاهرة',timezone)+option('Asia/Riyadh','الرياض',timezone)+option('Asia/Dubai','دبي',timezone)+option('UTC','UTC',timezone)+'</select></div>'+
+    '<div class="field '+(edit?'':'hidden')+'"><label for="cfClientStatus">حالة العميل</label><select id="cfClientStatus">'+option('active','نشط',status)+option('suspended','موقوف',status)+option('archived','مؤرشف',status)+'</select><small class="hint">الإيقاف والأرشفة لا يحذفان سجل العميل أو التكليفات السابقة.</small></div>'+
+    '<div class="field full cf-client-readonly-note">لن تتغير بيانات الأصناف أو التكليفات أو الجلسات المرتبطة بالعميل عند تحديث بياناته. لا يوجد حذف مادي من هذه الشاشة.</div>'+
+    '<div class="field full actions"><button type="button" class="soft" id="cfClientCancel">إلغاء</button><button type="submit" class="primary" id="cfClientSave">'+(edit?'حفظ التعديلات':'حفظ العميل')+'</button></div>'+
+   '</form></div>';
+  window.Swal.fire({html,width:820,showConfirmButton:false,showCancelButton:false,allowOutsideClick:false,customClass:{popup:'cf-swal-popup cf-client-swal'},didOpen:()=>{
+   $('cfClientCancel').onclick=()=>window.Swal.close();
+   $('cfClientForm').addEventListener('submit',e=>saveClientModal(e,client));
+  }});
+ }
+ async function saveClientModal(event,client){
+  event.preventDefault();if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);
+  const form=event.currentTarget;setBusy(form,true);
+  try{
+   const code=$('cfClientCode').value.trim().toUpperCase(),name=$('cfClientName').value.trim();
+   if(!/^[A-Z0-9_-]{2,40}$/.test(code))throw new Error('كود العميل يجب أن يتكون من 2 إلى 40 حرفاً أو رقماً أو شرطة.');
+   if(name.length<2)throw new Error('اسم العميل يجب ألا يقل عن حرفين.');
+   const payload={name,industry:$('cfClientIndustry').value.trim()||null,contact_name:$('cfClientContact').value.trim()||null,contact_email:$('cfClientEmail').value.trim()||null,contact_phone:$('cfClientPhone').value.trim()||null,default_timezone:$('cfClientTimezone').value,default_currency:$('cfClientCurrency').value};
+   let clientId=client?.id||null;
+   if(client){
+    payload.status=$('cfClientStatus').value;
+    const result=await db.from('count_clients').update(payload).eq('id',client.id).select('id').single();if(result.error)throw result.error;
+   }else{
+    payload.code=code;payload.status='active';payload.created_by=state.user.id;
+    const result=await db.from('count_clients').insert(payload).select('id').single();if(result.error)throw result.error;clientId=result.data.id;
+    state.clientId=clientId;state.roleClientId=clientId;state.catalogClientId=clientId;
+   }
+   const auditError=await writeClientAudit(clientId,client?'client.updated':'client.created','client',clientId,{code,changed_fields:Object.keys(payload).filter(k=>k!=='created_by')});
+   window.Swal.close();
+   await loadClients();
+   if(!client){await loadRoleCatalog();await loadCatalog();}
+   notify(client?'تم تحديث بيانات العميل مع الاحتفاظ بعلاقاته.':'تم إنشاء العميل. يمكنك الآن ربط مدير العميل.');
+   if(auditError)notify('تم حفظ العميل، لكن تعذر تسجيل حدث التدقيق: '+friendlyErrorMessage(auditError),true);
+  }catch(error){fail('تعذر حفظ بيانات العميل',error);}
+  finally{setBusy(form,false);}
+ }
+ async function openClientManagers(clientId){
+  const client=clientById(clientId);if(!client)return notify('تعذر العثور على سجل العميل الحالي.',true);
+  const managers=state.clientDirectoryManagers.filter(m=>m.client_id===clientId);
+  const rows=managers.length?managers.map(m=>'<tr><td><b>'+esc(m.display_name||'مدير دون اسم')+'</b><span class="sub" dir="auto">@'+esc(m.username||'—')+'</span></td><td>'+statusPill(m.status)+'</td><td>'+date(m.created_at)+'</td><td><div class="cf-client-manager-actions"><button class="soft" type="button" data-client-manager-edit="'+esc(m.id)+'">تعديل الاسم</button>'+(m.status==='removed'?'':'<button class="soft" type="button" data-client-manager-toggle="'+esc(m.id)+'">'+(m.status==='active'?'إيقاف':'إعادة تفعيل')+'</button><button class="danger" type="button" data-client-manager-reset="'+esc(m.id)+'">كلمة المرور</button>')+'</div></td></tr>').join(''):'<tr><td colspan="4" class="empty">لم يُربط مدير لهذا العميل بعد.</td></tr>';
+  const html='<div class="cf-client-modal"><div class="cf-client-modal-head"><div><b>مديرو العميل</b><small>'+esc(client.name)+' · '+esc(client.code)+'</small></div><span class="pill">'+managers.length+' مدير</span></div>'+
+   '<div class="cf-client-manager-add"><span class="hint">يمكن ربط حساب Auth مؤكد دون تغيير كلمة مروره، أو إنشاء حساب جديد.</span><button id="cfAddClientManager" class="primary" type="button">إضافة / ربط مدير</button></div>'+
+   '<div class="cf-client-manager-list"><table><thead><tr><th>المدير واسم المستخدم</th><th>الحالة</th><th>تاريخ الربط</th><th>الإجراءات</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+   '<p class="hint">إيقاف العضوية يمنع هذا الحساب من دخول مساحة العميل، مع الاحتفاظ بالسجل والتاريخ. إعادة تعيين كلمة المرور تغيّر بيانات Auth للحساب المحدد.</p></div>';
+  window.Swal.fire({html,width:850,showConfirmButton:false,showCancelButton:false,customClass:{popup:'cf-swal-popup cf-client-swal'},didOpen:()=>{
+   $('cfAddClientManager').onclick=()=>{window.Swal.close();openClientManagerForm(clientId,null);};
+   document.querySelectorAll('[data-client-manager-edit]').forEach(b=>b.onclick=()=>{const m=managers.find(x=>x.id===b.dataset.clientManagerEdit);if(m){window.Swal.close();openClientManagerForm(clientId,m);}});
+   document.querySelectorAll('[data-client-manager-toggle]').forEach(b=>b.onclick=()=>{const m=managers.find(x=>x.id===b.dataset.clientManagerToggle);if(m){window.Swal.close();toggleClientManagerStatus(client,m);}});
+   document.querySelectorAll('[data-client-manager-reset]').forEach(b=>b.onclick=()=>{const m=managers.find(x=>x.id===b.dataset.clientManagerReset);if(m){window.Swal.close();resetClientManagerPassword(client,m);}});
+  }});
+ }
+ function openClientManagerForm(clientId,manager=null){
+  const client=clientById(clientId);if(!client)return notify('تعذر العثور على العميل.',true);
+  const edit=!!manager;
+  const html='<div class="cf-client-modal"><div class="cf-client-modal-head"><div><b>'+(edit?'تعديل بيانات المدير':'إضافة أو ربط مدير عميل')+'</b><small>'+esc(client.name)+' · '+esc(client.code)+'</small></div></div>'+
+   '<form id="cfClientManagerForm" class="fields" autocomplete="off">'+
+   '<div class="field full"><label for="cfManagerName">الاسم الظاهر *</label><input id="cfManagerName" required minlength="2" maxlength="120" value="'+esc(manager?.display_name||'')+'"></div>'+
+   '<div class="field"><label for="cfManagerUsername">اسم المستخدم *</label><input id="cfManagerUsername" required minlength="2" maxlength="100" value="'+esc(manager?.username||'')+'"></div>'+
+   (edit?'<div class="field"><label>حالة العضوية</label><input value="'+esc(clientStatusLabel(manager.status))+'" disabled></div>':'<div class="field"><label for="cfManagerEmail">البريد الإلكتروني *</label><input id="cfManagerEmail" required type="email" maxlength="254" autocomplete="off" placeholder="name@company.com"></div>'+
+    '<div class="field full"><label for="cfManagerPassword">كلمة المرور الأولية (للحساب الجديد فقط)</label><input id="cfManagerPassword" type="password" minlength="10" autocomplete="new-password" placeholder="اتركها فارغة عند ربط حساب Auth موجود"><small class="hint">الحساب الموجود يجب أن يكون مؤكداً؛ لن تتغير كلمة مروره عند إعادة استخدامه.</small></div>')+
+   '<div class="field full actions"><button id="cfManagerCancel" class="soft" type="button">إلغاء</button><button class="primary" type="submit">'+(edit?'حفظ بيانات المدير':'إنشاء / ربط المدير')+'</button></div></form></div>';
+  window.Swal.fire({html,width:700,showConfirmButton:false,showCancelButton:false,allowOutsideClick:false,customClass:{popup:'cf-swal-popup cf-client-swal'},didOpen:()=>{
+   $('cfManagerCancel').onclick=()=>window.Swal.close();
+   $('cfClientManagerForm').addEventListener('submit',async e=>{
+    e.preventDefault();const form=e.currentTarget;setBusy(form,true);
+    try{
+     const displayName=$('cfManagerName').value.trim(),username=$('cfManagerUsername').value.trim();
+     if(displayName.length<2||username.length<2)throw new Error('أدخل اسماً واسم مستخدم صالحين.');
+     if(edit){
+      const result=await db.from('count_client_members').update({display_name:displayName,username}).eq('id',manager.id).eq('client_id',clientId);
+      if(result.error)throw result.error;
+      const auditError=await writeClientAudit(clientId,'client_manager.updated','client_member',manager.id,{changed_fields:['display_name','username']});
+      window.Swal.close();await loadClients();notify('تم تحديث بيانات مدير العميل.');if(auditError)notify('تم التحديث، لكن تعذر تسجيل حدث التدقيق.',true);
+     }else{
+      const email=$('cfManagerEmail').value.trim().toLowerCase(),password=$('cfManagerPassword').value;
+      if(!email)throw new Error('البريد الإلكتروني مطلوب.');
+      const {data,error}=await db.functions.invoke('counting-provision-member',{body:{action:'create_client_admin',client_id:clientId,email,password,display_name:displayName,username}});
+      if(error)throw error;if(!data?.ok)throw new Error(data?.error||'تعذر إنشاء أو ربط مدير العميل.');
+      window.Swal.close();await loadClients();
+      notify(data.membership_reused?'الحساب مرتبط بالفعل بهذا العميل.':data.account_reused?'تم ربط حساب Auth الموجود دون تغيير كلمة مروره.':'تم إنشاء حساب مدير العميل وربطه بنجاح.');
+     }
+     openClientManagers(clientId);
+    }catch(error){fail(edit?'تعذر تحديث مدير العميل':'تعذر إنشاء / ربط مدير العميل',error);}
+    finally{setBusy(form,false);}
+   });
+  }});
+ }
+ async function toggleClientManagerStatus(client,manager){
+  if(!state.platformOwner||manager.status==='removed')return;
+  const next=manager.status==='active'?'paused':'active';
+  if(!await confirmAction(next==='paused'?'سيتم إيقاف دخول المدير إلى مساحة هذا العميل مع الاحتفاظ بعضويته وسجلها.':'سيتم إعادة تفعيل عضوية المدير في مساحة العميل. هل تريد المتابعة؟',{title:next==='paused'?'إيقاف مدير العميل':'إعادة تفعيل مدير العميل',confirmText:next==='paused'?'إيقاف العضوية':'إعادة التفعيل'}))return;
+  const {error}=await db.from('count_client_members').update({status:next}).eq('id',manager.id).eq('client_id',client.id);
+  if(error)return fail('تعذر تغيير حالة مدير العميل',error);
+  const auditError=await writeClientAudit(client.id,next==='paused'?'client_manager.paused':'client_manager.reactivated','client_member',manager.id,{previous_status:manager.status,status:next});
+  await loadClients();notify(next==='paused'?'تم إيقاف عضوية المدير دون حذفها.':'تمت إعادة تفعيل عضوية المدير.');
+  if(auditError)notify('تم تغيير الحالة، لكن تعذر تسجيل حدث التدقيق.',true);
+  openClientManagers(client.id);
+ }
+ async function resetClientManagerPassword(client,manager){
+  const result=await window.Swal.fire({title:'إعادة تعيين كلمة المرور',text:'سيتم تغيير كلمة مرور حساب Auth المرتبط بالمدير؛ لن يتغير البريد أو اسم المستخدم.',input:'password',inputLabel:'كلمة المرور الجديدة',inputAttributes:{autocomplete:'new-password',minlength:'10',maxlength:'128'},showCancelButton:true,confirmButtonText:'تغيير كلمة المرور',cancelButtonText:'إلغاء',reverseButtons:true,focusCancel:true,customClass:{popup:'cf-swal-popup'},inputValidator:value=>String(value||'').length<10?'كلمة المرور يجب ألا تقل عن 10 أحرف.':undefined});
+  if(!result.isConfirmed)return;
+  try{
+   const {data,error}=await db.functions.invoke('counting-provision-member',{body:{action:'reset_password',member_type:'client',client_id:client.id,member_id:manager.id,new_password:String(result.value||'')}});
+   if(error)throw error;if(!data?.ok)throw new Error(data?.error||'تعذر إعادة تعيين كلمة المرور.');
+   notify('تم تغيير كلمة مرور مدير العميل بنجاح.');
+  }catch(error){fail('تعذر إعادة تعيين كلمة المرور',error);}
+ }
+ function bindClientDirectoryEvents(){
+  $('clientAdd').onclick=()=>openClientModal(null);
+  $('clientRefresh').onclick=()=>Promise.all([loadClientDirectorySummary(),loadClientDirectory()]).catch(e=>fail('تعذر تحديث دليل العملاء',e));
+  $('clientStatusFilter').onchange=()=>{state.clientDirectoryPage=1;loadClientDirectory().catch(e=>fail('تعذر تطبيق حالة العميل',e));};
+  $('clientSearch').oninput=()=>{clearTimeout(state.clientSearchTimer);state.clientSearchTimer=setTimeout(()=>{state.clientDirectoryPage=1;loadClientDirectory().catch(e=>fail('تعذر البحث في العملاء',e));},260);};
+  $('clientClearFilters').onclick=()=>{$('clientSearch').value='';$('clientStatusFilter').value='all';state.clientDirectoryPage=1;loadClientDirectory().catch(e=>fail('تعذر مسح المرشحات',e));};
+ }
+ bindClientDirectoryEvents();
+
  async function loadRoleCatalog(){
   if(!state.user)return;
   if(state.platformOwner){if($('roleClientScope')){$('roleClientScope').innerHTML='<option value="">اختر العميل لإدارة أدواره</option>'+(state.clients||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');if(state.roleClientId&&state.clients.some(c=>c.id===state.roleClientId))$('roleClientScope').value=state.roleClientId;else $('roleClientScope').value='';}}
@@ -2173,13 +2442,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   if(id){const x=await db.from('count_roles').update({name:payload.name,description:payload.description,updated_by:state.user.id}).eq('id',id);if(x.error)throw x.error;}else{const x=await db.from('count_roles').insert(payload).select('id').single();if(x.error)throw x.error;roleId=x.data.id;}
   const codes=[...$('rolePermissionOptions').querySelectorAll('input:checked')].map(x=>x.value);const rpc=await db.rpc('count_update_role_permissions',{p_role_id:roleId,p_permission_codes:codes});if(rpc.error)throw rpc.error;resetCustomRole();await loadRoleCatalog();notify('تم حفظ الدور وصلاحياته.');}catch(err){fail('تعذر حفظ الدور',err);}finally{setBusy(f,false);}});
  $('resetCustomRole').onclick=resetCustomRole;
- $('clientForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.platformOwner)return notify('إدارة العملاء للمالك فقط.',true);const f=e.currentTarget;setBusy(f,true);try{
-  const payload={code:$('clientCode').value.trim().toUpperCase(),name:$('clientName').value.trim(),industry:$('clientIndustry').value.trim()||null,contact_name:$('clientContact').value.trim()||null,contact_email:$('clientEmail').value.trim()||null,contact_phone:$('clientPhone').value.trim()||null,default_timezone:$('clientTimezone').value,default_currency:$('clientCurrency').value,status:'active',created_by:state.user.id};
-  const x=await db.from('count_clients').insert(payload).select('id').single();if(x.error)throw x.error;await db.from('count_client_audit_log').insert({client_id:x.data.id,actor_id:state.user.id,action:'client.created',entity_type:'client',entity_id:x.data.id,details:{code:payload.code}});f.reset();state.clientId=x.data.id;state.roleClientId=x.data.id;if($('roleClientScope'))$('roleClientScope').value=x.data.id;await loadClients();await loadRoleCatalog();await loadCatalog();notify('تم إنشاء العميل.');}catch(err){fail('تعذر إنشاء العميل',err);}finally{setBusy(f,false);}});
- $('clientAdminForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.platformOwner)return notify('إنشاء مدير العميل للمالك فقط.',true);const f=e.currentTarget;setBusy(f,true);try{
-  const body={action:'create_client_admin',client_id:$('clientAdminTarget').value,email:$('clientAdminEmail').value.trim(),password:$('clientAdminPassword').value,display_name:$('clientAdminName').value.trim(),username:$('clientAdminUsername').value.trim()};
-  const {data,error}=await db.functions.invoke('counting-provision-member',{body});if(error)throw error;if(!data?.ok)throw new Error(data?.error||'تعذر إنشاء مدير العميل.');f.reset();await loadClients();notify('تم إنشاء / ربط مدير العميل.');}catch(err){fail('تعذر إنشاء مدير العميل',err);}finally{setBusy(f,false);}});
- async function loadCatalog(){if(!state.user)return;const status=$('catalogStatusFilter')?.value||'active',category=$('catalogCategoryFilter')?.value.trim()||'',term=$('catalogSearch')?.value.trim().replace(/[%,().]/g,' ').slice(0,90)||'',keys=['name','canonical_sku','barcode','category','base_unit'],sort=keys.includes(state.catalogSort)?state.catalogSort:'name';let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});if(status==='active')q=q.eq('is_active',true);else if(status==='inactive')q=q.eq('is_active',false);if(category)q=q.ilike('category','%'+category+'%');if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);$('catalogResultCount').textContent=state.catalogTotal.toLocaleString('ar-EG')+' صنفاً في الدليل';
+  async function loadCatalog(){if(!state.user)return;const status=$('catalogStatusFilter')?.value||'active',category=$('catalogCategoryFilter')?.value.trim()||'',term=$('catalogSearch')?.value.trim().replace(/[%,().]/g,' ').slice(0,90)||'',keys=['name','canonical_sku','barcode','category','base_unit'],sort=keys.includes(state.catalogSort)?state.catalogSort:'name';let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});if(status==='active')q=q.eq('is_active',true);else if(status==='inactive')q=q.eq('is_active',false);if(category)q=q.ilike('category','%'+category+'%');if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);$('catalogResultCount').textContent=state.catalogTotal.toLocaleString('ar-EG')+' صنفاً في الدليل';
   $('catalogTable').innerHTML=state.catalogProducts.length?'<table class="cf-catalog-table"><thead><tr><th>#</th><th><button class="cf-catalog-sort" data-sort-catalog="name" type="button">الصنف</button></th><th><button class="cf-catalog-sort" data-sort-catalog="canonical_sku" type="button">SKU</button></th><th><button class="cf-catalog-sort" data-sort-catalog="barcode" type="button">الباركود</button></th><th><button class="cf-catalog-sort" data-sort-catalog="category" type="button">التصنيف</button></th><th><button class="cf-catalog-sort" data-sort-catalog="base_unit" type="button">وحدة الأساس</button></th><th>وحدات بديلة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+state.catalogProducts.map((p,i)=>{const units=Array.isArray(p.units)?p.units:[],actions=state.platformOwner?'<div class="cf-inline-actions"><button class="soft" type="button" data-edit-catalog="'+esc(p.id)+'">فتح / تعديل</button><button class="'+(p.is_active?'danger':'soft')+'" type="button" data-catalog-state="'+esc(p.id)+'">'+(p.is_active?'إيقاف':'إعادة تفعيل')+'</button></div>':'<span class="pill">عرض فقط</span>';return '<tr><td>'+((page-1)*size+i+1)+'</td><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.brand||'صنف عالمي')+'</span></td><td>'+esc(p.canonical_sku||'—')+'</td><td><span dir="ltr">'+esc(p.barcode||'—')+'</span></td><td>'+esc(p.category||'—')+'</td><td>'+esc(p.base_unit||'—')+'</td><td>'+units.length+'</td><td>'+statusPill(p.is_active?'active':'paused')+'</td><td>'+actions+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد أصناف مطابقة.</div>';
   $('catalogTable').querySelectorAll('[data-sort-catalog]').forEach(b=>b.onclick=()=>{const k=b.dataset.sortCatalog;if(state.catalogSort===k)state.catalogSortAsc=!state.catalogSortAsc;else{state.catalogSort=k;state.catalogSortAsc=true;}state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر ترتيب الأصناف',e));});
   $('catalogTable').querySelectorAll('[data-edit-catalog]').forEach(b=>b.onclick=()=>{const p=state.catalogProducts.find(x=>x.id===b.dataset.editCatalog);if(p)openGlobalProductEditor(p);});$('catalogTable').querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=()=>toggleCatalogProduct(b.dataset.catalogState));
@@ -2225,7 +2488,6 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   }catch(err){fail('تعذر حفظ مواءمة المؤسسة',err);}finally{setBusy(f,false);}
  });
  $('projectClient').addEventListener('change',async()=>{if(state.platformOwner){state.clientId=$('projectClient').value||null;state.catalogClientId=state.clientId;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId||'';try{await loadRoleCatalog();await loadCatalog();await refreshClientCatalogPermission();}catch(e){fail('تعذر تحميل العميل المحدد',e);}}});
- $('clientAdminTarget').addEventListener('change',()=>{if(state.platformOwner){state.clientId=$('clientAdminTarget').value||null;state.catalogClientId=state.clientId;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId||'';loadRoleCatalog().catch(e=>fail('تعذر تحديث الأدوار',e));}});
  $('sideToggle').onclick=()=>{const layout=document.querySelector('.layout'),v=layout.classList.toggle('cf-sidebar-collapsed');$('sideToggle').textContent=v?'توسيع القائمة ▸':'طي القائمة الجانبية ◂';$('sideToggle').setAttribute('aria-expanded',String(!v));};
 
  async function bootstrap(){
