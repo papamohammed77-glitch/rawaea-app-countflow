@@ -2415,13 +2415,40 @@ function getUnitMetaFields(prefix,units,extra={}){const cls=$(prefix+'UnitClass'
    if(state.project)loadProductsPage(1,$('productSearch')?.value.trim()||'').catch(e=>fail('تعذر تحميل أصناف ملف التكليف',e));
   }else loadCatalog().catch(e=>fail('تعذر تحميل الدليل العالمي',e));
  }
- function openGlobalProductEditor(product=null){if(!state.platformOwner)return notify('إدارة الأصناف العالمية للمالك فقط.',true);const p=product||null;$('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';$('globalCategory').value=p?.category||'';$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';$('globalImageCurrent').textContent=p?.image_storage_path?'توجد صورة مرتبطة بهذا الصنف.':'لا توجد صورة مرتبطة.';renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);setUnitMetaFields('global',p?.units||[],$('globalBaseUnit').value);if(!p){$('globalItemKind').value='BARCODED';$('globalBarcodeType').value='AUTO';$('globalUnitClass').value='other';$('globalUnitPrecision').value='3';}$('globalProductFormTitle').textContent=p?'تعديل بيانات الصنف العالمي':'إضافة صنف عالمي جديد';$('globalProductSave').textContent=p?'حفظ التعديلات':'إضافة إلى الدليل الدائم';$('catalogGlobalView').classList.add('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');switchGlobalProductTab('basic');window.scrollTo({top:0,behavior:'smooth'});}
- function closeGlobalProductEditor(){$('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');document.querySelectorAll('[data-catalog-view]').forEach(b=>b.classList.toggle('active',b.dataset.catalogView==='global'));state.catalogView='global';$('globalProductForm').reset();$('globalProductId').value='';$('globalProductSave').textContent='إضافة إلى الدليل الدائم';renderCatalogUnitEditor('globalProductUnitsEditor',[]);}
- async function loadCatalogMappingOptions(term=''){const clientId=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!clientId){$('clientProductCatalog').innerHTML='<option value="">اختر المؤسسة أولاً</option>';return;}let q=db.from('count_catalog_products').select('id,name,canonical_sku,barcode,base_unit,units,is_active').eq('is_active',true).order('name').limit(80);const value=String(term||'').trim().replace(/[%,().]/g,' ').slice(0,90);if(value)q=q.or(['name','canonical_sku','barcode'].map(k=>k+'.ilike.%'+value+'%').join(','));const {data,error}=await q;if(error)throw error;state.catalogOptionProducts=data||[];$('clientProductCatalog').innerHTML=state.catalogOptionProducts.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'—')+'</option>').join('')||'<option value="">لا توجد أصناف مطابقة</option>';}
- function resetClientProductForm(){$('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');$('clientProductUnit').value='';renderCatalogUnitEditor('clientProductUnitsEditor',[]);}
- function appendCatalogUnitRow(id){const el=$(id);if(!el)return;const row=document.createElement('div');row.className='product-unit-row';row.dataset.catalogUnitRow='';row.innerHTML='<div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name maxlength="40"></div><div class="field"><label>كم تعادل من وحدة الأساس؟</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-catalog-unit-barcode maxlength="120"></div><div class="field"><label>نوع الرمز</label><select data-catalog-unit-barcode-type><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128</option></select></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button>';el.appendChild(row);row.querySelector('[data-catalog-unit-remove]').onclick=()=>{row.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(id,[]);};}
- function refreshClientCatalogPermission(){const id=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!id){state.canManageClientCatalog=false;$('clientProductEditorPanel').classList.add('hidden');return Promise.resolve(false);}if(state.platformOwner){state.canManageClientCatalog=true;$('clientProductEditorPanel').classList.remove('hidden');return Promise.resolve(true);}return db.rpc('count_has_client_permission',{p_client_id:id,p_permission_code:'catalog.manage'}).then(({data,error})=>{state.canManageClientCatalog=!error&&data===true;$('clientProductEditorPanel').classList.toggle('hidden',!state.canManageClientCatalog);return state.canManageClientCatalog;});}
- function renderProductUnitEditor(units=[]){
+ function openGlobalProductEditor(product=null){
+ if(!state.platformOwner)return notify('إدارة الأصناف العالمية للمالك فقط.',true);
+ const p=product||null;resetGlobalImagePreview();state.globalImageCleared=false;
+ $('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';$('globalCategory').value=p?.category||'';$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';
+ $('globalImageCurrent').textContent=p?.image_storage_path?'جار تجهيز معاينة الصورة…':'لا توجد صورة مرتبطة بهذا الصنف.';
+ renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);setUnitMetaFields('global',p?.units||[],$('globalBaseUnit').value);
+ if(!p){$('globalItemKind').value='BARCODED';$('globalBarcodeType').value='AUTO';$('globalUnitClass').value='other';$('globalUnitPrecision').value='3';}
+ $('globalProductFormTitle').textContent=p?'تعديل بيانات الصنف العالمي':'إضافة صنف عالمي جديد';$('globalProductSave').textContent=p?'حفظ التعديلات':'إضافة إلى الدليل الدائم';
+ $('catalogGlobalView').classList.add('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');
+ if(p?.image_storage_path)loadGlobalProductImagePreview(p).catch(error=>console.warn('Global image preview failed',error));
+ switchGlobalProductTab('basic');window.scrollTo({top:0,behavior:'smooth'});
+}
+function closeGlobalProductEditor(){
+ $('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('catalogClientView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogViewTabs').classList.remove('hidden');
+ document.querySelectorAll('[data-catalog-view]').forEach(b=>{const active=b.dataset.catalogView==='global';b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+ state.catalogView='global';$('globalProductForm').reset();$('globalProductId').value='';$('globalProductSave').textContent='إضافة إلى الدليل الدائم';$('globalImageCurrent').textContent='';state.globalImageCleared=false;resetGlobalImagePreview();renderCatalogUnitEditor('globalProductUnitsEditor',[]);
+}
+async function loadCatalogMappingOptions(term=''){const clientId=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!clientId){$('clientProductCatalog').innerHTML='<option value="">اختر المؤسسة أولاً</option>';return;}let q=db.from('count_catalog_products').select('id,name,canonical_sku,barcode,base_unit,units,is_active').eq('is_active',true).order('name').limit(80);const value=String(term||'').trim().replace(/[%,().]/g,' ').slice(0,90);if(value)q=q.or(['name','canonical_sku','barcode'].map(k=>k+'.ilike.%'+value+'%').join(','));const {data,error}=await q;if(error)throw error;state.catalogOptionProducts=data||[];$('clientProductCatalog').innerHTML=state.catalogOptionProducts.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'—')+'</option>').join('')||'<option value="">لا توجد أصناف مطابقة</option>';}
+ function resetClientProductForm(){
+ $('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');$('clientProductUnit').value='';renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
+}
+function openClientCatalogEditor(){
+ if(!state.canManageClientCatalog)return notify('لا تملك صلاحية إدارة مواءمات المؤسسة.',true);
+ $('clientCatalogEditorShell').classList.remove('hidden');$('clientProductCatalog')?.focus();$('clientCatalogEditorShell').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function appendCatalogUnitRow(id){const el=$(id);if(!el)return;const row=document.createElement('div');row.className='product-unit-row';row.dataset.catalogUnitRow='';row.innerHTML='<div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name maxlength="40"></div><div class="field"><label>كم تعادل من وحدة الأساس؟</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-catalog-unit-barcode maxlength="120"></div><div class="field"><label>نوع الرمز</label><select data-catalog-unit-barcode-type><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128</option></select></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button>';el.appendChild(row);row.querySelector('[data-catalog-unit-remove]').onclick=()=>{row.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(id,[]);};}
+ function refreshClientCatalogPermission(){
+ const id=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId),shell=$('clientCatalogEditorShell'),panel=$('clientProductEditorPanel'),add=$('clientCatalogAddNew');
+ if(!id){state.canManageClientCatalog=false;panel?.classList.add('hidden');shell?.classList.add('hidden');if(add)add.classList.add('hidden');return Promise.resolve(false);}
+ const apply=allowed=>{state.canManageClientCatalog=!!allowed;panel?.classList.toggle('hidden',!allowed);if(add)add.classList.toggle('hidden',!allowed);if(!allowed)shell?.classList.add('hidden');return state.canManageClientCatalog;};
+ if(state.platformOwner)return Promise.resolve(apply(true));
+ return db.rpc('count_has_client_permission',{p_client_id:id,p_permission_code:'catalog.manage'}).then(({data,error})=>apply(!error&&data===true));
+}
+function renderProductUnitEditor(units=[]){
   const container=$('productUnitsEditor');if(!container)return;
   const rows=productUnitRows(units).map(u=>({name:String(u?.name||''),factor_to_base:String(u?.factor_to_base??u?.conversion_factor??u?.factor??''),barcode:String(u?.barcode||''),barcode_type:String(u?.barcode_type||'AUTO')}));
   container.innerHTML=(rows.length?rows:[{name:'',factor_to_base:'',barcode:'',barcode_type:'AUTO'}]).map((u,i)=>'<div class="product-unit-row" data-product-unit-row><div class="field"><label>اسم الوحدة البديلة</label><input data-unit-name value="'+esc(u.name)+'" maxlength="40" placeholder="مثال: كرتونة"></div><div class="field"><label>كم تعادل من الوحدة الأساسية؟</label><input data-unit-factor type="number" min="0.000001" step="0.000001" value="'+esc(u.factor_to_base)+'" placeholder="مثال: 12"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-unit-barcode value="'+esc(u.barcode)+'" maxlength="120"></div><div class="field"><label>نوع الرمز</label><select data-unit-barcode-type><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128</option></select></div><button type="button" class="danger" data-remove-product-unit aria-label="إزالة الوحدة">إزالة</button></div>').join('');
@@ -2465,18 +2492,18 @@ function getUnitMetaFields(prefix,units,extra={}){const cls=$(prefix+'UnitClass'
   return path;
  }
  async function editProduct(id){
-  const p=state.products.find(x=>x.id===id);if(!p)return;
-  resetProductImagePreview();$('productId').value=p.id;$('sku').value=p.sku;$('barcode').value=p.barcode||'';$('productName').value=p.name||'';$('category').value=p.category||'';$('baseUnit').value=p.base_unit;$('expectedQty').value=p.expected_qty??'';
-  state.editingProductImageRef=p.image_url||null;state.productImageCleared=false;
-  $('imageUrl').value=safeExternalProductImageUrl(p.image_url);
-  const displayUrl=productImageDisplayUrl(p);if(displayUrl)showProductImagePreview(displayUrl,'الصورة الحالية للصنف','هذه الصورة محفوظة في مساحة CountFlow الخاصة. عند الاستبدال أو إزالة الربط يبقى الملف القديم في التخزين ولا يُحذف تلقائياً.');
-  renderProductUnitEditor(p.units||[]);setUnitMetaFields('unit',p.units||[],p.base_unit);$('productFormTitle').textContent='تعديل الصنف';activateTab('products');window.scrollTo({top:0,behavior:'smooth'});
- }
- function resetProductForm(){
-  $('productForm').reset();$('productId').value='';$('baseUnit').value='وحدة';$('unitClass').value='count';$('unitPrecision').value='0';$('unitItemKind').value='BARCODED';$('unitBarcodeType').value='AUTO';$('productFormTitle').textContent='إضافة صنف';
-  state.editingProductImageRef=null;state.productImageCleared=false;resetProductImagePreview();renderProductUnitEditor([]);
- }
- async function toggleProduct(id){
+ const p=state.products.find(x=>x.id===id);if(!p)return;
+ $('projectProductEditorPanel').classList.remove('hidden');
+ resetProductImagePreview();$('productId').value=p.id;$('sku').value=p.sku;$('barcode').value=p.barcode||'';$('productName').value=p.name||'';$('category').value=p.category||'';$('baseUnit').value=p.base_unit;$('expectedQty').value=p.expected_qty??'';
+ state.editingProductImageRef=p.image_url||null;state.productImageCleared=false;$('imageUrl').value=safeExternalProductImageUrl(p.image_url);
+ const displayUrl=productImageDisplayUrl(p);if(displayUrl)showProductImagePreview(displayUrl,'الصورة الحالية للصنف','هذه الصورة محفوظة في مساحة CountFlow الخاصة. عند الاستبدال أو إزالة الربط يبقى الملف القديم في التخزين ولا يُحذف تلقائياً.');
+ renderProductUnitEditor(p.units||[]);setUnitMetaFields('unit',p.units||[],p.base_unit);$('productFormTitle').textContent='تعديل الصنف';$('projectProductEditorPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetProductForm(){
+ $('productForm').reset();$('productId').value='';$('baseUnit').value='وحدة';$('unitClass').value='count';$('unitPrecision').value='0';$('unitItemKind').value='BARCODED';$('unitBarcodeType').value='AUTO';$('productFormTitle').textContent='إضافة صنف';
+ state.editingProductImageRef=null;state.productImageCleared=false;resetProductImagePreview();renderProductUnitEditor([]);$('projectProductEditorPanel')?.classList.add('hidden');
+}
+async function toggleProduct(id){
   const p=state.products.find(x=>x.id===id);if(!p)return;
   const {error}=await db.from('count_products').update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('project_id',state.project.id);
   if(error)return fail('تعذر تحديث حالة الصنف',error);notify(p.is_active?'تم إيقاف الصنف':'تم تفعيل الصنف');await loadProjectData();
@@ -2814,13 +2841,148 @@ function isClientCodeUniqueConflict(error){
   if(id){const x=await db.from('count_roles').update({name:payload.name,description:payload.description,updated_by:state.user.id}).eq('id',id);if(x.error)throw x.error;}else{const x=await db.from('count_roles').insert(payload).select('id').single();if(x.error)throw x.error;roleId=x.data.id;}
   const codes=[...$('rolePermissionOptions').querySelectorAll('input:checked')].map(x=>x.value);const rpc=await db.rpc('count_update_role_permissions',{p_role_id:roleId,p_permission_codes:codes});if(rpc.error)throw rpc.error;resetCustomRole();await loadRoleCatalog();notify('تم حفظ الدور وصلاحياته.');}catch(err){fail('تعذر حفظ الدور',err);}finally{setBusy(f,false);}});
  $('resetCustomRole').onclick=resetCustomRole;
-  async function loadCatalog(){if(!state.user)return;const status=$('catalogStatusFilter')?.value||'active',category=$('catalogCategoryFilter')?.value.trim()||'',term=$('catalogSearch')?.value.trim().replace(/[%,().]/g,' ').slice(0,90)||'',keys=['name','canonical_sku','barcode','category','base_unit'],sort=keys.includes(state.catalogSort)?state.catalogSort:'name';let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});if(status==='active')q=q.eq('is_active',true);else if(status==='inactive')q=q.eq('is_active',false);if(category)q=q.ilike('category','%'+category+'%');if(term)q=q.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+term+'%').join(','));const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);const x=await q;if(x.error)throw x.error;state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);$('catalogResultCount').textContent=state.catalogTotal.toLocaleString('ar-EG')+' صنفاً في الدليل';
-  $('catalogTable').innerHTML=state.catalogProducts.length?'<table class="cf-catalog-table"><thead><tr><th>#</th><th><button class="cf-catalog-sort" data-sort-catalog="name" type="button">الصنف</button></th><th><button class="cf-catalog-sort" data-sort-catalog="canonical_sku" type="button">SKU</button></th><th><button class="cf-catalog-sort" data-sort-catalog="barcode" type="button">الباركود</button></th><th><button class="cf-catalog-sort" data-sort-catalog="category" type="button">التصنيف</button></th><th><button class="cf-catalog-sort" data-sort-catalog="base_unit" type="button">وحدة الأساس</button></th><th>وحدات بديلة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+state.catalogProducts.map((p,i)=>{const units=productUnitRows(Array.isArray(p.units)?p.units:[]),actions=state.platformOwner?'<div class="cf-inline-actions"><button class="soft" type="button" data-edit-catalog="'+esc(p.id)+'">فتح / تعديل</button><button class="'+(p.is_active?'danger':'soft')+'" type="button" data-catalog-state="'+esc(p.id)+'">'+(p.is_active?'إيقاف':'إعادة تفعيل')+'</button></div>':'<span class="pill">عرض فقط</span>';return '<tr><td>'+((page-1)*size+i+1)+'</td><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.brand||'صنف عالمي')+'</span></td><td>'+esc(p.canonical_sku||'—')+'</td><td><span dir="ltr">'+esc(p.barcode||'—')+'</span></td><td>'+esc(p.category||'—')+'</td><td>'+esc(p.base_unit||'—')+'</td><td>'+units.length+'</td><td>'+statusPill(p.is_active?'active':'paused')+'</td><td>'+actions+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد أصناف مطابقة.</div>';
-  $('catalogTable').querySelectorAll('[data-sort-catalog]').forEach(b=>b.onclick=()=>{const k=b.dataset.sortCatalog;if(state.catalogSort===k)state.catalogSortAsc=!state.catalogSortAsc;else{state.catalogSort=k;state.catalogSortAsc=true;}state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر ترتيب الأصناف',e));});
-  $('catalogTable').querySelectorAll('[data-edit-catalog]').forEach(b=>b.onclick=()=>{const p=state.catalogProducts.find(x=>x.id===b.dataset.editCatalog);if(p)openGlobalProductEditor(p);});$('catalogTable').querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=()=>toggleCatalogProduct(b.dataset.catalogState));
+  
+function safeCatalogProductImagePath(product){
+ const id=String(product?.id||''),path=String(product?.image_storage_path||'');
+ if(!id||!path.startsWith('catalog/products/'+id+'/'))return '';
+ const name=path.slice(('catalog/products/'+id+'/').length);
+ return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(name)?path:'';
+}
+async function loadCatalogImageUrls(rows,requestToken){
+ const paths=[...new Set((rows||[]).filter(p=>p.is_active).map(safeCatalogProductImagePath).filter(Boolean))];
+ state.catalogImageUrls=new Map();
+ if(!paths.length||requestToken!==state.catalogRequestToken)return;
+ try{
+  const result=await db.storage.from('counting-product-images').createSignedUrls(paths,3600);
+  if(result.error)throw result.error;
+  if(requestToken!==state.catalogRequestToken)return;
+  for(const item of result.data||[])if(item.path&&item.signedUrl)state.catalogImageUrls.set(item.path,item.signedUrl);
+ }catch(error){console.warn('Catalogue image preview URLs unavailable',error);}
+}
+function catalogImageMarkup(product){
+ const path=safeCatalogProductImagePath(product),url=path?state.catalogImageUrls.get(path):'';
+ if(url)return '<button type="button" class="cf-catalog-image-button" data-preview-catalog-image="'+esc(product.id)+'" aria-label="معاينة صورة '+esc(product.name||'الصنف')+'"><img class="cf-catalog-thumb" src="'+esc(url)+'" alt="" loading="lazy"></button>';
+ const hint=product.image_storage_path?(product.is_active?'تعذر تحميل الصورة':'الصورة غير متاحة للصنف الموقوف'):'لا توجد صورة';
+ return '<span class="cf-catalog-image-empty" title="'+esc(hint)+'" aria-label="'+esc(hint)+'"><i class="fa-regular fa-image" aria-hidden="true"></i></span>';
+}
+function openCatalogImage(product){
+ const path=safeCatalogProductImagePath(product),url=path?state.catalogImageUrls.get(path):'';
+ if(!url)return notify('صورة هذا الصنف غير متاحة للعرض حالياً.',true);
+ if(window.Swal?.fire)window.Swal.fire({title:esc(product.name||'صورة الصنف'),imageUrl:url,imageAlt:product.name||'صورة الصنف',imageWidth:720,showConfirmButton:false,showCloseButton:true,customClass:{popup:'cf-swal-popup'}});
+}
+function resetGlobalImagePreview(){
+ state.catalogEditorImageToken=(state.catalogEditorImageToken||0)+1;
+ if(state.globalImagePreviewObjectUrl){URL.revokeObjectURL(state.globalImagePreviewObjectUrl);state.globalImagePreviewObjectUrl=null;}
+ $('globalImagePreview').classList.add('hidden');$('globalImagePreviewImg').removeAttribute('src');$('globalImageFile').value='';
+}
+function showGlobalImagePreview(url,title,note){
+ if(!url)return;
+ $('globalImagePreviewImg').src=url;$('globalImagePreviewTitle').textContent=title||'صورة الصنف';$('globalImagePreviewNote').textContent=note||'تُحفظ الصورة داخل مساحة CountFlow الخاصة.';$('globalImagePreview').classList.remove('hidden');
+}
+async function loadGlobalProductImagePreview(product){
+ resetGlobalImagePreview();
+ const token=state.catalogEditorImageToken,path=safeCatalogProductImagePath(product);
+ if(!path){$('globalImageCurrent').textContent='لا توجد صورة مرتبطة بهذا الصنف.';return;}
+ $('globalImageCurrent').textContent='جار تحميل معاينة الصورة المحفوظة…';
+ try{
+  const result=await db.storage.from('counting-product-images').createSignedUrl(path,3600);
+  if(token!==state.catalogEditorImageToken)return;
+  if(result.error||!result.data?.signedUrl)throw result.error||new Error('Signed image URL unavailable');
+  $('globalImageCurrent').textContent='الصورة الحالية محفوظة في مساحة CountFlow الخاصة.';
+  showGlobalImagePreview(result.data.signedUrl,'الصورة الحالية للصنف','رابط عرض مؤقت؛ لا يُحفظ الرابط داخل سجل الصنف.');
+ }catch(error){if(token===state.catalogEditorImageToken)$('globalImageCurrent').textContent='تعذر عرض الصورة الحالية؛ سيظل سجل الصنف محفوظاً.';console.warn('Global catalogue image preview failed',error);}
+}
+function csvCell(value){
+ const text=value===null||value===undefined?'':(typeof value==='object'?JSON.stringify(value):String(value));
+ return '"'+text.replace(/"/g,'""')+'"';
+}
+function downloadCatalogCsv(filename,headers,rows){
+ const content='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
+ const blob=new Blob([content],{type:'text/csv;charset=utf-8;'});
+ const url=URL.createObjectURL(blob),anchor=document.createElement('a');
+ anchor.href=url;anchor.download=filename;anchor.style.display='none';document.body.appendChild(anchor);anchor.click();anchor.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function currentCatalogFilters(){
+ return {status:$('catalogStatusFilter')?.value||'active',category:$('catalogCategoryFilter')?.value.trim()||'',term:$('catalogSearch')?.value.trim().replace(/[%,()."'\\]/g,' ').replace(/\s+/g,' ').slice(0,90)||'',sort:['name','canonical_sku','barcode','category','base_unit'].includes(state.catalogSort)?state.catalogSort:'name',ascending:!!state.catalogSortAsc};
+}
+function applyCatalogFilters(query,filters){
+ if(filters.status==='active')query=query.eq('is_active',true);else if(filters.status==='inactive')query=query.eq('is_active',false);
+ if(filters.category)query=query.ilike('category','%'+filters.category+'%');
+ if(filters.term)query=query.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+filters.term+'%').join(','));
+ return query;
+}
+async function exportGlobalCatalogCsv(){
+ if(!state.user)return notify('سجّل الدخول أولاً.',true);
+ const button=$('catalogExport');button.disabled=true;
+ try{
+  const f=currentCatalogFilters(),rows=[],pageSize=500;let offset=0;
+  while(true){
+   let q=db.from('count_catalog_products').select('canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path').order(f.sort,{ascending:f.ascending}).order('id',{ascending:true});
+   q=applyCatalogFilters(q,f).range(offset,offset+pageSize-1);
+   const result=await q;if(result.error)throw result.error;
+   const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+   if(rows.length>=90000)throw new Error('تجاوزت النتائج 90,000 سجل؛ ضيّق البحث أو صدّر على دفعات أصغر.');
+  }
+  downloadCatalogCsv('CountFlow-global-catalog-'+new Date().toISOString().slice(0,10)+'.csv',
+   ['SKU العالمي','الباركود','اسم الصنف','العلامة التجارية','التصنيف','وحدة الأساس','الوحدات والتحويلات JSON','الحالة','مسار الصورة الخاص'],
+   rows.map(p=>[p.canonical_sku,p.barcode,p.name,p.brand,p.category,p.base_unit,p.units,p.is_active?'نشط':'موقوف',p.image_storage_path]));
+  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً من نتائج الدليل الحالية.');
+ }catch(error){fail('تعذر تصدير الدليل العالمي',error);}finally{button.disabled=false;}
+}
+async function exportClientCatalogCsv(){
+ const clientId=state.catalogClientId||state.clientId;if(!clientId)return notify('اختر المؤسسة أولاً.',true);
+ const button=$('clientCatalogExport');button.disabled=true;
+ try{
+  const rows=[],pageSize=500;let offset=0;
+  while(true){
+   const result=await db.from('count_client_products').select('client_sku,client_barcode,name_override,category_override,base_unit_override,units_override,image_storage_path_override,is_active,count_catalog_products(name,canonical_sku,barcode,category,base_unit)').eq('client_id',clientId).order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   if(result.error)throw result.error;const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+   if(rows.length>=200000)throw new Error('تجاوزت مواءمات المؤسسة 200,000 سجل؛ يرجى تقسيم التصدير.');
+  }
+  downloadCatalogCsv('CountFlow-client-catalog-'+clientId+'-'+new Date().toISOString().slice(0,10)+'.csv',
+   ['SKU المؤسسة','باركود المؤسسة','اسم المؤسسة','تصنيف المؤسسة','وحدة المؤسسة','وحدات المؤسسة JSON','حالة المواءمة','مسار صورة المؤسسة الخاص','اسم الصنف العالمي','SKU العالمي','باركود عالمي','تصنيف عالمي','وحدة عالمية'],
+   rows.map(p=>{const c=p.count_catalog_products||{};return [p.client_sku,p.client_barcode,p.name_override,p.category_override,p.base_unit_override,p.units_override,p.is_active?'نشط':'موقوف',p.image_storage_path_override,c.name,c.canonical_sku,c.barcode,c.category,c.base_unit];}));
+  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' مواءمة للمؤسسة.');
+ }catch(error){fail('تعذر تصدير مواءمات المؤسسة',error);}finally{button.disabled=false;}
+}
+async function exportProjectCatalogCsv(){
+ const project=state.project;if(!project)return notify('اختر ملف تكليف أولاً.',true);
+ const button=$('projectCatalogExport');button.disabled=true;
+ try{
+  const rows=[],pageSize=500;let offset=0;
+  while(true){
+   const result=await db.from('count_products').select('sku,barcode,name,category,base_unit,units,expected_qty,image_url,is_active').eq('project_id',project.id).order('name',{ascending:true}).order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   if(result.error)throw result.error;const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+   if(rows.length>=200000)throw new Error('تجاوزت أصناف التكليف 200,000 سجل؛ يرجى تقسيم التصدير.');
+  }
+  downloadCatalogCsv('CountFlow-project-products-'+(project.project_code||project.id)+'-'+new Date().toISOString().slice(0,10)+'.csv',
+   ['SKU','الباركود','اسم الصنف','التصنيف','وحدة الأساس','الوحدات JSON','الكمية المرجعية','مرجع الصورة','الحالة'],
+   rows.map(p=>[p.sku,p.barcode,p.name,p.category,p.base_unit,p.units,p.expected_qty,p.image_url,p.is_active?'نشط':'موقوف']));
+  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً من التكليف المحدد.');
+ }catch(error){fail('تعذر تصدير أصناف التكليف',error);}finally{button.disabled=false;}
+}
+async function loadCatalog(){
+ if(!state.user)return;
+ const requestToken=state.catalogRequestToken=(state.catalogRequestToken||0)+1;
+ const filters=currentCatalogFilters(),sort=filters.sort,table=$('catalogTable');
+ table?.setAttribute('aria-busy','true');
+ try{
+  let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});
+  q=applyCatalogFilters(q,filters);
+  const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);
+  const x=await q;if(x.error)throw x.error;if(requestToken!==state.catalogRequestToken)return;
+  state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);
+  await loadCatalogImageUrls(state.catalogProducts,requestToken);if(requestToken!==state.catalogRequestToken)return;
+  $('catalogResultCount').textContent=state.catalogTotal.toLocaleString('ar-EG')+' صنفاً في الدليل';
+  table.innerHTML=state.catalogProducts.length?'<table class="cf-catalog-table"><thead><tr><th>الصورة</th><th>#</th><th><button class="cf-catalog-sort" data-sort-catalog="name" type="button">الصنف '+(sort==='name'?(state.catalogSortAsc?'↑':'↓'):'↕')+'</button></th><th><button class="cf-catalog-sort" data-sort-catalog="canonical_sku" type="button">SKU '+(sort==='canonical_sku'?(state.catalogSortAsc?'↑':'↓'):'↕')+'</button></th><th><button class="cf-catalog-sort" data-sort-catalog="barcode" type="button">الباركود '+(sort==='barcode'?(state.catalogSortAsc?'↑':'↓'):'↕')+'</button></th><th><button class="cf-catalog-sort" data-sort-catalog="category" type="button">التصنيف '+(sort==='category'?(state.catalogSortAsc?'↑':'↓'):'↕')+'</button></th><th><button class="cf-catalog-sort" data-sort-catalog="base_unit" type="button">وحدة الأساس '+(sort==='base_unit'?(state.catalogSortAsc?'↑':'↓'):'↕')+'</button></th><th>وحدات بديلة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+state.catalogProducts.map((p,i)=>{const units=productUnitRows(Array.isArray(p.units)?p.units:[]),actions=state.platformOwner?'<div class="cf-inline-actions"><button class="soft" type="button" data-edit-catalog="'+esc(p.id)+'">فتح / تعديل</button><button class="'+(p.is_active?'danger':'soft')+'" type="button" data-catalog-state="'+esc(p.id)+'">'+(p.is_active?'إيقاف':'إعادة تفعيل')+'</button></div>':'<span class="pill">عرض فقط</span>';return '<tr><td>'+catalogImageMarkup(p)+'</td><td>'+((page-1)*size+i+1)+'</td><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.brand||'صنف عالمي')+'</span></td><td>'+esc(p.canonical_sku||'—')+'</td><td><span dir="ltr">'+esc(p.barcode||'—')+'</span></td><td>'+esc(p.category||'—')+'</td><td>'+esc(p.base_unit||'—')+'</td><td>'+units.length+'</td><td>'+statusPill(p.is_active?'active':'paused')+'</td><td>'+actions+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد أصناف مطابقة للبحث والمرشحات الحالية.</div>';
+  table.querySelectorAll('[data-preview-catalog-image]').forEach(b=>b.onclick=()=>{const p=state.catalogProducts.find(x=>x.id===b.dataset.previewCatalogImage);if(p)openCatalogImage(p);});
+  table.querySelectorAll('[data-sort-catalog]').forEach(b=>b.onclick=()=>{const k=b.dataset.sortCatalog;if(state.catalogSort===k)state.catalogSortAsc=!state.catalogSortAsc;else{state.catalogSort=k;state.catalogSortAsc=true;}state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر ترتيب الأصناف',e));});
+  table.querySelectorAll('[data-edit-catalog]').forEach(b=>b.onclick=()=>{const p=state.catalogProducts.find(x=>x.id===b.dataset.editCatalog);if(p)openGlobalProductEditor(p);});table.querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=()=>toggleCatalogProduct(b.dataset.catalogState));
   const pages=Math.max(1,Math.ceil(state.catalogTotal/size));$('catalogPagination').innerHTML='<span class="hint">عرض '+(state.catalogTotal?(page-1)*size+1:0)+'–'+Math.min(page*size,state.catalogTotal)+' من '+state.catalogTotal+' · الصفحة '+page+' / '+pages+'</span><div class="actions"><button id="catalogPrev" class="soft" type="button" '+(page<=1?'disabled':'')+'>السابق</button><button id="catalogNext" class="soft" type="button" '+(page>=pages?'disabled':'')+'>التالي</button></div>';$('catalogPrev').onclick=()=>{if(state.catalogPage>1){state.catalogPage--;loadCatalog().catch(e=>fail('تعذر تحميل الصفحة',e));}};$('catalogNext').onclick=()=>{if(state.catalogPage<pages){state.catalogPage++;loadCatalog().catch(e=>fail('تعذر تحميل الصفحة',e));}};
- }
- async function toggleCatalogProduct(id){
+ }finally{if(requestToken===state.catalogRequestToken)table?.removeAttribute('aria-busy');}
+}
+async function toggleCatalogProduct(id){
   if(!state.platformOwner)return notify('تعديل الكتالوج العالمي للمالك فقط.',true);
   const p=state.catalogProducts.find(x=>x.id===id);if(!p)return;
   if(p.is_active&&!await confirmAction('سيتم إيقاف الصنف عن الاستخدام في عمليات الجرد الجديدة. ستظل بياناته وروابطه التاريخية محفوظة. هل تريد المتابعة؟',{title:'إيقاف صنف عالمي',confirmText:'إيقاف الصنف'}))return;
@@ -2857,7 +3019,7 @@ function isClientCodeUniqueConflict(error){
    if(itemKind==='NO_BARCODE'&&barcode&&barcodeType!=='INTERNAL')throw new Error('الصنف بدون باركود لا يقبل GTIN أو Code 128 خارجي.');
    const units=getUnitMetaFields('global',readCatalogUnits('globalProductUnitsEditor',base,barcode),{item_kind:itemKind,barcode_type:barcodeType}),file=$('globalImageFile').files[0]||null;
    if(file&&(file.size<=0||file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type)))throw new Error('الصورة يجب ألا تتجاوز 5MB وأن تكون JPEG/PNG/WEBP.');
-   const row={canonical_sku:sku,barcode:barcode||null,name:$('globalName').value.trim(),brand:$('globalBrand').value.trim()||null,category:$('globalCategory').value.trim()||null,base_unit:base,units,updated_by:state.user.id,updated_at:new Date().toISOString()};
+   const row={canonical_sku:sku,barcode:barcode||null,name:$('globalName').value.trim(),brand:$('globalBrand').value.trim()||null,category:$('globalCategory').value.trim()||null,base_unit:base,units,updated_by:state.user.id,updated_at:new Date().toISOString()};if(state.globalImageCleared&&!file)row.image_storage_path=null;
    if(!row.name)throw new Error('اسم الصنف مطلوب.');let pid=id;
    if(id){const u=await db.from('count_catalog_products').update(row).eq('id',id);if(u.error)throw u.error;}
    else{const x=await db.from('count_catalog_products').insert({...row,is_active:true,source_type:'curated',created_by:state.user.id}).select('id').single();if(x.error)throw x.error;pid=x.data.id;}
