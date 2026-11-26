@@ -2952,6 +2952,26 @@ function applyCatalogFilters(query,filters){
  if(filters.term)query=query.or(['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+filters.term+'%').join(','));
  return query;
 }
+async function applyUnifiedCatalogFilters(query,filters,clientId){
+ query=applyCatalogFilters(query,{...filters,term:''});
+ if(!filters.term)return query;
+ const value=filters.term,conditions=['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+value+'%');
+ if(clientId){
+  const ids=[];let offset=0,pageSize=500;
+  while(true){
+   const result=await db.from('count_client_products').select('catalog_product_id').eq('client_id',clientId)
+    .or(['client_sku','client_barcode','name_override','category_override'].map(k=>k+'.ilike.%'+value+'%').join(','))
+    .order('catalog_product_id',{ascending:true}).range(offset,offset+pageSize-1);
+   if(result.error)throw result.error;
+   const page=result.data||[];ids.push(...page.map(x=>x.catalog_product_id).filter(Boolean));
+   if(page.length<pageSize)break;offset+=pageSize;
+   if(ids.length>90000)throw new Error('تجاوز بحث المؤسسة 90,000 نتيجة؛ استخدم كلمة بحث أكثر تحديداً.');
+  }
+  const unique=[...new Set(ids)];
+  if(unique.length)conditions.push('id.in.('+unique.join(',')+')');
+ }
+ return query.or(conditions.join(','));
+}
 async function exportGlobalCatalogCsv(){
  if(!state.user)return notify('سجّل الدخول أولاً.',true);
  const button=$('catalogExport');button.disabled=true;
@@ -2959,7 +2979,7 @@ async function exportGlobalCatalogCsv(){
   const f=currentCatalogFilters(),rows=[],clientRows=new Map(),pageSize=500,clientId=state.catalogClientId;let offset=0;
   while(true){
    let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path').order(f.sort,{ascending:f.ascending}).order('id',{ascending:true});
-   q=applyCatalogFilters(q,f).range(offset,offset+pageSize-1);
+   q=await applyUnifiedCatalogFilters(q,f,clientId);q=q.range(offset,offset+pageSize-1);
    const result=await q;if(result.error)throw result.error;
    const page=result.data||[];
    if(clientId&&page.length){
@@ -2999,7 +3019,7 @@ async function loadCatalog(){
  table?.setAttribute('aria-busy','true');
  try{
   let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});
-  q=applyCatalogFilters(q,filters);
+  q=await applyUnifiedCatalogFilters(q,filters,state.catalogClientId);
   const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);
   const x=await q;if(x.error)throw x.error;if(requestToken!==state.catalogRequestToken)return;
   state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);
