@@ -1626,7 +1626,7 @@ test("Global base-unit dropdown follows the measurement class and preserves cust
  assert.match(admin,/function bindGlobalBaseUnitSelector\(\)/);
  assert.match(admin,/inferProductUnitClass\(base\);if\(inferredUnitClass!=='other'&&inferredUnitClass!==unitClass\)/);
  const countStart=admin.indexOf("const CF_UNIT_CLASSES=");
- const countEnd=admin.indexOf("const CF_UNIT_META_FLAG=",countStart);
+ const countEnd=admin.indexOf("function defaultProductUnitPrecision(",countStart);
  const helperSource=admin.slice(countStart,countEnd);
  const helpers=vm.runInNewContext("(()=>{"+helperSource+";return {inferProductUnitClass,CF_UNIT_CLASSES}})()");
  assert.equal(helpers.inferProductUnitClass("كرتونة"),"count");
