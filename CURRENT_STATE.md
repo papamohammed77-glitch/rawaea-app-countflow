@@ -7,7 +7,7 @@
 **فرع الاعتماد:** `main` — لم يتغير في LVE-788.  
 **Base commit:** `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`.  
 **فرع التنفيذ:** `work/lve-788-admin-item-editor-ux`.  
-**Feature HEAD بعد التوثيق:** سيثبت من رأس الفرع بعد هذا التحديث.  
+**آخر التزام للكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`؛ الالتزامات اللاحقة في هذا الفرع تقارير/حالة فقط.  
 **PR #11:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11 — OPEN / NOT MERGED.  
 **الحالة:** SOURCE IMPLEMENTED — CI PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — NOT DEPLOYED.
 
@@ -30,7 +30,7 @@
 ### 3. الملفات والبصمات
 - `countflow-admin.html`: blob `b144a609f0ef5dad45dcc3cd25a5f198f50dab6f`.
 - `tests/unit/countflow-quality.test.mjs`: blob `b3a2fdb9762f201cf09743c3a9f4c9fec1bfb5d8`.
-- `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`: تقرير التنفيذ العربي الجديد.
+- `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`: تقرير التنفيذ العربي الجديد (blob `38721588cf527854c696c2e9d7f3d2b0474bd60f`).
 - `CURRENT_STATE.md`: هذا التحديث فقط.
 - PR #11 يضم تعديلات Runtime واختبارات وتقارير/حالة؛ لا يوجد دمج إلى main.
 
