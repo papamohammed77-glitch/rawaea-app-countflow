@@ -3048,7 +3048,7 @@ function applyCatalogFilters(query,filters){
 }
 async function applyUnifiedCatalogFilters(query,filters,clientId){
  query=applyCatalogFilters(query,{...filters,term:''});
- if(!filters.term)return query;
+ if(!filters.term)return {query};
  const value=filters.term,conditions=['name','canonical_sku','barcode','brand'].map(k=>k+'.ilike.%'+value+'%');
  if(clientId){
   const ids=[];let offset=0,pageSize=500;
@@ -3064,7 +3064,7 @@ async function applyUnifiedCatalogFilters(query,filters,clientId){
   const unique=[...new Set(ids)];
   if(unique.length)conditions.push('id.in.('+unique.join(',')+')');
  }
- return query.or(conditions.join(','));
+ return {query:query.or(conditions.join(','))};
 }
 async function exportGlobalCatalogCsv(){
  if(!state.user)return notify('سجّل الدخول أولاً.',true);
@@ -3073,7 +3073,7 @@ async function exportGlobalCatalogCsv(){
   const f=currentCatalogFilters(),rows=[],clientRows=new Map(),pageSize=500,clientId=state.catalogClientId;let offset=0;
   while(true){
    let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path').order(f.sort,{ascending:f.ascending}).order('id',{ascending:true});
-   q=await applyUnifiedCatalogFilters(q,f,clientId);q=q.range(offset,offset+pageSize-1);
+   const filtered=await applyUnifiedCatalogFilters(q,f,clientId);q=filtered.query.range(offset,offset+pageSize-1);
    const result=await q;if(result.error)throw result.error;
    const page=result.data||[];
    if(clientId&&page.length){
@@ -3113,8 +3113,8 @@ async function loadCatalog(){
  table?.setAttribute('aria-busy','true');
  try{
   let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path',{count:'exact'}).order(sort,{ascending:state.catalogSortAsc}).order('id',{ascending:true});
-  q=await applyUnifiedCatalogFilters(q,filters,state.catalogClientId);
-  const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=q.range((page-1)*size,page*size-1);
+  const filtered=await applyUnifiedCatalogFilters(q,filters,state.catalogClientId);
+  const size=50,page=Math.max(1,Number(state.catalogPage)||1);q=filtered.query.range((page-1)*size,page*size-1);
   const x=await q;if(x.error)throw x.error;if(requestToken!==state.catalogRequestToken)return;
   state.catalogProducts=x.data||[];state.catalogTotal=Number(x.count||0);
   const scopedClient=state.catalogClientId,productIds=state.catalogProducts.map(p=>p.id);
@@ -3196,14 +3196,14 @@ async function toggleCatalogProduct(id){
  async function bootstrap(){
   const {data:{user},error}=await db.auth.getUser();if(error)throw error;state.user=user||null;if(!state.user){showLogin();return;}
   state.platformOwner=isPlatformOwner(state.user);
-  if(state.platformOwner){state.clientId=null;state.clientRole='platform_owner';showApp();await loadClients();state.catalogClientId=state.clientId||state.clients[0]?.id||null;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId||'';await loadProjects();await loadRoleCatalog();await refreshClientCatalogPermission();await loadCatalog();return;}
+  if(state.platformOwner){state.clientId=null;state.clientRole='platform_owner';showApp();await loadClients();state.catalogClientId=state.clientId||state.clients[0]?.id||null;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId||'';await loadProjects();await loadRoleCatalog();await refreshClientCatalogPermission();await loadCatalog().catch(error=>fail('تعذر تحميل دليل الأصناف الموحد',error));return;}
   const {data:members,error:memberError}=await db.from('count_client_members').select('id,client_id,role_id,display_name,username,status,count_roles(role_key,scope)').eq('user_id',state.user.id).eq('status','active').limit(10);
   if(memberError)throw memberError;const membership=(members||[]).find(x=>x.count_roles?.scope==='client');
   if(!membership){await db.auth.signOut();state.user=null;showLogin('لا توجد عضوية إدارة عميل نشطة لهذا الحساب. راجع مالك المنصة.');return;}
   state.clientId=membership.client_id;state.clientRole=membership.count_roles?.role_key||'client_admin';state.catalogClientId=state.clientId;
   const {data:canRead,error:permError}=await db.rpc('count_has_client_permission',{p_client_id:state.clientId,p_permission_code:'client.read'});
   if(permError||canRead!==true){await db.auth.signOut();state.user=null;showLogin('الدور الحالي لا يملك صلاحية الدخول إلى مساحة العميل.');return;}
-  showApp();await loadClients();await loadProjects();await loadRoleCatalog();await refreshClientCatalogPermission();await loadCatalog();
+  showApp();await loadClients();await loadProjects();await loadRoleCatalog();await refreshClientCatalogPermission();await loadCatalog().catch(error=>fail('تعذر تحميل دليل الأصناف الموحد',error));
  }
 
  $('projectForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);try{
@@ -3442,7 +3442,7 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
  }
 
  db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){stopGlobalRealtime();state.user=null;state.project=null;showLogin();}});
- db.auth.getSession().then(({data})=>{if(data.session)bootstrap().catch(e=>{console.error(e);showLogin(friendlyErrorMessage(e));});});
+ db.auth.getSession().then(({data,error})=>{if(error)throw error;if(!data.session)return;bootstrap().catch(e=>{console.error('[CountFlow Admin] bootstrap failed',e);if(state.user){showApp();fail('تعذر تحميل بعض بيانات النظام. تم الاحتفاظ بجلسة الدخول؛ أعد المحاولة من القسم المطلوب.',e);}else showLogin(friendlyErrorMessage(e));});}).catch(e=>{console.error('[CountFlow Admin] session restore failed',e);if(state.user){showApp();fail('تعذر استعادة بعض بيانات النظام. تم الاحتفاظ بجلسة الدخول؛ أعد المحاولة.',e);}else showLogin(friendlyErrorMessage(e));});
 })();
 </script>
 </body></html>
