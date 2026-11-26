@@ -1611,9 +1611,10 @@ test("Global item editor is a single detail page with three internal sections an
  assert.match(admin,/data-global-product-tab="units"/);
  assert.match(admin,/data-global-product-tab="advanced"/);
  assert.doesNotMatch(admin,/id="globalProductNext"/);
- assert.match(admin,/id="globalBaseUnitChoice"/);
- assert.match(admin,/id="globalBaseUnitCustom"/);
- assert.match(admin,/id="cfBaseUnits"/); // Retained for the institution's unit-override editor.
+ assert.match(admin,/id="globalBaseUnitChoice"[^>]*required/);
+ assert.match(admin,/id="clientProductUnit"/);
+ assert.doesNotMatch(admin,/globalBaseUnitCustom|cfBaseUnits/);
+ assert.match(admin,/function setClientBaseUnit\(value='',preserveExisting=true\)/);
  assert.match(admin,/1 كرتونة = 12 قطعة/);
  assert.match(admin,/id="globalProductPanel-units"/);
  assert.match(admin,/id="globalProductPanel-image"/);
@@ -1668,29 +1669,38 @@ test("Global item editor exposes three accessible tabs and keeps image with basi
  assert.ok(basicStart>=0&&unitsStart>basicStart&&imageStart>basicStart&&imageStart<unitsStart);
 });
 
-test("Global base-unit dropdown follows the measurement class and preserves custom units", () => {
+test("Global and institution base-unit selectors are constrained by measurement class", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/id="globalUnitClass"/);
  assert.match(admin,/id="globalBaseUnitChoice"[^>]*required/);
- assert.match(admin,/id="globalBaseUnitCustom"/);
  assert.match(admin,/id="globalBaseUnit" type="hidden"/);
+ assert.match(admin,/id="clientProductUnit"><option value="">اختر الوحدة الأساسية<\/option><\/select>/);
  assert.match(admin,/const CF_BASE_UNIT_SUGGESTIONS=/);
  assert.match(admin,/function getGlobalBaseUnitValue\(\)/);
- assert.match(admin,/function setGlobalBaseUnit\(value=''\)/);
+ assert.match(admin,/function setGlobalBaseUnit\(value='',preserveExisting=true\)/);
+ assert.match(admin,/function setClientBaseUnit\(value='',preserveExisting=true\)/);
  assert.match(admin,/function bindGlobalBaseUnitSelector\(\)/);
- assert.match(admin,/inferProductUnitClass\(base\);if\(inferredUnitClass!=='other'&&inferredUnitClass!==unitClass\)/);
- const countStart=admin.indexOf("const CF_UNIT_CLASSES=");
- const countEnd=admin.indexOf("function defaultProductUnitPrecision(",countStart);
- const helperSource=admin.slice(countStart,countEnd);
- const helpers=vm.runInNewContext("(()=>{"+helperSource+";return {inferProductUnitClass,CF_UNIT_CLASSES}})()");
- assert.equal(helpers.inferProductUnitClass("كرتونة"),"count");
- assert.equal(helpers.inferProductUnitClass("جرام"),"mass");
- assert.equal(helpers.inferProductUnitClass("لتر"),"volume");
- assert.equal(helpers.inferProductUnitClass("oz"),"mass");
- assert.equal(helpers.inferProductUnitClass("ft"),"length");
- assert.equal(helpers.inferProductUnitClass("sq ft"),"area");
- assert.equal(helpers.inferProductUnitClass("sqft"),"area");
- assert.equal(helpers.inferProductUnitClass("وحدة جديدة خاصة"),"other");
+ assert.doesNotMatch(admin,/globalBaseUnitCustom|cfBaseUnits/,"New item editors must not expose free-text base-unit inputs or datalists");
+ assert.match(admin,/data-legacy="true"/,"Previously saved nonstandard units remain selectable when editing older records");
+ assert.match(admin,/if\(!base\)throw new Error\('وحدة الأساس مطلوبة\.'\)/,"A new global master still requires a base unit");
+ const classStart=admin.indexOf("const CF_BASE_UNIT_SUGGESTIONS=");
+ const classEnd=admin.indexOf("function getGlobalBaseUnitValue()",classStart);
+ const helperSource=admin.slice(classStart,classEnd);
+ const choices=vm.runInNewContext("(()=>{"+helperSource+";return CF_BASE_UNIT_SUGGESTIONS})()");
+ assert.ok(choices.count.includes("قطعة")&&choices.count.includes("كرتونة"));
+ assert.ok(choices.mass.includes("كجم")&&choices.mass.includes("جرام"));
+ assert.ok(choices.volume.includes("لتر")&&choices.volume.includes("ملليلتر"));
+ const inferStart=admin.indexOf("const CF_UNIT_CLASSES=");
+ const inferEnd=admin.indexOf("function defaultProductUnitPrecision(",inferStart);
+ const inferSource=admin.slice(inferStart,inferEnd);
+ const inferred=vm.runInNewContext("(()=>{"+inferSource+";return inferProductUnitClass})()");
+ assert.equal(inferred("كرتونة"),"count");
+ assert.equal(inferred("جرام"),"mass");
+ assert.equal(inferred("لتر"),"volume");
+ assert.equal(inferred("oz"),"mass");
+ assert.equal(inferred("ft"),"length");
+ assert.equal(inferred("sq ft"),"area");
+ assert.equal(inferred("sqft"),"area");
 });
 
 test("Global item editor retains CountFlow's actual barcode, image and multi-UOM contracts", () => {
@@ -1708,4 +1718,76 @@ test("Global item editor retains CountFlow's actual barcode, image and multi-UOM
  assert.doesNotMatch(admin,/count_save_product/);
  assert.doesNotMatch(admin,/measure_type/);
  assert.doesNotMatch(admin,/id="item-cost"|id="item-sales"|id="item-supplier"/);
+});
+
+
+test("LVE-790: catalogue import actions are prominent, owner-scoped, streaming and identity-deduplicated", () => {
+ const admin=read("countflow-admin.html");
+ for(const id of ["catalogOpenGlobalImport","catalogOpenClientImport","catalogAddProduct","clientCatalogImportFile","clientCatalogImportPreview","clientCatalogImportCommit","clientCatalogImportSummary"]) {
+  assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action/control "+id);
+ }
+ assert.match(admin,/function bindCatalogImportActions\(\)/);
+ assert.match(admin,/function updateCatalogImportActions\(\)/);
+ assert.match(admin,/async function previewClientCatalogImport\(\)/);
+ assert.match(admin,/async function commitClientCatalogImport\(\)/);
+ assert.match(admin,/db\.rpc\('count_upsert_client_catalog_chunk',\{p_client_id:client\.id,p_rows:rows\}\)/);
+ assert.match(admin,/pending\.length>=500/);
+ assert.match(admin,/parsed\.count>90000/);
+ assert.match(admin,/streamXlsxProductRows\(file/);
+ assert.match(admin,/function catalogImportIdentityKeys\(row\)/);
+ assert.match(admin,/reserveCatalogImportIdentities\(normalized,seenIdentities\)/);
+ assert.match(admin,/catalogInserted/);
+ assert.match(admin,/clientInserted/);
+ assert.match(admin,/clientUpdated/);
+ assert.match(admin,/duplicates/);
+ assert.match(admin,/globalCatalogLookupPanel/);
+ assert.match(admin,/async function searchGlobalCatalogBeforeManualAdd\(\)/);
+ assert.match(admin,/contains\('units',\[\{barcode:term\}\]\)/);
+ assert.doesNotMatch(admin,/count_products_master|count_product_units/);
+});
+
+test("LVE-790: batch client catalogue import enforces owner-only RPC and row-level reconciliation", () => {
+ const migration=read("database/migrations/20261126190000_countflow_client_catalog_import_upsert_v1.sql");
+ const hardening=read("database/migrations/20261126190500_countflow_client_catalog_import_upsert_row_atomicity_v2.sql");
+ for(const sql of [migration,hardening]){
+  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.count_upsert_client_catalog_chunk\(p_client_id uuid, p_rows jsonb\)/);
+  assert.match(sql,/SECURITY DEFINER/);
+  assert.match(sql,/SET search_path TO ''/);
+  assert.match(sql,/auth\.uid\(\)/);
+  assert.match(sql,/counting_private\.is_platform_owner\(\)/);
+  assert.match(sql,/jsonb_array_length\(p_rows\) > 500/);
+  assert.match(sql,/count_catalog_product_identifiers/);
+  assert.match(sql,/count_client_products/);
+  assert.match(sql,/ON CONFLICT \(client_id, catalog_product_id\) DO UPDATE/);
+  assert.doesNotMatch(sql,/UPDATE public\.count_catalog_products/,"A matched global master must not be overwritten by institution import");
+  assert.match(sql,/REVOKE ALL ON FUNCTION public\.count_upsert_client_catalog_chunk\(uuid, jsonb\) FROM PUBLIC, anon/);
+  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.count_upsert_client_catalog_chunk\(uuid, jsonb\) TO authenticated/);
+ }
+ assert.match(hardening,/v_seen_products := array_append\(v_seen_products, v_product_id\)/);
+ assert.ok(hardening.indexOf("v_seen_products := array_append")>hardening.indexOf("INSERT INTO public.count_client_products"),"A product is marked seen only after client mapping succeeds");
+ assert.ok(hardening.indexOf("v_catalog_inserted := v_catalog_inserted + 1")>hardening.indexOf("INSERT INTO public.count_client_products"),"New-master counters are committed only after client mapping succeeds");
+});
+
+test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity plus actual scanned identifier", () => {
+ const counter=read("countflow.html");
+ assert.match(counter,/function counterUnitRows\(product\)/);
+ assert.match(counter,/function counterUnitByBarcode\(product,code\)/);
+ assert.match(counter,/factor_to_base/);
+ assert.match(counter,/\.contains\('units',\[\{barcode:code\}\]\)/);
+ assert.match(counter,/renderCounterProductUnits\(product,matchedUnit\?\.name\|\|product\.base_unit\)/);
+ assert.match(counter,/scan_code:scannedProductCode\|\|product\.barcode\|\|product\.sku/);
+ assert.match(counter,/scannedProductCode=null/);
+ assert.match(counter,/unitConversionHint/);
+ assert.match(counter,/يحس(?:ب|ب) الخادم التحويل عند الحفظ/);
+ assert.doesNotMatch(counter,/qty\s*\*\s*(?:unit|factor_to_base)|quantity\s*\*\s*.*factor_to_base/,"The browser must never multiply the count; database trigger owns base conversion");
+ const helperStart=counter.indexOf("function counterUnitRows(product){");
+ const helperEnd=counter.indexOf("async function findProduct(){",helperStart);
+ assert.ok(helperStart>=0&&helperEnd>helperStart,"Counter unit resolution helpers must remain extractable");
+ const sandbox={esc:value=>String(value??''),$:(id)=>({innerHTML:'',value:'',onchange:null,textContent:''})};
+ vm.runInNewContext(counter.slice(helperStart,helperEnd)+"\nthis.testCounterUnitByBarcode=counterUnitByBarcode;this.testCounterUnitRows=counterUnitRows;",sandbox);
+ const product={base_unit:"قطعة",units:[{name:"كرتونة",factor_to_base:12,barcode:"BOX-12"},{name:"باكيت",factor_to_base:6,barcode:"PACK-6"}]};
+ assert.equal(sandbox.testCounterUnitByBarcode(product,"BOX-12").factor_to_base,12);
+ assert.equal(sandbox.testCounterUnitByBarcode(product,"pack-6").name,"باكيت");
+ assert.equal(sandbox.testCounterUnitByBarcode(product,"unknown"),null);
+ assert.equal(sandbox.testCounterUnitRows(product).length,3);
 });
