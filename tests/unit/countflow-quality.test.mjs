@@ -1820,6 +1820,33 @@ test("LVE-790: client catalog link to a project uses the scoped attach RPC and n
  assert.match(counter,/scan_code:scannedProductCode\|\|product\.barcode\|\|product\.sku/);
 });
 
+test("LVE-790: server identity alias matching and project attachment session guard are enforced", () => {
+ const aliases=read("database/migrations/20261126191500_countflow_client_import_identity_alias_resolution_v4.sql");
+ const aliasStart=aliases.indexOf("CREATE OR REPLACE FUNCTION public.count_upsert_client_catalog_chunk(");
+ const aliasEnd=aliases.indexOf("REVOKE ALL ON FUNCTION public.count_upsert_client_catalog_chunk",aliasStart);
+ assert.ok(aliasStart>=0&&aliasEnd>aliasStart);
+ const rpc=aliases.slice(aliasStart,aliasEnd);
+ assert.match(rpc,/catalog-sku:' \|\| lower\(v_client_sku\)/);
+ assert.match(rpc,/catalog-barcode:' \|\| lower\(v_client_barcode\)/);
+ assert.match(rpc,/catalog-uom-barcode:' \|\| lower\(v_client_barcode\)/);
+ assert.match(rpc,/lower\(btrim\(coalesce\(p\.canonical_sku, ''\)\)\) = lower\(v_client_sku\)/);
+ assert.match(rpc,/lower\(btrim\(coalesce\(p\.barcode, ''\)\)\) = lower\(v_client_barcode\)/);
+ assert.match(rpc,/v_client_barcode IS NOT NULL AND lower\(btrim\(coalesce\(u\.value->>'barcode', ''\)\)\) = lower\(v_client_barcode\)/);
+ assert.match(rpc,/pg_advisory_xact_lock/);
+ const attach=read("database/migrations/20261126192000_countflow_catalog_attach_open_session_guard_v1.sql");
+ assert.match(attach,/CREATE OR REPLACE FUNCTION counting_private\.count_attach_catalog_product_impl/);
+ assert.match(attach,/FROM public\.count_projects p[\s\S]{0,100}FOR UPDATE/);
+ assert.match(attach,/s\.status IN \('active','paused','review'\)/);
+ assert.match(attach,/PROJECT_CATALOG_ATTACHMENT_BLOCKED_DURING_OPEN_SESSION/);
+ assert.match(attach,/has_project_permission\(p_project_id,'catalog\.attach'\)/);
+ assert.match(attach,/has_client_permission\(v_client_id,'catalog\.manage'\)/);
+ assert.match(attach,/p_expected_qty/);
+ assert.doesNotMatch(attach,/INSERT INTO public\.count_entries|UPDATE public\.count_entries|INSERT INTO public\.count_expected_balances/);
+ const readme=read("database/migrations/README.md");
+ assert.match(readme,/20261126194742/);
+ assert.match(readme,/20261126194745/);
+});
+
 test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity plus actual scanned identifier", () => {
  const counter=read("countflow.html");
  assert.match(counter,/function counterUnitRows\(product\)/);
