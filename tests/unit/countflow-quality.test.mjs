@@ -1550,17 +1550,21 @@ test("Admin catalogue uses one unified list and places local organization fields
  }
 });
 
-test("Global item editor is a single-page form with base-unit suggestions and conversion details visible", () => {
+test("Global item editor is a single detail page with three internal sections and safe base-unit options", () => {
  const admin=read("countflow-admin.html");
- assert.doesNotMatch(admin,/data-global-product-tab=/);
+ assert.match(admin,/id="globalProductEditorTabs"/);
+ assert.match(admin,/data-global-product-tab="basic"/);
+ assert.match(admin,/data-global-product-tab="units"/);
+ assert.match(admin,/data-global-product-tab="advanced"/);
  assert.doesNotMatch(admin,/id="globalProductNext"/);
- assert.match(admin,/id="globalBaseUnit" list="cfBaseUnits"/);
- assert.match(admin,/id="cfBaseUnits"/);
+ assert.match(admin,/id="globalBaseUnitChoice"/);
+ assert.match(admin,/id="globalBaseUnitCustom"/);
+ assert.match(admin,/id="cfBaseUnits"/); // Retained for the institution's unit-override editor.
  assert.match(admin,/1 كرتونة = 12 قطعة/);
  assert.match(admin,/id="globalProductPanel-units"/);
  assert.match(admin,/id="globalProductPanel-image"/);
  assert.match(admin,/id="globalProductPanel-advanced"/);
- assert.match(admin,/function switchGlobalProductTab\(\)/);
+ assert.match(admin,/function switchGlobalProductTab\(tab='basic',focus=false\)/);
 });
 
 test("Global catalogue images use scoped private signed URLs and provide image preview and unlink state", () => {
@@ -1590,4 +1594,64 @@ test("Catalogue exports are paginated read paths and debounced list requests rej
  assert.match(admin,/async function applyUnifiedCatalogFilters\(query,filters,clientId\)/);
  assert.match(admin,/client_barcode.*name_override.*category_override/);
  assert.match(admin,/id\.in\.\('\+unique\.join\(','\)\+'/);
+});
+
+
+test("Global item editor exposes three accessible tabs and keeps image with basic details", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="globalProductEditorTabs"[^>]*role="tablist"/);
+ for(const key of ["basic","units","advanced"]) {
+  assert.match(admin,new RegExp('id="globalProductTab-'+key+'"[^>]*role="tab"[^>]*data-global-product-tab="'+key+'"'));
+  assert.match(admin,new RegExp('id="globalProductPanel-'+key+'"[^>]*role="tabpanel"'));
+ }
+ assert.match(admin,/function switchGlobalProductTab\(tab='basic',focus=false\)/);
+ assert.match(admin,/panel\?\.classList\.toggle\('hidden',!selected\)/);
+ assert.match(admin,/ArrowLeft/);
+ assert.match(admin,/ArrowRight/);
+ const basicStart=admin.indexOf('id="globalProductPanel-basic"');
+ const unitsStart=admin.indexOf('id="globalProductPanel-units"',basicStart);
+ const imageStart=admin.indexOf('id="globalProductPanel-image"',basicStart);
+ assert.ok(basicStart>=0&&unitsStart>basicStart&&imageStart>basicStart&&imageStart<unitsStart);
+});
+
+test("Global base-unit dropdown follows the measurement class and preserves custom units", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/id="globalUnitClass"/);
+ assert.match(admin,/id="globalBaseUnitChoice"[^>]*required/);
+ assert.match(admin,/id="globalBaseUnitCustom"/);
+ assert.match(admin,/id="globalBaseUnit" type="hidden"/);
+ assert.match(admin,/const CF_BASE_UNIT_SUGGESTIONS=/);
+ assert.match(admin,/function getGlobalBaseUnitValue\(\)/);
+ assert.match(admin,/function setGlobalBaseUnit\(value=''\)/);
+ assert.match(admin,/function bindGlobalBaseUnitSelector\(\)/);
+ assert.match(admin,/inferProductUnitClass\(base\);if\(inferredUnitClass!=='other'&&inferredUnitClass!==unitClass\)/);
+ const countStart=admin.indexOf("const CF_UNIT_CLASSES=");
+ const countEnd=admin.indexOf("function defaultProductUnitPrecision(",countStart);
+ const helperSource=admin.slice(countStart,countEnd);
+ const helpers=vm.runInNewContext("(()=>{"+helperSource+";return {inferProductUnitClass,CF_UNIT_CLASSES}})()");
+ assert.equal(helpers.inferProductUnitClass("كرتونة"),"count");
+ assert.equal(helpers.inferProductUnitClass("جرام"),"mass");
+ assert.equal(helpers.inferProductUnitClass("لتر"),"volume");
+ assert.equal(helpers.inferProductUnitClass("oz"),"mass");
+ assert.equal(helpers.inferProductUnitClass("ft"),"length");
+ assert.equal(helpers.inferProductUnitClass("sq ft"),"area");
+ assert.equal(helpers.inferProductUnitClass("sqft"),"area");
+ assert.equal(helpers.inferProductUnitClass("وحدة جديدة خاصة"),"other");
+});
+
+test("Global item editor retains CountFlow's actual barcode, image and multi-UOM contracts", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/function cfGenerateInternalBarcode\(\)/);
+ assert.match(admin,/CFI-/);
+ assert.match(admin,/function renderCatalogUnitEditor\(containerId,units=\[\]\)/);
+ assert.match(admin,/function readCatalogUnits\(containerId,baseUnit,primaryBarcode=null\)/);
+ assert.match(admin,/factor_to_base/);
+ assert.match(admin,/data-catalog-unit-barcode/);
+ assert.match(admin,/createSignedUrl\(path,3600\)/);
+ assert.match(admin,/counting-product-images/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.doesNotMatch(admin,/count_product_units/);
+ assert.doesNotMatch(admin,/count_save_product/);
+ assert.doesNotMatch(admin,/measure_type/);
+ assert.doesNotMatch(admin,/id="item-cost"|id="item-sales"|id="item-supplier"/);
 });
