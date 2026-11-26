@@ -1532,7 +1532,7 @@ test("Admin catalogue uses one unified list and places local organization fields
  assert.match(admin,/id="clientProductBarcode"/);
  assert.match(admin,/id="clientProductName"/);
  assert.match(admin,/id="clientProductCategory"/);
- assert.match(admin,/id="count_client_products"/);
+ assert.match(admin,/from\('count_client_products'\)/);
  assert.match(admin,/count_upsert_client_product/);
  assert.match(admin,/data-open-catalog-item=/);
  assert.match(admin,/data-edit-client-map=/);
