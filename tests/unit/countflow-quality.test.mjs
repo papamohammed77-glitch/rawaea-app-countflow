@@ -1550,17 +1550,21 @@ test("Admin catalogue uses one unified list and places local organization fields
  }
 });
 
-test("Global item editor is a single-page form with base-unit suggestions and conversion details visible", () => {
+test("Global item editor is a single detail page with three internal sections and safe base-unit options", () => {
  const admin=read("countflow-admin.html");
- assert.doesNotMatch(admin,/data-global-product-tab=/);
+ assert.match(admin,/id="globalProductEditorTabs"/);
+ assert.match(admin,/data-global-product-tab="basic"/);
+ assert.match(admin,/data-global-product-tab="units"/);
+ assert.match(admin,/data-global-product-tab="advanced"/);
  assert.doesNotMatch(admin,/id="globalProductNext"/);
- assert.match(admin,/id="globalBaseUnit" list="cfBaseUnits"/);
- assert.match(admin,/id="cfBaseUnits"/);
+ assert.match(admin,/id="globalBaseUnitChoice"/);
+ assert.match(admin,/id="globalBaseUnitCustom"/);
+ assert.match(admin,/id="cfBaseUnits"/); // Retained for the institution's unit-override editor.
  assert.match(admin,/1 كرتونة = 12 قطعة/);
  assert.match(admin,/id="globalProductPanel-units"/);
  assert.match(admin,/id="globalProductPanel-image"/);
  assert.match(admin,/id="globalProductPanel-advanced"/);
- assert.match(admin,/function switchGlobalProductTab\(\)/);
+ assert.match(admin,/function switchGlobalProductTab\(tab='basic',focus=false\)/);
 });
 
 test("Global catalogue images use scoped private signed URLs and provide image preview and unlink state", () => {
