@@ -2472,8 +2472,7 @@ async function openUnifiedCatalogItem(product){
  $('catalogGlobalView').classList.add('hidden');
  window.scrollTo({top:0,behavior:'smooth'});
 }
-async function loadCatalogMappingOptions(term=''){const clientId=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!clientId){$('clientProductCatalog').innerHTML='<option value="">اختر المؤسسة أولاً</option>';return;}let q=db.from('count_catalog_products').select('id,name,canonical_sku,barcode,base_unit,units,is_active').eq('is_active',true).order('name').limit(80);const value=String(term||'').trim().replace(/[%,().]/g,' ').slice(0,90);if(value)q=q.or(['name','canonical_sku','barcode'].map(k=>k+'.ilike.%'+value+'%').join(','));const {data,error}=await q;if(error)throw error;state.catalogOptionProducts=data||[];$('clientProductCatalog').innerHTML=state.catalogOptionProducts.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.canonical_sku||p.barcode||'—')+'</option>').join('')||'<option value="">لا توجد أصناف مطابقة</option>';}
- function resetClientProductForm(){
+function resetClientProductForm(){
  $('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');$('clientProductUnit').value='';renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
 }
 function openClientCatalogEditor(){
@@ -2482,9 +2481,9 @@ function openClientCatalogEditor(){
 }
 function appendCatalogUnitRow(id){const el=$(id);if(!el)return;const row=document.createElement('div');row.className='product-unit-row';row.dataset.catalogUnitRow='';row.innerHTML='<div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name maxlength="40"></div><div class="field"><label>كم تعادل من وحدة الأساس؟</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-catalog-unit-barcode maxlength="120"></div><div class="field"><label>نوع الرمز</label><select data-catalog-unit-barcode-type><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128</option></select></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button>';el.appendChild(row);row.querySelector('[data-catalog-unit-remove]').onclick=()=>{row.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(id,[]);};}
  function refreshClientCatalogPermission(){
- const id=state.catalogClientId,shell=$('clientCatalogEditorShell'),panel=$('clientProductEditorPanel'),add=$('clientCatalogAddNew');
- if(!id){state.canManageClientCatalog=false;panel?.classList.add('hidden');shell?.classList.add('hidden');if(add)add.classList.add('hidden');return Promise.resolve(false);}
- const apply=allowed=>{state.canManageClientCatalog=!!allowed;panel?.classList.toggle('hidden',!allowed);if(add)add.classList.toggle('hidden',!allowed);if(!allowed)shell?.classList.add('hidden');return state.canManageClientCatalog;};
+ const id=state.catalogClientId,shell=$('clientCatalogEditorShell'),panel=$('clientProductEditorPanel');
+ if(!id){state.canManageClientCatalog=false;panel?.classList.add('hidden');shell?.classList.add('hidden');return Promise.resolve(false);}
+ const apply=allowed=>{state.canManageClientCatalog=!!allowed;panel?.classList.toggle('hidden',!allowed);if(!allowed)shell?.classList.add('hidden');return state.canManageClientCatalog;};
  if(state.platformOwner)return Promise.resolve(apply(true));
  return db.rpc('count_has_client_permission',{p_client_id:id,p_permission_code:'catalog.manage'}).then(({data,error})=>apply(!error&&data===true));
 }
@@ -2971,22 +2970,6 @@ async function exportGlobalCatalogCsv(){
   notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً من نتائج الدليل الحالية.');
  }catch(error){fail('تعذر تصدير الدليل العالمي',error);}finally{button.disabled=false;}
 }
-async function exportClientCatalogCsv(){
- const clientId=state.catalogClientId||state.clientId;if(!clientId)return notify('اختر المؤسسة أولاً.',true);
- const button=$('clientCatalogExport');button.disabled=true;
- try{
-  const rows=[],pageSize=500;let offset=0;
-  while(true){
-   const result=await db.from('count_client_products').select('client_sku,client_barcode,name_override,category_override,base_unit_override,units_override,image_storage_path_override,is_active,count_catalog_products(name,canonical_sku,barcode,category,base_unit)').eq('client_id',clientId).order('id',{ascending:true}).range(offset,offset+pageSize-1);
-   if(result.error)throw result.error;const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
-   if(rows.length>=200000)throw new Error('تجاوزت مواءمات المؤسسة 200,000 سجل؛ يرجى تقسيم التصدير.');
-  }
-  downloadCatalogCsv('CountFlow-client-catalog-'+clientId+'-'+new Date().toISOString().slice(0,10)+'.csv',
-   ['SKU المؤسسة','باركود المؤسسة','اسم المؤسسة','تصنيف المؤسسة','وحدة المؤسسة','وحدات المؤسسة JSON','حالة المواءمة','مسار صورة المؤسسة الخاص','اسم الصنف العالمي','SKU العالمي','باركود عالمي','تصنيف عالمي','وحدة عالمية'],
-   rows.map(p=>{const c=p.count_catalog_products||{};return [p.client_sku,p.client_barcode,p.name_override,p.category_override,p.base_unit_override,p.units_override,p.is_active?'نشط':'موقوف',p.image_storage_path_override,c.name,c.canonical_sku,c.barcode,c.category,c.base_unit];}));
-  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' مواءمة للمؤسسة.');
- }catch(error){fail('تعذر تصدير مواءمات المؤسسة',error);}finally{button.disabled=false;}
-}
 async function exportProjectCatalogCsv(){
  const project=state.project;if(!project)return notify('اختر ملف تكليف أولاً.',true);
  const button=$('projectCatalogExport');button.disabled=true;
@@ -3047,11 +3030,6 @@ async function toggleCatalogProduct(id){
   $('globalProductFormTitle').textContent='إضافة صنف عالمي';$('globalProductSave').textContent='إضافة للكتالوج';
  }
 
- async function loadClientCatalogMappings(){const id=state.catalogClientId||(state.platformOwner?state.clientId:state.clientId);if(!id){$('clientCatalogTable').innerHTML='<div class="empty">اختر مؤسسة لعرض أصنافها.</div>';return;}const {data,error}=await db.from('count_client_products').select('id,client_id,catalog_product_id,client_sku,client_barcode,name_override,category_override,base_unit_override,units_override,image_storage_path_override,is_active,count_catalog_products(id,name,canonical_sku,barcode,base_unit,units,category,is_active)').eq('client_id',id).limit(500);if(error)throw error;const rows=data||[],term=$('clientCatalogSearch')?.value.trim().toLocaleLowerCase()||'',filtered=rows.filter(p=>{const c=p.count_catalog_products||{};return [c.name,c.canonical_sku,c.barcode,p.client_sku,p.client_barcode,p.name_override,p.category_override].join(' ').toLocaleLowerCase().includes(term);});$('catalogClientScopeLabel').textContent='نطاق المؤسسة: '+(state.clients.find(c=>c.id===id)?.name||'المؤسسة المحددة')+'. مواءمتها محفوظة للتكليفات المتكررة.';const same=!!(state.project&&state.project.client_id===id);
-  $('clientCatalogTable').innerHTML=filtered.length?'<table><thead><tr><th>الصنف العالمي</th><th>معرف المؤسسة</th><th>اسم المؤسسة</th><th>الوحدة الأساسية</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>'+filtered.map(p=>{const c=p.count_catalog_products||{},units=productUnitRows(Array.isArray(p.units_override)?p.units_override:(Array.isArray(c.units)?c.units:[])),actions=(state.canManageClientCatalog?'<button class="soft" type="button" data-edit-client-map="'+esc(p.id)+'">تعديل</button> ':'')+'<button class="primary" type="button" data-attach="'+esc(p.id)+'" '+(!same?'disabled':'')+'>إدراج في التكليف الحالي</button>';return '<tr><td><b>'+esc(c.name||'—')+'</b><span class="sub">'+esc(c.canonical_sku||c.barcode||'')+'</span></td><td>'+esc(p.client_sku||'—')+'<span class="sub">'+esc(p.client_barcode||'')+'</span></td><td>'+esc(p.name_override||'—')+'<span class="sub">'+esc(p.category_override||'')+'</span></td><td>'+esc(p.base_unit_override||c.base_unit||'—')+'<span class="sub">'+units.length+' وحدات بديلة</span></td><td>'+statusPill(p.is_active?'active':'paused')+'</td><td><div class="cf-inline-actions">'+actions+'</div></td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لا توجد مواءمات مطابقة.</div>';
-  $('clientCatalogTable').querySelectorAll('[data-edit-client-map]').forEach(b=>b.onclick=()=>{const p=rows.find(x=>x.id===b.dataset.editClientMap);if(!p)return;$('clientProductCatalog').innerHTML='<option value="'+esc(p.catalog_product_id)+'">'+esc(p.count_catalog_products?.name||'الصنف العالمي')+'</option>';$('clientProductCatalog').value=p.catalog_product_id;$('clientProductSku').value=p.client_sku||'';$('clientProductBarcode').value=p.client_barcode||'';$('clientProductName').value=p.name_override||'';$('clientProductCategory').value=p.category_override||'';$('clientProductImagePath').value=p.image_storage_path_override||'';const custom=!!(p.base_unit_override||p.units_override);$('clientUnitsOverrideToggle').checked=custom;$('clientUnitsOverrideFields').classList.toggle('hidden',!custom);$('clientProductUnit').value=p.base_unit_override||'';renderCatalogUnitEditor('clientProductUnitsEditor',p.units_override||[]);setUnitMetaFields('client',p.units_override||p.count_catalog_products?.units||[],$('clientProductUnit').value||p.count_catalog_products?.base_unit||'');$('clientProductFormTitle').textContent='تعديل مواءمة الصنف للمؤسسة';openClientCatalogEditor();});
-  $('clientCatalogTable').querySelectorAll('[data-attach]').forEach(b=>b.onclick=async()=>{try{if(!state.project)return notify('اختر ملف تكليف أولاً.');if(state.project.client_id!==id)return notify('المؤسسة المحددة لا تطابق مالك ملف التكليف.',true);const x=await db.rpc('count_attach_catalog_product',{p_project_id:state.project.id,p_client_product_id:b.dataset.attach,p_expected_qty:null});if(x.error)throw x.error;notify(x.data?.already_linked?'الصنف مرتبط بهذا التكليف بالفعل.':'تم ربط الصنف مع الاحتفاظ بسجله الدائم.');await loadProjectData();}catch(error){fail('تعذر إدراج الصنف في ملف التكليف',error);}});
- }
  function bindUnitPrecisionDefaults(){
  [['globalUnitClass','globalUnitPrecision'],['unitClass','unitPrecision'],['clientUnitClass','clientUnitPrecision']].forEach(([classId,precisionId])=>{
   const cls=$(classId),precision=$(precisionId);if(!cls||!precision)return;
