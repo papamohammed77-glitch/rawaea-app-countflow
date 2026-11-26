@@ -9,7 +9,7 @@
 **فرع التطوير التاريخي قبل الدمج:** `work/lve-788-admin-item-editor-ux` (ليس مسار الاعتماد بعد الدمج).  
 **Commit الكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`. **Commit الدمج إلى main:** `74a426fbdd7a036633350546107e9f452aa3eae2` (Squash merge).  
 **PR #11:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11 — MERGED / CLOSED.  
-**الحالة:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH QUALITY GATE RUNNING AT LAST CHECK — AUTHENTICATED VISUAL ACCEPTANCE OPEN — CLOUDFLARE DEPLOYMENT UNVERIFIED.
+**الحالة:** MERGED TO MAIN — PR + MAIN PUSH QUALITY GATES PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — LATEST CLOUDFLARE PRODUCTION DEPLOYMENT UNVERIFIED.
 
 ### 1. نقطة الاستئناف
 - استُؤنف العمل من LVE-787 المدمج في main. لم تُعد كتابة دليل الأصناف الموحد أو البحث أو صفحة التفاصيل أو فصل Global/Client/Project.
@@ -36,7 +36,7 @@
 
 ### 4. التحقق الآلي
 - GitHub Actions PR Run `45871276475`, HEAD `bc92f73cf08501217f9432ea08b1479058042abb`: SUCCESS على HEAD النهائي قبل الدمج. 99/99 Node tests، وDeno وPages build وPlaywright 2 PASS / 1 SKIP.  
-- Main push Run `45872497257` على Commit `74a426fbdd7a036633350546107e9f452aa3eae2`: IN_PROGRESS عند آخر تحقق؛ لا يُعلن نجاح main CI قبل ظهور نتيجته النهائية.
+- Main push Run `45872497257` على Commit `74a426fbdd7a036633350546107e9f452aa3eae2`: SUCCESS. نجحت خطوات Deno type-check وNode/source/streaming tests (99/99) وCloudflare Pages allowlisted build وPlaywright discovery/public shell (2 PASS / 1 SKIP).
 - Node tests: 99/99 PASS.
 - Deno type-check لوظيفتي Edge: PASS.
 - Cloudflare Pages allowlisted build: PASS.
@@ -67,7 +67,7 @@
 ### 8. الخطوة التالية
 بعد نجاح Main push CI، يلزم قبول بصري مصادق لمحرر الصنف على Desktop/Mobile (التنقل بين الأقسام دون فقد المدخلات، فتح صنف قائم، وحدة أساس مخصصة، الوحدات البديلة والصورة). لا تستخدم بيانات QA90K ولا تنفذ كتابة قاعدة بيانات كجزء من القبول البصري.
 
-**Readiness:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH CI PENDING AT LAST CHECK — AUTHENTICATED VISUAL/OWNER ACCEPTANCE OPEN — DEPLOYMENT UNVERIFIED.
+**Readiness:** MERGED TO MAIN — PR + MAIN PUSH CI PASS — AUTHENTICATED VISUAL/OWNER ACCEPTANCE OPEN — LATEST PRODUCTION DEPLOYMENT UNVERIFIED.
 
 ---
 
