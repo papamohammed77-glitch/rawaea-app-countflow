@@ -1587,4 +1587,7 @@ test("Catalogue exports are paginated read paths and debounced list requests rej
  assert.match(admin,/state\.catalogRequestToken=\(state\.catalogRequestToken\|\|0\)\+1/);
  assert.match(admin,/state\.catalogSearchTimer=setTimeout/);
  assert.match(admin,/function applyCatalogFilters\(query,filters\)/);
+ assert.match(admin,/async function applyUnifiedCatalogFilters\(query,filters,clientId\)/);
+ assert.match(admin,/client_barcode.*name_override.*category_override/);
+ assert.match(admin,/id\.in\.\('\+unique\.join\(','\)\+'/);
 });
