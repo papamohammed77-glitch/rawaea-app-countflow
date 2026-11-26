@@ -4,8 +4,8 @@
 **التقرير التفصيلي:** `Reports/LVE-2026-11-26-785_ADMIN_CATALOG_UX_OVERHAUL.md`.  
 **Pull Request:** #9 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/9.  
 **فرع العمل:** `work/lve-785-admin-catalog-ux`.  
-**حالة التغيير:** IMPLEMENTED ON PR BRANCH — NOT MERGED — VISUAL OWNER ACCEPTANCE PENDING.  
-**آخر Head معروف قبل تحديث وثائق هذا الحدث:** `11fa0553e307367bb944308a7413c54cbafb1578`.
+**حالة التغيير:** IMPLEMENTED ON PR BRANCH — CI GREEN — NOT MERGED — VISUAL OWNER ACCEPTANCE PENDING.  
+**Head اجتاز بوابة CI الكاملة:** `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e` (التغييرات اللاحقة على الفرع وثائق فقط).
 
 ### الملخص التنفيذي
 - أُعيد تنظيم Global catalogue ليكون list-first مع البحث/التصنيف/الحالة والفرز وpagination وحماية طلبات البحث المتأخرة.
@@ -18,7 +18,7 @@
 ### التغييرات والاختبارات
 - الملفات المعدلة في PR: `countflow-admin.html` و`tests/unit/countflow-quality.test.mjs` فقط.
 - ثلاث اختبارات انحدار جديدة تغطي فصل الشاشات، الصور الخاصة، التصدير المجزأ وحماية الطلبات المتأخرة.
-- Workflow run `45853504510` على head `11fa0553e307367bb944308a7413c54cbafb1578`: Deno check وNode tests وPages allowlist build ناجحة؛ Playwright العام كان IN PROGRESS عند آخر قراءة قبل إضافة التقرير. لا يجوز وصف الـWorkflow بالنجاح النهائي قبل ظهور conclusion.
+- Workflow run `45853859251` على head `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e`: **SUCCESS**؛ Node tests 95/95، Deno check ناجح، Pages allowlist build ناجح، وPlaywright لواجهة الدخول العامة وRTL على Mobile ناجح (2 passed؛ اختبار source parity الخاص بحدث main push تم تخطيه في حدث PR).
 - أول CI attempt على commit سابق فشل في JavaScript regex لحماية CSV؛ صُحح الخطأ وأعيد تشغيل البوابة على head أحدث.
 - القبول البصري المصادق عليه بعد تسجيل الدخول كمالك على Desktop وMobile لم يُنفذ بعد.
 
@@ -30,7 +30,7 @@
 - القائمة الحالية لمواءمات العميل ما زالت بحد قراءة 500 سجل مع فلترة محلية؛ التصدير يقرأ صفحات مستقلة حتى 200,000. هذه فجوة متبقية موثقة.
 
 ### قرار الإغلاق
-التغيير موجود على PR #9 فقط، وليس على `main`، ولم يحدث دمج أو نشر. الإغلاق يتطلب CI أخضر على آخر commit ومراجعة المالك البصرية قبل الدمج.
+التغيير موجود على PR #9 فقط، وليس على `main`، ولم يحدث دمج أو نشر. الإغلاق يتطلب مراجعة المالك البصرية لواجهة Admin على Desktop وMobile قبل الدمج. CI الأخضر موثق في run 45853859251.
 
 ---
 
