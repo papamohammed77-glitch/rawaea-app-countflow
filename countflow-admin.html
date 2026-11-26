@@ -2896,7 +2896,7 @@ async function loadGlobalProductImagePreview(product){
 }
 function csvCell(value){
  let text=value===null||value===undefined?'':(typeof value==='object'?JSON.stringify(value):String(value));
- if(typeof value==='string'&&/^[\\s]*[=+\\-@]/.test(text))text="'"+text;
+ if(typeof value==='string'&&/^[=+@-]/.test(text.trimStart()))text="'"+text;
  return '"'+text.replace(/"/g,'""')+'"';
 }
 function downloadCatalogCsv(filename,headers,rows){
