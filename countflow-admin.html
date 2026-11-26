@@ -219,6 +219,7 @@
 .cf-catalog-editor-preview{min-height:92px}
 .cf-catalog-editor-preview img{width:104px;height:104px;object-fit:contain;background:#fff}
 .cf-catalog-export-note{font-size:11px;color:var(--muted)}
+#projectProductWorkspace:not(.cf-catalog-editor-open){grid-template-columns:minmax(0,1fr)}
 .split:has(>#projectProductEditorPanel.hidden){grid-template-columns:minmax(0,1fr)}
 #catalogTable[aria-busy="true"]{opacity:.62;pointer-events:none}
 @media(max-width:760px){.cf-catalog-tools>summary{align-items:flex-start;padding:12px}.cf-catalog-tools-content{padding:0 8px 8px}.cf-catalog-table{min-width:760px}.cf-catalog-list-tools{align-items:stretch}.cf-catalog-list-tools .toolbar{min-width:100%}.cf-catalog-view-heading{align-items:flex-start}}
@@ -466,7 +467,7 @@
       <div id="productImportDetails" class="tablewrap" style="margin-top:10px"></div>
      </div>
      </div></details>
-     <div class="split">
+     <div class="split" id="projectProductWorkspace">
       <div class="panel hidden" id="projectProductEditorPanel"><div class="row cf-catalog-view-heading"><h3 id="productFormTitle">إضافة صنف</h3><button id="projectProductEditorClose" type="button" class="soft">إغلاق المحرر</button></div><form id="productForm"><input id="productId" type="hidden"><div class="fields">
        <div class="field"><label>كود الصنف SKU (اختياري عند إدخال الباركود)</label><input id="sku" maxlength="100" placeholder="يمكن تركه فارغاً"></div><div class="field"><label>الباركود</label><input id="barcode" maxlength="120"></div>
        <div class="field full"><label>اسم الصنف (اختياري)</label><input id="productName" maxlength="200" placeholder="يمكن استكمال الاسم لاحقاً"></div>
@@ -2494,7 +2495,7 @@ function renderProductUnitEditor(units=[]){
  }
  async function editProduct(id){
  const p=state.products.find(x=>x.id===id);if(!p)return;
- $('projectProductEditorPanel').classList.remove('hidden');
+ $('projectProductEditorPanel').classList.remove('hidden');$('projectProductWorkspace').classList.add('cf-catalog-editor-open');
  resetProductImagePreview();$('productId').value=p.id;$('sku').value=p.sku;$('barcode').value=p.barcode||'';$('productName').value=p.name||'';$('category').value=p.category||'';$('baseUnit').value=p.base_unit;$('expectedQty').value=p.expected_qty??'';
  state.editingProductImageRef=p.image_url||null;state.productImageCleared=false;$('imageUrl').value=safeExternalProductImageUrl(p.image_url);
  const displayUrl=productImageDisplayUrl(p);if(displayUrl)showProductImagePreview(displayUrl,'الصورة الحالية للصنف','هذه الصورة محفوظة في مساحة CountFlow الخاصة. عند الاستبدال أو إزالة الربط يبقى الملف القديم في التخزين ولا يُحذف تلقائياً.');
@@ -2502,7 +2503,7 @@ function renderProductUnitEditor(units=[]){
 }
 function resetProductForm(){
  $('productForm').reset();$('productId').value='';$('baseUnit').value='وحدة';$('unitClass').value='count';$('unitPrecision').value='0';$('unitItemKind').value='BARCODED';$('unitBarcodeType').value='AUTO';$('productFormTitle').textContent='إضافة صنف';
- state.editingProductImageRef=null;state.productImageCleared=false;resetProductImagePreview();renderProductUnitEditor([]);$('projectProductEditorPanel')?.classList.add('hidden');
+ state.editingProductImageRef=null;state.productImageCleared=false;resetProductImagePreview();renderProductUnitEditor([]);$('projectProductEditorPanel')?.classList.add('hidden');$('projectProductWorkspace')?.classList.remove('cf-catalog-editor-open');
 }
 async function toggleProduct(id){
   const p=state.products.find(x=>x.id===id);if(!p)return;
@@ -3089,7 +3090,7 @@ async function toggleCatalogProduct(id){
   state.editingProductImageRef=imageRef;state.productImageCleared=false;
   notify(id?'تم تحديث الصنف ووحداته وصورته.':'تمت إضافة الصنف ووحداته وصورته.');resetProductForm();await loadProjectData();
  }catch(err){fail('تعذر حفظ الصنف',err);}finally{setBusy(f,false);}});
- $('productCancel').onclick=resetProductForm;$('addProjectProduct').onclick=()=>{if(!state.project)return notify('اختر ملف تكليف أولاً.',true);resetProductForm();$('projectProductEditorPanel').classList.remove('hidden');$('sku').focus();$('projectProductEditorPanel').scrollIntoView({behavior:'smooth',block:'start'});};$('projectProductEditorClose').onclick=resetProductForm;$('projectCatalogExport').onclick=exportProjectCatalogCsv;
+ $('productCancel').onclick=resetProductForm;$('addProjectProduct').onclick=()=>{if(!state.project)return notify('اختر ملف تكليف أولاً.',true);resetProductForm();$('projectProductEditorPanel').classList.remove('hidden');$('projectProductWorkspace').classList.add('cf-catalog-editor-open');$('sku').focus();$('projectProductEditorPanel').scrollIntoView({behavior:'smooth',block:'start'});};$('projectProductEditorClose').onclick=resetProductForm;$('projectCatalogExport').onclick=exportProjectCatalogCsv;
  $('addProductUnit').addEventListener('click',()=>{
   const container=$('productUnitsEditor'),row=document.createElement('div');row.className='product-unit-row';row.dataset.productUnitRow='';
   row.innerHTML='<div class="field"><label>اسم الوحدة البديلة</label><input data-unit-name maxlength="40" placeholder="مثال: كرتونة"></div><div class="field"><label>كم تعادل من الوحدة الأساسية؟</label><input data-unit-factor type="number" min="0.000001" step="0.000001" placeholder="مثال: 12"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-unit-barcode maxlength="120"></div><div class="field"><label>نوع الرمز</label><select data-unit-barcode-type><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128</option></select></div><button type="button" class="danger" data-remove-product-unit>إزالة</button>';
