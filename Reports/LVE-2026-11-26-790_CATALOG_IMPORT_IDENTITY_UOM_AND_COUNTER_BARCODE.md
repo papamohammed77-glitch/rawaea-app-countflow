@@ -3,15 +3,15 @@
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
 **المستودع المعتمد:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **مسار التنفيذ:** `main` فقط؛ لا فروع مؤقتة ولا مستودعات موازية.  
-**Commit النهائي على main:** `a7387bc582af3a8475579694861c319881543d7f`.  
-**Commit واجهة التطبيق الأخيرة:** `d236374e041d354424e388a03306759cc711147e`.  
-**Commit اختبارات منع التكرار والقبول:** `a7387bc582af3a8475579694861c319881543d7f`.
-**ملف Admin:** `countflow-admin.html` — blob `c6ba6c0e75705caaa32c60a104b7da9168711935`.  
-**ملف العد الميداني:** `countflow.html` — blob `101ce09a5a63323ec078951841847850b9b8a84d`.  
-**ملف الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `0379157b3353500a71a576b1194cc9b33aaa515f`.  
-**README الترحيلات:** `database/migrations/README.md` — blob `4800d421f7a16b34bf233bcfa38a6ba4853a9771`.  
-**CI:** Run `45882855790` — SUCCESS على آخر HEAD.  
-**الحالة:** IMPLEMENTED ON MAIN — 105/105 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — AUTHENTICATED CLIENT IMPORT E2E PENDING ACTIVE CLIENT.
+**آخر Commit كود واختبارات:** `22e1e4d2bab68d4211ad068f653dd6411392bdb5`.  
+**HEAD موثق ومتحقق منه عبر Cloudflare Pages:** `143283394d31faa2ee635273acc6c282041f7a1c` (تغيير README فقط بعد Commit الكود/الاختبارات).  
+**ملف Admin:** `countflow-admin.html` — blob `2e1a65000052ffd68b5c9ad7a3a4f4d21ea067be`.  
+**ملف العد الميداني:** `countflow.html` — blob `2feaccac1467498677ee90c05ec08191902c9572`.  
+**ملف الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `88f23173714de630d9d554b1d7d142868ec47562`.  
+**Migration README:** تم تحديثه ليوثق ستة ترحيلات LVE-790 مع إصدارات سجل Supabase الحقيقية.  
+**CI:** Run `45886721963` على HEAD `143283394d31faa2ee635273acc6c282041f7a1c` — **SUCCESS**؛ Node 109/109، Deno PASS، Pages build PASS، Playwright 3/3 PASS.  
+**Production parity:** PASS — Playwright أكد أن Cloudflare Pages Production يطابق HEAD `143283394d31faa2ee635273acc6c282041f7a1c`.  
+**الحالة:** IMPLEMENTED ON MAIN — 109/109 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — REAL CLIENT IMPORT E2E / AUTHENTICATED OWNER VISUAL ACCEPTANCE OPEN.
 
 ---
 
@@ -100,7 +100,9 @@
 - `SECURITY DEFINER` مع `SET search_path TO ''`.
 - تشترط `auth.uid()` و`counting_private.is_platform_owner()` ومؤسسة نشطة.
 - تم سحب التنفيذ من `PUBLIC` و`anon` ومنحه لـ `authenticated` فقط؛ التحقق المباشر أثبت `authenticated_execute=true` و`anon_execute=false`.
-- تستعمل أقفال Advisory لتسلسل استيرادات متزامنة لنفس SKU والباركود وباركود الوحدة والمعرف المحلي.
+- تستعمل أقفال Advisory لتسلسل استيرادات متزامنة لمفاتيح SKU والباركود العالمي والمحلي وباركود الوحدة.
+- الإصدار v4 يطابق القيم الواردة في عمودي SKU/باركود المؤسسة أيضاً مع SKU العالمي والباركود الأساسي وباركودات الوحدات ومعرفات الكتالوج قبل إنشاء Master جديد.
+- الإصدار v5 يمنع حفظ باركود يخص الصنف العالمي أو وحدة بديلة في حقل `client_barcode` الأساسي؛ يظل باركود العبوة في صف الوحدة الصحيح.
 - تحفظ التعديلات في مواءمة العميل باستخدام `ON CONFLICT (client_id,catalog_product_id) DO UPDATE`، لا `ON CONFLICT(barcode)` على Master.
 - تم تصحيح عدادات الصفوف وتتبع المكرر حتى لا يُحتسب الصنف جديداً أو مكرراً قبل نجاح كتابة مواءمته.
 - تم التحقق من وجود القيود والفهارس الأساسية الحالية في الكتالوج العالمي والمواءمات، ولم تتم إضافة فهرس أو جدول جديد.
@@ -112,6 +114,9 @@
 | `20261126190000_countflow_client_catalog_import_upsert_v1.sql` | `20261126185715` |
 | `20261126190500_countflow_client_catalog_import_upsert_row_atomicity_v2.sql` | `20261126185813` |
 | `20261126191000_countflow_client_catalog_import_uom_override_v3.sql` | `20261126191110` |
+| `20261126191500_countflow_client_import_identity_alias_resolution_v4.sql` | `20261126194742` |
+| `20261126192000_countflow_catalog_attach_open_session_guard_v1.sql` | `20261126194745` |
+| `20261126192500_countflow_client_import_uom_barcode_primary_conflict_v5.sql` | `20261126195037` |
 
 أضيفت هذه المطابقة إلى `database/migrations/README.md`. أرقام الإصدار الفعلية في سجل Supabase هي المرجع؛ أسماء الملفات تحمل بادئة توقيت تطويرية مختلفة، ولم تتم إعادة تشغيل أي ترحيل سابق.
 
@@ -134,7 +139,8 @@
 
 - `counterUnitRows` يبني الوحدات المتاحة من الصنف ووحدة الأساس والوحدات البديلة.
 - `counterUnitByBarcode` يطابق باركود العبوة مع الوحدة الصحيحة.
-- عند مسح باركود وحدة بديلة، يبحث التطبيق في أصناف التكليف باستخدام JSONB `units`، ثم يختار الوحدة المرتبطة بالباركود ويعرض معاملها.
+- عند مسح باركود وحدة بديلة، يبحث التطبيق في أصناف التكليف باستخدام JSONB `units`، ثم يختار الوحدة المرتبطة بالباركود.
+- قائمة الوحدات تعرض اسم كل وحدة ومعاملها إلى وحدة الأساس وباركودها؛ ويظهر الباركود الأساسي بجوار وحدة الأساس.
 - سطر العد يرسل `unit` المحددة والكمية كما أدخلها المستخدم والباركود الذي تم مسحه فعلياً في `scan_code`.
 - يمنع التطبيق خلط وحدتين مختلفتين في سطر عد واحد؛ إذا تغيرت العبوة أثناء وجود صنف مفتوح يطلب حفظ السطر أولاً.
 - لا يضرب المتصفح الكمية في `factor_to_base`. RPC تسجيل العد يقبل اسم الوحدة المسموح بها، وTrigger قاعدة البيانات يحفظ `unit_factor_to_base` و`base_quantity` ويظل المرجع الوحيد للتحويل.
@@ -143,11 +149,11 @@
 
 ## 9. الاختبارات والتحقق
 
-GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a8475579694861c319881543d7f`.
+GitHub Actions Run `45886721963` — **SUCCESS** على HEAD `143283394d31faa2ee635273acc6c282041f7a1c`.
 
 | بوابة | النتيجة |
 |---|---:|
-| Node source/unit/streaming tests | 105/105 PASS |
+| Node source/unit/streaming tests | 109/109 PASS |
 | Deno type-check لوظيفتي Edge الحالية | PASS |
 | Cloudflare Pages allowlisted build | PASS |
 | Playwright production/source parity | PASS |
@@ -156,7 +162,7 @@ GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a84
 | إجمالي Playwright | 3/3 PASS |
 | إجمالي Workflow | SUCCESS |
 
-تحقق Playwright من أن Cloudflare Pages Production يطابق `main` على commit `a7387bc582af3a8475579694861c319881543d7f` عند إجراء الفحص. الاختبارات الآلية شملت سلوك PostgREST thenable السابق، مستورد المؤسسة، منع التكرار، صلاحيات RPC، Overrides الوحدات، والباركود البديل.
+تحقق Playwright صراحة من أن Cloudflare Pages Production يطابق `main` على commit `143283394d31faa2ee6359694861c319881543d7f` عند تنفيذ Run `45886721963`. شملت الاختبارات عقود مستورد المؤسسة، مطابقة معرّفات العميل والعالم، عدم تمرير باركود UoM كـPrimary Client Barcode، الربط عبر RPC، وحارس الجلسات المفتوحة.
 
 ## 10. قاعدة البيانات والبيانات التي لم تتغير
 
@@ -169,6 +175,11 @@ GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a84
 | `count_products` | 41,000 |
 | `count_entries` | 0 |
 | `count_clients` | 0 |
+| `count_projects` | 1 |
+| `count_projects` المرتبطة بمؤسسة | 0 |
+| أصناف التكليف ذات وحدات بديلة | 0 |
+| أصناف التكليف ذات باركودات UoM | 0 |
+| جلسات الجرد | 1 بحالة `planned` |
 
 لم يوجد عميل نشط أو ملف أعمال يمكن استعماله لاختبار استيراد مؤسسة حقيقي. لذلك لم نستورد ملفاً ولم ننشئ عميلاً/أصنافاً/مواءمات اصطناعية لاجتياز الاختبار. تصميم الاستيراد وRPC والصلاحيات والترحيلات تم التحقق منه، لكن أول استيراد عميل حقيقي ينتظر اختيار مؤسسة نشطة وملف عمل معتمد.
 
@@ -182,9 +193,11 @@ GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a84
 
 ## 12. حدود القبول المتبقية
 
-1. لا يمكن إثبات استيراد ملف مؤسسة كاملاً في بيئة التشغيل الحالية لأن عدد العملاء صفر ولا توجد مؤسسة نشطة/ملف معتمد. لا تُنشئ بيانات عميل تجريبية لهذا الغرض.
-2. لا يتوفر في جلسة التنفيذ تحكم تفاعلي داخل Admin المصادق لاختبار الضغط على الأدوات بصرياً. Playwright تحقق من نشر آخر `main` والغلاف العام، واختبارات المصدر تتحقق من منطق التطبيق؛ لكن القبول النهائي البصري بعد دخول المالك لم يُعلن.
-3. أول قبول تشغيلي مطلوب: اختيار مؤسسة حقيقية نشطة، مراجعة ملفها، معاينة الأعمدة، تنفيذ استيراد معتمد، ومراجعة العدادات والأخطاء والمواءمات؛ دون إدخال بيانات QA90K أو أصناف تكليف.
+1. لا يمكن إثبات استيراد ملف مؤسسة كاملاً في بيئة التشغيل الحالية لأن عدد العملاء صفر ولا توجد مؤسسة نشطة/ملف معتمد. لم تُنشأ بيانات عميل أو أصناف أو مواءمات اصطناعية لهذا الغرض.
+2. المشروع الحي الوحيد غير مرتبط حالياً بمؤسسة (`client_id IS NULL`)؛ لذلك زر «إضافة إلى التكليف المحدد» لا يظهر لهذا المشروع الحالي، مع أن الربط أصبح موصولاً في المصدر ومحمياً في RPC.
+3. لا يحتوي أي من أصناف التكليف الـ41,000 حالياً على وحدات بديلة أو باركودات UoM؛ لذلك لا يوجد مثال بيانات حية لاختبار مسح الكرتونة داخل تكليف قائم. اختبارات المصدر تثبت مطابقة الباركود وعرضه، لكن القبول التشغيلي يحتاج صنف عمل حقيقي يحوي UoM معتمد.
+4. لا يتوفر في جلسة التنفيذ تحكم تفاعلي داخل Admin المصادق لاختبار دخول المالك والضغط على المستورد والربط بصرياً. Playwright تحقق من نشر الإنتاج والغلاف العام وRTL/mobile، وليس من رحلة Admin بعد المصادقة.
+5. أول قبول تشغيلي مطلوب: عميل نشط، ومشروع مرتبط به، وملف أصناف معتمد. اختبر المعاينة، استيراد الربط، ربط صنف بمشروع بلا جلسة مفتوحة، ثم امسح باركود UoM على جهاز عد مصادق. لا تستخدم بيانات QA90K أو عينات مصطنعة في التشغيل.
 
 ## 13. حدود التغيير والتراجع
 
@@ -193,4 +206,31 @@ GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a84
 - لا Edge deployment أو تغيير في auth أو السياسات العامة خارج RPC الجديدة.
 - التراجع عن ميزة استيراد المؤسسة يتطلب مراجعة استخدام الـ RPC قبل حذفها. لا تحذف ترحيل applied ولا تعكسه آلياً بعد بدء استيراد عميل فعلي. يمكن إخفاء أدوات الواجهة أولاً إذا استدعى الأمر، ثم مراجعة الأثر والروابط قبل DB rollback.
 
-**Readiness:** READY WITH LIMITATIONS — Unified UI, client import source, identity resolution, secure batch RPC, class-bound UoM selection, alternate-barcode counting, responsive toolbar and row-level identity guard implemented on main; latest CI and Production parity pass. Real client-file import and authenticated visual acceptance remain open until a real active client and authorized file are available.
+**Readiness:** READY WITH LIMITATIONS — Unified catalog UI, owner-only streaming import, SKU/barcode alias resolution, client-only overlays, UoM barcode conflict guard, project attachment through the existing scoped RPC, database open-session guard, class-bound UoM selectors, and counter barcode display are implemented on `main`. Latest verified CI is SUCCESS (109/109; Deno/Pages PASS; Playwright 3/3) with exact Production/main parity. Real customer-file import, a client-scoped project attachment, scanning a populated alternate-UoM item, and authenticated owner visual acceptance remain open because the live environment has no clients or client-scoped project and no alternate UoM rows.
+
+## 14. استكمال تدقيق المصادر والربط التشغيلي — آخر مراجعة 26 نوفمبر 2026
+
+هذه الإضافة تصحح نقطة مهمة لم تكن واضحة في التثبيت السابق: مستورد المؤسسة لا ينتهي عند `count_client_products`. تطبيق العد الميداني يقرأ `count_products` على مستوى التكليف؛ لذلك راجعنا الجسر الموجود فعلياً في Supabase بدلاً من إنشاء جدول وحدات أو مسار موازٍ.
+
+### جسر المؤسسة إلى ملف التكليف
+
+- المصدر الفعلي هو `public.count_attach_catalog_product(project_id,client_product_id,expected_qty)`، ويستدعي التنفيذ الخاص `counting_private.count_attach_catalog_product_impl`.
+- تمت إضافة زر `إضافة إلى التكليف المحدد` في صفوف الدليل الموحد عندما تتطابق المؤسسة المختارة مع `project.client_id` وتوجد مواءمة مؤسسة نشطة.
+- الزر يستدعي RPC القائمة، لا إدراجاً مباشراً في `count_products`. يرسل `p_expected_qty=null`، فلا ينشئ رصيداً مرجعياً.
+- RPC تنسخ SKU/الباركود/الاسم/التصنيف/الوحدة الأساسية والوحدات الفعالة من مواءمة العميل أو Master العالمي إلى سجل التكليف وتضع `catalog_product_id` و`client_product_id` المناسبين.
+- التحقق الخلفي يفرض تطابق المؤسسة والعميل وصلاحية `catalog.attach` أو `catalog.manage`، ويرفض التعارض في هوية الصنف.
+- الترحيل `20261126192000...` يقفل صف المشروع ويمنع الربط إذا كانت جلسة المشروع `active` أو `paused` أو `review`. wrapper العام وصلاحياته لم تتغير.
+
+### تصحيحات مطابقة الهوية وباركود الوحدة
+
+- v4 يطابق SKU/باركود ملف المؤسسة، حتى عندما يكون في عمود محلي، مع SKU الأساسي أو الباركود الأساسي أو باركود UoM أو معرف كتالوج مسجل قبل إنشاء Master جديد.
+- عالج v5 حالة أن باركود الكرتونة الوارد ضمن عمود المؤسسة يطابق باركود وحدة عالمية: لا يُنسخ هذا الرمز إلى `client_barcode` الأساسي، بل يبقى مرتبطاً بالـUoM. هذا يمنع تصادم الـPrimary Barcode مع الباركود نفسه في مصفوفة الوحدات عند ربط الصنف بملف التكليف.
+- الترحيلات الثلاثة الأخيرة موثقة بمطابقة أرقام سجل Supabase الحية في `database/migrations/README.md`: v4 `20261126194742`، session guard `20261126194745`، وv5 `20261126195037`.
+
+### الحدود المحققة وما لم يُختبر على بيانات حقيقية
+
+- تم فحص الدالة النهائية و`search_path='' ` وحق التنفيذ: الاستيراد والربط متاحان لـ`authenticated` ومرفوضان عن `anon`; واستيراد المؤسسة ما زال يتحقق داخلياً من مالك المنصة.
+- لا يُستدل من نجاح اختبارات المصدر أن استيراد عميل حقيقي قد تم؛ عدد العملاء الحي صفر، وعدد المشاريع ذات `client_id` صفر.
+- لا يُستدل من ظهور مسح بديل في الكود على توفر بيانات UoM حية؛ الأصناف الـ41,000 الحالية لا تحتوي على وحدات بديلة أو باركودات UoM.
+- لم نستدع RPC الاستيراد أو الربط على بيانات حية، ولم ننشئ سجلات اختبار لتجاوز هذا القيد. لا توجد حركة مخزون أو حدث عد جديد أنشئ في هذا العمل.
+
