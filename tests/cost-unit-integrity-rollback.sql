@@ -8,7 +8,7 @@ DECLARE
   v_session_id uuid := 'd435854f-1646-4549-9c12-2936f74a4052';
   v_batch_id uuid := 'f799c5c1-b766-4712-b74f-c0bb19836ddc';
   v_product_id uuid;
-  v_import_row_id uuid;
+  v_import_row_id bigint;
   v_cost_id uuid;
   v_warnings text[];
 BEGIN
