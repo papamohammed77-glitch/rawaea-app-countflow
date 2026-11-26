@@ -332,4 +332,19 @@ Two additional CountFlow-only migrations were applied after source review of the
 
 A fresh read-only schema/function/grant check confirmed the two migrations are in the live ledger, both import and attachment public RPCs remain executable by `authenticated` and not `anon`, and the import RPC retains its internal platform-owner gate. Do not expose the private implementation as a new public RPC.
 
+
+### LVE-790 source-review hardening — live ledger 2026-11-26
+
+| Repository source file | Live Supabase migration version | Live ledger name |
+|---|---:|---|
+| `20261126191500_countflow_client_import_identity_alias_resolution_v4.sql` | `20261126194742` | `countflow_client_import_identity_alias_resolution_v4` |
+| `20261126192000_countflow_catalog_attach_open_session_guard_v1.sql` | `20261126194745` | `countflow_catalog_attach_open_session_guard_v1` |
+
+- The v4 import resolver matches both canonical and client-mapped SKU/barcode values against global canonical SKU, primary barcode, alternate-UoM barcode and registered catalogue identifiers before deciding to create a master. Advisory transaction locks cover the same identity aliases.
+- The attachment guard changes only the existing private implementation `counting_private.count_attach_catalog_product_impl(uuid,uuid,numeric)`. It locks the project row, checks permissions and matching active client mapping, then rejects attachment while any project session is `active`, `paused`, or `review`. The public invoker wrapper and its ACL are unchanged.
+- The Admin uses the existing public `count_attach_catalog_product(uuid,uuid,numeric)` RPC, only for a matching selected client/project and an active mapping; it passes `p_expected_qty=null`. No manual insert into `count_products` is used by this attachment action.
+- The counter option label now shows each alternative UoM barcode beside its factor-to-base. The selected unit name, raw quantity and actual scanned barcode continue through the existing recording RPC and server conversion trigger.
+
+Live schema/function/ACL verification confirmed both migrations in the Supabase ledger. For both public RPCs, `authenticated` execute is true and `anon` execute is false. These source migrations must not be replayed; consult the live migration ledger first.
+
 These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
