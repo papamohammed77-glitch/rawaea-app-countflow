@@ -2760,7 +2760,49 @@ function bindGlobalProductTabs(){
    refreshClientCatalogPermission().then(()=>loadCatalog()).catch(e=>fail('تعذر تحميل دليل الأصناف الموحد',e));
   }
  }
- function openGlobalProductEditor(product=null){
+ function updateCatalogImportActions(){
+ const client=state.clients.find(item=>item.id===state.catalogClientId&&item.status==='active');
+ const allowed=!!(state.platformOwner&&client);
+ const button=$('catalogOpenClientImport');if(button){button.disabled=!allowed;button.title=allowed?'استيراد ملف أصناف إلى '+client.name:'اختر مؤسسة نشطة أولاً؛ استيراد المؤسسة متاح لمالك المنصة فقط.';}
+ const target=$('clientCatalogImportTarget');if(target)target.textContent=client?'وجهة الاستيراد: '+client.name+' · '+client.code+'. الأصناف المطابقة ستُربط دون تعديل بيانات الصنف العالمي؛ الناقص فقط سيُنشأ ثم يُربط.':'اختر مؤسسة نشطة من محدد المؤسسة أعلى الدليل.';
+}
+async function searchGlobalCatalogBeforeManualAdd(){
+ if(!state.platformOwner)return notify('البحث في الدليل العالمي متاح لمالك المنصة فقط.',true);
+ const term=String($('globalCatalogLookupInput')?.value||'').trim();
+ const host=$('globalCatalogLookupResults');if(!term){host.textContent='اكتب باركوداً أو SKU أو اسماً للبحث.';return;}
+ if(term.length<2){host.textContent='أدخل حرفين على الأقل للبحث بالاسم.';return;}
+ const button=$('globalCatalogLookupButton');button.disabled=true;host.textContent='جار البحث في الدليل العالمي…';
+ try{
+  const projection='id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path';
+  const [barcode,sku,unit,name]=await Promise.all([
+   db.from('count_catalog_products').select(projection).eq('is_active',true).ilike('barcode',term).limit(5),
+   db.from('count_catalog_products').select(projection).eq('is_active',true).ilike('canonical_sku',term).limit(5),
+   db.from('count_catalog_products').select(projection).eq('is_active',true).contains('units',[{barcode:term}]).limit(5),
+   db.from('count_catalog_products').select(projection).eq('is_active',true).ilike('name','%'+term.replace(/[%_,]/g,' ').slice(0,80)+'%').order('name',{ascending:true}).limit(8)
+  ]);
+  for(const result of [barcode,sku,unit,name])if(result.error)throw result.error;
+  const products=new Map();for(const result of [barcode,sku,unit,name])for(const item of result.data||[])products.set(item.id,item);
+  const rows=[...products.values()].slice(0,12);
+  if(!rows.length){host.innerHTML='<div class="empty">لم يُعثر على تطابق. يمكنك إغلاق البحث ومتابعة إضافة صنف جديد.</div>';return;}
+  host.innerHTML='<div class="hint">تم العثور على '+rows.length+' نتيجة؛ اختر الصنف المطابق لفتح سجله الحالي وتجنب إنشاء نسخة أخرى.</div><div class="cf-catalog-lookup-results">'+rows.map(item=>'<div class="cf-catalog-lookup-result"><div><b>'+esc(item.name)+'</b><small>SKU: '+esc(item.canonical_sku||'—')+' · باركود: '+esc(item.barcode||'—')+' · وحدة الأساس: '+esc(item.base_unit||'—')+'</small></div><button type="button" class="soft" data-use-global-lookup="'+esc(item.id)+'">فتح الصنف</button></div>').join('')+'</div>';
+  host.querySelectorAll('[data-use-global-lookup]').forEach(choice=>choice.onclick=()=>{
+   const selected=rows.find(item=>item.id===choice.dataset.useGlobalLookup);
+   if(selected)openUnifiedCatalogItem(selected).catch(error=>fail('تعذر فتح الصنف المطابق',error));
+  });
+ }catch(error){host.textContent='تعذر البحث حالياً. '+friendlyErrorMessage(error);fail('تعذر البحث في الدليل العالمي',error);}
+ finally{button.disabled=false;}
+}
+function bindCatalogImportActions(){
+ const globalButton=$('catalogOpenGlobalImport'),clientButton=$('catalogOpenClientImport');
+ if(globalButton)globalButton.onclick=()=>{if(!state.platformOwner)return notify('استيراد الدليل العالمي متاح لمالك المنصة فقط.',true);const panel=$('globalCatalogImportTools');panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'start'});$('globalCatalogImportFile').focus();};
+ if(clientButton)clientButton.onclick=()=>{updateCatalogImportActions();if(clientButton.disabled)return notify('اختر مؤسسة نشطة أولاً.',true);const panel=$('clientCatalogImportTools');panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'start'});$('clientCatalogImportFile').focus();};
+ $('clientCatalogImportPreview').onclick=previewClientCatalogImport;
+ $('clientCatalogImportCommit').onclick=commitClientCatalogImport;
+ $('clientCatalogImportReset').onclick=resetClientCatalogImport;
+ $('globalCatalogLookupButton').onclick=searchGlobalCatalogBeforeManualAdd;
+ $('globalCatalogLookupInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();searchGlobalCatalogBeforeManualAdd();}});
+}
+function openGlobalProductEditor(product=null){
  if(!state.platformOwner)return notify('لا تملك صلاحية تعديل بيانات الصنف الأساسية.',true);
  const p=product||null;resetGlobalImagePreview();state.globalImageCleared=false;
  $('globalProductForm').classList.remove('hidden');$('unifiedProductReadOnlySummary')?.classList.add('hidden');
@@ -2912,6 +2954,7 @@ async function toggleProduct(id){
   if($('projectClient'))$('projectClient').innerHTML='<option value="">اختر العميل</option>'+activeClients.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.clientId?'selected':'')+'>'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');
   if(!state.catalogClientId)state.catalogClientId=state.clientId||state.clients[0]?.id||null;
   if($('catalogClientScope')){$('catalogClientScope').innerHTML='<option value="">اختر المؤسسة</option>'+state.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+' · '+esc(c.code)+'</option>').join('');if(state.catalogClientId)$('catalogClientScope').value=state.catalogClientId;}
+  updateCatalogImportActions();
   if($('clientList')&&state.platformOwner){await loadClientDirectorySummary();await loadClientDirectory();}
  }
  function clientById(id){return state.clients.find(c=>c.id===id)||state.clientDirectoryRows.find(c=>c.id===id)||null;}
@@ -3438,11 +3481,11 @@ async function toggleCatalogProduct(id){
    closeGlobalProductEditor();state.catalogPage=1;await loadCatalog();notify((id?'تم تحديث بيانات الصنف ووحداته وباركوداته.':'تمت إضافة الصنف إلى الدليل الموحد.')+(barcode?'':' · سيولد النظام معرفاً داخلياً تلقائياً.')+warning,!!warning);
   }catch(err){fail('تعذر حفظ الصنف العالمي',err);}finally{setBusy(f,false);}
  });
- $('catalogAddProduct').onclick=()=>openGlobalProductEditor(null);$('globalProductCancel').onclick=closeGlobalProductEditor;$('globalProductCancelBottom').onclick=closeGlobalProductEditor;$('catalogExport').onclick=exportGlobalCatalogCsv;
+ $('catalogAddProduct').onclick=()=>openGlobalProductEditor(null);bindCatalogImportActions();$('globalProductCancel').onclick=closeGlobalProductEditor;$('globalProductCancelBottom').onclick=closeGlobalProductEditor;$('catalogExport').onclick=exportGlobalCatalogCsv;
  $('globalGenerateBarcode').onclick=()=>{const code=cfGenerateInternalBarcode();$('globalBarcode').value=code;$('globalItemKind').value='NO_BARCODE';$('globalBarcodeType').value='INTERNAL';};$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!getGlobalBaseUnitValue())setGlobalBaseUnit('كجم');else setGlobalBaseUnit(getGlobalBaseUnitValue());}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
  bindUnitPrecisionDefaults();bindGlobalBaseUnitSelector();bindGlobalProductTabs();
  $('catalogMode').addEventListener('change',()=>switchCatalogView($('catalogMode').value));
- $('catalogClientScope').addEventListener('change',async()=>{state.catalogClientId=$('catalogClientScope').value||null;try{await refreshClientCatalogPermission();$('catalogClientScopeLabel').textContent=state.catalogClientId?'يتم عرض الحقول المحلية للمؤسسة المختارة بجوار بيانات الصنف الأساسي.':'اختر مؤسسة لعرض حقولها المحلية في الجدول وصفحة الصنف.';state.catalogPage=1;await loadCatalog();}catch(e){fail('تعذر تغيير المؤسسة المحددة',e);}});$('catalogResetFilters').onclick=()=>{$('catalogSearch').value='';$('catalogCategoryFilter').value='';$('catalogStatusFilter').value='active';state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر إعادة ضبط المرشحات',e));};
+ $('catalogClientScope').addEventListener('change',async()=>{if(state.clientCatalogImport?.busy){$('catalogClientScope').value=state.catalogClientId||'';return notify('لا يمكن تغيير المؤسسة أثناء تنفيذ دفعة الاستيراد الحالية.',true);}if(state.clientCatalogImport?.file)resetClientCatalogImport();state.catalogClientId=$('catalogClientScope').value||null;updateCatalogImportActions();try{await refreshClientCatalogPermission();$('catalogClientScopeLabel').textContent=state.catalogClientId?'يتم عرض الحقول المحلية للمؤسسة المختارة بجوار بيانات الصنف الأساسي.':'اختر مؤسسة لعرض حقولها المحلية في الجدول وصفحة الصنف.';state.catalogPage=1;await loadCatalog();}catch(e){fail('تعذر تغيير المؤسسة المحددة',e);}});$('catalogResetFilters').onclick=()=>{$('catalogSearch').value='';$('catalogCategoryFilter').value='';$('catalogStatusFilter').value='active';state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر إعادة ضبط المرشحات',e));};
  function scheduleCatalogReload(){clearTimeout(state.catalogSearchTimer);state.catalogSearchTimer=setTimeout(()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تحديث نتائج البحث',e));},260);} $('catalogSearch').oninput=scheduleCatalogReload;$('catalogCategoryFilter').oninput=scheduleCatalogReload;$('catalogStatusFilter').onchange=()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تغيير الحالة',e));};$('catalogRefresh').onclick=()=>loadCatalog().catch(e=>fail('تعذر التحديث',e));let catalogSearchTimer=null;
 
  $('clientProductForm').addEventListener('submit',async e=>{
