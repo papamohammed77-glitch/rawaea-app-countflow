@@ -895,7 +895,7 @@ test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky
 test("Client-balance XLSX excludes products without a complete counted result at every reconciliation location", () => {
   const exporter = read("functions/counting-export-session/index.ts");
   const helperStart = exporter.indexOf("function hasCompleteClientCountResult(");
-  const helperEnd = exporter.indexOf("\n}", helperStart) + 2;
+  const helperEnd = exporter.indexOf("\\n}", helperStart) + 2;
   assert.ok(helperStart >= 0 && helperEnd > helperStart, "Missing complete-count predicate");
   const hasCompleteClientCountResult = vm.runInNewContext("(" + exporter.slice(helperStart, helperEnd).trim() + ")");
   assert.equal(hasCompleteClientCountResult([]), false, "A catalogue product without reconciliation lines is not a counted result");
@@ -908,17 +908,21 @@ test("Client-balance XLSX excludes products without a complete counted result at
   const branchStart = exporter.indexOf('if (scope === "client_balance") {');
   const branchEnd = exporter.indexOf("    // Count the large relations", branchStart);
   const branch = exporter.slice(branchStart, branchEnd);
-  assert.match(branch, /const clientProducts=products\.filter\(\(product:any\)=>hasCompleteClientCountResult\(/);
-  assert.match(branch, /clientProductIds\.has\(row\.product_id\)/);
+  assert.ok(branchStart >= 0 && branchEnd > branchStart);
+  assert.match(branch, /const productCoverage=products\\.map/);
+  assert.match(branch, /const clientProducts=productCoverage\\.filter\\(\\(item:any\\)=>item\\.complete\\)\\.map/);
+  assert.match(branch, /const clientProductIds=new Set\\(clientProducts\\.map/);
   assert.ok(branch.includes("const clientCountEntries=countEntries.filter((entry:any)=>clientProductIds.has(entry.product_id))"), "Count events must be scoped to delivered products");
-  assert.match(branch, /count_events:clientCountEntries\.length/);
+  assert.match(branch, /count_events:clientCountEntries\\.length/);
   assert.ok(branch.includes("committedImportRows.filter((item:any)=>clientProductIds.has(item.product_id))"), "Import exception details must be scoped to delivered products");
-  assert.match(branch, /for\(const product of clientProducts\)/);
-  assert.match(branch, /row_count:clientProducts\.length/);
+  assert.match(branch, /for\\(const product of clientProducts\\)/);
+  assert.match(branch, /row_count:clientProducts\\.length/);
   assert.match(branch, /incomplete_products_excluded:excludedUncountedProductCount/);
-  assert.doesNotMatch(branch, /for\(const product of products\)\{/);
+  assert.match(branch, /partiallyCountedProducts=productCoverage\\.filter/);
+  assert.match(branch, /notCountedProducts=productCoverage\\.filter/);
+  assert.match(branch, /لا توجد نتيجة عد/);
+  assert.doesNotMatch(branch, /for\\(const product of products\\)\\{/);
 });
-
 test("Supervisor live rows open a paginated, filtered, read-only count detail view with realtime refresh", () => {
   const supervisor = read("Countflow-supervisor.html");
   assert.ok(supervisor.includes('id="entryDetailModal"'), "Missing accessible count detail dialog");
