@@ -2956,19 +2956,25 @@ async function exportGlobalCatalogCsv(){
  if(!state.user)return notify('سجّل الدخول أولاً.',true);
  const button=$('catalogExport');button.disabled=true;
  try{
-  const f=currentCatalogFilters(),rows=[],pageSize=500;let offset=0;
+  const f=currentCatalogFilters(),rows=[],clientRows=new Map(),pageSize=500,clientId=state.catalogClientId;let offset=0;
   while(true){
-   let q=db.from('count_catalog_products').select('canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path').order(f.sort,{ascending:f.ascending}).order('id',{ascending:true});
+   let q=db.from('count_catalog_products').select('id,canonical_sku,barcode,name,brand,category,base_unit,units,is_active,image_storage_path').order(f.sort,{ascending:f.ascending}).order('id',{ascending:true});
    q=applyCatalogFilters(q,f).range(offset,offset+pageSize-1);
    const result=await q;if(result.error)throw result.error;
-   const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+   const page=result.data||[];
+   if(clientId&&page.length){
+    const local=await db.from('count_client_products').select('catalog_product_id,client_sku,client_barcode,name_override,category_override,base_unit_override,units_override,image_storage_path_override,is_active').eq('client_id',clientId).in('catalog_product_id',page.map(p=>p.id));
+    if(local.error)throw local.error;
+    for(const item of local.data||[])clientRows.set(item.catalog_product_id,item);
+   }
+   rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
    if(rows.length>90000)throw new Error('تجاوزت النتائج 90,000 سجل؛ ضيّق البحث أو صدّر على دفعات أصغر.');
   }
-  downloadCatalogCsv('CountFlow-global-catalog-'+new Date().toISOString().slice(0,10)+'.csv',
-   ['SKU العالمي','الباركود','اسم الصنف','العلامة التجارية','التصنيف','وحدة الأساس','الوحدات والتحويلات JSON','الحالة','مسار الصورة الخاص'],
-   rows.map(p=>[p.canonical_sku,p.barcode,p.name,p.brand,p.category,p.base_unit,p.units,p.is_active?'نشط':'موقوف',p.image_storage_path]));
-  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً من نتائج الدليل الحالية.');
- }catch(error){fail('تعذر تصدير الدليل العالمي',error);}finally{button.disabled=false;}
+  downloadCatalogCsv('CountFlow-unified-catalog-'+new Date().toISOString().slice(0,10)+'.csv',
+   ['SKU الأساسي','باركود الصنف الأساسي','اسم الصنف الأساسي','العلامة التجارية','التصنيف الأساسي','وحدة الأساس','الوحدات والتحويلات الأساسية JSON','SKU المؤسسة','باركود المؤسسة','اسم المؤسسة','تصنيف المؤسسة','وحدة الأساس للمؤسسة','وحدات المؤسسة JSON','الحالة العامة','حالة المؤسسة','مسار الصورة الخاص','مسار صورة المؤسسة الخاص'],
+   rows.map(p=>{const local=clientRows.get(p.id);return [p.canonical_sku,p.barcode,p.name,p.brand,p.category,p.base_unit,p.units,local?.client_sku,local?.client_barcode,local?.name_override,local?.category_override,local?.base_unit_override,local?.units_override,p.is_active?'نشط':'موقوف',local?(local.is_active?'نشط':'موقوف'):'غير مواءم',p.image_storage_path,local?.image_storage_path_override];}));
+  notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً مع حقول المؤسسة المختارة.');
+ }catch(error){fail('تعذر تصدير دليل الأصناف الموحد',error);}finally{button.disabled=false;}
 }
 async function exportProjectCatalogCsv(){
  const project=state.project;if(!project)return notify('اختر ملف تكليف أولاً.',true);
