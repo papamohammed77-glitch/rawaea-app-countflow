@@ -158,6 +158,19 @@
 .cf-catalog-import-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
 .cf-catalog-import-summary span{display:block;padding:9px 10px;background:#f8fafc;border:1px solid var(--line);border-radius:9px;font-size:11px;line-height:1.5}
 .cf-catalog-import-summary b{display:block;font-size:17px;color:var(--navy);font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+ .cf-catalog-primary-actions{align-items:stretch}
+ .cf-catalog-primary-actions>div:first-child{flex:1 1 100%}
+ .cf-catalog-primary-actions .actions{width:100%}
+ .cf-catalog-primary-actions .actions button{flex:1 1 145px}
+ .cf-catalog-lookup-controls{grid-template-columns:1fr}
+ .cf-catalog-import-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cf-catalog-lookup-result{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:420px){
+ .cf-catalog-primary-actions .actions button{flex-basis:100%}
+ .cf-catalog-import-summary{grid-template-columns:1fr 1fr;gap:6px}
+}
 
 .cf-catalog-sort{padding:0;background:transparent;color:inherit;font-weight:800;border-radius:0}.cf-catalog-sort:hover{transform:none;color:#2563eb}
 .cf-catalog-scope-panel{display:grid;grid-template-columns:minmax(220px,360px) minmax(0,1fr);align-items:end;gap:12px;box-shadow:none}.cf-catalog-scope-panel select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
@@ -1162,7 +1175,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   {key:'category',label:'التصنيف',aliases:['category','group','الفئة','التصنيف']},
   {key:'base_unit',label:'وحدة الأساس (مطلوبة)',aliases:['base_unit','unit','uom','الواحدة','الوحدة','وحدة القياس']},
   {key:'units',label:'الوحدات البديلة ومعاملاتها',aliases:['units','unit_options','الوحدات','وحدات التعبئة']},
-  {key:'unit_class',label:'فئة القياس',aliases:['unit_class','measurement_class','فئة الوحدة','نوع القياس']},
+  {key:'unit_class',label:'نمط القياس',aliases:['unit_class','measurement_class','فئة الوحدة','نوع القياس']},
   {key:'decimal_precision',label:'دقة الكمية',aliases:['decimal_precision','quantity_precision','دقة الكمية','المنازل العشرية']},
   {key:'item_kind',label:'نوع الصنف',aliases:['item_kind','product_kind','نوع الصنف']},
   {key:'barcode_type',label:'نوع الباركود',aliases:['barcode_type','symbology','نوع الباركود']}
