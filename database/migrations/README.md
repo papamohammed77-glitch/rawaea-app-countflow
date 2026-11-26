@@ -313,4 +313,23 @@ The timestamps above intentionally distinguish the Git filename prefix from the 
 - Latest read-only check during LVE-790 found 0 rows in `count_catalog_products`, 0 in `count_client_products`, 41,000 in `count_products`, 0 in `count_entries`, and 0 clients (0 active clients). Consequently the client-import workflow is implemented and its database contract/security verified, but a real customer-file import could not be end-to-end exercised without an active client and an approved business file.
 - The CountFlow counter's existing `count_record_entry` and recount RPC contracts accept the selected unit name; the installed `count_entries` trigger snapshots `unit_factor_to_base` and `base_quantity`. The browser must send the entered quantity in its selected unit and must not multiply it by the conversion factor.
 
+
+### Follow-up source verification and operational attachment — 2026-11-26
+
+Two additional CountFlow-only migrations were applied after source review of the complete flow from client import to the field counter:
+
+| Repository source file | Live Supabase migration version | Live ledger name |
+|---|---:|---|
+| `20261126191500_countflow_client_import_identity_alias_resolution_v4.sql` | `20261126194742` | `countflow_client_import_identity_alias_resolution_v4` |
+| `20261126192000_countflow_catalog_attach_open_session_guard_v1.sql` | `20261126194745` | `countflow_catalog_attach_open_session_guard_v1` |
+
+- **Identity alias resolution (v4):** If the file maps its SKU/barcode to a client-specific column, the server also checks those values against global canonical SKU, primary barcode, alternate-UoM barcode and registered catalog identifiers before creating a new master. Advisory locks cover the same alias keys. The client values remain local overrides when they do not equal the global identity.
+- **Project attachment:** Existing RPC `public.count_attach_catalog_product(project_id,client_product_id,expected_qty)` is the only supported bridge from the client catalogue into the project-scoped `count_products` read by the field counter. It copies the effective local/global name, SKU/barcode, base unit and units JSONB. It retains the existing client/project scope and permission checks.
+- **Open-session guard:** The existing private implementation `counting_private.count_attach_catalog_product_impl` now locks the project row and rejects catalogue attachment while a project session is `active`, `paused`, or `review`. The public wrapper and its existing ACL remain unchanged. The Admin UI also hides/disables the action outside a matching client scope and while an open session is shown.
+- The Admin passes `p_expected_qty: null`. Linking a catalogue item therefore does not create a reference balance; it is not an inventory movement or a count entry.
+- The field counter's unit selector now displays the barcode alongside each alternative unit and its `factor_to_base`. The scanned unit name, raw entered quantity and scanned barcode are sent to the existing record-entry RPC. The browser does not multiply the quantity.
+- This attachment action is available only when the selected client equals the selected project's `client_id`, and an active `count_client_products` row exists. Projects without a client scope (the current live project has none) will not show the action.
+
+A fresh read-only schema/function/grant check confirmed the two migrations are in the live ledger, both import and attachment public RPCs remain executable by `authenticated` and not `anon`, and the import RPC retains its internal platform-owner gate. Do not expose the private implementation as a new public RPC.
+
 These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
