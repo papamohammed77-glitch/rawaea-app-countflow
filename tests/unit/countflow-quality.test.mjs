@@ -1847,6 +1847,21 @@ test("LVE-790: server identity alias matching and project attachment session gua
  assert.match(readme,/20261126194745/);
 });
 
+test("LVE-790: alternate-unit barcode aliases are never persisted as the client primary barcode", () => {
+ const sql=read("database/migrations/20261126192500_countflow_client_import_uom_barcode_primary_conflict_v5.sql");
+ const start=sql.indexOf("CREATE OR REPLACE FUNCTION public.count_upsert_client_catalog_chunk(");
+ const end=sql.indexOf("REVOKE ALL ON FUNCTION public.count_upsert_client_catalog_chunk",start);
+ assert.ok(start>=0&&end>start);
+ const rpc=sql.slice(start,end);
+ assert.match(rpc,/IF v_client_barcode IS NOT NULL THEN/);
+ assert.match(rpc,/lower\(v_client_barcode\) = lower\(coalesce\(v_catalog\.barcode, ''\)\)/);
+ assert.match(rpc,/lower\(btrim\(coalesce\(u\.value->>'barcode', ''\)\)\) = lower\(v_client_barcode\)/);
+ assert.match(rpc,/OR v_barcode_matches_alt_uom THEN\s+v_client_barcode := NULL/);
+ assert.match(rpc,/v_client_barcode IS NULL AND v_barcode IS NOT NULL/);
+ assert.match(sql,/REVOKE ALL ON FUNCTION public\.count_upsert_client_catalog_chunk\(uuid, jsonb\) FROM PUBLIC, anon/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.count_upsert_client_catalog_chunk\(uuid, jsonb\) TO authenticated/);
+});
+
 test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity plus actual scanned identifier", () => {
  const counter=read("countflow.html");
  assert.match(counter,/function counterUnitRows\(product\)/);
