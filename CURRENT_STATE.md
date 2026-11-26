@@ -4,7 +4,7 @@
 **نقطة الأساس المتحقق منها:** `dda38bd4be886631009ab69385d504c624c202d3`.
 **الفرع:** `work/lve-791-export-coverage-cost-unit-integrity`.
 **التقرير التفصيلي:** `Reports/FINAL_EXECUTION_REPORT_LVE-791.md`.
-**الحالة التنفيذية:** READY WITH LIMITATIONS — الترحيل مطبق، Edge Function v16 منشورة، اختبار rollback لوحدة التكلفة اجتاز، وCI النهائي 111/111.
+**الحالة التنفيذية:** READY WITH LIMITATIONS — الترحيلان مطبقان، Edge Function v16 منشورة، اختبارات rollback لوحدة التكلفة وACL اجتازت، PR #12 مدموج، وMain CI/Production parity ناجح.
 **حد لا يجوز تجاوزه:** لا يُعلن اكتمال تصدير 90k+ متعدد المواقع قبل بناء/اختبار تصدير مجزأ/streaming وقياس الأداء وفتح Excel فعلياً.
 
 ### ما تم تنفيذه
@@ -30,6 +30,18 @@
 - تصدير 90k+ لا يزال يتجاوز preflight المحافظ 160 MiB؛ الحل الصحيح background/streaming/resumable pipeline وليس رفع حد الذاكرة.
 - `MAX_LINES=150000` و`MAX_ENTRIES=150000` لا يثبتان سعة 90k × مواقع متعددة.
 - لا توجد لقطة عمل حقيقية أو اختبار ميداني/كاميرا/Excel مصادق يثبت هذه الحالات.
+
+### الدمج والنشر على main — CONFIRMED
+- PR #12: merged (squash).
+- Merge/main SHA: `cb911ec62d75ba8fe3ba607d92e73e8c5bef0eb5`.
+- Main CI run `45901190845`: Node 111/111, Deno PASS, Pages build PASS, Playwright 3/3 PASS.
+- Production SHA parity: PASS — Cloudflare Pages Production يطابق `cb911ec62d75ba8fe3ba607d92e73e8c5bef0eb5`.
+- Edge Function v16 وmigration versions مثبتة أعلاه.
+
+### تنظيف فرع العمل — OPEN / TOOL LIMITATION
+- PR #12 merged; repository setting `delete_branch_on_merge=false`.
+- فرع `work/lve-791-export-coverage-cost-unit-integrity` ما زال موجودًا بعد الدمج.
+- GitHub actions المتاحة في هذه الجلسة لا تعرض DELETE ref / delete-branch؛ لم أحرّك الفرع إلى SHA بديل ولم أدّعِ حذفه. يلزم حذفه من GitHub بعد التسليم.
 
 ### نتائج الإغلاق — التحقق النهائي
 - Live migration: `20261126213437 / countflow_purchase_unit_factor_integrity_v1`.
