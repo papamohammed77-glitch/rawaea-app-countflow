@@ -402,7 +402,7 @@ function applyCounterProductPrecision(product){
 }
 
 function counterUnitRows(product){
- const base=String(product?.base_unit||'').trim(),rows=[{name:base,factor_to_base:1,isBase:true}],seen=new Set([base.toLocaleLowerCase()]);
+ const base=String(product?.base_unit||'').trim(),rows=[{name:base,factor_to_base:1,isBase:true,barcode:String(product?.barcode||'').trim()}],seen=new Set([base.toLocaleLowerCase()]);
  for(const unit of Array.isArray(product?.units)?product.units:[]){
   if(!unit||typeof unit!=='object'||typeof unit.name!=='string')continue;
   const name=unit.name.trim(),factor=Number(unit.factor_to_base??unit.conversion_factor??unit.factor);
@@ -419,7 +419,9 @@ function counterUnitByBarcode(product,code){
 function renderCounterProductUnits(product,selectedUnit=null){
  const rows=counterUnitRows(product),select=$('unit');
  select.innerHTML=rows.map(unit=>{
-  const label=unit.isBase?unit.name:unit.name+' — 1 '+unit.name+' = '+unit.factor_to_base+' '+product.base_unit;
+  const label=unit.isBase
+   ?unit.name+' — الوحدة الأساسية'+(unit.barcode?' · باركود: '+unit.barcode:'')
+   :unit.name+' — 1 '+unit.name+' = '+unit.factor_to_base+' '+product.base_unit+(unit.barcode?' · باركود: '+unit.barcode:'');
   return '<option value="'+esc(unit.name)+'" '+(unit.name===selectedUnit?'selected':'')+'>'+esc(label)+'</option>';
  }).join('');
  if(!selectedUnit||!rows.some(unit=>unit.name===selectedUnit))select.value=product.base_unit;
@@ -430,8 +432,8 @@ function updateCounterUnitHint(product){
  const unit=$('unit').value,selected=counterUnitRows(product).find(item=>item.name===unit),hint=$('unitConversionHint');
  if(!hint)return;
  hint.textContent=selected&&!selected.isBase
-  ?'1 '+selected.name+' = '+selected.factor_to_base+' '+product.base_unit+'؛ يحسب الخادم التحويل عند الحفظ.'
-  :'الوحدة الأساسية: '+product.base_unit+'؛ تسجل الكمية كما أدخلتها دون تحويل داخل الجهاز.';
+  ?'1 '+selected.name+' = '+selected.factor_to_base+' '+product.base_unit+(selected.barcode?' · باركود الوحدة: '+selected.barcode:'')+'؛ يحسب الخادم التحويل عند الحفظ.'
+  :'الوحدة الأساسية: '+product.base_unit+(selected?.barcode?' · الباركود الأساسي: '+selected.barcode:'')+'؛ تسجل الكمية كما أدخلتها دون تحويل داخل الجهاز.';
 }
 async function findProduct(){
  const code=$('barcode').value.trim();if(!code)return;
