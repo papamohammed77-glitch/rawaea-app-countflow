@@ -1,0 +1,89 @@
+STRICT EXECUTION PROTOCOL — CountFlow Repository & Data Governance
+
+THE GOLDEN RULE:
+The ONLY allowed repository is: https://github.com/papamohammed77-glitch/rawaea-app-countflow
+The ONLY allowed database is: Supabase rawaea-staging (https://hfzznsiprnwkpayskzhu.supabase.co).
+
+Anything else is strictly FORBIDDEN.
+
+1. Absolute Forbidden Actions
+FORBIDDEN to create a new GitHub Repository under any name.
+
+FORBIDDEN to create a Branch and leave it without merging. If you create a branch for testing, you MUST merge it into main or delete it immediately after finishing.
+
+FORBIDDEN to create Test Files, Fixtures, or Mock Data in the repository and leave them. Any test file must be in .gitignore or deleted before Push.
+
+FORBIDDEN to create a new Supabase database or use any DB other than rawaea-staging.
+
+FORBIDDEN to use a new Storage Bucket without deleting it after testing.
+
+2. Before Starting Any Task
+MANDATORY: Read the following files completely before writing a single line:
+
+CURRENT_STATE.md — to know the Last Verified Event (LVE) and where the previous assistant stopped.
+
+README.md — to understand the overall structure.
+
+Reports/ — review at least the last 3 reports (especially LVE-XXXX).
+
+FORBIDDEN to start from scratch. If you find previous work, continue from it.
+
+3. Test Data Rules
+All test data MUST be clearly tagged. Use the prefix QA_ or TEST_ in table names, fields, or records.
+
+Example: If you create a test project, name it QA_Project_Name, not Test Project.
+
+After finishing testing, you MUST delete all test data from rawaea-staging. Leave no trace.
+
+If you need permanent test data (Seed Data), place it in seeds/qa_seed.sql in the repo, with clear instructions to run and delete.
+
+4. Branches — The Strict Rule
+ALLOWED to create ONLY ONE branch per task, with a clear name (e.g., feat/LVE-788-admin-ui).
+
+FORBIDDEN to work on more than one branch at a time.
+
+MANDATORY: After finishing the task, open a Pull Request, merge it into main immediately, then delete the branch.
+
+If the task fails, delete the branch. Do not leave it "hanging".
+
+5. Temporary Files
+FORBIDDEN to upload files like test.js, debug.html, temp.sql, scratch.md to the repository.
+
+If you need a temporary file, place it in tmp/ and add it to .gitignore.
+
+Before any Commit: Review the files to be pushed. If you find any temporary file, delete it.
+
+6. Mandatory Documentation
+After every task, you MUST update:
+
+CURRENT_STATE.md: Add an LVE-XXXX section explaining what was done, how it was tested, and what test data was deleted.
+
+Reports/: Write a detailed report in Reports/FINAL_EXECUTION_REPORT_LVE-XXXX.md.
+
+In the report, you MUST explicitly state:
+
+What files you modified.
+
+What test data you created (and how you deleted it).
+
+Did you leave any branch, repository, or temporary file? (The answer must be "No").
+
+7. Final Verification
+Before declaring the task complete, run this mental checklist:
+
+□ Am I on main or a task branch that will be merged?
+□ Is the only repository used rawaea-app-countflow?
+□ Is the only database used rawaea-staging?
+□ Did I delete all test data I created?
+□ Did I delete all temporary branches?
+□ Did I delete all temporary files?
+□ Did I update CURRENT_STATE.md and Reports/?
+If any item is incomplete, do NOT declare completion.
+
+8. Consequences
+If the Owner discovers a left-over repository, branch, or test data, the task will be rejected entirely, and you will be required to redo the work from scratch.
+
+No excuses. "I didn't know" or "I thought it was allowed" is unacceptable. The protocol is clear.
+
+Your First Action: Acknowledge this protocol. Then read CURRENT_STATE.md and Reports/. Then start the assigned task. Do not deviate from the specified path.
+
