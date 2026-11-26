@@ -1727,6 +1727,9 @@ test("LVE-790: catalogue import actions are prominent, owner-scoped, streaming a
   assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action/control "+id);
  }
  assert.match(admin,/function bindCatalogImportActions\(\)/);
+ assert.match(admin,/\.cf-catalog-primary-actions/);
+ assert.match(admin,/@media\(max-width:760px\)\{[\s\S]{0,600}\.cf-catalog-import-summary/,"Catalog import toolbar and summary must reflow on mobile");
+ assert.match(admin,/label for="globalUnitClass">نمط القياس<\/label/);
  assert.match(admin,/function updateCatalogImportActions\(\)/);
  assert.match(admin,/async function previewClientCatalogImport\(\)/);
  assert.match(admin,/async function commitClientCatalogImport\(\)/);
