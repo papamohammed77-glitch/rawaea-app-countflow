@@ -1167,8 +1167,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   {key:'item_kind',label:'نوع الصنف',aliases:['item_kind','product_kind','نوع الصنف']},
   {key:'barcode_type',label:'نوع الباركود',aliases:['barcode_type','symbology','نوع الباركود']}
  ];
- function globalCatalogImportValue(row,key){
-  const header=state.globalCatalogImport.mapping?.[key];
+ function globalCatalogImportValue(row,key,mapping=state.globalCatalogImport.mapping){
+  const header=mapping?.[key];
   return header&&Object.prototype.hasOwnProperty.call(row,header)?row[header]:'';
  }
  function renderGlobalCatalogImportMapping(){
@@ -1197,7 +1197,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
  function resetGlobalCatalogImport(){
   const g=state.globalCatalogImport;
   if(g?.busy)return notify('لا يمكن إلغاء الملف أثناء تنفيذ دفعة؛ انتظر اكتمال الاستدعاء الحالي.',true);
-  state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+  state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}};
   $('globalCatalogImportFile').value='';
   $('globalCatalogImportMapping').classList.add('hidden');
   $('globalCatalogImportMapping').innerHTML='';
@@ -1224,13 +1224,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    if(parsed.count>90000)throw new Error('الحد الأقصى للدليل العالمي 90,000 صف في الملف الواحد.');
    const ext=(file.name.split('.').pop()||'').toLowerCase();
    if(!['csv','xlsx','xls'].includes(ext))throw new Error('امتداد الملف غير مدعوم. استخدم CSV أو XLSX.');
-   state.globalCatalogImport={file,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext==='csv'?'csv':ext==='xlsx'?'xlsx':'xls',parseErrors:Number(parsed.parseErrors||0),stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+   state.globalCatalogImport={file,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext==='csv'?'csv':ext==='xlsx'?'xlsx':'xls',parseErrors:Number(parsed.parseErrors||0),stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}};
    renderGlobalCatalogImportMapping();
    renderGlobalCatalogImportPreview();
    $('globalCatalogImportProgress').textContent=(parsed.streaming?'تم فحص الملف دون تحميل جميع صفوفه إلى الذاكرة. ':'تمت قراءة الملف. ')+Number(parsed.count).toLocaleString('en-US')+' صف؛ راجع مطابقة الأعمدة قبل الاستيراد.';
    if(parsed.parseErrors)$('globalCatalogImportProgress').textContent+=' أخطاء تحليل CSV المتجاوزة في المعاينة: '+parsed.parseErrors;
   }catch(error){
-   state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,rejected:0,errors:[]}};
+   state.globalCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',parseErrors:0,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}};
    $('globalCatalogImportPreviewText').textContent='';
    $('globalCatalogImportMapping').classList.add('hidden');
    $('globalCatalogImportProgress').textContent='تعذرت المعاينة: '+friendlyErrorMessage(error);
@@ -1240,8 +1240,8 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    commitButton.disabled=!state.globalCatalogImport.count||!state.globalCatalogImport.mapping.name||!state.globalCatalogImport.mapping.base_unit;
   }
  }
- function normalizeGlobalCatalogImportRow(row,index,sourceRowNumber=null,checksum=''){
-  const value=key=>String(globalCatalogImportValue(row,key)??'').trim();
+ function normalizeGlobalCatalogImportRow(row,index,sourceRowNumber=null,checksum='',mapping=state.globalCatalogImport.mapping){
+  const value=key=>String(globalCatalogImportValue(row,key,mapping)??'').trim();
   const rowNumber=Number(sourceRowNumber||row.__countflowRowNumber||index+2);
   const name=value('name'),baseUnit=value('base_unit');
   if(!name)throw new Error('اسم الصنف مطلوب.');
@@ -1289,10 +1289,23 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   const errors=state.globalCatalogImport?.stats?.errors||[];
   $('globalCatalogImportErrors').innerHTML=errors.length?'<table><thead><tr><th>صف المصدر</th><th>SKU</th><th>الباركود</th><th>سبب الرفض</th></tr></thead><tbody>'+errors.map(e=>'<tr><td>'+Number(e.row_number||0)+'</td><td>'+esc(e.sku||'')+'</td><td>'+esc(e.barcode||'')+'</td><td>'+esc(e.error||'تعذر قبول الصف')+'</td></tr>').join('')+'</tbody></table>':'';
  }
+function catalogImportIdentityKeys(row){
+ const keys=[],add=(kind,value)=>{const normalized=String(value||'').trim().toLocaleLowerCase();if(normalized)keys.push(kind+':'+normalized);};
+ add('sku',row?.canonical_sku);add('sku',row?.sku);add('client-sku',row?.client_sku);
+ add('barcode',row?.barcode);add('barcode',row?.client_barcode);
+ for(const unit of Array.isArray(row?.units)?row.units:[])add('barcode',unit?.barcode);
+ for(const unit of Array.isArray(row?.client_units)?row.client_units:[])add('barcode',unit?.barcode);
+ return [...new Set(keys)];
+}
+function reserveCatalogImportIdentities(row,seen){
+ const keys=catalogImportIdentityKeys(row);
+ if(keys.some(key=>seen.has(key)))return false;
+ keys.forEach(key=>seen.add(key));return true;
+}
  function updateGlobalCatalogImportProgress(){
   const g=state.globalCatalogImport,stats=g.stats||{},total=Math.max(0,Number(g.count||0)),processed=Math.min(total,Number(stats.processed||0)),percent=total?Math.min(100,Math.round(processed/total*100)):0;
   $('globalCatalogImportProgressFill').style.width=percent+'%';
-  $('globalCatalogImportProgress').textContent='المعالجة '+processed.toLocaleString('en-US')+' / '+total.toLocaleString('en-US')+' · أضيف '+Number(stats.inserted||0).toLocaleString('en-US')+' · حُدث '+Number(stats.updated||0).toLocaleString('en-US')+' · رُفض '+Number(stats.rejected||0).toLocaleString('en-US');
+  $('globalCatalogImportProgress').textContent='المعالجة '+processed.toLocaleString('en-US')+' / '+total.toLocaleString('en-US')+' · أضيف '+Number(stats.inserted||0).toLocaleString('en-US')+' · حُدث '+Number(stats.updated||0).toLocaleString('en-US')+' · مكرر متجاهل '+Number(stats.duplicates||0).toLocaleString('en-US')+' · رُفض '+Number(stats.rejected||0).toLocaleString('en-US');
   renderGlobalCatalogImportErrors();
  }
  async function commitGlobalCatalogChunk(rows){
@@ -1315,21 +1328,25 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   if(!g.file||!file||file!==g.file)return notify('الملف الحالي تغير؛ أعد معاينته قبل الاستيراد.',true);
   if(!g.mapping?.name||!g.mapping?.base_unit)return notify('اربط عمود اسم الصنف ووحدة الأساس أولاً.',true);
   if(g.count<1||g.count>90000)return notify('عدد الصفوف خارج الحد التشغيلي 1–90,000.',true);
-  g.busy=true;g.stats={processed:0,inserted:0,updated:0,rejected:0,errors:[]};
+  g.busy=true;g.stats={processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]};
   const controls=['globalCatalogImportPreview','globalCatalogImportCommit','globalCatalogImportReset'];
   controls.forEach(id=>$(id).disabled=true);
   $('globalCatalogImportFile').disabled=true;
   $('globalCatalogImportProgress').textContent='جار حساب بصمة الملف وتجهيز الاستيراد…';
   $('globalCatalogImportErrors').innerHTML='';
-  let pending=[],rowIndex=0,parseErrors=0;
+  let pending=[],rowIndex=0,parseErrors=0;const seenIdentities=new Set();
   const recordLocalError=(row,rowNumber,error)=>{
    const stats=state.globalCatalogImport.stats;stats.processed++;stats.rejected++;
    if(stats.errors.length<120)stats.errors.push({row_number:rowNumber,sku:String(globalCatalogImportValue(row,'sku')||''),barcode:String(globalCatalogImportValue(row,'barcode')||''),error:error?.message||String(error)});
    updateGlobalCatalogImportProgress();
   };
   const acceptRow=(row,sourceRowNumber)=>{
-   try{pending.push(normalizeGlobalCatalogImportRow(row,rowIndex,sourceRowNumber,g.checksum));}
-   catch(error){recordLocalError(row,sourceRowNumber,error);}
+   try{
+    const normalized=normalizeGlobalCatalogImportRow(row,rowIndex,sourceRowNumber,g.checksum);
+    if(!reserveCatalogImportIdentities(normalized,seenIdentities)){
+     const stats=state.globalCatalogImport.stats;stats.processed++;stats.duplicates++;updateGlobalCatalogImportProgress();
+    }else pending.push(normalized);
+   }catch(error){recordLocalError(row,sourceRowNumber,error);}
    rowIndex++;
   };
   const flush=async()=>{if(!pending.length)return;const rows=pending;pending=[];await commitGlobalCatalogChunk(rows);};
@@ -1373,7 +1390,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    if(rowIndex>g.count)throw new Error('عدد الصفوف أثناء الاستيراد تجاوز العدد الذي تمت معاينته.');
    const stats=g.stats;
    $('globalCatalogImportProgressFill').style.width='100%';
-   $('globalCatalogImportProgress').textContent='اكتمل فحص الملف · صفوف '+rowIndex.toLocaleString('en-US')+' · أضيف '+stats.inserted.toLocaleString('en-US')+' · حُدث '+stats.updated.toLocaleString('en-US')+' · رُفض '+stats.rejected.toLocaleString('en-US')+(parseErrors?' · أخطاء تحليل '+parseErrors:'');
+   $('globalCatalogImportProgress').textContent='اكتمل فحص الملف · صفوف '+rowIndex.toLocaleString('en-US')+' · أضيف '+stats.inserted.toLocaleString('en-US')+' · حُدث '+stats.updated.toLocaleString('en-US')+' · مكرر متجاهل '+Number(stats.duplicates||0).toLocaleString('en-US')+' · رُفض '+stats.rejected.toLocaleString('en-US')+(parseErrors?' · أخطاء تحليل '+parseErrors:'');
    renderGlobalCatalogImportErrors();
    notify('اكتمل استيراد الدليل العالمي. الأرصدة وحركات الجرد لم تتغير.');
    try{await loadCatalog();}catch(refreshError){fail('اكتمل الاستيراد لكن تعذر تحديث عرض الدليل',refreshError);}
