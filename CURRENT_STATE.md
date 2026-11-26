@@ -1,3 +1,69 @@
+## LVE-2026-11-26-790 — إغلاق فجوات دليل الأصناف والاستيراد ووحدات القياس
+
+**Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
+**التقرير التنفيذي:** `Reports/LVE-2026-11-26-790_CATALOG_IMPORT_IDENTITY_UOM_AND_COUNTER_BARCODE.md`.  
+**المستودع/المسار المعتمد:** `papamohammed77-glitch/rawaea-app-countflow` / `main` فقط.  
+**آخر Commit كود واختبارات:** `a7387bc582af3a8475579694861c319881543d7f`.  
+**ملف Admin:** `countflow-admin.html` — blob `c6ba6c0e75705caaa32c60a104b7da9168711935`.  
+**ملف العد:** `countflow.html` — blob `101ce09a5a63323ec078951841847850b9b8a84d`.  
+**الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `0379157b3353500a71a576b1194cc9b33aaa515f`.  
+**Migration README:** blob `4800d421f7a16b34bf233bcfa38a6ba4853a9771`.  
+**CI:** Run `45882855790` — SUCCESS على آخر Commit `a7387bc582af3a8475579694861c319881543d7f`.  
+**Production parity:** PASS — Playwright أثبت أن Cloudflare Pages يعرض آخر `main` على الالتزام نفسه.  
+**الحالة:** IMPLEMENTED ON MAIN — 105/105 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — REAL CLIENT IMPORT E2E/OWNER VISUAL ACCEPTANCE OPEN.
+
+### 1. قرارات المعمارية
+- تم رفض إنشاء `count_products_master` أو `count_product_units` أو `measure_type` لأنها ليست جزءاً من عقد CountFlow.
+- مصدر الصنف العالمي `count_catalog_products`، ومعرفاته `count_catalog_product_identifiers`، والاختلافات المحلية `count_client_products`، وأصناف التكليف `count_products` تبقى نطاقات منفصلة.
+- تمت المحافظة على دليل موحد وصفحة تفاصيل واحدة، دون إضافة تبويبات Global/Client جديدة.
+
+### 2. تحسينات الواجهة
+- شريط أعلى دليل الأصناف: استيراد الدليل العالمي (Primary)، استيراد أصناف المؤسسة (يُتاح بعد اختيار مؤسسة نشطة)، وإضافة صنف يدوي.
+- استيراد العميل لديه معاينة ومطابقة أعمدة وتقدم وملخص أعداد وأخطاء صفوف؛ CSV/XLSX streaming بدفعات 500 حتى 90,000 صف.
+- زر الاستيراد العالمي يفتح مسار الاستيراد الحالي؛ لم يُنشأ مسار استيراد عالمي موازٍ.
+- إضافة بحث بالدليل العالمي داخل محرر الصنف قبل الإضافة اليدوية: باركود أساسي، SKU، باركود وحدة بديلة، واسم؛ فتح النتيجة يفتح السجل الحالي ولا ينشئ نسخة أخرى.
+- جعل حقل وحدة الأساس Select مقيداً بـ `unit_class` في الصنف العالمي ومواءمة المؤسسة، وتسمية القياس «نمط القياس». حُذفت حقول النص الحر وقائمة datalist؛ السجلات القديمة غير القياسية تبقى قابلة للتحرير عبر خيار Legacy.
+- استجابة Responsive لشريط الأدوات وحقول البحث وبطاقات ملخص الاستيراد.
+
+### 3. استيراد المؤسسة ومنع التكرار
+- المطابقة على SKU العالمي والباركود الأساسي ومعرفات الكتالوج وباركود الوحدة البديلة، ثم على SKU/باركود المؤسسة القائمة.
+- الصف لا يقبل دون SKU أو باركود عالمي أو محلي؛ لا يتم إنشاء صنف بالاسم فقط.
+- عند وجود Master: لا يُعدّل الصنف العالمي؛ تحفظ اختلافات المؤسسة في `count_client_products`، بما في ذلك وحدات ومعاملات وباركودات محلية مختلفة.
+- عند عدم وجود Master: ينشأ صنف عالمي جديد فقط تحت صلاحية مالك المنصة، بشرط وجود الاسم ووحدة الأساس، ثم ينشأ الربط المحلي.
+- التكرارات تُحسب وتُتجاهل، وتُرفض تعارضات الهوية متعددة المطابقات بدلاً من تخمين سجل.
+- ملخص الاستيراد يفرق بين Master جديد، Master مطابق، مواءمة جديدة، مواءمة محدثة، مكرر متجاهل، ومرفوض.
+
+### 4. ملفات قاعدة البيانات المطبقة
+- `database/migrations/20261126190000_countflow_client_catalog_import_upsert_v1.sql` — Live ledger `20261126185715`.
+- `database/migrations/20261126190500_countflow_client_catalog_import_upsert_row_atomicity_v2.sql` — Live ledger `20261126185813`.
+- `database/migrations/20261126191000_countflow_client_catalog_import_uom_override_v3.sql` — Live ledger `20261126191110`.
+- RPC `public.count_upsert_client_catalog_chunk(uuid,jsonb)` تقبل حتى 500 صف، وتتحقق من `auth.uid()` ومالك المنصة وعميل نشط، وتستخدم `SECURITY DEFINER` مع `search_path=''`.
+- تنفيذ RPC متاح لـ `authenticated` فقط؛ تم التحقق `authenticated_execute=true` و`anon_execute=false`. لا تُزل فحص المالك الداخلي.
+- التحديث بـ `ON CONFLICT` يحدث على مواءمة `(client_id,catalog_product_id)` لا على باركود عالمي وحده؛ لا تحديث في Global Master عند التطابق.
+- تم توثيق اختلاف بادئات أسماء ملفات SQL عن الإصدارات الحقيقية في سجل Supabase داخل `database/migrations/README.md`.
+
+### 5. باركود الوحدات في تطبيق العد
+- `countflow.html` يبحث أيضاً في `units` JSONB عن باركود الوحدة البديلة، ويختار اسم وحدة العبوة المطابقة ويعرض معاملها.
+- يرسل التطبيق كمية العد الخام واسم الوحدة وباركود المسح الحقيقي؛ لا يجري ضرباً في المتصفح.
+- Trigger قاعدة البيانات يلتقط `unit_factor_to_base` ويحسب `base_quantity`؛ لم نغير RPC تسجيل العد أو التحقق الخلفي.
+- يمنع خلط وحدتين في سطر واحد، ويطلب حفظ السطر الحالي قبل الانتقال إلى وحدة/صنف آخر.
+
+### 6. بوابة الجودة والحالة الفعلية للبيانات
+- GitHub Actions `45882855790`: SUCCESS؛ Node 105/105؛ Deno PASS؛ Pages build PASS؛ Playwright 3/3 PASS.
+- اختبار الإنتاج أثبت تطابق `rawaea-app-countflow.pages.dev` مع HEAD `a7387bc582af3a8475579694861c319881543d7f`.
+- آخر قراءة SQL فقط: `count_catalog_products=0`، `count_client_products=0`، `count_products=41000`، `count_entries=0`، `count_clients=0`.
+- لم يُنشأ عميل تجريبي أو Master أو مواءمة أو عدّ لاختبار الاستيراد؛ لا يوجد عميل نشط وملف مؤسسي معتمد لإجراء E2E حقيقي.
+- لم تتغير بيانات QA90K، ولم تُعدل جداول التكليف أو الأرصدة أو أحداث العد.
+
+### 7. الحدود والمتابعة
+- قبول استيراد مؤسسة فعلياً ينتظر مؤسسة نشطة وملف أعمال معتمداً؛ لا تستخدم بيانات مصطنعة أو QA90K.
+- القبول البصري التفاعلي داخل Admin بحساب المالك ما زال مفتوحاً؛ Playwright تحقق من الغلاف العام ومطابقة النشر، وليس من استخدام المستورد بعد المصادقة.
+- Supabase Security Advisor سجل التحذير الخاص بقابلية authenticated لاستدعاء RPC SECURITY DEFINER؛ هذا متوقع للواجهة المسجلة، مع فحص مالك داخلي وحجب anon. لا تُضعف هذا الفحص.
+- ظهرت كذلك تنبيهات قديمة في جداول/وظائف ERP ضمن `rawaea-staging`؛ لم تُغير لأنها خارج نطاق CountFlow.
+
+**Readiness:** READY WITH LIMITATIONS — Unified catalogue UI, client import logic, secured DB batch upsert, UoM dropdowns, alternate barcode scanning, 105 automated tests and production parity are confirmed. Real customer import and authenticated visual acceptance remain open.
+
+---
 ## LVE-2026-11-26-789 — إصلاح حادثة تحميل دليل الأصناف الموحد
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
