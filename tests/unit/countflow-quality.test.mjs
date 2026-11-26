@@ -1737,6 +1737,9 @@ test("LVE-790: catalogue import actions are prominent, owner-scoped, streaming a
  assert.match(admin,/pending\.length>=500/);
  assert.match(admin,/parsed\.count>90000/);
  assert.match(admin,/streamXlsxProductRows\(file/);
+ assert.match(admin,/if\(!value\('sku'\)&&!value\('barcode'\)&&!localSku&&!localBarcode\)throw new Error\('لا يمكن منع تكرار هذا الصف دون SKU أو باركود عالمي أو محلي/,"Each client row must carry a stable identity; name-only rows must be rejected");
+ assert.match(admin,/normalizeGlobalCatalogImportRow\(row,index,sourceRowNumber,checksum,mapping,true\)/,"Existing global matches may be normalized without requiring a repeated base unit");
+ assert.match(admin,/if\(!source\.base_unit&&value\('units'\)\)throw new Error/,"Alternate units require a base unit even when the global master exists");
  assert.match(admin,/function catalogImportIdentityKeys\(row\)/);
  assert.match(admin,/reserveCatalogImportIdentities\(normalized,seenIdentities\)/);
  assert.match(admin,/catalogInserted/);
