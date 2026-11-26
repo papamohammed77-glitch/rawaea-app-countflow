@@ -165,6 +165,16 @@
 - جرى اختبار ذلك قبل التطبيق داخل معاملة rollback: سُحبت صلاحية التنفيذ مؤقتًا، ثم أُدخلت لقطة تكلفة QA غير صحيحة من مالك قاعدة البيانات؛ اشتغل المشغّل وأعاد التحذير المتوقع، ثم ROLLBACK.
 - هذا يقلل سطح SECURITY DEFINER؛ لا يمكن استدعاء الدالة كـRPC من واجهة Data API.
 
+### 6.3 الدمج والتحقق بعد الدمج
+- PR #12 merged with squash; main commit `cb911ec62d75ba8fe3ba607d92e73e8c5bef0eb5`.
+- Main workflow [45901190845](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45901190845) succeeded on the merge commit: Node 111/111, Deno PASS, Pages build PASS, Playwright 3/3 PASS.
+- Playwright confirmed Cloudflare Pages Production SHA parity with the merged main SHA.
+- PR is closed as merged; the detailed report is stored in this `Reports/` directory.
+
+### 6.4 Branch cleanup limitation
+- The repository's `delete_branch_on_merge` setting is false, so GitHub did not automatically remove the task branch.
+- The available GitHub connector actions in this session provide branch reads and ref updates but no DELETE ref / delete-branch operation. The merged task branch `work/lve-791-export-coverage-cost-unit-integrity` therefore remains present. It was not misrepresented as deleted; branch deletion remains the sole repository-cleanup item.
+
 ## 7. فجوات لم تُغلق بعد — لا تُخفى
 
 ### 7.1 تصدير 90,000 صنف وما فوق
