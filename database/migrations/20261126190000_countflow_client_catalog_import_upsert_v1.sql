@@ -60,7 +60,8 @@ BEGIN
     RAISE EXCEPTION 'CLIENT_NOT_FOUND_OR_INACTIVE';
   END IF;
 
-  IF jsonb_typeof(p_rows) <> 'array'
+  IF p_rows IS NULL
+     OR jsonb_typeof(p_rows) <> 'array'
      OR jsonb_array_length(p_rows) < 1
      OR jsonb_array_length(p_rows) > 500 THEN
     RAISE EXCEPTION 'CLIENT_CATALOG_IMPORT_CHUNK_MUST_CONTAIN_1_TO_500_ROWS';
@@ -299,6 +300,10 @@ BEGIN
       END IF;
       v_seen_products := array_append(v_seen_products, v_product_id);
 
+      PERFORM pg_catalog.pg_advisory_xact_lock(
+        pg_catalog.hashtextextended('client-product:' || p_client_id::text || ':' || v_product_id::text, 0)
+      );
+
       SELECT cp.id INTO v_mapping_id
       FROM public.count_client_products cp
       WHERE cp.client_id = p_client_id
@@ -333,12 +338,12 @@ BEGIN
         v_actor
       )
       ON CONFLICT (client_id, catalog_product_id) DO UPDATE SET
-        client_sku = coalesce(EXCLUDED.client_sku, public.count_client_products.client_sku),
-        client_barcode = coalesce(EXCLUDED.client_barcode, public.count_client_products.client_barcode),
-        name_override = coalesce(EXCLUDED.name_override, public.count_client_products.name_override),
-        category_override = coalesce(EXCLUDED.category_override, public.count_client_products.category_override),
-        base_unit_override = coalesce(EXCLUDED.base_unit_override, public.count_client_products.base_unit_override),
-        units_override = coalesce(EXCLUDED.units_override, public.count_client_products.units_override),
+        client_sku = coalesce(EXCLUDED.client_sku, count_client_products.client_sku),
+        client_barcode = coalesce(EXCLUDED.client_barcode, count_client_products.client_barcode),
+        name_override = coalesce(EXCLUDED.name_override, count_client_products.name_override),
+        category_override = coalesce(EXCLUDED.category_override, count_client_products.category_override),
+        base_unit_override = coalesce(EXCLUDED.base_unit_override, count_client_products.base_unit_override),
+        units_override = coalesce(EXCLUDED.units_override, count_client_products.units_override),
         updated_by = v_actor,
         updated_at = now();
 
