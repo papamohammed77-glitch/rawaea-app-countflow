@@ -1809,7 +1809,7 @@ test("LVE-790: client catalog link to a project uses the scoped attach RPC and n
  assert.match(admin,/data-attach-client-catalog-product=/);
  assert.match(admin,/attachClientCatalogProductToProject\(b\.dataset\.attachClientCatalogProduct,b\)/);
  assert.match(admin,/data\?\.already_linked/);
- assert.match(admin,/لا يُنشأ رصيد مرجعي أو حركة جرد/);
+ assert.match(admin,/لم يُنشأ رصيد مرجعي أو حركة جرد/);
  assert.doesNotMatch(admin,/from\('count_products'\)\.insert/,"Project catalog attachment must remain in the authorized database RPC");
  const counter=read("countflow.html");
  assert.match(counter,/\.contains\('units',\[\{barcode:code\}\]\)/);
