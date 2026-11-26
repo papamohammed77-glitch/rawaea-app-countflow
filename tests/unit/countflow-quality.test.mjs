@@ -1838,4 +1838,10 @@ test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity p
  assert.equal(sandbox.testCounterUnitByBarcode(product,"pack-6").name,"باكيت");
  assert.equal(sandbox.testCounterUnitByBarcode(product,"unknown"),null);
  assert.equal(sandbox.testCounterUnitRows(product).length,3);
+ const elements={unit:{innerHTML:"",value:"",onchange:null},unitConversionHint:{textContent:""}};
+ const renderSandbox={esc:value=>String(value??""),$:id=>elements[id]};
+ vm.runInNewContext(counter.slice(helperStart,counter.indexOf("async function findProduct()",helperStart))+"\nthis.renderCounterUnits=renderCounterProductUnits;",renderSandbox);
+ renderSandbox.renderCounterUnits(product,"كرتونة");
+ assert.match(elements.unit.innerHTML,/كرتونة — 1 كرتونة = 12 قطعة · باركود: BOX-12/);
+ assert.match(elements.unit.innerHTML,/باكيت — 1 باكيت = 6 قطعة · باركود: PACK-6/);
 });
