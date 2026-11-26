@@ -1891,3 +1891,39 @@ test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity p
  assert.match(elements.unit.innerHTML,/كرتونة — 1 كرتونة = 12 قطعة · باركود: BOX-12/);
  assert.match(elements.unit.innerHTML,/باكيت — 1 باكيت = 6 قطعة · باركود: PACK-6/);
 });
+
+
+test("LVE-791: client balance export covers the complete project catalogue and reports omitted items", () => {
+  const source=read("functions/counting-export-session/index.ts");
+  const start=source.indexOf('if (scope === "client_balance") {');
+  const end=source.indexOf("    // Count the large relations",start);
+  assert.ok(start>=0&&end>start,"Client balance branch must exist");
+  const branch=source.slice(start,end);
+  assert.match(branch,/const productUpperBound=projectProductCount/);
+  assert.match(branch,/countRows\(admin,"count_products",\[\["project_id","eq",session\.project_id\]\],MAX_PRODUCTS\)/);
+  assert.match(branch,/fetchAll\(admin,"count_products",[\s\S]{0,220}\[\["project_id","eq",session\.project_id\]\]/);
+  assert.match(branch,/const productCoverage=products\.map/);
+  assert.match(branch,/status:complete\?"complete":countedLines\.length>0\?"partial":"not_counted"/);
+  assert.match(branch,/let partiallyCountedProducts=productCoverage\.filter/);
+  assert.match(branch,/let notCountedProducts=productCoverage\.filter/);
+  assert.match(branch,/if\(!item\.productLines\.length\)/);
+  assert.match(branch,/عد جزئي - موقع غير معدود/);
+  assert.match(branch,/CLIENT_BALANCE_CATALOG_SNAPSHOT_MISMATCH/);
+  assert.match(branch,/CLIENT_BALANCE_IMPORTS_NOT_FINALIZED/);
+});
+
+test("LVE-791: purchase value is blocked when purchase UoM factor mismatches product configuration", () => {
+  const source=read("functions/counting-export-session/index.ts");
+  assert.match(source,/\"PURCHASE_UNIT_FACTOR_MISMATCH\"/);
+  const migration=read("database/migrations/20261126213000_countflow_purchase_unit_factor_integrity_v1.sql");
+  assert.match(migration,/counting_private\.unit_factor_to_base\(\s*NEW\.product_id,\s*NEW\.purchase_unit\s*\)/);
+  assert.match(migration,/round\(v_expected_factor, 6\) <> round\(NEW\.unit_factor_to_base, 6\)/);
+  assert.match(migration,/count_import_rows_purchase_unit_guard/);
+  assert.match(migration,/count_session_product_costs_purchase_unit_guard/);
+  assert.match(migration,/REVOKE ALL ON FUNCTION counting_private\.validate_purchase_cost_unit_snapshot\(\) FROM PUBLIC, anon/);
+  assert.match(migration,/GRANT EXECUTE ON FUNCTION counting_private\.validate_purchase_cost_unit_snapshot\(\) TO authenticated, service_role/);
+  const rollback=read("tests/cost-unit-integrity-rollback.sql");
+  assert.match(rollback,/QA90K-000001/);
+  assert.match(rollback,/QA_INVALID_PURCHASE_UNIT/);
+  assert.match(rollback,/ROLLBACK;/);
+});

@@ -355,3 +355,15 @@ Live schema/function/ACL verification confirmed both migrations in the Supabase 
 The v5 import guard prevents a barcode that matches the global primary barcode or one of the matched global product's alternate-UoM barcodes from being written into `count_client_products.client_barcode`. The code remains the primary identity or the alternate-unit barcode in the appropriate source. This avoids a project attachment promoting a carton barcode to the product's primary barcode while retaining the same barcode on an alternate UoM, which the project master trigger correctly rejects.
 
 These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
+
+
+### 2026-11-26 — LVE-791 purchase-unit factor integrity
+
+Source migration: `20261126213000_countflow_purchase_unit_factor_integrity_v1.sql`.
+
+- Adds the private trigger function `counting_private.validate_purchase_cost_unit_snapshot()`.
+- Both `count_import_rows` and `count_session_product_costs` now validate the submitted `purchase_unit` against the product's configured base/alternate UoM through the existing `counting_private.unit_factor_to_base(product_id, unit)` contract.
+- A mismatch is preserved as source data and annotated with `PURCHASE_UNIT_FACTOR_MISMATCH`; it is not silently converted, overwritten, or used for a value calculation.
+- Correcting the purchase unit/factor removes that warning automatically.
+- The function is SECURITY DEFINER with an empty search_path, is not executable by PUBLIC/anon, and is granted only to authenticated/service_role for trigger execution.
+- Test file: `tests/cost-unit-integrity-rollback.sql`; it exercises insert/update on the existing QA90K project inside an explicit transaction and ends with ROLLBACK. It must not be committed as live data.

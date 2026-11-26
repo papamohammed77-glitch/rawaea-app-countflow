@@ -369,6 +369,10 @@ Deno.serve(async (req: Request) => {
       const importBatches = await fetchAll(admin,"count_import_batches",
         "id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,completed_at,error_report",
         [["session_id","eq",sessionId]],50000);
+      const unfinishedImports=importBatches.filter((b:any)=>["preview","committing"].includes(String(b.status||"")));
+      if(unfinishedImports.length){
+        throw new Error("CLIENT_BALANCE_IMPORTS_NOT_FINALIZED:"+unfinishedImports.length);
+      }
       const committedRowsUpperBound = importBatches
         .filter((b:any)=>b.status==="committed")
         .reduce((sum:number,b:any)=>sum+Math.max(0,Number(b.accepted_count)||0),0);
@@ -381,9 +385,12 @@ Deno.serve(async (req: Request) => {
         countRows(admin,"count_entries",[["session_id","eq",sessionId]],MAX_ENTRIES),
         countRows(admin,"count_products",[["project_id","eq",session.project_id]],MAX_PRODUCTS),
       ]);
-      const productUpperBound=Math.min(projectProductCount,lineCount+committedRowsUpperBound+costCount+entryCount);
+      // The client deliverable covers the complete project catalogue, including
+      // products with no count event and products absent from the latest reconciliation.
+      // Use the exact project catalogue count, never an evidence-derived lower bound.
+      const productUpperBound=projectProductCount;
       const preflightPeakBytes=productUpperBound*1500+entryCount*320+lineCount*420+
-        committedRowsUpperBound*240+locationCount*300+40*1024*1024;
+        committedRowsUpperBound*240+costCount*180+locationCount*300+40*1024*1024;
       if(preflightPeakBytes>MAX_EXPORT_ESTIMATED_MEMORY){
         throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance_preflight:estimated_bytes="+preflightPeakBytes);
       }
@@ -421,13 +428,14 @@ Deno.serve(async (req: Request) => {
         committedImportRows.length*240+locations.length*300+40*1024*1024;
       if(estimatedPeakBytes>MAX_EXPORT_ESTIMATED_MEMORY)throw new Error("EXPORT_MEMORY_BUDGET_EXCEEDED:client_balance:estimated_bytes="+estimatedPeakBytes);
 
-      const productIdArray=[...productIds];
-      const products:any[]=[];
-      for(let offset=0;offset<productIdArray.length;offset+=500){
-        const chunk=productIdArray.slice(offset,offset+500);
-        products.push(...await fetchAll(admin,"count_products",
-          "id,sku,barcode,name,category,base_unit,units,image_url,is_active",
-          [["project_id","eq",session.project_id],["id","in",chunk]],MAX_PRODUCTS));
+      // Read every project item, not only products referenced by count events,
+      // import rows, costs or the latest reconciliation. This is the denominator
+      // for client coverage and the basis for the excluded/not-counted register.
+      const products=await fetchAll(admin,"count_products",
+        "id,sku,barcode,name,category,base_unit,units,image_url,is_active",
+        [["project_id","eq",session.project_id]],MAX_PRODUCTS);
+      if(products.length!==projectProductCount){
+        throw new Error("CLIENT_BALANCE_CATALOG_SNAPSHOT_MISMATCH:"+products.length+"/"+projectProductCount);
       }
       const productMap=new Map(products.map((p:any)=>[p.id,p]));
       const locationMap=new Map(locations.map((l:any)=>[l.id,l]));
@@ -443,10 +451,28 @@ Deno.serve(async (req: Request) => {
       // Customer delivery is a results file, not a catalogue dump.
       // Every expected reconciliation location must have a counted quantity.
       // A quantity of zero is valid; null/undefined must never be coerced to zero.
-      const clientProducts=products.filter((product:any)=>hasCompleteClientCountResult(linesByProduct.get(product.id)||[]));
+      const productCoverage=products.map((product:any)=>{
+        const productLines=linesByProduct.get(product.id)||[];
+        const countedLines=productLines.filter((line:any)=>line.counted_quantity!==null&&
+          line.counted_quantity!==undefined&&line.result_status!=="not_counted");
+        const uncountedLines=productLines.filter((line:any)=>line.counted_quantity===null||
+          line.counted_quantity===undefined||line.result_status==="not_counted");
+        const complete=hasCompleteClientCountResult(productLines);
+        return {
+          product,
+          productLines,
+          countedLines,
+          uncountedLines,
+          complete,
+          status:complete?"complete":countedLines.length>0?"partial":"not_counted",
+        };
+      });
+      const clientProducts=productCoverage.filter((item:any)=>item.complete).map((item:any)=>item.product);
       const clientProductIds=new Set(clientProducts.map((product:any)=>product.id));
       const clientCountEntries=countEntries.filter((entry:any)=>clientProductIds.has(entry.product_id));
       const excludedUncountedProductCount=Math.max(0,products.length-clientProducts.length);
+      let partiallyCountedProducts=productCoverage.filter((item:any)=>item.status==="partial").length;
+      let notCountedProducts=productCoverage.filter((item:any)=>item.status==="not_counted").length;
       const unitRows:any[][]=[[
         "SKU","الباركود","الصنف","الفرع / المخزن / الموقع","الكمية التي أدخلها العداد",
         "وحدة العد","معامل التحويل إلى الوحدة الأساسية","الكمية المحولة إلى الوحدة الأساسية",
@@ -534,11 +560,34 @@ Deno.serve(async (req: Request) => {
         "الرصيد الدفتري المرجعي","الكمية المعدودة","الفرق","حالة الموقع",
       ]];
       const gapRows:any[][]=[["SKU","الباركود","الصنف","الموقع","نوع الفجوة","التفاصيل","الإجراء المقترح"]];
+      // The delivery workbook is intentionally a complete-coverage register:
+      // products without a reconciliation line must be reported, not silently omitted.
+      for(const item of productCoverage){
+        if(item.complete)continue;
+        const product:any=item.product||{};
+        if(!item.productLines.length){
+          gapRows.push([
+            product.sku||"",product.barcode||"",product.name||"","",
+            "لا توجد نتيجة عد",
+            "الصنف موجود في دليل التكليف ولم يظهر له أي سطر في جولة التسوية المعتمدة",
+            "إسناد الصنف إلى المواقع المعنية وإتمام العد ثم إعادة التسوية"
+          ]);
+          continue;
+        }
+        for(const line of item.uncountedLines){
+          gapRows.push([
+            product.sku||"",product.barcode||"",product.name||"",
+            locationPath(line.location_id),
+            item.countedLines.length?"عد جزئي - موقع غير معدود":"الصنف غير معدود",
+            "نتيجة الموقع: "+String(line.result_status||"غير محددة")+" · لا توجد كمية معدودة صريحة",
+            "استكمال عد الموقع أو تنفيذ إعادة العد ثم إعادة التسوية"
+          ]);
+        }
+      }
       const currencyTotals=new Map<string,{valueMicro:bigint,products:number}>();
-      let fullyCountedProducts=0,partiallyCountedProducts=0,notCountedProducts=0;
+      let fullyCountedProducts=0;
       let fullyPricedProducts=0,unpricedProducts=0,valueEligibleProducts=0;
       let embeddedCount=0,notEmbeddedCount=0,completeQuantityProducts=0;
-      let knownCountedQuantityProducts=0;
       for(const product of clientProducts){
         const productLines=(linesByProduct.get(product.id)||[]).sort((a:any,b:any)=>String(a.location_path||"").localeCompare(String(b.location_path||"")));
         const countedLines=productLines.filter((l:any)=>l.counted_quantity!==null&&l.counted_quantity!==undefined);
@@ -561,7 +610,7 @@ Deno.serve(async (req: Request) => {
         const costWarnings=Array.isArray(cost?.warning_codes)?cost.warning_codes:[];
         const blockingCostWarnings=costWarnings.filter((w:string)=>[
           "COST_DATA_INCOMPLETE","INVALID_PURCHASE_UNIT_COST","INVALID_CURRENCY_CODE",
-          "INVALID_UNIT_FACTOR","COST_REQUIRES_OPERATION_SCOPE","CONFLICTING_COST_SNAPSHOT_IN_BATCH"
+          "INVALID_UNIT_FACTOR","PURCHASE_UNIT_FACTOR_MISMATCH","COST_REQUIRES_OPERATION_SCOPE","CONFLICTING_COST_SNAPSHOT_IN_BATCH"
         ].includes(w));
         const purchasePriceMicro=cost?decimalToScaled(cost.purchase_unit_cost,6):null;
         const purchaseUnitFactorMicro=cost?decimalToScaled(cost.unit_factor_to_base,6):null;
@@ -1015,7 +1064,7 @@ Deno.serve(async (req: Request) => {
     }
     const status = /SUPERVISOR_ACCESS_REQUIRED/.test(message) ? 403 :
       /CLIENT_BALANCE_REQUIRES_APPROVED_RECONCILIATION/.test(message) ? 409 :
-      /EXPORT_LIMIT|EXPORT_COMBINED_ROW_LIMIT|CLIENT_BALANCE_PRODUCT_LIMIT|CLIENT_BALANCE_EXPORT_EXCEEDS_50MB|EXPORT_MEMORY_BUDGET_EXCEEDED/.test(message) ? 413 : 500;
+      /EXPORT_LIMIT|EXPORT_COMBINED_ROW_LIMIT|CLIENT_BALANCE_PRODUCT_LIMIT|CLIENT_BALANCE_IMPORTS_NOT_FINALIZED|CLIENT_BALANCE_CATALOG_SNAPSHOT_MISMATCH|CLIENT_BALANCE_EXPORT_EXCEEDS_50MB|EXPORT_MEMORY_BUDGET_EXCEEDED/.test(message) ? 413 : 500;
     return json({error:message},status);
   }
 });
