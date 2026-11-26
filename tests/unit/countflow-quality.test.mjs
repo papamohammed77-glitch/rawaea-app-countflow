@@ -921,7 +921,7 @@ test("Client-balance XLSX excludes products without a complete counted result at
   assert.match(branch, /partiallyCountedProducts=productCoverage\.filter/);
   assert.match(branch, /notCountedProducts=productCoverage\.filter/);
   assert.match(branch, /لا توجد نتيجة عد/);
-  assert.doesNotMatch(branch, /for\(const product of products\)\\{/);
+  assert.doesNotMatch(branch, /for\(const product of products\)\{/);
 });
 test("Supervisor live rows open a paginated, filtered, read-only count detail view with realtime refresh", () => {
   const supervisor = read("Countflow-supervisor.html");
