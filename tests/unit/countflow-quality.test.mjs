@@ -1572,6 +1572,8 @@ test("Catalogue bootstrap failures do not discard a valid authenticated session"
   "Both owner and client bootstrap paths must isolate catalogue loading failures");
  assert.match(admin,/if\(state\.user\)\{showApp\(\);fail\('تعذر تحميل بعض بيانات النظام\./,
   "A recoverable startup data failure must preserve the authenticated app shell");
+ assert.ok(admin.includes('role="alert">تعذر تحميل دليل الأصناف الآن.'),"A failed catalogue request must replace the loading state with a recoverable message");
+ assert.ok(admin.includes('id="catalogRefresh"'),"The catalogue retry action must remain available");
  assert.match(admin,/showLogin\(friendlyErrorMessage\(e\)\)/,
   "Only a bootstrap failure without an authenticated user should return to login");
  assert.match(admin,/if\(!membership\)\{await db\.auth\.signOut\(\);state\.user=null;showLogin/,
