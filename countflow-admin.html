@@ -1463,6 +1463,7 @@ function normalizeClientCatalogImportRow(row,index,sourceRowNumber,checksum,mapp
  const source=normalizeGlobalCatalogImportRow(row,index,sourceRowNumber,checksum,mapping,true);
  if(!source.base_unit&&value('units'))throw new Error('وحدة الأساس مطلوبة للتحقق من معاملات الوحدات البديلة.');
  const localSku=value('client_sku')||null,localBarcode=value('client_barcode')||null;
+ if(!value('sku')&&!value('barcode')&&!localSku&&!localBarcode)throw new Error('لا يمكن منع تكرار هذا الصف دون SKU أو باركود عالمي أو محلي؛ أضف المعرّف قبل الاستيراد.');
  const localName=value('client_name_override')||null,localCategory=value('client_category_override')||null;
  const localBase=value('client_base_unit_override')||null,localUnitsText=value('client_units_override');
  if(localSku&&localSku.length>100)throw new Error('SKU المؤسسة يتجاوز 100 حرف.');
