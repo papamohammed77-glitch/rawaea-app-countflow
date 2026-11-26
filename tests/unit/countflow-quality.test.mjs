@@ -1278,27 +1278,33 @@ test("CountFlow institution mapping stores client-specific unit overrides and st
  assert.match(admin,/p_base_unit_override:base,p_units_override:units/);
  assert.match(admin,/p_client_id:client,p_catalog_product_id:cat/);
  assert.match(admin,/count_upsert_client_product/);
- assert.match(admin,/eq\('client_id',id\)/);
+ assert.match(admin,/eq\\('client_id',scopedClient\\)/);
+ assert.match(admin,/in\\('catalog_product_id',productIds\\)/);
  assert.match(admin,/state\.project\.client_id!==id/);
  assert.match(admin,/count_attach_catalog_product/);
 });
 
-test("CountFlow separates global master, client mapping and project roster without physical catalog deletion", () => {
+test("CountFlow presents global and institution fields together while preserving independent project records", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/id="catalogGlobalView"/);
- assert.match(admin,/id="catalogClientView"/);
+ assert.doesNotMatch(admin,/id="catalogClientView"/);
  assert.match(admin,/id="tab-products"/);
  assert.match(admin,/أصناف ملف التكليف/);
- assert.match(admin,/is_active:!p\.is_active/);
- assert.doesNotMatch(admin,/from\('count_catalog_products'\)\.delete/);
- assert.doesNotMatch(admin,/from\('count_client_products'\)\.delete/);
+ assert.match(admin,/from\\('count_catalog_products'\\)/);
+ assert.match(admin,/from\\('count_client_products'\\)/);
+ assert.match(admin,/from\\('count_products'\\)/);
+ assert.match(admin,/is_active:!p\\.is_active/);
+ assert.doesNotMatch(admin,/from\\('count_catalog_products'\\)\\.delete/);
+ assert.doesNotMatch(admin,/from\\('count_client_products'\\)\\.delete/);
 });
 
-test("CountFlow client mapping reset and attach actions provide guarded feedback", () => {
-  const admin = read("countflow-admin.html");
-  assert.match(admin, /clientProductReset'\)\.onclick=resetClientProductForm/);
-  assert.match(admin, /state\.project\.client_id!==id/);
-  assert.match(admin, /catch\(error\)\{fail\('تعذر إدراج الصنف في ملف التكليف',error\);\}/);
+test("CountFlow institution fields open and save inside the unified item detail page", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/clientProductReset'\\)\\.onclick=resetClientProductForm/);
+ assert.match(admin,/data-edit-client-map=/);
+ assert.match(admin,/openUnifiedCatalogItem\\(product\\)/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.match(admin,/catch\\(err\\)\\{fail\\('تعذر حفظ مواءمة المؤسسة',err\\);\\}/);
 });
 
 
@@ -1495,8 +1501,8 @@ test("Admin product unit summaries exclude precision metadata from alternate-uni
  const admin = read("countflow-admin.html");
  // Engagement, global catalog, and client mapping lists must count selectable UoM rows only.
  assert.ok(admin.includes("const units=productUnitRows(Array.isArray(x.units)?x.units:[]),unitSummary="));
- assert.ok(admin.includes("const units=productUnitRows(Array.isArray(p.units)?p.units:[]),actions="));
- assert.ok(admin.includes("units=productUnitRows(Array.isArray(p.units_override)?p.units_override:(Array.isArray(c.units)?c.units:[])),actions="));
+ assert.ok(admin.includes("const units=productUnitRows(Array.isArray(p.units)?p.units:[]),m=localByProduct.get(p.id)"));
+ assert.ok(admin.includes("productUnitRows(Array.isArray(p.units)?p.units:[])"));
  const start = admin.indexOf("const CF_UNIT_CLASSES=");
  const end = admin.indexOf("function renderCatalogUnitEditor", start);
  assert.ok(start >= 0 && end > start, "Missing CountFlow UoM metadata helpers");
@@ -1573,10 +1579,13 @@ test("Global catalogue images use scoped private signed URLs and provide image p
 
 test("Catalogue exports are paginated read paths and debounced list requests reject stale responses", () => {
  const admin=read("countflow-admin.html");
- for(const name of ["exportGlobalCatalogCsv","exportClientCatalogCsv","exportProjectCatalogCsv","downloadCatalogCsv"]) {
+ for(const name of ["exportGlobalCatalogCsv","exportProjectCatalogCsv","downloadCatalogCsv"]) {
   assert.match(admin,new RegExp("function "+name+"\\s*\\("),"Missing export function "+name);
  }
- assert.match(admin,/range\(offset,offset\+pageSize-1\)/);
+ assert.match(admin,/range\\(offset,offset\\+pageSize-1\\)/);
+ assert.match(admin,/clientRows\.set\(item\.catalog_product_id,item\)/);
+ assert.match(admin,/SKU المؤسسة/);
+ assert.match(admin,/وحدات المؤسسة JSON/);
  assert.match(admin,/state\.catalogRequestToken=\(state\.catalogRequestToken\|\|0\)\+1/);
  assert.match(admin,/state\.catalogSearchTimer=setTimeout/);
  assert.match(admin,/function applyCatalogFilters\(query,filters\)/);
