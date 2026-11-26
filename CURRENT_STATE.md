@@ -1,3 +1,47 @@
+## LVE-2026-11-26-789 — إصلاح حادثة تحميل دليل الأصناف الموحد
+
+**Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
+**التقرير الجنائي والتنفيذي:** Reports/LVE-2026-11-26-789_CATALOG_LOAD_THENABLE_AND_AUTH_SESSION_RECOVERY.md.  
+**المستودع المعتمد:** papamohammed77-glitch/rawaea-app-countflow.  
+**مسار التنفيذ:** main فقط؛ لم يُنشأ Branch أو PR أو مستودع مؤقت.  
+**كود الإصلاح:** countflow-admin.html — blob 010f4bdd1f2fb6a803b956e4ada70d9778d0e3cf.  
+**اختبارات الانحدار:** tests/unit/countflow-quality.test.mjs — blob 022a968e9d70b34025376a22892d46d7f4b0c562.  
+**Commit كود الإصلاح الأول:** b0653e863d84bdee99285101f33f5a587267d48a.  
+**Commit معالجة خطأ الواجهة:** 7541af4bb1874b08eb76bf291960e6817691a6e7.  
+**آخر Commit للكود والاختبارات:** f5fdaac14389f58620b8bdac7b20afb466748f33.  
+**CI:** Run 45875097398 — SUCCESS على HEAD المذكور.  
+**Production parity:** PASS — Playwright تحقق من أن Cloudflare Pages يطابق COUNTFLOW_EXPECTED_COMMIT = f5fdaac14389f58620b8bdac7b20afb466748f33.  
+**الحالة:** ROOT CAUSE CONFIRMED — FIXED ON MAIN — 101/101 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — AUTHENTICATED CATALOG INTERACTION ACCEPTANCE OPEN.
+
+### 1. نتيجة التحقيق
+- سبب TypeError هو أن applyUnifiedCatalogFilters معرفة async وتعيد PostgREST Query Builder مباشرة؛ كائن PostgrestBuilder thenable، لذا await ينفذ الطلب ويرجع استجابة بدلاً من Builder؛ ثم يفشل q.range لأن الاستجابة لا تحتوي هذه الدالة.
+- العيب دخل مع إضافة الدليل الموحد في LVE-787 / PR #10. وقد تكرر في مساري loadCatalog وexportGlobalCatalogCsv.
+- ظهور شاشة الدخول كان بسبب معالج bootstrap الذي كان يستدعي showLogin لأي خطأ تهيئة بعد المصادقة. هذا المسار لا يستدعي signOut؛ الرفض الصريح للعضوية/الصلاحية ما زال يخرج المستخدم.
+
+### 2. الإصلاحات
+- جعل helper يعيد غلافاً عادياً {query} غير thenable، وتطبيق range على filtered.query قبل await استعلام الدليل النهائي.
+- إصلاح مساري القائمة والتصدير.
+- عزل خطأ تحميل الدليل في bootstrap للمالك ومدير العميل، والحفاظ على واجهة التطبيق عندما يكون state.user مثبتاً.
+- عرض رسالة role=alert قابلة للاسترجاع داخل الجدول، ومسح بيانات الترقيم القديمة والحفاظ على زر تحديث الدليل.
+- إضافة اختبارات تحاكي PostgREST thenable، وتتحقق من سلامة range وبحث المؤسسة وCSV والجلسة ومسار رفض الصلاحيات الصريح.
+
+### 3. التحقق
+- GitHub Actions Run 45875097398: SUCCESS.
+- Node: 101/101 PASS، صفر فشل.
+- Deno type-check: PASS.
+- Cloudflare Pages allowlisted build: PASS.
+- Playwright: 3/3 PASS، بما في ذلك مطابقة Production مع آخر main.
+- قراءة SQL فقط في rawaea-staging أكدت أن count_catalog_products وcount_client_products يجيبان دون خطأ؛ العدد المقروء 0 في كل منهما.
+
+### 4. السلامة والحدود
+- لا DDL/DML/Migration/RLS/GRANT/Trigger/RPC/Edge deployment.
+- لا تغيير أو استئناف أو حذف QA90K، ولا كتابة Storage أو أصناف أو مواءمات.
+- لا تغيير في RAWAEA ERP أو SMART ERP.
+- القبول البصري المصادق بعد الدخول إلى Admin لا يزال بحاجة إلى تحقق تشغيلي؛ لا يُدّعى اختباره من Playwright public shell.
+
+**Readiness:** READY WITH LIMITATIONS — Fix, regression coverage, CI, and Production source parity confirmed; authenticated catalog interaction remains open.
+
+---
 ## LVE-2026-11-26-788 — تنظيم محرر الصنف ووحدة الأساس
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
