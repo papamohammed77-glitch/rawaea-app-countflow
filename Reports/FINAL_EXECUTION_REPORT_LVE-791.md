@@ -123,7 +123,8 @@
 | `functions/counting-export-session/index.ts` | تغطية الكتالوج الكامل، exact preflight، رفض الاستيراد غير النهائي، تصنيف كامل/جزئي/غير معدود، وقفل قيمة التكلفة عند mismatch |
 | `database/migrations/20261126213000_countflow_purchase_unit_factor_integrity_v1.sql` | Trigger function + trigger على جدول الاستيراد ولقطات تكلفة العملية |
 | `tests/unit/countflow-quality.test.mjs` | اختبارات regression لتغطية الكتالوج والتصنيف وحراسة معامل وحدة الشراء |
-| `tests/cost-unit-integrity-rollback.sql` | اختبار QA عابر داخل transaction ينتهي بـROLLBACK |
+| `tests/cost-unit-integrity-rollback.sql` | اختبار وحدة الشراء/التحذير وتصحيحها داخل transaction ينتهي بـROLLBACK |
+| `tests/import_90k_rollback.sql` | توحيد أسماء fixtures إلى `QA_` مع الحفاظ على `ROLLBACK`؛ تشغيله الفعلي تعذر بأداة SQL، لذلك نتيجته NOT VERIFIED |
 | `database/migrations/README.md` | توثيق عقد migration |
 | `CURRENT_STATE.md` | LVE-791 وحالة الاستمرار |
 | `Reports/FINAL_EXECUTION_REPORT_LVE-791.md` | هذا التقرير |
@@ -146,7 +147,7 @@
 
 
 ### 6.1 نتائج التحقق المنشور — LVE-791
-- Live database migration: `20261126213437 / countflow_purchase_unit_factor_integrity_v1`.
+- Live database migrations: `20261126213437 / countflow_purchase_unit_factor_integrity_v1` and `20261126215042 / countflow_purchase_cost_trigger_acl_v1`.
 - `counting-export-session` deployed as version **16**, ACTIVE, `verify_jwt=true`, entrypoint `index.ts`; deployed source hash `f6a18caeafeecea77cae396fb8893a37367050a9240ce150677fcaf31ce07562`. The repository source blob is `548ab79bdc931940248cefceabfe6f90c758cf0e`.
 - GitHub Actions run [45899839584](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45899839584) on `f721b52403053b50070a25c1fb87f531c3612478`: Node **111/111 PASS**, zero failed/skipped; Deno type check PASS; Pages build PASS; Playwright production shell: **2 PASS / 1 SKIPPED**. The skipped case is the main-branch-only production SHA equality assertion; the two PR-safe public shell/RTL cases passed.
 - The first CI attempt exposed one outdated assertion requiring the old evidence-derived product filter. The assertion was rewritten to test the full-project catalog coverage contract; the final CI run is green.
