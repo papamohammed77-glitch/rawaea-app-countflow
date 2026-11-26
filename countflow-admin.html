@@ -1403,6 +1403,212 @@ function reserveCatalogImportIdentities(row,seen){
    $('globalCatalogImportCommit').disabled=!g.count||!g.mapping?.name||!g.mapping?.base_unit;
   }
  }
+const clientCatalogImportFields=[
+ {key:'sku',label:'SKU / الكود العالمي',aliases:['sku','code','item_code','product_code','canonical_sku','كود الصنف','كود','رمز الصنف']},
+ {key:'barcode',label:'الباركود العالمي الأساسي',aliases:['barcode','bar_code','ean','upc','gtin','باركود','الباركود']},
+ {key:'name',label:'اسم الصنف (مطلوب)',aliases:['name','item_name','product_name','اسم الصنف','الصنف','الاسم']},
+ {key:'brand',label:'العلامة التجارية',aliases:['brand','manufacturer','العلامة التجارية','الماركة']},
+ {key:'category',label:'التصنيف الأساسي',aliases:['category','group','الفئة','التصنيف']},
+ {key:'base_unit',label:'وحدة الأساس (مطلوبة لإنشاء صنف جديد)',aliases:['base_unit','unit','uom','الواحدة','الوحدة','وحدة القياس']},
+ {key:'units',label:'الوحدات البديلة ومعاملاتها',aliases:['units','unit_options','الوحدات','وحدات التعبئة']},
+ {key:'unit_class',label:'نمط القياس',aliases:['unit_class','measurement_class','فئة الوحدة','نمط القياس','نوع القياس']},
+ {key:'decimal_precision',label:'دقة الكمية',aliases:['decimal_precision','quantity_precision','دقة الكمية','المنازل العشرية']},
+ {key:'item_kind',label:'نوع الصنف',aliases:['item_kind','product_kind','نوع الصنف']},
+ {key:'barcode_type',label:'نوع الباركود العالمي',aliases:['barcode_type','symbology','نوع الباركود']},
+ {key:'client_sku',label:'SKU المؤسسة (اختياري)',aliases:['client_sku','tenant_sku','organization_sku','كود المؤسسة','sku المؤسسة']},
+ {key:'client_barcode',label:'باركود المؤسسة (اختياري)',aliases:['client_barcode','tenant_barcode','organization_barcode','باركود المؤسسة']},
+ {key:'client_name_override',label:'اسم المؤسسة (اختياري)',aliases:['client_name','client_name_override','tenant_name','اسم المؤسسة']},
+ {key:'client_category_override',label:'تصنيف المؤسسة (اختياري)',aliases:['client_category','client_category_override','tenant_category','تصنيف المؤسسة']},
+ {key:'client_base_unit_override',label:'وحدة الأساس للمؤسسة (اختياري)',aliases:['client_base_unit','client_base_unit_override','tenant_base_unit','وحدة المؤسسة']},
+ {key:'client_units_override',label:'وحدات المؤسسة ومعاملاتها (JSON اختياري)',aliases:['client_units','client_units_override','tenant_units','وحدات المؤسسة']}
+];
+function clientCatalogImportValue(row,key,mapping=state.clientCatalogImport.mapping){
+ const header=mapping?.[key];return header&&Object.prototype.hasOwnProperty.call(row,header)?row[header]:'';
+}
+function renderClientCatalogImportMapping(){
+ const g=state.clientCatalogImport,host=$('clientCatalogImportMapping'),headers=g.headers||[];
+ if(!headers.length)throw new Error('لم يتم العثور على عناوين أعمدة في ملف المؤسسة.');
+ g.mapping=g.mapping||{};
+ for(const field of clientCatalogImportFields){
+  if(!Object.prototype.hasOwnProperty.call(g.mapping,field.key)){
+   const aliases=field.aliases.map(x=>String(x).trim().toLocaleLowerCase());
+   g.mapping[field.key]=headers.find(h=>aliases.includes(String(h).trim().toLocaleLowerCase()))||'';
+  }
+ }
+ host.classList.remove('hidden');
+ host.innerHTML='<div class="panel" style="box-shadow:none;margin:0;padding:12px"><b>مطابقة أعمدة ملف المؤسسة</b><p class="hint">اربط اسم الصنف ووحدة الأساس والباركود أو SKU. يمكن ربط كود/باركود واسم وتصنيف ووحدة محلية منفصلة. الصنف الموجود لا تُستبدل بياناته العالمية؛ تُحفظ الاختلافات في مواءمة المؤسسة فقط.</p><div class="fields">'+clientCatalogImportFields.map(f=>'<div class="field"><label>'+esc(f.label)+'</label><select data-client-catalog-import-map="'+f.key+'"><option value="">— تجاهل الحقل —</option>'+headers.map(h=>'<option value="'+esc(h)+'" '+(g.mapping[f.key]===h?'selected':'')+'>'+esc(h)+'</option>').join('')+'</select></div>').join('')+'</div></div>';
+ host.querySelectorAll('[data-client-catalog-import-map]').forEach(select=>select.onchange=()=>{
+  g.mapping[select.dataset.clientCatalogImportMap]=select.value;
+  $('clientCatalogImportCommit').disabled=!!g.busy||!g.mapping.name||!g.mapping.base_unit;
+ });
+ $('clientCatalogImportCommit').disabled=!!g.busy||!g.mapping.name||!g.mapping.base_unit;
+}
+function renderClientCatalogImportPreview(){
+ const g=state.clientCatalogImport,headers=g.headers||[],rows=(g.sample||[]).slice(0,8);
+ const sample=rows.length?'<div class="tablewrap"><table><thead><tr>'+headers.slice(0,8).map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.slice(0,8).map(h=>'<td>'+esc(String(r[h]??'').slice(0,80))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'';
+ $('clientCatalogImportPreviewText').innerHTML='<b>معاينة الملف: '+Number(g.count||0).toLocaleString('en-US')+' صف</b><span class="sub"> أول 8 صفوف · '+headers.length+' عمود</span>'+sample;
+}
+function renderClientCatalogImportErrors(){
+ const errors=state.clientCatalogImport?.stats?.errors||[];
+ $('clientCatalogImportErrors').innerHTML=errors.length?'<table><thead><tr><th>صف الملف</th><th>SKU</th><th>الباركود</th><th>سبب الرفض</th></tr></thead><tbody>'+errors.map(e=>'<tr><td>'+Number(e.row_number||0)+'</td><td>'+esc(e.sku||'')+'</td><td>'+esc(e.barcode||'')+'</td><td>'+esc(e.error||'تعذر قبول الصف')+'</td></tr>').join('')+'</tbody></table>':'';
+}
+function updateClientCatalogImportProgress(){
+ const g=state.clientCatalogImport,stats=g.stats||{},total=Math.max(0,Number(g.count||0)),processed=Math.min(total,Number(stats.processed||0)),percent=total?Math.min(100,Math.round(processed/total*100)):0;
+ $('clientCatalogImportProgressFill').style.width=percent+'%';
+ $('clientCatalogImportProgress').textContent='المعالجة '+processed.toLocaleString('en-US')+' / '+total.toLocaleString('en-US')+' · أصناف عالمية جديدة '+Number(stats.catalogInserted||0).toLocaleString('en-US')+' · مطابقة مع الدليل '+Number(stats.catalogMatched||0).toLocaleString('en-US')+' · ربط جديد '+Number(stats.clientInserted||0).toLocaleString('en-US')+' · مواءمات محدثة '+Number(stats.clientUpdated||0).toLocaleString('en-US')+' · مكرر متجاهل '+Number(stats.duplicates||0).toLocaleString('en-US')+' · مرفوض '+Number(stats.rejected||0).toLocaleString('en-US');
+ renderClientCatalogImportErrors();
+}
+function normalizeClientCatalogImportRow(row,index,sourceRowNumber,checksum,mapping){
+ const value=key=>String(globalCatalogImportValue(row,key,mapping)??'').trim();
+ const source=normalizeGlobalCatalogImportRow(row,index,sourceRowNumber,checksum,mapping);
+ const localSku=value('client_sku')||null,localBarcode=value('client_barcode')||null;
+ const localName=value('client_name_override')||null,localCategory=value('client_category_override')||null;
+ const localBase=value('client_base_unit_override')||null,localUnitsText=value('client_units_override');
+ if(localSku&&localSku.length>100)throw new Error('SKU المؤسسة يتجاوز 100 حرف.');
+ if(localBarcode){if(localBarcode.length>120)throw new Error('باركود المؤسسة يتجاوز 120 حرفاً.');cfResolveBarcodeType(localBarcode,'AUTO');}
+ if(localName&&localName.length>240)throw new Error('اسم المؤسسة يتجاوز 240 حرفاً.');
+ if(localCategory&&localCategory.length>120)throw new Error('تصنيف المؤسسة يتجاوز 120 حرفاً.');
+ if(localBase&&localBase.length>40)throw new Error('وحدة الأساس المحلية تتجاوز 40 حرفاً.');
+ const output={...source,client_sku:localSku,client_barcode:localBarcode,client_name_override:localName,client_category_override:localCategory};
+ if(localBase)output.client_base_unit_override=localBase;
+ if(localUnitsText){
+  const rows=cfParseUnitRows(localUnitsText);
+  if(!Array.isArray(rows)||rows.length>50)throw new Error('عدد وحدات المؤسسة البديلة يجب ألا يتجاوز 50 وحدة.');
+  const base=localBase||source.base_unit,unitClass=inferProductUnitClass(base),meta=readProductUnitMeta(source.units,source.base_unit);
+  const seenNames=new Set(),seenCodes=new Set();if(localBarcode)seenCodes.add(localBarcode.toLocaleLowerCase());
+  const normalized=rows.map(entry=>{
+   if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('صيغة إحدى وحدات المؤسسة غير صحيحة.');
+   const name=String(entry.name??'').trim(),factor=Number(entry.factor_to_base??entry.conversion_factor??entry.factor);
+   if(!name||name.length>40)throw new Error('اسم وحدة المؤسسة مطلوب ولا يتجاوز 40 حرفاً.');
+   const key=normalizeUnitName(name);
+   if(key===normalizeUnitName(base)||seenNames.has(key))throw new Error('وحدة المؤسسة مكررة أو تطابق وحدة الأساس.');
+   if(!Number.isFinite(factor)||factor<=0||factor>1000000000)throw new Error('معامل تحويل وحدة المؤسسة غير صالح.');
+   const unit={name,factor_to_base:factor},barcode=String(entry.barcode??'').trim();
+   if(barcode){if(barcode.length>120)throw new Error('باركود وحدة المؤسسة أطول من الحد.');const code=barcode.toLocaleLowerCase();if(seenCodes.has(code))throw new Error('باركود الصنف أو وحداته المحلية مكرر.');seenCodes.add(code);unit.barcode=barcode;unit.barcode_type=cfResolveBarcodeType(barcode,entry.barcode_type||'AUTO');}
+   seenNames.add(key);return unit;
+  });
+  output.client_units_override=withProductUnitMeta(normalized,unitClass,meta.decimal_precision??defaultProductUnitPrecision(unitClass),{item_kind:localBarcode?'BARCODED':meta.item_kind||'NO_BARCODE',barcode_type:localBarcode?cfResolveBarcodeType(localBarcode,'AUTO'):meta.barcode_type||'INTERNAL'});
+ }else if(localBase)output.client_units_override=[];
+ return output;
+}
+async function commitClientCatalogChunk(rows,clientId){
+ if(!rows.length)return;
+ const {data,error}=await db.rpc('count_upsert_client_catalog_chunk',{p_client_id:clientId,p_rows:rows});
+ if(error)throw error;
+ if(!data||typeof data!=='object')throw new Error('استجابة ربط أصناف المؤسسة غير صالحة.');
+ const stats=state.clientCatalogImport.stats;
+ stats.processed+=rows.length;
+ stats.catalogInserted+=Number(data.catalog_inserted||0);
+ stats.catalogMatched+=Number(data.catalog_matched||0);
+ stats.clientInserted+=Number(data.client_inserted||0);
+ stats.clientUpdated+=Number(data.client_updated||0);
+ stats.duplicates+=Number(data.duplicates||0);
+ stats.rejected+=Number(data.rejected||0);
+ for(const item of Array.isArray(data.errors)?data.errors:[]){
+  if(stats.errors.length>=120)break;
+  stats.errors.push({row_number:item.row_number,sku:item.sku,barcode:item.barcode,error:item.error||'رفض الخادم الصف'});
+ }
+ updateClientCatalogImportProgress();
+}
+function resetClientCatalogImport(){
+ const g=state.clientCatalogImport;if(g?.busy)return notify('لا يمكن إلغاء الملف أثناء تنفيذ دفعة؛ انتظر اكتمال الاستدعاء الحالي.',true);
+ state.clientCatalogImport={file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}};
+ $('clientCatalogImportFile').value='';$('clientCatalogImportMapping').classList.add('hidden');$('clientCatalogImportMapping').innerHTML='';
+ $('clientCatalogImportPreviewText').textContent='';$('clientCatalogImportProgress').textContent='لم يبدأ الاستيراد';
+ $('clientCatalogImportProgressFill').style.width='0%';$('clientCatalogImportErrors').innerHTML='';
+ $('clientCatalogImportPreview').disabled=false;$('clientCatalogImportCommit').disabled=true;$('clientCatalogImportReset').disabled=false;
+}
+async function previewClientCatalogImport(){
+ if(!state.platformOwner)return notify('استيراد أصناف المؤسسة متاح لمالك المنصة فقط.',true);
+ const client=state.clients.find(item=>item.id===state.catalogClientId&&item.status==='active');
+ if(!client)return notify('اختر مؤسسة نشطة أولاً من محدد المؤسسة أعلى دليل الأصناف.',true);
+ const file=$('clientCatalogImportFile').files?.[0];if(!file)return notify('اختر ملف أصناف المؤسسة أولاً.',true);
+ if(state.clientCatalogImport?.busy)return;
+ const preview=$('clientCatalogImportPreview'),commit=$('clientCatalogImportCommit'),reset=$('clientCatalogImportReset');
+ preview.disabled=true;commit.disabled=true;reset.disabled=true;
+ $('clientCatalogImportTarget').textContent='وجهة الاستيراد: '+client.name+' · '+client.code+'. لن تُنقل أصناف التكليف أو الأرصدة المرجعية.';
+ $('clientCatalogImportProgress').textContent='جار فحص الملف وقراءة عينة من الصفوف…';$('clientCatalogImportErrors').innerHTML='';
+ try{
+  const parsed=await parseProductImportFile(file),ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(!parsed.count)throw new Error('لا توجد صفوف بيانات قابلة للقراءة.');
+  if(parsed.count>90000)throw new Error('الحد الأقصى لملف المؤسسة 90,000 صف.');
+  if(!['csv','xlsx'].includes(ext))throw new Error('يدعم الاستيراد CSV وXLSX فقط.');
+  state.clientCatalogImport={file,clientId:client.id,count:parsed.count,headers:parsed.headers||Object.keys((parsed.sample||parsed.rows||[])[0]||{}),sample:parsed.sample||parsed.rows||[],mapping:{},busy:false,checksum:'',sourceFormat:ext,stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}};
+  renderClientCatalogImportMapping();renderClientCatalogImportPreview();
+  $('clientCatalogImportProgress').textContent=(parsed.streaming?'تمت معاينة الملف بالقراءة المتدفقة. ':'تمت قراءة الملف. ')+parsed.count.toLocaleString('en-US')+' صف؛ راجع مطابقة الأعمدة قبل التنفيذ.';
+ }catch(error){
+  resetClientCatalogImport();$('clientCatalogImportProgress').textContent='تعذرت معاينة الملف: '+friendlyErrorMessage(error);fail('تعذرت معاينة ملف المؤسسة',error);
+ }finally{
+  preview.disabled=false;reset.disabled=false;
+  commit.disabled=!state.clientCatalogImport.count||!state.clientCatalogImport.mapping?.name||!state.clientCatalogImport.mapping?.base_unit;
+ }
+}
+async function commitClientCatalogImport(){
+ if(!state.platformOwner)return notify('استيراد أصناف المؤسسة متاح لمالك المنصة فقط.',true);
+ const g=state.clientCatalogImport,file=$('clientCatalogImportFile').files?.[0],client=state.clients.find(item=>item.id===state.catalogClientId&&item.status==='active');
+ if(g.busy)return;
+ if(!client||g.clientId!==client.id)return notify('تغيرت المؤسسة المحددة. أعد معاينة الملف على المؤسسة الجديدة.',true);
+ if(!g.file||!file||file!==g.file)return notify('الملف الحالي تغير؛ أعد معاينته قبل الاستيراد.',true);
+ if(!g.mapping?.name||!g.mapping?.base_unit)return notify('اربط عمود اسم الصنف ووحدة الأساس أولاً.',true);
+ if(g.count<1||g.count>90000)return notify('عدد الصفوف خارج الحد التشغيلي 1–90,000.',true);
+ g.busy=true;g.stats={processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]};
+ const controls=['clientCatalogImportPreview','clientCatalogImportCommit','clientCatalogImportReset'];controls.forEach(id=>$(id).disabled=true);
+ $('clientCatalogImportFile').disabled=true;$('clientCatalogImportErrors').innerHTML='';
+ $('clientCatalogImportProgress').textContent='جار حساب بصمة الملف وتجهيز دفعات المؤسسة…';
+ let pending=[],rowIndex=0,parseErrors=0;const seenIdentities=new Set();
+ const recordError=(row,rowNumber,error)=>{
+  const stats=state.clientCatalogImport.stats;stats.processed++;stats.rejected++;
+  if(stats.errors.length<120)stats.errors.push({row_number:rowNumber,sku:String(globalCatalogImportValue(row,'sku',g.mapping)||''),barcode:String(globalCatalogImportValue(row,'barcode',g.mapping)||''),error:error?.message||String(error)});
+  updateClientCatalogImportProgress();
+ };
+ const acceptRow=(row,rowNumber)=>{
+  try{
+   const normalized=normalizeClientCatalogImportRow(row,rowIndex,rowNumber,g.checksum,g.mapping);
+   if(!reserveCatalogImportIdentities(normalized,seenIdentities)){
+    const stats=state.clientCatalogImport.stats;stats.processed++;stats.duplicates++;updateClientCatalogImportProgress();
+   }else pending.push(normalized);
+  }catch(error){recordError(row,rowNumber,error);}
+  rowIndex++;
+ };
+ const flush=async()=>{if(!pending.length)return;const chunk=pending;pending=[];await commitClientCatalogChunk(chunk,client.id);};
+ try{
+  g.checksum=await hashFileInChunks(file);
+  if(g.sourceFormat==='csv'){
+   await new Promise((resolve,reject)=>{
+    let chain=Promise.resolve(),sourceRow=2,settled=false;
+    const failParse=error=>{if(settled)return;settled=true;reject(error);};
+    Papa.parse(file,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,transformHeader:x=>String(x||'').trim(),
+     step:(result,parser)=>{
+      const current=sourceRow++;
+      if(result.errors?.length){parseErrors+=result.errors.length;recordError(result.data||{},current,new Error('تعذر تحليل صف CSV: '+result.errors.map(x=>x.message).join('، ')));return;}
+      const row=result.data||{};if(!Object.keys(row).some(k=>String(row[k]??'').trim()!==''))return;
+      acceptRow(row,current);
+      if(pending.length>=500){parser.pause();const chunk=pending;pending=[];chain=chain.then(()=>commitClientCatalogChunk(chunk,client.id)).then(()=>parser.resume()).catch(error=>{parser.abort();failParse(error);});}
+     },
+     complete:async()=>{if(settled)return;try{await chain;await flush();if(!rowIndex&&!state.clientCatalogImport.stats.rejected)throw new Error('لم يتم العثور على صفوف بيانات قابلة للقراءة.');settled=true;resolve();}catch(error){failParse(error);}},
+     error:failParse
+    });
+   });
+  }else{
+   const parsed=await streamXlsxProductRows(file,async row=>{
+    const number=Number(row.__countflowRowNumber||rowIndex+2);acceptRow(row,number);if(pending.length>=500)await flush();
+   });
+   if(parsed.count!==g.count)throw new Error('تغير عدد صفوف XLSX بعد المعاينة؛ أعد معاينة الملف.');await flush();
+  }
+  if(rowIndex>g.count)throw new Error('عدد صفوف الاستيراد تجاوز العدد الذي تمت معاينته.');
+  const s=g.stats;
+  $('clientCatalogImportProgressFill').style.width='100%';
+  $('clientCatalogImportProgress').textContent='اكتمل الاستيراد · جديد عالمي '+s.catalogInserted.toLocaleString('en-US')+' · موجود '+s.catalogMatched.toLocaleString('en-US')+' · ربط جديد '+s.clientInserted.toLocaleString('en-US')+' · مواءمة محدثة '+s.clientUpdated.toLocaleString('en-US')+' · مكرر متجاهل '+s.duplicates.toLocaleString('en-US')+' · مرفوض '+s.rejected.toLocaleString('en-US');
+  renderClientCatalogImportErrors();notify('اكتمل استيراد وربط أصناف مؤسسة '+client.name+'. لم تُنشأ أرصدة أو حركات جرد.');
+  state.catalogPage=1;await loadCatalog();
+ }catch(error){
+  $('clientCatalogImportProgress').textContent='توقف الاستيراد عند '+Number(g.stats.processed||0).toLocaleString('en-US')+' صف. الدفعات الناجحة محفوظة، ويمكن إعادة تشغيل الملف نفسه بصورة آمنة. '+friendlyErrorMessage(error);
+  fail('تعذر استكمال استيراد أصناف المؤسسة',error);
+ }finally{
+  g.busy=false;$('clientCatalogImportFile').disabled=false;controls.forEach(id=>$(id).disabled=false);
+  $('clientCatalogImportCommit').disabled=!g.count||!g.mapping?.name||!g.mapping?.base_unit;
+ }
+}
  function resetProductImport(){
   state.productImportRows=[];state.productImportRowCount=0;state.productImportHeaders=[];state.productImportMapping={};state.productImportMappingId=null;state.productImportFileName='';
   $('productImportFile').value='';$('productImportMapping').classList.add('hidden');$('productImportMapping').innerHTML='';
