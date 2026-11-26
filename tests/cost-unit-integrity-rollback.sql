@@ -8,8 +8,7 @@ DECLARE
   v_session_id uuid := 'd435854f-1646-4549-9c12-2936f74a4052';
   v_batch_id uuid := 'f799c5c1-b766-4712-b74f-c0bb19836ddc';
   v_product_id uuid;
-  v_import_row_id bigint;
-  v_original record;
+  v_import_row_id uuid;
   v_cost_id uuid;
   v_warnings text[];
 BEGIN
@@ -39,9 +38,7 @@ BEGIN
     RAISE EXCEPTION 'COST_TABLE_MISMATCH_WARNING_NOT_CLEARED';
   END IF;
 
-  SELECT id,purchase_unit_cost,currency_code,purchase_unit,unit_factor_to_base,
-         cost_source_type,cost_source_reference,cost_source_date,warning_codes
-  INTO STRICT v_import_row_id,v_original
+  SELECT id INTO STRICT v_import_row_id
   FROM public.count_import_rows
   WHERE batch_id=v_batch_id AND row_status='committed'
     AND product_id=v_product_id
