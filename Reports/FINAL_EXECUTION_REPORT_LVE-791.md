@@ -144,6 +144,15 @@
 
 لم يتم تعديل أو استئناف أو حذف دفعة 90,000 صف الحالية في هذه المهمة. لم يتم تسجيل عد أو اعتماد تسوية أو إنشاء مخزون أو حسابات.
 
+
+### 6.1 نتائج التحقق المنشور — LVE-791
+- Live database migration: `20261126213437 / countflow_purchase_unit_factor_integrity_v1`.
+- `counting-export-session` deployed as version **16**, ACTIVE, `verify_jwt=true`, entrypoint `index.ts`; deployed source hash `f6a18caeafeecea77cae396fb8893a37367050a9240ce150677fcaf31ce07562`. The repository source blob is `548ab79bdc931940248cefceabfe6f90c758cf0e`.
+- GitHub Actions run [45899839584](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45899839584) on `f721b52403053b50070a25c1fb87f531c3612478`: Node **111/111 PASS**, zero failed/skipped; Deno type check PASS; Pages build PASS; Playwright production shell: **2 PASS / 1 SKIPPED**. The skipped case is the main-branch-only production SHA equality assertion; the two PR-safe public shell/RTL cases passed.
+- The first CI attempt exposed one outdated assertion requiring the old evidence-derived product filter. The assertion was rewritten to test the full-project catalog coverage contract; the final CI run is green.
+- Cost-unit rollback smoke: PASS. The new trigger added `PURCHASE_UNIT_FACTOR_MISMATCH` to an invalid purchase UoM factor, removed it after correction to `each / 1`, then the transaction rolled back. Post-check: 0 cost rows for the QA session, the committed import row has its original blank cost values, and the existing 90k QA batch remains `committing / 41,000 accepted / 0 rejected`.
+- Separate 5k and 90k import rollback calls failed inside the SQL tool before a result was returned. Both were followed by read-only residue checks: zero `QA_5K_Rollback` and `QA_90K_Rollback` projects, zero corresponding batches/products. They are **NOT VERIFIED**, not passed.
+
 ## 7. فجوات لم تُغلق بعد — لا تُخفى
 
 ### 7.1 تصدير 90,000 صنف وما فوق
