@@ -1787,6 +1787,24 @@ test("LVE-790: institution alternate-unit differences are stored as client overr
  for(const version of ["20261126185715","20261126185813","20261126191110"])assert.ok(readme.includes(version),"Migration README must map live ledger version "+version);
 });
 
+test("LVE-790: client catalog link to a project uses the scoped attach RPC and no expected balance", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/async function attachClientCatalogProductToProject\(clientProductId,button=null\)/);
+ assert.match(admin,/project\.client_id\)/);
+ assert.match(admin,/clientId!==project\.client_id/);
+ assert.match(admin,/state\.catalogClientRows\|\|\[\]\)\.find\(item=>item\.id===clientProductId&&item\.is_active\)/);
+ assert.match(admin,/db\.rpc\('count_attach_catalog_product',\{[\s\S]{0,160}p_expected_qty:null/);
+ assert.match(admin,/\['active','paused','review'\]\.includes\(item\.status\)/);
+ assert.match(admin,/data-attach-client-catalog-product=/);
+ assert.match(admin,/attachClientCatalogProductToProject\(b\.dataset\.attachClientCatalogProduct,b\)/);
+ assert.match(admin,/data\?\.already_linked/);
+ assert.match(admin,/لا يُنشأ رصيد مرجعي أو حركة جرد/);
+ assert.doesNotMatch(admin,/from\('count_products'\)\.insert/,"Project catalog attachment must remain in the authorized database RPC");
+ const counter=read("countflow.html");
+ assert.match(counter,/\.contains\('units',\[\{barcode:code\}\]\)/);
+ assert.match(counter,/scan_code:scannedProductCode\|\|product\.barcode\|\|product\.sku/);
+});
+
 test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity plus actual scanned identifier", () => {
  const counter=read("countflow.html");
  assert.match(counter,/function counterUnitRows\(product\)/);
