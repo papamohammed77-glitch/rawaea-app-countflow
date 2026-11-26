@@ -365,7 +365,7 @@ Source migration: `20261126213000_countflow_purchase_unit_factor_integrity_v1.sq
 - Both `count_import_rows` and `count_session_product_costs` now validate the submitted `purchase_unit` against the product's configured base/alternate UoM through the existing `counting_private.unit_factor_to_base(product_id, unit)` contract.
 - A mismatch is preserved as source data and annotated with `PURCHASE_UNIT_FACTOR_MISMATCH`; it is not silently converted, overwritten, or used for a value calculation.
 - Correcting the purchase unit/factor removes that warning automatically.
-- The function is SECURITY DEFINER with an empty search_path, is not executable by PUBLIC/anon, and is granted only to authenticated/service_role for trigger execution.
+- The function is SECURITY DEFINER with an empty search_path. The initial v1 grant was subsequently removed by the trigger-only ACL migration; its final ACL denies EXECUTE to PUBLIC, anon, authenticated and service_role.
 - Test file: `tests/cost-unit-integrity-rollback.sql`; it exercises insert/update on the existing QA90K project inside an explicit transaction and ends with ROLLBACK. It must not be committed as live data.
 
 ### 2026-11-26 — LVE-791 trigger-only ACL hardening
