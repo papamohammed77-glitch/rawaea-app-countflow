@@ -4,7 +4,7 @@
 **نقطة الأساس المتحقق منها:** `dda38bd4be886631009ab69385d504c624c202d3`.
 **الفرع:** `work/lve-791-export-coverage-cost-unit-integrity`.
 **التقرير التفصيلي:** `Reports/FINAL_EXECUTION_REPORT_LVE-791.md`.
-**الحالة التنفيذية:** مصدر كامل الكتالوج وحراسة UoM للتكلفة تم تعديلهما؛ يلزم تثبيت نتائج CI وrollback smoke قبل الدمج.
+**الحالة التنفيذية:** READY WITH LIMITATIONS — الترحيل مطبق، Edge Function v16 منشورة، اختبار rollback لوحدة التكلفة اجتاز، وCI النهائي 111/111.
 **حد لا يجوز تجاوزه:** لا يُعلن اكتمال تصدير 90k+ متعدد المواقع قبل بناء/اختبار تصدير مجزأ/streaming وقياس الأداء وفتح Excel فعلياً.
 
 ### ما تم تنفيذه
@@ -20,14 +20,22 @@
 - اختبار regression: `LVE-791` في `tests/unit/countflow-quality.test.mjs`.
 - اختبار DB عابر قابل للـrollback: `tests/cost-unit-integrity-rollback.sql`.
 - لا DML دائم على دفعة QA90K أو على بيانات الجرد/التسوية/التكلفة.
-- لا تغييرات في جداول أو Edge Functions أو أعمال ERP القديمة.
+- لم تُعدّل جداول أو وظائف ERP القديمة. تغيير CountFlow في قاعدة البيانات هو trigger validation على cost snapshots/import rows؛ وCountFlow Edge Function `counting-export-session` نُشرت بالإصدار 16 مع `verify_jwt=true`.
 
 ### المتبقي
 - تصدير 90k+ لا يزال يتجاوز preflight المحافظ 160 MiB؛ الحل الصحيح background/streaming/resumable pipeline وليس رفع حد الذاكرة.
 - `MAX_LINES=150000` و`MAX_ENTRIES=150000` لا يثبتان سعة 90k × مواقع متعددة.
 - لا توجد لقطة عمل حقيقية أو اختبار ميداني/كاميرا/Excel مصادق يثبت هذه الحالات.
 
-**التوجيه التالي:** ثبّت migration ledger ونتيجة rollback smoke وCI، ثم تابع تصميم تصدير job/streaming كمرحلة مستقلة على نفس قاعدة البيانات مع QA rows موسومة بوضوح وتُلغى معاملتها. لا تبدأ من الصفر، ولا تُعد تشغيل الترحيل.
+### نتائج الإغلاق — التحقق النهائي
+- Live migration: `20261126213437 / countflow_purchase_unit_factor_integrity_v1`.
+- Edge Function `counting-export-session`: version 16، ACTIVE، `verify_jwt=true`، source blob `548ab79bdc931940248cefceabfe6f90c758cf0e`.
+- GitHub Actions run `45899839584` على SHA `f721b52403053b50070a25c1fb87f531c3612478`: Node 111/111، Deno PASS، Pages Build PASS؛ Playwright 2 PASS و1 SKIPPED (اختبار مطابقة Production SHA لا يعمل إلا على main).
+- DB rollback smoke لوحدة الشراء: mismatch warning أُضيف ثم أزيل بعد التصحيح؛ لا cost rows متبقية؛ صف QA import عاد إلى قيمه السابقة؛ الدفعة QA90K الأصلية بقيت دون تغيير.
+- اختبارات 5k و90k import rollback تعذر تشغيلها بسبب فشل داخلي في أداة SQL؛ residue SELECT أثبت صفر مشاريع/دفعات/أصناف من المحاولتين. لا تُصنف هذه الاختبارات PASS.
+- PR #12 يضم التنفيذ والتقرير؛ لم يُعلن اكتمال قدرة Excel 90k+ متعددة المواقع.
+
+**التوجيه التالي:** تابع تصميم تصدير job/streaming كمرحلة مستقلة على نفس قاعدة البيانات مع QA rows موسومة بوضوح وتُلغى معاملتها. لا تبدأ من الصفر، ولا تُعد تشغيل الترحيل.
 
 ---
 
