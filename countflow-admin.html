@@ -2870,7 +2870,7 @@ function catalogImageMarkup(product){
 function openCatalogImage(product){
  const path=safeCatalogProductImagePath(product),url=path?state.catalogImageUrls.get(path):'';
  if(!url)return notify('صورة هذا الصنف غير متاحة للعرض حالياً.',true);
- if(window.Swal?.fire)window.Swal.fire({title:esc(product.name||'صورة الصنف'),imageUrl:url,imageAlt:product.name||'صورة الصنف',imageWidth:720,showConfirmButton:false,showCloseButton:true,customClass:{popup:'cf-swal-popup'}});
+ if(window.Swal?.fire)window.Swal.fire({title:product.name||'صورة الصنف',imageUrl:url,imageAlt:product.name||'صورة الصنف',imageWidth:720,showConfirmButton:false,showCloseButton:true,customClass:{popup:'cf-swal-popup'}});
 }
 function resetGlobalImagePreview(){
  state.catalogEditorImageToken=(state.catalogEditorImageToken||0)+1;
@@ -2895,7 +2895,8 @@ async function loadGlobalProductImagePreview(product){
  }catch(error){if(token===state.catalogEditorImageToken)$('globalImageCurrent').textContent='تعذر عرض الصورة الحالية؛ سيظل سجل الصنف محفوظاً.';console.warn('Global catalogue image preview failed',error);}
 }
 function csvCell(value){
- const text=value===null||value===undefined?'':(typeof value==='object'?JSON.stringify(value):String(value));
+ let text=value===null||value===undefined?'':(typeof value==='object'?JSON.stringify(value):String(value));
+ if(typeof value==='string'&&/^[\\s]*[=+\\-@]/.test(text))text="'"+text;
  return '"'+text.replace(/"/g,'""')+'"';
 }
 function downloadCatalogCsv(filename,headers,rows){
@@ -2924,7 +2925,7 @@ async function exportGlobalCatalogCsv(){
    q=applyCatalogFilters(q,f).range(offset,offset+pageSize-1);
    const result=await q;if(result.error)throw result.error;
    const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
-   if(rows.length>=90000)throw new Error('تجاوزت النتائج 90,000 سجل؛ ضيّق البحث أو صدّر على دفعات أصغر.');
+   if(rows.length>90000)throw new Error('تجاوزت النتائج 90,000 سجل؛ ضيّق البحث أو صدّر على دفعات أصغر.');
   }
   downloadCatalogCsv('CountFlow-global-catalog-'+new Date().toISOString().slice(0,10)+'.csv',
    ['SKU العالمي','الباركود','اسم الصنف','العلامة التجارية','التصنيف','وحدة الأساس','الوحدات والتحويلات JSON','الحالة','مسار الصورة الخاص'],
@@ -2958,7 +2959,7 @@ async function exportProjectCatalogCsv(){
    if(result.error)throw result.error;const page=result.data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
    if(rows.length>=200000)throw new Error('تجاوزت أصناف التكليف 200,000 سجل؛ يرجى تقسيم التصدير.');
   }
-  downloadCatalogCsv('CountFlow-project-products-'+(project.project_code||project.id)+'-'+new Date().toISOString().slice(0,10)+'.csv',
+  downloadCatalogCsv('CountFlow-project-products-'+String(project.project_code||project.id).replace(/[^A-Za-z0-9_-]/g,'-')+'-'+new Date().toISOString().slice(0,10)+'.csv',
    ['SKU','الباركود','اسم الصنف','التصنيف','وحدة الأساس','الوحدات JSON','الكمية المرجعية','مرجع الصورة','الحالة'],
    rows.map(p=>[p.sku,p.barcode,p.name,p.category,p.base_unit,p.units,p.expected_qty,p.image_url,p.is_active?'نشط':'موقوف']));
   notify('تم تصدير '+rows.length.toLocaleString('ar-EG')+' صنفاً من التكليف المحدد.');
