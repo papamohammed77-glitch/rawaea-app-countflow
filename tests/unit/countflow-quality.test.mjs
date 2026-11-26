@@ -1787,6 +1787,17 @@ test("LVE-790: institution alternate-unit differences are stored as client overr
  for(const version of ["20261126185715","20261126185813","20261126191110"])assert.ok(readme.includes(version),"Migration README must map live ledger version "+version);
 });
 
+test("LVE-790: client import preserves blank global identity fields instead of leaking generated fallback SKUs", () => {
+ const admin=read("countflow-admin.html");
+ const start=admin.indexOf("function normalizeClientCatalogImportRow(");
+ const end=admin.indexOf("async function commitClientCatalogChunk(",start);
+ assert.ok(start>=0&&end>start,"Client row normalizer must remain extractable");
+ const normalizer=admin.slice(start,end);
+ assert.match(normalizer,/if\(!value\('sku'\)\)source\.canonical_sku=null/);
+ assert.match(normalizer,/if\(!value\('barcode'\)\)source\.barcode=null/);
+ assert.match(normalizer,/لا يمكن منع تكرار هذا الصف دون SKU أو باركود عالمي أو محلي/);
+ assert.match(normalizer,/if\(!source\.base_unit&&value\('units'\)\)/);
+});
 test("LVE-790: client catalog link to a project uses the scoped attach RPC and no expected balance", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/async function attachClientCatalogProductToProject\(clientProductId,button=null\)/);
