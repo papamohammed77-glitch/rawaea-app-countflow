@@ -1149,10 +1149,16 @@ test("Admin keeps operation register and project-scoped product data distinct in
   assert.doesNotMatch(admin,/data-tab="catalog"/);
   assert.doesNotMatch(admin,/<section id="tab-catalog"/);
   assert.equal((admin.match(/<section id="tab-products"/g)||[]).length,1);
-  for(const view of ['global','client','project'])assert.match(admin,new RegExp('data-catalog-view="'+view+'"'));
+  assert.match(admin,/id="catalogWorkspaceSelector"/);
+  assert.match(admin,/id="catalogClientScope"/);
+  assert.match(admin,/id="catalogMode"/);
+  assert.doesNotMatch(admin,/data-catalog-view=/);
+  assert.doesNotMatch(admin,/id="catalogClientView"/);
   assert.match(admin,/id="projectProductsView"/);
   assert.match(admin,/id="projectProductsContent"/);
   assert.match(admin,/function switchCatalogView\(view\)/);
+  assert.match(admin,/openUnifiedCatalogItem\(product\)/);
+  assert.match(admin,/in\('catalog_product_id',productIds\)/);
 });
 
 test("Admin script declarations remain syntactically unique after UI refactors", () => {
@@ -1272,27 +1278,31 @@ test("CountFlow institution mapping stores client-specific unit overrides and st
  assert.match(admin,/p_base_unit_override:base,p_units_override:units/);
  assert.match(admin,/p_client_id:client,p_catalog_product_id:cat/);
  assert.match(admin,/count_upsert_client_product/);
- assert.match(admin,/eq\('client_id',id\)/);
- assert.match(admin,/state\.project\.client_id!==id/);
- assert.match(admin,/count_attach_catalog_product/);
+ assert.match(admin,/eq\('client_id',scopedClient\)/);
+ assert.match(admin,/in\('catalog_product_id',productIds\)/);
 });
 
-test("CountFlow separates global master, client mapping and project roster without physical catalog deletion", () => {
+test("CountFlow presents global and institution fields together while preserving independent project records", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/id="catalogGlobalView"/);
- assert.match(admin,/id="catalogClientView"/);
+ assert.doesNotMatch(admin,/id="catalogClientView"/);
  assert.match(admin,/id="tab-products"/);
  assert.match(admin,/أصناف ملف التكليف/);
+ assert.match(admin,/from\('count_catalog_products'\)/);
+ assert.match(admin,/from\('count_client_products'\)/);
+ assert.match(admin,/from\('count_products'\)/);
  assert.match(admin,/is_active:!p\.is_active/);
  assert.doesNotMatch(admin,/from\('count_catalog_products'\)\.delete/);
  assert.doesNotMatch(admin,/from\('count_client_products'\)\.delete/);
 });
 
-test("CountFlow client mapping reset and attach actions provide guarded feedback", () => {
-  const admin = read("countflow-admin.html");
-  assert.match(admin, /clientProductReset'\)\.onclick=resetClientProductForm/);
-  assert.match(admin, /state\.project\.client_id!==id/);
-  assert.match(admin, /catch\(error\)\{fail\('تعذر إدراج الصنف في ملف التكليف',error\);\}/);
+test("CountFlow institution fields open and save inside the unified item detail page", () => {
+ const admin=read("countflow-admin.html");
+ assert.ok(admin.includes("$('clientProductReset').onclick=resetClientProductForm"));
+ assert.match(admin,/data-edit-client-map=/);
+ assert.match(admin,/openUnifiedCatalogItem\(product\)/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.match(admin,/catch\(err\)\{fail\('تعذر حفظ مواءمة المؤسسة',err\);\}/);
 });
 
 
@@ -1489,8 +1499,8 @@ test("Admin product unit summaries exclude precision metadata from alternate-uni
  const admin = read("countflow-admin.html");
  // Engagement, global catalog, and client mapping lists must count selectable UoM rows only.
  assert.ok(admin.includes("const units=productUnitRows(Array.isArray(x.units)?x.units:[]),unitSummary="));
- assert.ok(admin.includes("const units=productUnitRows(Array.isArray(p.units)?p.units:[]),actions="));
- assert.ok(admin.includes("units=productUnitRows(Array.isArray(p.units_override)?p.units_override:(Array.isArray(c.units)?c.units:[])),actions="));
+ assert.ok(admin.includes("const units=productUnitRows(Array.isArray(p.units)?p.units:[]),m=localByProduct.get(p.id)"));
+ assert.ok(admin.includes("productUnitRows(Array.isArray(p.units)?p.units:[])"));
  const start = admin.indexOf("const CF_UNIT_CLASSES=");
  const end = admin.indexOf("function renderCatalogUnitEditor", start);
  assert.ok(start >= 0 && end > start, "Missing CountFlow UoM metadata helpers");
@@ -1514,4 +1524,70 @@ test("Global catalogue importer handlers are defined and use bounded owner RPC b
  assert.match(admin,/pending\.length>=500/);
  assert.match(admin,/parsed\.count>90000/);
  assert.match(admin,/deterministic='CFI-'/);
+});
+
+test("Admin catalogue uses one unified list and places local organization fields inside the same item editor", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/<details class="cf-catalog-tools" id="globalCatalogImportTools"/);
+ assert.match(admin,/<details class="cf-catalog-tools" id="projectProductImportTools"/);
+ assert.match(admin,/id="clientCatalogEditorShell" class="hidden"/);
+ assert.match(admin,/id="clientProductForm"/);
+ assert.match(admin,/id="clientProductSku"/);
+ assert.match(admin,/id="clientProductBarcode"/);
+ assert.match(admin,/id="clientProductName"/);
+ assert.match(admin,/id="clientProductCategory"/);
+ assert.match(admin,/from\('count_client_products'\)/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.match(admin,/data-open-catalog-item=/);
+ assert.match(admin,/data-edit-client-map=/);
+ assert.match(admin,/id="catalogMode"/);
+ assert.match(admin,/الأصناف الموحدة \(العامة \+ المحلية\)/);
+ assert.doesNotMatch(admin,/id="catalogViewTabs"/);
+ assert.doesNotMatch(admin,/data-catalog-view=/);
+ assert.doesNotMatch(admin,/id="catalogClientView"/);
+ for(const id of ["catalogExport","projectCatalogExport","addProjectProduct"]) {
+  assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action "+id);
+ }
+});
+
+test("Global item editor is a single-page form with base-unit suggestions and conversion details visible", () => {
+ const admin=read("countflow-admin.html");
+ assert.doesNotMatch(admin,/data-global-product-tab=/);
+ assert.doesNotMatch(admin,/id="globalProductNext"/);
+ assert.match(admin,/id="globalBaseUnit" list="cfBaseUnits"/);
+ assert.match(admin,/id="cfBaseUnits"/);
+ assert.match(admin,/1 كرتونة = 12 قطعة/);
+ assert.match(admin,/id="globalProductPanel-units"/);
+ assert.match(admin,/id="globalProductPanel-image"/);
+ assert.match(admin,/id="globalProductPanel-advanced"/);
+ assert.match(admin,/function switchGlobalProductTab\(\)/);
+});
+
+test("Global catalogue images use scoped private signed URLs and provide image preview and unlink state", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/function safeCatalogProductImagePath\(product\)/);
+ assert.match(admin,/path\.startsWith\('catalog\/products\/'\+id\+'\/'\)/);
+ assert.match(admin,/createSignedUrls\(paths,3600\)/);
+ assert.match(admin,/createSignedUrl\(path,3600\)/);
+ assert.match(admin,/data-preview-catalog-image=/);
+ assert.match(admin,/globalImageCleared&&!file\)row\.image_storage_path=null/);
+ assert.match(admin,/id="globalImagePreview"/);
+ assert.match(admin,/bucket.*public=false|counting-product-images/);
+});
+
+test("Catalogue exports are paginated read paths and debounced list requests reject stale responses", () => {
+ const admin=read("countflow-admin.html");
+ for(const name of ["exportGlobalCatalogCsv","exportProjectCatalogCsv","downloadCatalogCsv"]) {
+  assert.match(admin,new RegExp("function "+name+"\\s*\\("),"Missing export function "+name);
+ }
+ assert.match(admin,/range\(offset,offset\+pageSize-1\)/);
+ assert.match(admin,/clientRows\.set\(item\.catalog_product_id,item\)/);
+ assert.match(admin,/SKU المؤسسة/);
+ assert.match(admin,/وحدات المؤسسة JSON/);
+ assert.match(admin,/state\.catalogRequestToken=\(state\.catalogRequestToken\|\|0\)\+1/);
+ assert.match(admin,/state\.catalogSearchTimer=setTimeout/);
+ assert.match(admin,/function applyCatalogFilters\(query,filters\)/);
+ assert.match(admin,/async function applyUnifiedCatalogFilters\(query,filters,clientId\)/);
+ assert.match(admin,/client_barcode.*name_override.*category_override/);
+ assert.match(admin,/id\.in\.\('\+unique\.join\(','\)\+'/);
 });
