@@ -1474,6 +1474,11 @@ function updateClientCatalogImportProgress(){
 function normalizeClientCatalogImportRow(row,index,sourceRowNumber,checksum,mapping){
  const value=key=>String(globalCatalogImportValue(row,key,mapping)??'').trim();
  const source=normalizeGlobalCatalogImportRow(row,index,sourceRowNumber,checksum,mapping,true);
+ // Global-import normalizer generates a deterministic CFI SKU when its SKU column is blank.
+ // Client import must not mistake that internal fallback for an institution SKU when a
+ // matching global product is resolved by barcode or by an existing client identifier.
+ if(!value('sku'))source.canonical_sku=null;
+ if(!value('barcode'))source.barcode=null;
  if(!source.base_unit&&value('units'))throw new Error('وحدة الأساس مطلوبة للتحقق من معاملات الوحدات البديلة.');
  const localSku=value('client_sku')||null,localBarcode=value('client_barcode')||null;
  if(!value('sku')&&!value('barcode')&&!localSku&&!localBarcode)throw new Error('لا يمكن منع تكرار هذا الصف دون SKU أو باركود عالمي أو محلي؛ أضف المعرّف قبل الاستيراد.');
