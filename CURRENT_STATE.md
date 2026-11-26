@@ -1,3 +1,48 @@
+## LVE-2026-11-26-791 — اكتمال نطاق تسليم الكتالوج وحراسة وحدة تكلفة الشراء
+
+**Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.
+**نقطة الأساس المتحقق منها:** `dda38bd4be886631009ab69385d504c624c202d3`.
+**الفرع:** `work/lve-791-export-coverage-cost-unit-integrity`.
+**التقرير التفصيلي:** `Reports/FINAL_EXECUTION_REPORT_LVE-791.md`.
+**الحالة التنفيذية:** READY WITH LIMITATIONS — الترحيل مطبق، Edge Function v16 منشورة، اختبار rollback لوحدة التكلفة اجتاز، وCI النهائي 111/111.
+**حد لا يجوز تجاوزه:** لا يُعلن اكتمال تصدير 90k+ متعدد المواقع قبل بناء/اختبار تصدير مجزأ/streaming وقياس الأداء وفتح Excel فعلياً.
+
+### ما تم تنفيذه
+- عميل التصدير يعتمد كامل `count_products` للمشروع، لا اتحاد الأصناف التي ظهرت في أحداث العد/الاستيراد/التكلفة.
+- exact count للكتالوج يدخل preflight، وعدد كل المنتجات التي لا تملك نتيجة تسوية أو لديها موقع غير معدود يظهر في سجل الاستكمالات.
+- تصنيف كامل/جزئي/غير معدود يُحسب لكل صنف؛ لا يتحول NULL إلى صفر.
+- رفض التصدير إذا كانت دفعات الاستيراد المرتبطة بالجلسة في preview أو committing.
+- migration جديدة تضيف تحذير `PURCHASE_UNIT_FACTOR_MISMATCH` عند اختلاف وحدة/معامل سعر الشراء عن وحدة الصنف المعرّفة.
+- التحذير يمنع استخدام التكلفة لحساب القيمة، ويُزال بعد تصحيح بيانات وحدة الشراء.
+
+### قاعدة البيانات/الاختبارات
+- الترحيل CountFlow-only: `20261126213000_countflow_purchase_unit_factor_integrity_v1.sql`.
+- اختبار regression: `LVE-791` في `tests/unit/countflow-quality.test.mjs`.
+- اختبار DB عابر قابل للـrollback: `tests/cost-unit-integrity-rollback.sql`.
+- لا DML دائم على دفعة QA90K أو على بيانات الجرد/التسوية/التكلفة.
+- لم تُعدّل جداول أو وظائف ERP القديمة. تغيير CountFlow في قاعدة البيانات هو trigger validation على cost snapshots/import rows؛ وCountFlow Edge Function `counting-export-session` نُشرت بالإصدار 16 مع `verify_jwt=true`.
+
+### تضييق ACL للمشغّل
+- الترحيل الثاني: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`؛ النسخة الحية `20261126215042`.
+- تم التحقق من أن مشغّلي BEFORE INSERT/UPDATE يعملان دون أي EXECUTE grants إلى PUBLIC/anon/authenticated/service_role؛ live ACL = false للأدوار الأربعة، والدالة مخصصة للتشغيل عبر trigger فقط.
+
+### المتبقي
+- تصدير 90k+ لا يزال يتجاوز preflight المحافظ 160 MiB؛ الحل الصحيح background/streaming/resumable pipeline وليس رفع حد الذاكرة.
+- `MAX_LINES=150000` و`MAX_ENTRIES=150000` لا يثبتان سعة 90k × مواقع متعددة.
+- لا توجد لقطة عمل حقيقية أو اختبار ميداني/كاميرا/Excel مصادق يثبت هذه الحالات.
+
+### نتائج الإغلاق — التحقق النهائي
+- Live migration: `20261126213437 / countflow_purchase_unit_factor_integrity_v1`.
+- Edge Function `counting-export-session`: version 16، ACTIVE، `verify_jwt=true`، source blob `548ab79bdc931940248cefceabfe6f90c758cf0e`.
+- GitHub Actions run `45899839584` على SHA `f721b52403053b50070a25c1fb87f531c3612478`: Node 111/111، Deno PASS، Pages Build PASS؛ Playwright 2 PASS و1 SKIPPED (اختبار مطابقة Production SHA لا يعمل إلا على main).
+- DB rollback smoke لوحدة الشراء: mismatch warning أُضيف ثم أزيل بعد التصحيح؛ لا cost rows متبقية؛ صف QA import عاد إلى قيمه السابقة؛ الدفعة QA90K الأصلية بقيت دون تغيير.
+- اختبارات 5k و90k import rollback تعذر تشغيلها بسبب فشل داخلي في أداة SQL؛ residue SELECT أثبت صفر مشاريع/دفعات/أصناف من المحاولتين. لا تُصنف هذه الاختبارات PASS.
+- PR #12 يضم التنفيذ والتقرير؛ لم يُعلن اكتمال قدرة Excel 90k+ متعددة المواقع.
+
+**التوجيه التالي:** تابع تصميم تصدير job/streaming كمرحلة مستقلة على نفس قاعدة البيانات مع QA rows موسومة بوضوح وتُلغى معاملتها. لا تبدأ من الصفر، ولا تُعد تشغيل الترحيل.
+
+---
+
 ## LVE-2026-11-26-790 — إغلاق فجوات دليل الأصناف والاستيراد ووحدات القياس والربط بالتكليف
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.

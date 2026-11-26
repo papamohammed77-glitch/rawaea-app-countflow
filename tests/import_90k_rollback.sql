@@ -3,7 +3,7 @@
 -- created in one transaction and rolled back. Never remove the final ROLLBACK.
 BEGIN;
 SET LOCAL statement_timeout='180s';
-CREATE TEMP TABLE countflow_90k_result(result jsonb) ON COMMIT DROP;
+CREATE TEMP TABLE qa_import_90k_result(result jsonb) ON COMMIT DROP;
 DO $countflow_90k$
 DECLARE
   v_owner uuid; v_project uuid; v_batch uuid;
@@ -17,15 +17,15 @@ BEGIN
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',v_owner,'role','authenticated','aud','authenticated')::text,true);
   PERFORM set_config('role','authenticated',true);
   INSERT INTO public.count_projects(name,code,created_by)
-  VALUES('QA 90K Rollback','QA90K-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_owner)
+  VALUES('QA_90K_Rollback','QA_90K-'||substr(replace(gen_random_uuid()::text,'-',''),1,12),v_owner)
   RETURNING id INTO v_project;
-  v_batch := public.count_create_import_batch(v_project,NULL,'qa-90000-products.csv','csv',encode(digest('countflow-90k-qa','sha256'),'hex'));
+  v_batch := public.count_create_import_batch(v_project,NULL,'QA_90000_products.csv','csv',encode(digest('QA_90K_import_regression','sha256'),'hex'));
   FOR v_offset IN 0..89000 BY 1000 LOOP
     SELECT jsonb_agg(jsonb_build_object(
       '_row_number',v_offset+g+1,
-      'sku','QA90K-'||lpad((v_offset+g+1)::text,6,'0'),
-      'barcode','QA90KB-'||lpad((v_offset+g+1)::text,6,'0'),
-      'name','QA 90K Product '||(v_offset+g+1),
+      'sku','QA_90K-'||lpad((v_offset+g+1)::text,6,'0'),
+      'barcode','QA_90KB-'||lpad((v_offset+g+1)::text,6,'0'),
+      'name','QA_90K_Product_'||(v_offset+g+1),
       'base_unit','each','units','[]'::jsonb
     )) INTO v_rows FROM generate_series(0,999) g;
     v_chunk_result := public.count_stage_import_rows(v_batch,v_rows,v_offset);
@@ -43,11 +43,11 @@ BEGIN
   IF v_commit->>'status'<>'committed' OR (v_commit->>'accepted_rows')::bigint<>90000 OR v_staged<>90000 OR v_products<>90000
   THEN RAISE EXCEPTION 'QA_90K_IMPORT_ASSERTION_FAILED: %, staged %, products %',v_commit,v_staged,v_products; END IF;
   PERFORM set_config('role','none',true);
-  INSERT INTO pg_temp.countflow_90k_result(result)
+  INSERT INTO pg_temp.qa_import_90k_result(result)
   VALUES(jsonb_build_object('status','PASS','rows_submitted',90000,'rows_staged',v_staged,
     'rows_accepted',(v_commit->>'accepted_rows')::bigint,'products_committed',v_products,
     'batch_chunks',90,'rollback_only',true));
 END
 $countflow_90k$;
-SELECT result FROM pg_temp.countflow_90k_result;
+SELECT result FROM pg_temp.qa_import_90k_result;
 ROLLBACK;

@@ -355,3 +355,24 @@ Live schema/function/ACL verification confirmed both migrations in the Supabase 
 The v5 import guard prevents a barcode that matches the global primary barcode or one of the matched global product's alternate-UoM barcodes from being written into `count_client_products.client_barcode`. The code remains the primary identity or the alternate-unit barcode in the appropriate source. This avoids a project attachment promoting a carton barcode to the product's primary barcode while retaining the same barcode on an alternate UoM, which the project master trigger correctly rejects.
 
 These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
+
+
+### 2026-11-26 — LVE-791 purchase-unit factor integrity
+
+Source migration: `20261126213000_countflow_purchase_unit_factor_integrity_v1.sql`.
+
+- Adds the private trigger function `counting_private.validate_purchase_cost_unit_snapshot()`.
+- Both `count_import_rows` and `count_session_product_costs` now validate the submitted `purchase_unit` against the product's configured base/alternate UoM through the existing `counting_private.unit_factor_to_base(product_id, unit)` contract.
+- A mismatch is preserved as source data and annotated with `PURCHASE_UNIT_FACTOR_MISMATCH`; it is not silently converted, overwritten, or used for a value calculation.
+- Correcting the purchase unit/factor removes that warning automatically.
+- The function is SECURITY DEFINER with an empty search_path. The initial v1 grant was subsequently removed by the trigger-only ACL migration; its final ACL denies EXECUTE to PUBLIC, anon, authenticated and service_role.
+- Test file: `tests/cost-unit-integrity-rollback.sql`; it exercises insert/update on the existing QA90K project inside an explicit transaction and ends with ROLLBACK. It must not be committed as live data.
+
+### 2026-11-26 — LVE-791 trigger-only ACL hardening
+
+Source migration: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`.
+
+- `counting_private.validate_purchase_cost_unit_snapshot()` is bound only as a BEFORE INSERT/UPDATE trigger function on `count_import_rows` and `count_session_product_costs`.
+- A rollback-only database probe revoked EXECUTE from PUBLIC, anon, authenticated and service_role, then inserted an intentionally mismatched QA cost row as the database owner; trigger logic and the mismatch warning still executed correctly.
+- EXECUTE is therefore revoked persistently from all client/service roles. The function is not a PostgREST RPC and is not intended for direct invocation.
+- The trigger owner remains postgres; the function keeps an empty search_path and uses schema-qualified helper references.
