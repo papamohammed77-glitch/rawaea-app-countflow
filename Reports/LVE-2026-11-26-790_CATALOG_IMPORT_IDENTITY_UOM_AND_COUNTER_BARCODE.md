@@ -3,12 +3,14 @@
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
 **المستودع المعتمد:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **مسار التنفيذ:** `main` فقط؛ لا فروع مؤقتة ولا مستودعات موازية.  
-**Commit النهائي:** `28dba806d24be7b1d144c818b8797718772ab537`.  
+**Commit النهائي على main:** `a7387bc582af3a8475579694861c319881543d7f`.  
+**Commit واجهة التطبيق الأخيرة:** `d236374e041d354424e388a03306759cc711147e`.  
+**Commit اختبارات منع التكرار والقبول:** `a7387bc582af3a8475579694861c319881543d7f`.
 **ملف Admin:** `countflow-admin.html` — blob `c6ba6c0e75705caaa32c60a104b7da9168711935`.  
 **ملف العد الميداني:** `countflow.html` — blob `101ce09a5a63323ec078951841847850b9b8a84d`.  
-**ملف الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `9d11cf92f50da1779ed6e6eec8aa2403ac427234`.  
+**ملف الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `0379157b3353500a71a576b1194cc9b33aaa515f`.  
 **README الترحيلات:** `database/migrations/README.md` — blob `4800d421f7a16b34bf233bcfa38a6ba4853a9771`.  
-**CI:** Run `45882578301` — SUCCESS على آخر HEAD.  
+**CI:** Run `45882855790` — SUCCESS على آخر HEAD.  
 **الحالة:** IMPLEMENTED ON MAIN — 105/105 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — AUTHENTICATED CLIENT IMPORT E2E PENDING ACTIVE CLIENT.
 
 ---
@@ -141,7 +143,7 @@
 
 ## 9. الاختبارات والتحقق
 
-GitHub Actions Run `45882578301` — **SUCCESS** على Commit `28dba806d24be7b1d144c818b8797718772ab537`.
+GitHub Actions Run `45882855790` — **SUCCESS** على Commit `a7387bc582af3a8475579694861c319881543d7f`.
 
 | بوابة | النتيجة |
 |---|---:|
@@ -154,7 +156,7 @@ GitHub Actions Run `45882578301` — **SUCCESS** على Commit `28dba806d24be7b1
 | إجمالي Playwright | 3/3 PASS |
 | إجمالي Workflow | SUCCESS |
 
-تحقق Playwright من أن Cloudflare Pages Production يطابق `main` على commit `28dba806d24be7b1d144c818b8797718772ab537` عند إجراء الفحص. الاختبارات الآلية شملت سلوك PostgREST thenable السابق، مستورد المؤسسة، منع التكرار، صلاحيات RPC، Overrides الوحدات، والباركود البديل.
+تحقق Playwright من أن Cloudflare Pages Production يطابق `main` على commit `a7387bc582af3a8475579694861c319881543d7f` عند إجراء الفحص. الاختبارات الآلية شملت سلوك PostgREST thenable السابق، مستورد المؤسسة، منع التكرار، صلاحيات RPC، Overrides الوحدات، والباركود البديل.
 
 ## 10. قاعدة البيانات والبيانات التي لم تتغير
 
@@ -191,4 +193,4 @@ GitHub Actions Run `45882578301` — **SUCCESS** على Commit `28dba806d24be7b1
 - لا Edge deployment أو تغيير في auth أو السياسات العامة خارج RPC الجديدة.
 - التراجع عن ميزة استيراد المؤسسة يتطلب مراجعة استخدام الـ RPC قبل حذفها. لا تحذف ترحيل applied ولا تعكسه آلياً بعد بدء استيراد عميل فعلي. يمكن إخفاء أدوات الواجهة أولاً إذا استدعى الأمر، ثم مراجعة الأثر والروابط قبل DB rollback.
 
-**Readiness:** READY WITH LIMITATIONS — Unified UI, client import source, identity resolution, secure batch RPC, UoM selection and alternate-barcode counting implemented on main; CI and Production parity pass. Real client-file import and authenticated visual acceptance remain open until a real active client and authorized file are available.
+**Readiness:** READY WITH LIMITATIONS — Unified UI, client import source, identity resolution, secure batch RPC, class-bound UoM selection, alternate-barcode counting, responsive toolbar and row-level identity guard implemented on main; latest CI and Production parity pass. Real client-file import and authenticated visual acceptance remain open until a real active client and authorized file are available.
