@@ -1526,6 +1526,58 @@ test("Global catalogue importer handlers are defined and use bounded owner RPC b
  assert.match(admin,/deterministic='CFI-'/);
 });
 
+test("Unified catalogue filters preserve the PostgREST builder across async enrichment and pagination", async () => {
+ const admin=read("countflow-admin.html");
+ const helperStart=admin.indexOf("function applyCatalogFilters(query,filters){");
+ const helperEnd=admin.indexOf("async function exportGlobalCatalogCsv(){",helperStart);
+ assert.ok(helperStart>=0&&helperEnd>helperStart,"Unified filter helpers must remain extractable as a unit");
+ const helperSource=admin.slice(helperStart,helperEnd);
+ function makeBuilder(response){
+  const calls={then:0,range:[],or:[],eq:0,ilike:0};
+  const builder={
+   select(){return this;},
+   eq(){calls.eq++;return this;},
+   ilike(){calls.ilike++;return this;},
+   or(expression){calls.or.push(expression);return this;},
+   order(){return this;},
+   range(from,to){calls.range.push([from,to]);return this;},
+   then(resolve,reject){calls.then++;return Promise.resolve(response).then(resolve,reject);}
+  };
+  return {builder,calls};
+ }
+ const catalog=makeBuilder({data:[],error:null});
+ const client=makeBuilder({data:[{catalog_product_id:"product-1"}],error:null});
+ const sandbox={db:{from(table){return table==="count_client_products"?client.builder:catalog.builder;}}};
+ vm.runInNewContext(helperSource+"\nthis.testApplyUnifiedCatalogFilters=applyUnifiedCatalogFilters;",sandbox);
+ const baseFilters={status:"active",category:"",term:"",sort:"name",ascending:true};
+ const plain=await sandbox.testApplyUnifiedCatalogFilters(catalog.builder,baseFilters,null);
+ assert.equal(plain.query,catalog.builder,"The helper must return the original builder inside a non-thenable wrapper");
+ assert.equal(catalog.calls.then,0,"Returning the builder must not execute the catalogue request");
+ plain.query.range(0,49);
+ assert.deepEqual(catalog.calls.range,[[0,49]],"Pagination must still be available after async filter preparation");
+ const clientFilters={...baseFilters,term:"sugar"};
+ const scoped=await sandbox.testApplyUnifiedCatalogFilters(catalog.builder,clientFilters,"client-1");
+ assert.equal(scoped.query,catalog.builder,"The institution search must also preserve the catalogue builder");
+ assert.equal(client.calls.then,1,"Only the explicit institution-ID lookup should execute inside the helper");
+ assert.deepEqual(client.calls.range,[[0,499]],"Institution identifier lookup must remain bounded");
+ assert.equal(catalog.calls.then,0,"The final catalogue query must not execute before the caller awaits it");
+ assert.match(catalog.calls.or.at(-1),/id\\.in\\.\\(product-1\\)/,"Institution-specific matches must be included in the final unified search");
+ assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\\(q,f,clientId\\);q=filtered\\.query\\.range\\(offset,offset\\+pageSize-1\\)/,"CSV export must paginate the preserved builder");
+ assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\\(q,filters,state\\.catalogClientId\\);[\\s\\S]{0,180}q=filtered\\.query\\.range\\(\\(page-1\\)\\*size,page\\*size-1\\)/,"Catalogue list must paginate the preserved builder");
+});
+
+test("Catalogue bootstrap failures do not discard a valid authenticated session", () => {
+ const admin=read("countflow-admin.html");
+ assert.equal((admin.match(/await loadCatalog\\(\\)\\.catch\\(error=>fail\\('تعذر تحميل دليل الأصناف الموحد',error\\)\\)/g)||[]).length,2,
+  "Both owner and client bootstrap paths must isolate catalogue loading failures");
+ assert.match(admin,/if\\(state\\.user\\)\\{showApp\\(\\);fail\\('تعذر تحميل بعض بيانات النظام\\./,
+  "A recoverable startup data failure must preserve the authenticated app shell");
+ assert.match(admin,/showLogin\\(friendlyErrorMessage\\(e\\)\\)/,
+  "Only a bootstrap failure without an authenticated user should return to login");
+ assert.match(admin,/if\\(!membership\\)\\{await db\\.auth\\.signOut\\(\\);state\\.user=null;showLogin/,
+  "Explicit authorization failures must still sign out rather than being masked");
+});
+
 test("Admin catalogue uses one unified list and places local organization fields inside the same item editor", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/<details class="cf-catalog-tools" id="globalCatalogImportTools"/);
