@@ -1240,13 +1240,13 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    commitButton.disabled=!state.globalCatalogImport.count||!state.globalCatalogImport.mapping.name||!state.globalCatalogImport.mapping.base_unit;
   }
  }
- function normalizeGlobalCatalogImportRow(row,index,sourceRowNumber=null,checksum='',mapping=state.globalCatalogImport.mapping){
+ function normalizeGlobalCatalogImportRow(row,index,sourceRowNumber=null,checksum='',mapping=state.globalCatalogImport.mapping,allowMissingBaseUnit=false){
   const value=key=>String(globalCatalogImportValue(row,key,mapping)??'').trim();
   const rowNumber=Number(sourceRowNumber||row.__countflowRowNumber||index+2);
   const name=value('name'),baseUnit=value('base_unit');
   if(!name)throw new Error('اسم الصنف مطلوب.');
   if(name.length>240)throw new Error('اسم الصنف يتجاوز 240 حرفاً.');
-  if(!baseUnit)throw new Error('وحدة الأساس مطلوبة.');
+  if(!baseUnit&&!allowMissingBaseUnit)throw new Error('وحدة الأساس مطلوبة.');
   if(baseUnit.length>40)throw new Error('اسم وحدة الأساس يتجاوز 40 حرفاً.');
   let sku=value('sku')||null,barcode=value('barcode')||null;
   if(sku&&sku.length>100)throw new Error('SKU يتجاوز 100 حرف.');
@@ -1292,9 +1292,9 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
 function catalogImportIdentityKeys(row){
  const keys=[],add=(kind,value)=>{const normalized=String(value||'').trim().toLocaleLowerCase();if(normalized)keys.push(kind+':'+normalized);};
  add('sku',row?.canonical_sku);add('sku',row?.sku);add('client-sku',row?.client_sku);
- add('barcode',row?.barcode);add('barcode',row?.client_barcode);
+ add('barcode',row?.barcode);add('barcode',row?.client_barcode);add('client-sku',row?.client_sku);
  for(const unit of Array.isArray(row?.units)?row.units:[])add('barcode',unit?.barcode);
- for(const unit of Array.isArray(row?.client_units)?row.client_units:[])add('barcode',unit?.barcode);
+ for(const unit of [...(Array.isArray(row?.client_units)?row.client_units:[]),...(Array.isArray(row?.client_units_override)?row.client_units_override:[])])add('barcode',unit?.barcode);
  return [...new Set(keys)];
 }
 function reserveCatalogImportIdentities(row,seen){
@@ -1460,7 +1460,7 @@ function updateClientCatalogImportProgress(){
 }
 function normalizeClientCatalogImportRow(row,index,sourceRowNumber,checksum,mapping){
  const value=key=>String(globalCatalogImportValue(row,key,mapping)??'').trim();
- const source=normalizeGlobalCatalogImportRow(row,index,sourceRowNumber,checksum,mapping);
+ const source=normalizeGlobalCatalogImportRow(row,index,sourceRowNumber,checksum,mapping,true);
  const localSku=value('client_sku')||null,localBarcode=value('client_barcode')||null;
  const localName=value('client_name_override')||null,localCategory=value('client_category_override')||null;
  const localBase=value('client_base_unit_override')||null,localUnitsText=value('client_units_override');
@@ -1540,7 +1540,7 @@ async function previewClientCatalogImport(){
   resetClientCatalogImport();$('clientCatalogImportProgress').textContent='تعذرت معاينة الملف: '+friendlyErrorMessage(error);fail('تعذرت معاينة ملف المؤسسة',error);
  }finally{
   preview.disabled=false;reset.disabled=false;
-  commit.disabled=!state.clientCatalogImport.count||!state.clientCatalogImport.mapping?.name||!state.clientCatalogImport.mapping?.base_unit;
+  commit.disabled=!state.clientCatalogImport.count||!state.clientCatalogImport.mapping?.name||(!state.clientCatalogImport.mapping?.sku&&!state.clientCatalogImport.mapping?.barcode&&!state.clientCatalogImport.mapping?.client_sku&&!state.clientCatalogImport.mapping?.client_barcode);
  }
 }
 async function commitClientCatalogImport(){
@@ -1549,7 +1549,7 @@ async function commitClientCatalogImport(){
  if(g.busy)return;
  if(!client||g.clientId!==client.id)return notify('تغيرت المؤسسة المحددة. أعد معاينة الملف على المؤسسة الجديدة.',true);
  if(!g.file||!file||file!==g.file)return notify('الملف الحالي تغير؛ أعد معاينته قبل الاستيراد.',true);
- if(!g.mapping?.name||!g.mapping?.base_unit)return notify('اربط عمود اسم الصنف ووحدة الأساس أولاً.',true);
+ if(!g.mapping?.name)return notify('اربط عمود اسم الصنف أولاً.',true);if(!g.mapping.sku&&!g.mapping.barcode&&!g.mapping.client_sku&&!g.mapping.client_barcode)return notify('اربط عمود SKU أو باركود عالمي أو محلي حتى يمكن منع التكرار.',true);
  if(g.count<1||g.count>90000)return notify('عدد الصفوف خارج الحد التشغيلي 1–90,000.',true);
  g.busy=true;g.stats={processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]};
  const controls=['clientCatalogImportPreview','clientCatalogImportCommit','clientCatalogImportReset'];controls.forEach(id=>$(id).disabled=true);
@@ -1606,7 +1606,7 @@ async function commitClientCatalogImport(){
   fail('تعذر استكمال استيراد أصناف المؤسسة',error);
  }finally{
   g.busy=false;$('clientCatalogImportFile').disabled=false;controls.forEach(id=>$(id).disabled=false);
-  $('clientCatalogImportCommit').disabled=!g.count||!g.mapping?.name||!g.mapping?.base_unit;
+  $('clientCatalogImportCommit').disabled=!g.count||!g.mapping?.name||(!g.mapping?.sku&&!g.mapping?.barcode&&!g.mapping?.client_sku&&!g.mapping?.client_barcode);
  }
 }
  function resetProductImport(){
