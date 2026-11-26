@@ -367,3 +367,12 @@ Source migration: `20261126213000_countflow_purchase_unit_factor_integrity_v1.sq
 - Correcting the purchase unit/factor removes that warning automatically.
 - The function is SECURITY DEFINER with an empty search_path, is not executable by PUBLIC/anon, and is granted only to authenticated/service_role for trigger execution.
 - Test file: `tests/cost-unit-integrity-rollback.sql`; it exercises insert/update on the existing QA90K project inside an explicit transaction and ends with ROLLBACK. It must not be committed as live data.
+
+### 2026-11-26 — LVE-791 trigger-only ACL hardening
+
+Source migration: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`.
+
+- `counting_private.validate_purchase_cost_unit_snapshot()` is bound only as a BEFORE INSERT/UPDATE trigger function on `count_import_rows` and `count_session_product_costs`.
+- A rollback-only database probe revoked EXECUTE from PUBLIC, anon, authenticated and service_role, then inserted an intentionally mismatched QA cost row as the database owner; trigger logic and the mismatch warning still executed correctly.
+- EXECUTE is therefore revoked persistently from all client/service roles. The function is not a PostgREST RPC and is not intended for direct invocation.
+- The trigger owner remains postgres; the function keeps an empty search_path and uses schema-qualified helper references.
