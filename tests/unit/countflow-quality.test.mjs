@@ -1149,10 +1149,16 @@ test("Admin keeps operation register and project-scoped product data distinct in
   assert.doesNotMatch(admin,/data-tab="catalog"/);
   assert.doesNotMatch(admin,/<section id="tab-catalog"/);
   assert.equal((admin.match(/<section id="tab-products"/g)||[]).length,1);
-  for(const view of ['global','client','project'])assert.match(admin,new RegExp('data-catalog-view="'+view+'"'));
+  assert.match(admin,/id="catalogWorkspaceSelector"/);
+  assert.match(admin,/id="catalogClientScope"/);
+  assert.match(admin,/id="catalogMode"/);
+  assert.doesNotMatch(admin,/data-catalog-view=/);
+  assert.doesNotMatch(admin,/id="catalogClientView"/);
   assert.match(admin,/id="projectProductsView"/);
   assert.match(admin,/id="projectProductsContent"/);
   assert.match(admin,/function switchCatalogView\(view\)/);
+  assert.match(admin,/openUnifiedCatalogItem\(product\)/);
+  assert.match(admin,/in\('catalog_product_id',productIds\)/);
 });
 
 test("Admin script declarations remain syntactically unique after UI refactors", () => {
@@ -1516,18 +1522,41 @@ test("Global catalogue importer handlers are defined and use bounded owner RPC b
  assert.match(admin,/deterministic='CFI-'/);
 });
 
-test("Admin catalogue is list-first, keeps import tools secondary and separates client and project editors", () => {
+test("Admin catalogue uses one unified list and places local organization fields inside the same item editor", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/<details class="cf-catalog-tools" id="globalCatalogImportTools"/);
  assert.match(admin,/<details class="cf-catalog-tools" id="projectProductImportTools"/);
  assert.match(admin,/id="clientCatalogEditorShell" class="hidden"/);
- assert.match(admin,/class="panel hidden" id="projectProductEditorPanel"/);
- for(const id of ["catalogExport","clientCatalogExport","projectCatalogExport","clientCatalogAddNew","addProjectProduct"]) {
+ assert.match(admin,/id="clientProductForm"/);
+ assert.match(admin,/id="clientProductSku"/);
+ assert.match(admin,/id="clientProductBarcode"/);
+ assert.match(admin,/id="clientProductName"/);
+ assert.match(admin,/id="clientProductCategory"/);
+ assert.match(admin,/id="count_client_products"/);
+ assert.match(admin,/count_upsert_client_product/);
+ assert.match(admin,/data-open-catalog-item=/);
+ assert.match(admin,/data-edit-client-map=/);
+ assert.match(admin,/id="catalogMode"/);
+ assert.match(admin,/الأصناف الموحدة \(العامة \+ المحلية\)/);
+ assert.doesNotMatch(admin,/id="catalogViewTabs"/);
+ assert.doesNotMatch(admin,/data-catalog-view=/);
+ assert.doesNotMatch(admin,/id="catalogClientView"/);
+ for(const id of ["catalogExport","projectCatalogExport","addProjectProduct"]) {
   assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action "+id);
  }
- assert.match(admin,/data-catalog-view="global"/);
- assert.match(admin,/data-catalog-view="client"/);
- assert.match(admin,/data-catalog-view="project"/);
+});
+
+test("Global item editor is a single-page form with base-unit suggestions and conversion details visible", () => {
+ const admin=read("countflow-admin.html");
+ assert.doesNotMatch(admin,/data-global-product-tab=/);
+ assert.doesNotMatch(admin,/id="globalProductNext"/);
+ assert.match(admin,/id="globalBaseUnit" list="cfBaseUnits"/);
+ assert.match(admin,/id="cfBaseUnits"/);
+ assert.match(admin,/1 كرتونة = 12 قطعة/);
+ assert.match(admin,/id="globalProductPanel-units"/);
+ assert.match(admin,/id="globalProductPanel-image"/);
+ assert.match(admin,/id="globalProductPanel-advanced"/);
+ assert.match(admin,/function switchGlobalProductTab\(\)/);
 });
 
 test("Global catalogue images use scoped private signed URLs and provide image preview and unlink state", () => {
