@@ -2374,10 +2374,10 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
 
 const CF_UNIT_CLASSES=[
  {value:'count',label:'عدد / قطعة',precision:0,aliases:['each','ea','pc','pcs','piece','pieces','unit','units','dozen','dz','box','boxes','carton','cartons','case','cases','pack','packet','عدد','قطعة','وحدة','حبة','علبة','كرتونة','كرتون','عبوة','باكيت','دستة']},
- {value:'mass',label:'وزن / كتلة',precision:3,aliases:['kg','kgs','kilogram','kilograms','g','gm','gram','grams','mg','milligram','milligrams','ton','tons','tonne','tonnes','lb','lbs','pound','pounds','كجم','كيلوجرام','كيلو جرام','كيلو','جم','جرام','مجم','مليجرام','طن','أطنان','رطل']},
+ {value:'mass',label:'وزن / كتلة',precision:3,aliases:['kg','kgs','kilogram','kilograms','g','gm','gram','grams','mg','milligram','milligrams','oz','ounce','ounces','ton','tons','tonne','tonnes','lb','lbs','pound','pounds','كجم','كيلوجرام','كيلوغرام','كيلو جرام','كيلو','جم','جرام','غرام','مجم','ملجم','مليجرام','طن','أطنان','رطل']},
  {value:'volume',label:'حجم / سعة',precision:3,aliases:['l','lt','liter','litre','liters','litres','ml','milliliter','millilitre','m3','cm3','لتر','مل','مليلتر','ملي لتر','متر مكعب','سم مكعب']},
- {value:'length',label:'طول',precision:3,aliases:['m','meter','metre','meters','metres','cm','centimeter','centimetre','mm','millimeter','millimetre','km','كيلومتر','متر','سم','سنتيمتر','مم','ملليمتر']},
- {value:'area',label:'مساحة',precision:3,aliases:['m2','sqm','cm2','square meter','square metre','متر مربع','سم مربع','متر²','سم²']},
+ {value:'length',label:'طول',precision:3,aliases:['m','meter','metre','meters','metres','cm','centimeter','centimetre','mm','millimeter','millimetre','km','inch','in','inches','ft','foot','feet','كيلومتر','متر','سم','سنتيمتر','مم','ملليمتر']},
+ {value:'area',label:'مساحة',precision:3,aliases:['m2','sqm','cm2','sqft','ft2','square meter','square metre','متر مربع','سم مربع','متر²','سم²']},
  {value:'other',label:'وحدة خاصة / تعبئة',precision:3,aliases:[]}
 ];
 const CF_UNIT_META_FLAG='__countflow_unit_meta';
@@ -2421,9 +2421,9 @@ function getUnitMetaFields(prefix,units,extra={}){const cls=$(prefix+'UnitClass'
  
 const CF_BASE_UNIT_SUGGESTIONS={
  count:['قطعة','حبة','عدد','وحدة','علبة','كرتونة','كرتون','عبوة','باكيت','دستة','each','ea','piece','pc','pcs','unit','dozen','dz'],
- mass:['كجم','جرام','جم','ملجم','طن','kilogram','kg','gram','g','mg'],
+ mass:['كجم','جرام','جم','ملجم','طن','kilogram','kg','gram','g','mg','oz','ounce','lb','رطل'],
  volume:['لتر','مليلتر','ملليلتر','متر مكعب','liter','litre','l','ml'],
- length:['متر','سم','مم','كيلومتر','meter','metre','m','cm','mm','km'],
+ length:['متر','سم','مم','كيلومتر','بوصة','قدم','meter','metre','m','cm','mm','km','inch','in','ft'],
  area:['متر مربع','سم مربع','m2','sqm','sqft','ft2'],
  other:['وحدة','عبوة']
 };
