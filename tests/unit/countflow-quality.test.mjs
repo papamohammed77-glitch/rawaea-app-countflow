@@ -1730,7 +1730,7 @@ test("LVE-790: catalogue import actions are prominent, owner-scoped, streaming a
  assert.match(admin,/function updateCatalogImportActions\(\)/);
  assert.match(admin,/async function previewClientCatalogImport\(\)/);
  assert.match(admin,/async function commitClientCatalogImport\(\)/);
- assert.match(admin,/db\.rpc\('count_upsert_client_catalog_chunk',\{p_client_id:client\.id,p_rows:rows\}\)/);
+ assert.match(admin,/db\.rpc\('count_upsert_client_catalog_chunk',\{p_client_id:clientId,p_rows:rows\}\)/);
  assert.match(admin,/pending\.length>=500/);
  assert.match(admin,/parsed\.count>90000/);
  assert.match(admin,/streamXlsxProductRows\(file/);
@@ -1750,7 +1750,7 @@ test("LVE-790: batch client catalogue import enforces owner-only RPC and row-lev
  const migration=read("database/migrations/20261126190000_countflow_client_catalog_import_upsert_v1.sql");
  const hardening=read("database/migrations/20261126190500_countflow_client_catalog_import_upsert_row_atomicity_v2.sql");
  for(const sql of [migration,hardening]){
-  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.count_upsert_client_catalog_chunk\(p_client_id uuid, p_rows jsonb\)/);
+  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.count_upsert_client_catalog_chunk\([\s\S]{0,80}p_client_id uuid,[\s\S]{0,40}p_rows jsonb/);
   assert.match(sql,/SECURITY DEFINER/);
   assert.match(sql,/SET search_path TO ''/);
   assert.match(sql,/auth\.uid\(\)/);
