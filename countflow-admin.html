@@ -223,6 +223,13 @@
 .split:has(>#projectProductEditorPanel.hidden){grid-template-columns:minmax(0,1fr)}
 #catalogTable[aria-busy="true"]{opacity:.62;pointer-events:none}
 @media(max-width:760px){.cf-catalog-tools>summary{align-items:flex-start;padding:12px}.cf-catalog-tools-content{padding:0 8px 8px}.cf-catalog-table{min-width:760px}.cf-catalog-list-tools{align-items:stretch}.cf-catalog-list-tools .toolbar{min-width:100%}.cf-catalog-view-heading{align-items:flex-start}}
+
+.cf-catalog-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:6px;background:#f1f5f9;border:1px solid var(--line);border-radius:14px}
+.cf-catalog-tab{flex:1 1 145px;background:#fff;color:var(--muted);border:1px solid var(--line);padding:10px 12px}
+.cf-catalog-tab[aria-selected="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cf-catalog-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.cf-catalog-image-panel{margin-top:12px}
+@media(max-width:600px){.cf-catalog-tabs{display:grid;grid-template-columns:1fr}.cf-catalog-tab{width:100%;text-align:center}}
 </style>
 </head>
 <body>
@@ -464,17 +471,29 @@
       <div class="headrow"><div><h2 id="globalProductFormTitle">إضافة صنف عالمي</h2><p class="hint">بيانات الصنف الأساسية. أدخل بياناته مرة واحدة، ثم أضف الاختلافات الخاصة بالمؤسسة في الجزء التالي عند الحاجة.</p></div><button id="globalProductCancel" class="soft" type="button">العودة إلى الدليل</button></div>
       <form id="globalProductForm"><input id="globalProductId" type="hidden">
        
-       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-basic"><div class="fields">
-        <div class="field"><label for="globalSku">SKU العالمي</label><input id="globalSku" maxlength="100"></div>
-        <div class="field"><label for="globalBarcode">الباركود / PLU</label><input id="globalBarcode" inputmode="text" maxlength="120" placeholder="EAN / UPC / PLU؛ يحفظ الأصفار الأولى"></div><div class="field"><label for="globalItemKind">نوع الصنف</label><select id="globalItemKind"><option value="BARCODED">صنف بباركود</option><option value="WEIGHED">صنف وزني (كجم / جرام)</option><option value="NO_BARCODE">بدون باركود (معرف داخلي)</option></select></div><div class="field"><label>معرف الصنف الداخلي</label><button type="button" id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن</button><small class="hint">المعرف الداخلي ليس EAN/UPC ولا يحل محل باركود GS1.</small></div>
-        <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
-        <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
-        <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120"></div>
-        <div class="field"><label for="globalBaseUnit">وحدة الأساس</label><input id="globalBaseUnit" list="cfBaseUnits" required maxlength="40" placeholder="اختر أو اكتب وحدة الأساس…"><datalist id="cfBaseUnits"><option value="قطعة"><option value="حبة"><option value="علبة"><option value="كرتونة"><option value="كجم"><option value="جرام"><option value="لتر"><option value="ملليلتر"><option value="متر"><option value="متر مربع"><option value="وحدة"></datalist></div>
-       </div></div>
-       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-units"><h3>الوحدات والتحويل</h3><p class="hint">أضف وحدة بديلة عند الحاجة. المعامل يعني عدد وحدات الأساس داخل وحدة واحدة بديلة؛ مثال: 1 كرتونة = 12 قطعة. يبدأ المحرر بوحدة بديلة واحدة ويمكن إضافة المزيد.</p><div id="globalProductUnitsEditor" class="product-unit-list"></div><button id="addGlobalProductUnit" class="soft" type="button">إضافة وحدة بديلة</button></div>
-       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-image"><h3>صورة الصنف</h3><p class="hint">الصورة تحفظ في Storage الخاص، ولا يُحفظ رابط العرض المؤقت داخل السجل.</p><div class="field"><label for="globalImageFile">JPEG / PNG / WEBP حتى 5MB</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div><div id="globalImageCurrent" class="hint"></div><div id="globalImagePreview" class="product-image-preview cf-catalog-editor-preview hidden"><img id="globalImagePreviewImg" alt="معاينة صورة الصنف"><div class="grow"><b id="globalImagePreviewTitle">صورة الصنف</b><p id="globalImagePreviewNote" class="hint">معاينة الصورة الحالية أو المختارة.</p><button type="button" id="clearGlobalImage" class="danger">إزالة ربط الصورة</button></div></div></div><div class="panel cf-catalog-editor-panel" id="globalProductPanel-advanced"><h3>إعدادات التعريف والقياس</h3><p class="hint">تضبط هذه الخيارات طريقة التحقق من الباركود ودقة الكمية؛ لا تُدخل أسعاراً على الدليل العالمي.</p><div class="fields"><div class="field"><label for="globalBarcodeType">نوع الباركود</label><select id="globalBarcodeType"><option value="AUTO">اكتشاف تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128 / PLU</option><option value="INTERNAL">معرف CountFlow داخلي</option></select></div><div class="field"><label for="globalUnitClass">فئة وحدة القياس</label><select id="globalUnitClass"><option value="count">عدد / قطعة</option><option value="mass">وزن / كتلة</option><option value="volume">حجم / سعة</option><option value="length">طول</option><option value="area">مساحة</option><option value="other" selected>وحدة خاصة / تعبئة</option></select></div><div class="field"><label for="globalUnitPrecision">دقة الكمية</label><select id="globalUnitPrecision"><option value="0">0 منازل</option><option value="1">1 منزلة</option><option value="2">2 منزلتان</option><option value="3" selected>3 منازل</option><option value="4">4 منازل</option><option value="5">5 منازل</option><option value="6">6 منازل</option></select></div></div></div>
-       <div class="panel"><div class="actions"><button id="globalProductSave" class="primary" type="submit">إضافة إلى الدليل الدائم</button><button id="globalProductCancelBottom" class="soft" type="button">إلغاء</button></div></div>
+       
+       <div id="globalProductEditorTabs" class="cf-catalog-tabs" role="tablist" aria-label="أقسام بيانات الصنف">
+        <button id="globalProductTab-basic" class="cf-catalog-tab active" type="button" role="tab" data-global-product-tab="basic" aria-controls="globalProductPanel-basic" aria-selected="true" tabindex="0">البيانات الأساسية</button>
+        <button id="globalProductTab-units" class="cf-catalog-tab" type="button" role="tab" data-global-product-tab="units" aria-controls="globalProductPanel-units" aria-selected="false" tabindex="-1">الوحدات البديلة</button>
+        <button id="globalProductTab-advanced" class="cf-catalog-tab" type="button" role="tab" data-global-product-tab="advanced" aria-controls="globalProductPanel-advanced" aria-selected="false" tabindex="-1">الإعدادات المتقدمة</button>
+       </div>
+       <div class="panel cf-catalog-editor-panel" id="globalProductPanel-basic" role="tabpanel" aria-labelledby="globalProductTab-basic">
+        <div class="fields">
+         <div class="field"><label for="globalSku">SKU العالمي</label><input id="globalSku" maxlength="100"></div>
+         <div class="field"><label for="globalBarcode">الباركود / PLU</label><input id="globalBarcode" inputmode="text" maxlength="120" placeholder="EAN / UPC / PLU؛ يحفظ الأصفار الأولى"></div>
+         <div class="field"><label for="globalItemKind">نوع تعريف الصنف</label><select id="globalItemKind"><option value="BARCODED">صنف بباركود</option><option value="WEIGHED">صنف وزني (كجم / جرام)</option><option value="NO_BARCODE">بدون باركود (معرف داخلي)</option></select><small class="hint">هذا الاختيار يحدد هوية الباركود، وليس فئة وحدة القياس.</small></div>
+         <div class="field"><label>معرف الصنف الداخلي</label><button type="button" id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن</button><small class="hint">المعرف الداخلي يبدأ بـ CFI-، وليس EAN/UPC ولا يحل محل باركود GS1.</small></div>
+         <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
+         <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
+         <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120" placeholder="اكتب التصنيف أو اختر من المقترحات عند توفرها"></div>
+         <div class="field"><label for="globalUnitClass">نمط القياس</label><select id="globalUnitClass"><option value="count">عدد / قطعة</option><option value="mass">وزن / كتلة</option><option value="volume">حجم / سعة</option><option value="length">طول</option><option value="area">مساحة</option><option value="other">وحدة خاصة / تعبئة</option></select><small class="hint">يفصل نوع القياس عن اسم الوحدة نفسها؛ اختر الوزن ثم اختر كجم أو جرام كوحدة أساس.</small></div>
+         <div class="field"><label for="globalBaseUnitChoice">الوحدة الأساسية</label><select id="globalBaseUnitChoice" required><option value="">اختر الوحدة الأساسية</option><option value="__custom__">وحدة مخصصة…</option></select><input id="globalBaseUnit" type="hidden" value=""><input id="globalBaseUnitCustom" class="hidden" maxlength="40" placeholder="اكتب اسم الوحدة المخصصة" autocomplete="off"><small id="globalBaseUnitHint" class="hint">تظهر وحدات مقترحة حسب نمط القياس، ويمكن إدخال وحدة مخصصة.</small></div>
+        </div>
+        <div id="globalProductPanel-image" class="panel cf-catalog-image-panel"><h3>صورة الصنف</h3><p class="hint">الصورة تحفظ في Storage الخاص، ولا يُحفظ رابط العرض المؤقت داخل السجل.</p><div class="field"><label for="globalImageFile">JPEG / PNG / WEBP حتى 5MB</label><input id="globalImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div><div id="globalImageCurrent" class="hint"></div><div id="globalImagePreview" class="product-image-preview cf-catalog-editor-preview hidden"><img id="globalImagePreviewImg" alt="معاينة صورة الصنف"><div class="grow"><b id="globalImagePreviewTitle">صورة الصنف</b><p id="globalImagePreviewNote" class="hint">معاينة الصورة الحالية أو المختارة.</p><button type="button" id="clearGlobalImage" class="danger">إزالة ربط الصورة</button></div></div></div>
+       </div>
+       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-units" role="tabpanel" aria-labelledby="globalProductTab-units"><h3>الوحدات البديلة</h3><p class="hint">أضف وحدات بديلة عند الحاجة. المعامل يعني عدد وحدات الأساس داخل وحدة واحدة بديلة؛ مثال: 1 كرتونة = 12 قطعة. يمكن إضافة أكثر من وحدة، ولكل وحدة باركود مستقل اختياري.</p><div id="globalProductUnitsEditor" class="product-unit-list"></div><button id="addGlobalProductUnit" class="soft" type="button">إضافة وحدة بديلة</button></div>
+       <div class="panel cf-catalog-editor-panel hidden" id="globalProductPanel-advanced" role="tabpanel" aria-labelledby="globalProductTab-advanced"><h3>الإعدادات المتقدمة</h3><p class="hint">إعدادات التحقق من رموز التعريف ودقة الكمية. لا تُسجل أسعاراً أو مورداً في الدليل العالمي.</p><div class="fields"><div class="field"><label for="globalBarcodeType">نوع الباركود</label><select id="globalBarcodeType"><option value="AUTO">اكتشاف تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128 / PLU</option><option value="INTERNAL">معرف CountFlow داخلي</option></select></div><div class="field"><label for="globalUnitPrecision">دقة الكمية</label><select id="globalUnitPrecision"><option value="0">0 منازل</option><option value="1">1 منزلة</option><option value="2">2 منزلتان</option><option value="3" selected>3 منازل</option><option value="4">4 منازل</option><option value="5">5 منازل</option><option value="6">6 منازل</option></select></div></div></div>
+<div class="panel"><div class="actions"><button id="globalProductSave" class="primary" type="submit">إضافة إلى الدليل الدائم</button><button id="globalProductCancelBottom" class="soft" type="button">إلغاء</button></div></div>
       </form>
       <div id="clientCatalogEditorShell" class="hidden"><div class="panel" id="clientProductEditorPanel"><div class="row cf-catalog-view-heading"><h3 id="clientProductFormTitle">البيانات الخاصة بالمؤسسة</h3><button id="clientCatalogEditorClose" type="button" class="soft">إغلاق المحرر</button></div><p class="hint">أدخل الأكواد والتسميات التي تختلف لهذه المؤسسة. تظل بيانات الصنف الأساسية والوحدات العامة في نفس صفحة الصنف.</p>
         <form id="clientProductForm"><input id="clientProductImagePath" type="hidden">
@@ -2354,7 +2373,7 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
 
 
 const CF_UNIT_CLASSES=[
- {value:'count',label:'عدد / قطعة',precision:0,aliases:['each','ea','pc','pcs','piece','pieces','unit','units','عدد','قطعة','وحدة','حبة']},
+ {value:'count',label:'عدد / قطعة',precision:0,aliases:['each','ea','pc','pcs','piece','pieces','unit','units','dozen','dz','box','boxes','carton','cartons','case','cases','pack','packet','عدد','قطعة','وحدة','حبة','علبة','كرتونة','كرتون','عبوة','باكيت','دستة']},
  {value:'mass',label:'وزن / كتلة',precision:3,aliases:['kg','kgs','kilogram','kilograms','g','gm','gram','grams','mg','milligram','milligrams','ton','tons','tonne','tonnes','lb','lbs','pound','pounds','كجم','كيلوجرام','كيلو جرام','كيلو','جم','جرام','مجم','مليجرام','طن','أطنان','رطل']},
  {value:'volume',label:'حجم / سعة',precision:3,aliases:['l','lt','liter','litre','liters','litres','ml','milliliter','millilitre','m3','cm3','لتر','مل','مليلتر','ملي لتر','متر مكعب','سم مكعب']},
  {value:'length',label:'طول',precision:3,aliases:['m','meter','metre','meters','metres','cm','centimeter','centimetre','mm','millimeter','millimetre','km','كيلومتر','متر','سم','سنتيمتر','مم','ملليمتر']},
@@ -2399,7 +2418,81 @@ function getUnitMetaFields(prefix,units,extra={}){const cls=$(prefix+'UnitClass'
 
  function renderCatalogUnitEditor(containerId,units=[]){const el=$(containerId);if(!el)return;const list=productUnitRows(units).map(u=>({name:String(u?.name||''),factor_to_base:String(u?.factor_to_base??u?.conversion_factor??u?.factor??''),barcode:String(u?.barcode||''),barcode_type:String(u?.barcode_type||'AUTO')}));el.innerHTML=(list.length?list:[{name:'',factor_to_base:'',barcode:'',barcode_type:'AUTO'}]).map(u=>'<div class="product-unit-row" data-catalog-unit-row><div class="field"><label>اسم الوحدة البديلة</label><input data-catalog-unit-name value="'+esc(u.name)+'" maxlength="40"></div><div class="field"><label>تعادل من وحدة الأساس</label><input data-catalog-unit-factor type="number" min="0.000001" step="0.000001" value="'+esc(u.factor_to_base)+'"></div><div class="field"><label>باركود الوحدة (اختياري)</label><input data-catalog-unit-barcode value="'+esc(u.barcode)+'" maxlength="120" inputmode="text"></div><div class="field"><label>نوع الرمز</label><select data-catalog-unit-barcode-type><option value="AUTO" '+(u.barcode_type==='AUTO'?'selected':'')+'>تلقائي</option><option value="EAN8" '+(u.barcode_type==='EAN8'?'selected':'')+'>EAN-8</option><option value="UPC_A" '+(u.barcode_type==='UPC_A'?'selected':'')+'>UPC-A</option><option value="EAN13" '+(u.barcode_type==='EAN13'?'selected':'')+'>EAN-13</option><option value="GTIN14" '+(u.barcode_type==='GTIN14'?'selected':'')+'>GTIN-14</option><option value="CODE128" '+(u.barcode_type==='CODE128'?'selected':'')+'>Code 128</option></select></div><button type="button" class="danger" data-catalog-unit-remove>إزالة</button></div>').join('');el.querySelectorAll('[data-catalog-unit-remove]').forEach(b=>b.onclick=()=>{b.closest('[data-catalog-unit-row]')?.remove();if(!el.querySelector('[data-catalog-unit-row]'))renderCatalogUnitEditor(containerId,[]);});}
  function readCatalogUnits(containerId,baseUnit,primaryBarcode=null){const el=$(containerId);if(!el)throw new Error('محرر الوحدات غير متاح.');const out=[],seen=new Set(),codes=new Set(),base=String(baseUnit||'').trim().toLocaleLowerCase();if(primaryBarcode)codes.add(String(primaryBarcode).trim().toLowerCase());for(const row of el.querySelectorAll('[data-catalog-unit-row]')){const name=row.querySelector('[data-catalog-unit-name]').value.trim(),raw=row.querySelector('[data-catalog-unit-factor]').value.trim(),barcode=row.querySelector('[data-catalog-unit-barcode]')?.value.trim()||'',requested=row.querySelector('[data-catalog-unit-barcode-type]')?.value||'AUTO';if(!name&&!raw&&!barcode)continue;if(!name||!raw)throw new Error('أكمل اسم الوحدة البديلة ومعامل التحويل معاً.');const key=name.toLocaleLowerCase(),factor=Number(raw);if(key===base)throw new Error('الوحدة البديلة يجب أن تختلف عن وحدة الأساس.');if(seen.has(key))throw new Error('لا تكرر اسم الوحدة البديلة.');if(!Number.isFinite(factor)||factor<=0||factor>1000000000)throw new Error('معامل التحويل يجب أن يكون رقماً موجباً وصالحاً.');const unit={name,factor_to_base:factor};if(barcode){const type=cfResolveBarcodeType(barcode,requested);if(codes.has(barcode.toLowerCase()))throw new Error('لا يمكن تكرار الباركود بين الصنف ووحداته أو داخل الوحدات.');codes.add(barcode.toLowerCase());unit.barcode=barcode;unit.barcode_type=type;}seen.add(key);out.push(unit);}return out;}
- function switchGlobalProductTab(){['basic','units','image','advanced'].forEach(k=>$('globalProductPanel-'+k)?.classList.remove('hidden'));}
+ 
+const CF_BASE_UNIT_SUGGESTIONS={
+ count:['قطعة','حبة','عدد','وحدة','علبة','كرتونة','كرتون','عبوة','باكيت','دستة','each','ea','piece','pc','pcs','unit','dozen','dz'],
+ mass:['كجم','جرام','جم','ملجم','طن','kilogram','kg','gram','g','mg'],
+ volume:['لتر','مليلتر','ملليلتر','متر مكعب','liter','litre','l','ml'],
+ length:['متر','سم','مم','كيلومتر','meter','metre','m','cm','mm','km'],
+ area:['متر مربع','سم مربع','m2','sqm','sqft','ft2'],
+ other:['وحدة','عبوة']
+};
+function getGlobalBaseUnitValue(){
+ const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),backing=$('globalBaseUnit');
+ const value=select?.value==='__custom__'?String(custom?.value||'').trim():String(select?.value||'').trim();
+ if(backing)backing.value=value;
+ return value;
+}
+function setGlobalBaseUnit(value=''){
+ const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),backing=$('globalBaseUnit');
+ if(!select||!custom||!backing)return;
+ const current=String(value||'').trim(),unitClass=$('globalUnitClass')?.value||'other';
+ const choices=CF_BASE_UNIT_SUGGESTIONS[unitClass]||[];
+ select.innerHTML='<option value="">اختر الوحدة الأساسية</option>'+choices.map(item=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+'<option value="__custom__">وحدة مخصصة…</option>';
+ const known=choices.find(item=>normalizeUnitName(item)===normalizeUnitName(current));
+ if(current&&known){select.value=known;custom.value='';custom.classList.add('hidden');custom.required=false;backing.value=known;}
+ else if(current){select.value='__custom__';custom.value=current;custom.classList.remove('hidden');custom.required=true;backing.value=current;}
+ else{select.value='';custom.value='';custom.classList.add('hidden');custom.required=false;backing.value='';}
+ const hint=$('globalBaseUnitHint');
+ if(hint)hint.textContent=unitClass==='mass'?'للوحدات الوزنية اختر كجم أو جرام أو اكتب وحدة كتلة أخرى.':unitClass==='count'?'اختر وحدة عدد مناسبة مثل قطعة أو حبة أو كرتونة.':'اختر الوحدة المناسبة لنمط القياس، أو أدخل وحدة مخصصة.';
+}
+function bindGlobalBaseUnitSelector(){
+ const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),unitClass=$('globalUnitClass');
+ if(!select||!custom||select.dataset.bound==='true')return;
+ select.dataset.bound='true';
+ select.addEventListener('change',()=>{
+  if(select.value==='__custom__'){custom.classList.remove('hidden');custom.required=true;if(!custom.value.trim())custom.focus();}
+  else{custom.classList.add('hidden');custom.required=false;custom.value='';}
+  getGlobalBaseUnitValue();
+ });
+ custom.addEventListener('input',()=>getGlobalBaseUnitValue());
+ unitClass?.addEventListener('change',()=>{
+  const current=getGlobalBaseUnitValue();
+  setGlobalBaseUnit(!current&&unitClass.value==='mass'?'كجم':current);
+ });
+}
+function switchGlobalProductTab(tab='basic',focus=false){
+ const keys=['basic','units','advanced'],active=keys.includes(tab)?tab:'basic';
+ keys.forEach(key=>{
+  const panel=$('globalProductPanel-'+key),button=$('globalProductTab-'+key),selected=key===active;
+  panel?.classList.toggle('hidden',!selected);
+  if(button){button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;button.classList.toggle('active',selected);}
+ });
+ if(focus)$('globalProductTab-'+active)?.focus();
+}
+function bindGlobalProductTabs(){
+ const host=$('globalProductEditorTabs');
+ if(!host||host.dataset.bound==='true')return;
+ host.dataset.bound='true';
+ host.addEventListener('click',event=>{
+  const button=event.target.closest('[data-global-product-tab]');
+  if(button)switchGlobalProductTab(button.dataset.globalProductTab);
+ });
+ host.addEventListener('keydown',event=>{
+  const button=event.target.closest('[data-global-product-tab]');
+  if(!button)return;
+  const keys=['basic','units','advanced'],index=keys.indexOf(button.dataset.globalProductTab);
+  if(index<0)return;
+  let next=index;
+  if(event.key==='ArrowLeft')next=(index+1)%keys.length;
+  else if(event.key==='ArrowRight')next=(index-1+keys.length)%keys.length;
+  else if(event.key==='Home')next=0;
+  else if(event.key==='End')next=keys.length-1;
+  else return;
+  event.preventDefault();switchGlobalProductTab(keys[next],true);
+ });
+}
+
  function switchCatalogView(view){
   const allowed=['global','project'];state.catalogView=allowed.includes(view)?view:'global';
   $('catalogGlobalView').classList.toggle('hidden',state.catalogView!=='global');
@@ -2424,6 +2517,7 @@ function getUnitMetaFields(prefix,units,extra={}){const cls=$(prefix+'UnitClass'
  $('globalImageCurrent').textContent=p?.image_storage_path?'جار تجهيز معاينة الصورة…':'لا توجد صورة مرتبطة بهذا الصنف.';
  renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);setUnitMetaFields('global',p?.units||[],$('globalBaseUnit').value);
  if(!p){$('globalItemKind').value='BARCODED';$('globalBarcodeType').value='AUTO';$('globalUnitClass').value='other';$('globalUnitPrecision').value='3';}
+ setGlobalBaseUnit(p?.base_unit||'');
  $('globalProductFormTitle').textContent=p?'تفاصيل الصنف وتعديل بياناته':'إضافة صنف جديد';$('globalProductSave').textContent=p?'حفظ بيانات الصنف':'إضافة الصنف';
  $('catalogGlobalView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogWorkspaceSelector').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');
  $('clientCatalogEditorShell')?.classList.add('hidden');resetClientProductForm();
@@ -3066,8 +3160,9 @@ async function toggleCatalogProduct(id){
  $('globalProductForm').addEventListener('submit',async e=>{
   e.preventDefault();if(!state.platformOwner)return notify('إدارة الأصناف العالمية للمالك فقط.',true);const f=e.currentTarget;setBusy(f,true);
   try{
-   const id=$('globalProductId').value||null,sku=$('globalSku').value.trim()||null,barcode=$('globalBarcode').value.trim()||null,base=$('globalBaseUnit').value.trim(),itemKind=$('globalItemKind').value,requestedType=$('globalBarcodeType').value;
+   const id=$('globalProductId').value||null,sku=$('globalSku').value.trim()||null,barcode=$('globalBarcode').value.trim()||null,base=getGlobalBaseUnitValue(),itemKind=$('globalItemKind').value,requestedType=$('globalBarcodeType').value,unitClass=$('globalUnitClass').value;
    if(!base)throw new Error('وحدة الأساس مطلوبة.');
+   const inferredUnitClass=inferProductUnitClass(base);if(inferredUnitClass!=='other'&&inferredUnitClass!==unitClass)throw new Error('الوحدة الأساسية لا تتوافق مع نمط القياس المحدد؛ اختر وحدة مناسبة أو غيّر نمط القياس.');
    if(itemKind==='BARCODED'&&!barcode)throw new Error('الصنف الذي يحمل باركوداً يحتاج رمزاً خارجياً؛ اختر بدون باركود لتوليد معرف داخلي.');
    if(itemKind==='WEIGHED'&&$('globalUnitClass').value!=='mass')throw new Error('الصنف الوزني يحتاج فئة وحدة قياس من الوزن.');
    const barcodeType=barcode?cfResolveBarcodeType(barcode,requestedType):'INTERNAL';
@@ -3083,8 +3178,8 @@ async function toggleCatalogProduct(id){
   }catch(err){fail('تعذر حفظ الصنف العالمي',err);}finally{setBusy(f,false);}
  });
  $('catalogAddProduct').onclick=()=>openGlobalProductEditor(null);$('globalProductCancel').onclick=closeGlobalProductEditor;$('globalProductCancelBottom').onclick=closeGlobalProductEditor;$('catalogExport').onclick=exportGlobalCatalogCsv;
- $('globalGenerateBarcode').onclick=()=>{const code=cfGenerateInternalBarcode();$('globalBarcode').value=code;$('globalItemKind').value='NO_BARCODE';$('globalBarcodeType').value='INTERNAL';};$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!$('globalBaseUnit').value.trim())$('globalBaseUnit').value='كجم';}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
- bindUnitPrecisionDefaults();
+ $('globalGenerateBarcode').onclick=()=>{const code=cfGenerateInternalBarcode();$('globalBarcode').value=code;$('globalItemKind').value='NO_BARCODE';$('globalBarcodeType').value='INTERNAL';};$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!getGlobalBaseUnitValue())setGlobalBaseUnit('كجم');else setGlobalBaseUnit(getGlobalBaseUnitValue());}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
+ bindUnitPrecisionDefaults();bindGlobalBaseUnitSelector();bindGlobalProductTabs();
  $('catalogMode').addEventListener('change',()=>switchCatalogView($('catalogMode').value));
  $('catalogClientScope').addEventListener('change',async()=>{state.catalogClientId=$('catalogClientScope').value||null;try{await refreshClientCatalogPermission();$('catalogClientScopeLabel').textContent=state.catalogClientId?'يتم عرض الحقول المحلية للمؤسسة المختارة بجوار بيانات الصنف الأساسي.':'اختر مؤسسة لعرض حقولها المحلية في الجدول وصفحة الصنف.';state.catalogPage=1;await loadCatalog();}catch(e){fail('تعذر تغيير المؤسسة المحددة',e);}});$('catalogResetFilters').onclick=()=>{$('catalogSearch').value='';$('catalogCategoryFilter').value='';$('catalogStatusFilter').value='active';state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر إعادة ضبط المرشحات',e));};
  function scheduleCatalogReload(){clearTimeout(state.catalogSearchTimer);state.catalogSearchTimer=setTimeout(()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تحديث نتائج البحث',e));},260);} $('catalogSearch').oninput=scheduleCatalogReload;$('catalogCategoryFilter').oninput=scheduleCatalogReload;$('catalogStatusFilter').onchange=()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تغيير الحالة',e));};$('catalogRefresh').onclick=()=>loadCatalog().catch(e=>fail('تعذر التحديث',e));let catalogSearchTimer=null;
