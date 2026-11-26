@@ -4,16 +4,16 @@
 **التقرير التنفيذي:** `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`.  
 **التقرير المساعد المدروس:** `Reports/تقرير تحسين تبويب الأصناف` (blob `11bb86d93a64a2dff735902690e8898f58cbbe9e`).  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
-**فرع الاعتماد:** `main` — لم يتغير في LVE-788.  
+**فرع الاعتماد:** `main` — تم دمج التغيير فيه وأصبح مصدر التنفيذ المعتمد.  
 **Base commit:** `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`.  
-**فرع التنفيذ:** `work/lve-788-admin-item-editor-ux`.  
-**آخر التزام للكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`؛ الالتزامات اللاحقة في هذا الفرع تقارير/حالة فقط.  
-**PR #11:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11 — OPEN / NOT MERGED.  
-**الحالة:** SOURCE IMPLEMENTED — CI PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — NOT DEPLOYED.
+**فرع التطوير التاريخي قبل الدمج:** `work/lve-788-admin-item-editor-ux` (ليس مسار الاعتماد بعد الدمج).  
+**Commit الكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`. **Commit الدمج إلى main:** `74a426fbdd7a036633350546107e9f452aa3eae2` (Squash merge).  
+**PR #11:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11 — MERGED / CLOSED.  
+**الحالة:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH QUALITY GATE RUNNING AT LAST CHECK — AUTHENTICATED VISUAL ACCEPTANCE OPEN — CLOUDFLARE DEPLOYMENT UNVERIFIED.
 
 ### 1. نقطة الاستئناف
 - استُؤنف العمل من LVE-787 المدمج في main. لم تُعد كتابة دليل الأصناف الموحد أو البحث أو صفحة التفاصيل أو فصل Global/Client/Project.
-- أحدث Commit على main عند البدء كان `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`؛ كان إضافة تقرير تحسين الأصناف فقط، دون تعديل Runtime.
+- كان HEAD الأساسي قبل الدمج `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`؛ وبعد المراجعة دُمجت التغييرات إلى main في `74a426fbdd7a036633350546107e9f452aa3eae2`.
 - التغيير الوظيفي محصور في محرر الصنف العالمي داخل `countflow-admin.html`؛ مواءمة المؤسسة وأصناف التكليف بقيت ضمن مساراتها الحالية.
 
 ### 2. ما تم تنفيذه
@@ -32,10 +32,11 @@
 - `tests/unit/countflow-quality.test.mjs`: blob `b3a2fdb9762f201cf09743c3a9f4c9fec1bfb5d8`.
 - `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`: تقرير التنفيذ العربي الجديد (blob `38721588cf527854c696c2e9d7f3d2b0474bd60f`).
 - `CURRENT_STATE.md`: هذا التحديث فقط.
-- PR #11 يضم تعديلات Runtime واختبارات وتقارير/حالة؛ لا يوجد دمج إلى main.
+- PR #11 مدمج إلى main. بصمات Runtime والاختبارات والتقرير ونقطة الحالة موجودة على الفرع المعتمد.
 
 ### 4. التحقق الآلي
-- GitHub Actions Run `45870843566`, HEAD `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`: SUCCESS.
+- GitHub Actions PR Run `45871276475`, HEAD `bc92f73cf08501217f9432ea08b1479058042abb`: SUCCESS على HEAD النهائي قبل الدمج. 99/99 Node tests، وDeno وPages build وPlaywright 2 PASS / 1 SKIP.  
+- Main push Run `45872497257` على Commit `74a426fbdd7a036633350546107e9f452aa3eae2`: IN_PROGRESS عند آخر تحقق؛ لا يُعلن نجاح main CI قبل ظهور نتيجته النهائية.
 - Node tests: 99/99 PASS.
 - Deno type-check لوظيفتي Edge: PASS.
 - Cloudflare Pages allowlisted build: PASS.
@@ -53,7 +54,7 @@
 - SMART ERP / `fiilmooggumokxanwiyx` وملفات ERP لم تُلمس.
 
 ### 6. Deployment / Runtime / Acceptance
-- PR #11 غير مدمج، لذلك تغيير LVE-788 غير منشور على Cloudflare Production.
+- PR #11 مدمج إلى main. هذا يثبت دمج المصدر فقط، ولا يثبت اكتمال نشر Cloudflare Production.
 - CI بنى Pages من الفرع فقط؛ لا يساوي Deploy إلى Production.
 - القبول البصري المصادق داخل Admin على Desktop/Mobile، وتفاعل المحرر بحساب المالك: OPEN.
 - لم يتم إنشاء/تحديث صنف فعلي أو مواءمة مؤسسة أو رفع صورة في قاعدة البيانات.
@@ -64,9 +65,9 @@
 - التراجع يكون عبر Revert لالتزامات PR #11 أو استعادة البصمتين في فرع مستقل؛ لا يوجد DB rollback مطلوب.
 
 ### 8. الخطوة التالية
-أكمل قبولاً بصرياً مصادقاً لمحرر الصنف في PR #11 (Desktop/Mobile، التنقل بين الأقسام دون فقد المدخلات، فتح صنف قائم، وحدة أساسية مخصصة، الوحدات البديلة والصورة)، ثم قرر الدمج بعد قبول الواجهة. لا تستخدم بيانات QA90K ولا تنفذ كتابة قاعدة بيانات كجزء من القبول البصري.
+بعد نجاح Main push CI، يلزم قبول بصري مصادق لمحرر الصنف على Desktop/Mobile (التنقل بين الأقسام دون فقد المدخلات، فتح صنف قائم، وحدة أساس مخصصة، الوحدات البديلة والصورة). لا تستخدم بيانات QA90K ولا تنفذ كتابة قاعدة بيانات كجزء من القبول البصري.
 
-**Readiness:** READY WITH LIMITATIONS — CI/source gates PASS; authenticated visual and owner acceptance OPEN.
+**Readiness:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH CI PENDING AT LAST CHECK — AUTHENTICATED VISUAL/OWNER ACCEPTANCE OPEN — DEPLOYMENT UNVERIFIED.
 
 ---
 
