@@ -1,3 +1,39 @@
+## LVE-2026-11-26-785 — تنظيم تبويب الأصناف في CountFlow Admin
+
+**Last Verified Event:** 26 نوفمبر 2026 (Africa/Cairo).  
+**التقرير التفصيلي:** `Reports/LVE-2026-11-26-785_ADMIN_CATALOG_UX_OVERHAUL.md`.  
+**Pull Request:** #9 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/9.  
+**فرع العمل:** `work/lve-785-admin-catalog-ux`.  
+**حالة التغيير:** IMPLEMENTED ON PR BRANCH — CI GREEN — NOT MERGED — VISUAL OWNER ACCEPTANCE PENDING.  
+**Head اجتاز بوابة CI الكاملة:** `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e` (التغييرات اللاحقة على الفرع وثائق فقط).
+
+### الملخص التنفيذي
+- أُعيد تنظيم Global catalogue ليكون list-first مع البحث/التصنيف/الحالة والفرز وpagination وحماية طلبات البحث المتأخرة.
+- أضيف عرض الصور المصغرة والمعاينة المكبرة باستخدام Signed URLs من حاوية Storage الخاصة، مع معاينة صورة المحرر وخيار إزالة ربطها دون حذف ملف Storage مادياً.
+- نُقل محرر Client mapping ومحرر Project products إلى لوحات تفتح عند الحاجة بدلاً من احتلال مساحة القائمة افتراضياً.
+- نُقلت لوحات استيراد Global وProject إلى disclosure مغلق افتراضياً، مع الحفاظ على منطق الاستيراد الحالي.
+- أُضيف CSV export مستقل لنطاق Global/Client/Project؛ التصدير مجزأ للقراءة فقط وبحدود معلنة. لا يتضمن CSV ملفات الصور الثنائية.
+- بقيت الكيانات `count_catalog_products` و`count_client_products` و`count_products` مستقلة.
+
+### التغييرات والاختبارات
+- الملفات المعدلة في PR: `countflow-admin.html` و`tests/unit/countflow-quality.test.mjs` فقط.
+- ثلاث اختبارات انحدار جديدة تغطي فصل الشاشات، الصور الخاصة، التصدير المجزأ وحماية الطلبات المتأخرة.
+- Workflow run `45853859251` على head `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e`: **SUCCESS**؛ Node tests 95/95، Deno check ناجح، Pages allowlist build ناجح، وPlaywright لواجهة الدخول العامة وRTL على Mobile ناجح (2 passed؛ اختبار source parity الخاص بحدث main push تم تخطيه في حدث PR).
+- أول CI attempt على commit سابق فشل في JavaScript regex لحماية CSV؛ صُحح الخطأ وأعيد تشغيل البوابة على head أحدث.
+- القبول البصري المصادق عليه بعد تسجيل الدخول كمالك على Desktop وMobile لم يُنفذ بعد.
+
+### حدود السلامة المؤكدة
+- لا DDL/DML أو SQL migration أو تعديل RLS/GRANT/Storage policy أو RPC/Edge deploy.
+- لا تغييرات في قاعدة البيانات أو ملفات التخزين أو أرصدة أو بيانات اختبار.
+- لا تعديل أو استئناف أو حذف أو إعادة استيراد لدفعة QA90K.
+- لا تعديل في RAWAEA ERP أو مستودع `erp-frontend`.
+- القائمة الحالية لمواءمات العميل ما زالت بحد قراءة 500 سجل مع فلترة محلية؛ التصدير يقرأ صفحات مستقلة حتى 200,000. هذه فجوة متبقية موثقة.
+
+### قرار الإغلاق
+التغيير موجود على PR #9 فقط، وليس على `main`، ولم يحدث دمج أو نشر. الإغلاق يتطلب مراجعة المالك البصرية لواجهة Admin على Desktop وMobile قبل الدمج. CI الأخضر موثق في run 45853859251.
+
+---
+
 ## LVE-2026-11-26-784 — تدقيق استخراج تبويب الأصناف المرجعي من RAWAEA ERP
 
 **Last Verified Event:** 26 نوفمبر 2026 (Africa/Cairo).  

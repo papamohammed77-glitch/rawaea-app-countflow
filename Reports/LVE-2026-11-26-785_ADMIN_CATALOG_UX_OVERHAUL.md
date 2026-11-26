@@ -1,10 +1,10 @@
 # LVE-2026-11-26-785 — إعادة تنظيم تبويب الأصناف في CountFlow Admin
 
 **Last Verified Event:** 26 نوفمبر 2026 (Africa/Cairo).  
-**الحالة:** IMPLEMENTED ON FEATURE BRANCH — PR OPEN — CI PARTIALLY VERIFIED.  
+**الحالة:** IMPLEMENTED ON FEATURE BRANCH — PR OPEN — CI GREEN — OWNER VISUAL ACCEPTANCE PENDING.  
 **Pull Request:** #9 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/9  
 **Feature branch:** `work/lve-785-admin-catalog-ux`  
-**Head checked:** `11fa0553e307367bb944308a7413c54cbafb1578`  
+**Head checked by final CI:** `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e` (code blob unchanged after documentation commit).  
 **Base main at PR creation:** `030f434f2e636e15d95e59f65175c03db5ec65b1`  
 **Source file:** `countflow-admin.html`  
 **Regression tests:** `tests/unit/countflow-quality.test.mjs`
@@ -98,21 +98,21 @@
 ### المحاولة الأولى — commit `8afdb8c560443a55fa263d2dca98acdff9c29a5f`
 
 - فشل فحص صياغة JavaScript بسبب escape غير صحيح في Regular Expression الخاص بحماية CSV.
-- نجحت الاختبارات الجديدة الثلاثة (95، 94، 93 في تقرير Node)، لكن المجموعة احتوت فشلاً واحداً في فحص صياغة script.
-- تم إصلاح التعبير إلى فحص يبدأ بعد `trimStart()`، ثم أُنشئ commit أحدث.
+- نجحت الاختبارات الجديدة الثلاثة (Node tests 93–95)، لكن المجموعة احتوت فشلاً واحداً في فحص صياغة script.
+- تم تحديد السبب من سجل CI وتصحيح التعبير إلى `/^[=+@-]/.test(text.trimStart())`، ثم أُعيد تشغيل البوابة.
 
-### المحاولة الثانية — commit `11fa0553e307367bb944308a7413c54cbafb1578`
+### النتيجة النهائية — head `c4f07ec8b5b6ee66379fd8e4c5487d04c94ee36e`
 
-Workflow run: `45853504510`.
+<badge>SUCCESS</badge> Workflow run: `45853859251` — https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/45853859251
 
-آخر قراءة للوظيفة أثناء إعداد هذا التقرير:
-- Deno check: SUCCESS.
-- Node unit/streaming tests: SUCCESS.
+- JavaScript source and application syntax checks: SUCCESS.
+- Node unit/streaming tests: **95 passed / 0 failed**.
+- Deno check لوظيفتي Edge Function المنشورتين: SUCCESS.
 - Cloudflare Pages allowlist build: SUCCESS.
-- Playwright discovery/public production login shell: IN PROGRESS وقت آخر قراءة.
-- النتيجة النهائية للـWorkflow لم تكن قد ظهرت بعد، لذلك لا تُسجل بوابة CI هنا على أنها مكتملة النجاح.
+- Playwright discovery + public production login-shell tests: SUCCESS؛ نجح اختبارا واجهة الدخول العامة وRTL على Mobile. اختبار deployment/source parity الذي يجري فقط في push إلى `main` كان skipped في حدث Pull Request.
+- هذا النجاح يثبت سلامة الاختبارات الآلية والغلاف العام، ولا يثبت قبولاً بصرياً لواجهة Admin بعد تسجيل دخول المالك.
 
-لا يوجد اختبار بصري مصادق عليه لواجهة Admin داخل حساب المالك على Desktop وMobile ضمن هذه المهمة. اختبار الغلاف العام للدخول لا يثبت واجهة Admin بعد المصادقة.
+لا يوجد اختبار بصري مصادق عليه لواجهة Admin داخل حساب المالك على Desktop وMobile ضمن هذه المهمة. يبقى ذلك مطلوباً قبل الدمج.
 
 ## 6. الحدود الأمنية والتشغيلية
 

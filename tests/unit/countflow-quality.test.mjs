@@ -1515,3 +1515,40 @@ test("Global catalogue importer handlers are defined and use bounded owner RPC b
  assert.match(admin,/parsed\.count>90000/);
  assert.match(admin,/deterministic='CFI-'/);
 });
+
+test("Admin catalogue is list-first, keeps import tools secondary and separates client and project editors", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/<details class="cf-catalog-tools" id="globalCatalogImportTools"/);
+ assert.match(admin,/<details class="cf-catalog-tools" id="projectProductImportTools"/);
+ assert.match(admin,/id="clientCatalogEditorShell" class="hidden"/);
+ assert.match(admin,/class="panel hidden" id="projectProductEditorPanel"/);
+ for(const id of ["catalogExport","clientCatalogExport","projectCatalogExport","clientCatalogAddNew","addProjectProduct"]) {
+  assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action "+id);
+ }
+ assert.match(admin,/data-catalog-view="global"/);
+ assert.match(admin,/data-catalog-view="client"/);
+ assert.match(admin,/data-catalog-view="project"/);
+});
+
+test("Global catalogue images use scoped private signed URLs and provide image preview and unlink state", () => {
+ const admin=read("countflow-admin.html");
+ assert.match(admin,/function safeCatalogProductImagePath\(product\)/);
+ assert.match(admin,/path\.startsWith\('catalog\/products\/'\+id\+'\/'\)/);
+ assert.match(admin,/createSignedUrls\(paths,3600\)/);
+ assert.match(admin,/createSignedUrl\(path,3600\)/);
+ assert.match(admin,/data-preview-catalog-image=/);
+ assert.match(admin,/globalImageCleared&&!file\)row\.image_storage_path=null/);
+ assert.match(admin,/id="globalImagePreview"/);
+ assert.match(admin,/bucket.*public=false|counting-product-images/);
+});
+
+test("Catalogue exports are paginated read paths and debounced list requests reject stale responses", () => {
+ const admin=read("countflow-admin.html");
+ for(const name of ["exportGlobalCatalogCsv","exportClientCatalogCsv","exportProjectCatalogCsv","downloadCatalogCsv"]) {
+  assert.match(admin,new RegExp("function "+name+"\\s*\\("),"Missing export function "+name);
+ }
+ assert.match(admin,/range\(offset,offset\+pageSize-1\)/);
+ assert.match(admin,/state\.catalogRequestToken=\(state\.catalogRequestToken\|\|0\)\+1/);
+ assert.match(admin,/state\.catalogSearchTimer=setTimeout/);
+ assert.match(admin,/function applyCatalogFilters\(query,filters\)/);
+});
