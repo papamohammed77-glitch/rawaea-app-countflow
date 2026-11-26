@@ -4,12 +4,14 @@
 **المهمة:** استكمال UI Overhaul من LVE-787 دون إعادة بناء دليل الأصناف الموحد.  
 **المستودع المعتمد:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **فرع المصدر:** `main`.  
-**فرع التنفيذ:** `work/lve-788-admin-item-editor-ux`.  
+**فرع التطوير التاريخي قبل الدمج:** `work/lve-788-admin-item-editor-ux` (لم يعد مسار الاعتماد).  
 **Base commit:** `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`.  
-**آخر التزام للكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90` (بعده تقارير/نقطة حالة فقط).  
+**Commit الكود والاختبارات:** `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`.  
+**Commit الدمج إلى main:** `74a426fbdd7a036633350546107e9f452aa3eae2` (Squash merge).  
 **Pull Request:** #11 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11.  
-**CI:** Run `45870843566` — SUCCESS على Feature HEAD.  
-**الحالة:** SOURCE IMPLEMENTED — QUALITY GATE PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — NOT MERGED / NOT DEPLOYED.
+**CI قبل الدمج:** Run `45871276475` على Feature HEAD النهائي — SUCCESS.  
+**Main push CI:** Run `45872497257` على Commit الدمج — IN_PROGRESS عند آخر تحقق.  
+**الحالة:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH QUALITY GATE RUNNING AT LAST CHECK — AUTHENTICATED VISUAL ACCEPTANCE OPEN — DEPLOYMENT UNVERIFIED.
 
 ---
 
@@ -24,7 +26,7 @@
 - فصل السجلات Global / Client / Project.
 - CSV paginated export أو صور Storage أو آلية صلاحيات مواءمات المؤسسة.
 
-ظل `main` دون تغيير من هذه المهمة. جميع التغييرات الوظيفية والتوثيقية أدناه موجودة في فرع العمل وPR #11 فقط.
+بدأت التغييرات على فرع عمل للمراجعة والعزل، ثم دُمجت بعد نجاح بوابة PR إلى `main` في الالتزام `74a426fbdd7a036633350546107e9f452aa3eae2`. أصبح `main` الآن المرجع الوحيد المعتمد للتنفيذ. لا يُعد فرع العمل أو أي مستودع مؤقت مرجعاً موازياً.
 
 ## 2. دراسة التقرير المساعد — النتيجة التحليلية
 
@@ -124,8 +126,8 @@
 **Source Code — CONFIRMED**
 - Admin الحالي على Feature HEAD: blob `b144a609f0ef5dad45dcc3cd25a5f198f50dab6f`.
 - اختبارات الجودة على Feature HEAD: blob `b3a2fdb9762f201cf09743c3a9f4c9fec1bfb5d8`.
-- Feature HEAD: `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`.
-- PR #11 مفتوح، وليس مدمجاً.
+- كود/اختبارات المصدر: Commit `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`; الدمج إلى `main`: `74a426fbdd7a036633350546107e9f452aa3eae2`.
+- PR #11: MERGED / CLOSED إلى `main` عبر Squash Merge.
 
 **Database — READ ONLY / CONFIRMED**
 - مشروع Supabase: `rawaea-staging` / `hfzznsiprnwkpayskzhu`، ACTIVE_HEALTHY.
@@ -144,9 +146,12 @@
 
 ## 7. نتائج CI
 
-**GitHub Actions Run #45870843566**  
-Commit: `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`  
-الحالة النهائية: **SUCCESS**.
+**GitHub Actions PR Run #45871276475**  
+Feature HEAD النهائي: `bc92f73cf08501217f9432ea08b1479058042abb`  
+الحالة النهائية: **SUCCESS**.  
+**GitHub Actions Main push Run #45872497257**  
+Commit: `74a426fbdd7a036633350546107e9f452aa3eae2`  
+الحالة عند آخر تحقق: **IN_PROGRESS**؛ لا يُعلن نجاح main CI قبل نتيجته النهائية.
 
 | البوابة | النتيجة |
 |---|---|
@@ -168,7 +173,7 @@ Commit: `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`
 ## 8. الفصل بين مصدر الكود والنشر والسلوك
 
 **Deployed Artifact — NOT UPDATED BY THIS PR**
-- لم يتم دمج PR #11 ولم يحدث نشر من هذا الفرع.
+- تم دمج PR #11 في main؛ لم يُنفذ نشر Cloudflare يدوياً في هذه المهمة، ولا توجد مصادقة منشورة تثبت أن Production يعرض هذا الالتزام.
 - سياق Cloudflare الذي تمت قراءته سابقاً أظهر Production على `main` بمرجع أقدم من HEAD الحالي؛ لذلك لا يُدّعى أن تغيير LVE-788 منشور.
 - نجاح Pages build في CI يبني مخرجات الفرع للاختبار، ولا يعني نشرها على Production.
 
@@ -185,7 +190,7 @@ Commit: `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`
 - لا تعديل أو استئناف أو حذف لدفعة QA90K.
 - لا تغيير في أصناف التكليف أو بيانات المؤسسة أو أصناف الدليل الحالية.
 - لا تعديل على SMART ERP أو RAWAEA ERP أو أي جداول مخزون/مالية/حسابات.
-- لم يُدمج PR #11 ولم يُنشر إلى Cloudflare Production.
+- تم دمج PR #11 إلى `main`. دمج المصدر لا يثبت وحده أن Cloudflare Production قد نُشر أو أن Runtime تم التحقق منه.
 
 ## 10. خطة التراجع
 
@@ -205,9 +210,9 @@ Commit: `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`
 
 ## 12. إعلان الجاهزية
 
-**READY WITH LIMITATIONS**
+**MERGED TO MAIN — READY WITH LIMITATIONS**
 
 - المصدر المعدل واجتياز بوابة الجودة الآلية مؤكدان.
-- PR #11 مفتوح وقابل للدمج من ناحية Git، لكنه لم يُدمج.
+- PR #11 مدمج في `main`، لكن قبول الواجهة المصادق والنشر لم يُثبتا بعد.
 - القبول البصري المصادق والنشر والسلوك الحقيقي بعد تسجيل الدخول ما زالت غير مثبتة.
-- الخطوة التالية الواحدة: إتمام القبول البصري المصادق لمحرر الصنف على PR #11، مع حماية بيانات QA90K وترك main دون تغيير إلى حين إغلاق هذه البوابة.
+- الإجراء المتبقي: تأكيد Main push CI، ثم قبول بصري مصادق في Admin على Desktop/Mobile والتحقق من نشر Cloudflare. لا تُستخدم QA90K ولا تُجرى أي كتابة قاعدة بيانات لهذا القبول.
