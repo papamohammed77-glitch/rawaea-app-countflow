@@ -1632,9 +1632,9 @@ test("Global base-unit dropdown follows the measurement class and preserves cust
  assert.equal(helpers.inferProductUnitClass("كرتونة"),"count");
  assert.equal(helpers.inferProductUnitClass("جرام"),"mass");
  assert.equal(helpers.inferProductUnitClass("لتر"),"volume");
- assert.equal(helpers.inferProductUnitClass("أونصة"),"mass");
- assert.equal(helpers.inferProductUnitClass("قدم"),"length");
- assert.equal(helpers.inferProductUnitClass("قدم مربع"),"other");
+ assert.equal(helpers.inferProductUnitClass("oz"),"mass");
+ assert.equal(helpers.inferProductUnitClass("ft"),"length");
+ assert.equal(helpers.inferProductUnitClass("sq ft"),"other");
  assert.equal(helpers.inferProductUnitClass("sqft"),"area");
  assert.equal(helpers.inferProductUnitClass("وحدة جديدة خاصة"),"other");
 });
