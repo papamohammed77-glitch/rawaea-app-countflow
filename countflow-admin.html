@@ -3134,6 +3134,13 @@ async function loadCatalog(){
   table.querySelectorAll('[data-edit-client-map]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=state.catalogProducts.find(x=>x.id===b.dataset.editClientMap);if(p)openUnifiedCatalogItem(p).catch(err=>fail('تعذر فتح بيانات المؤسسة',err));});
   table.querySelectorAll('[data-catalog-state]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleCatalogProduct(b.dataset.catalogState);});
   const pages=Math.max(1,Math.ceil(state.catalogTotal/size));$('catalogPagination').innerHTML='<span class="hint">عرض '+(state.catalogTotal?(page-1)*size+1:0)+'–'+Math.min(page*size,state.catalogTotal)+' من '+state.catalogTotal+' · الصفحة '+page+' / '+pages+'</span><div class="actions"><button id="catalogPrev" class="soft" type="button" '+(page<=1?'disabled':'')+'>السابق</button><button id="catalogNext" class="soft" type="button" '+(page>=pages?'disabled':'')+'>التالي</button></div>';$('catalogPrev').onclick=()=>{if(state.catalogPage>1){state.catalogPage--;loadCatalog().catch(e=>fail('تعذر تحميل الصفحة',e));}};$('catalogNext').onclick=()=>{if(state.catalogPage<pages){state.catalogPage++;loadCatalog().catch(e=>fail('تعذر تحميل الصفحة',e));}};
+ }catch(error){
+  if(requestToken===state.catalogRequestToken){
+   if(table)table.innerHTML='<div class="empty" role="alert">تعذر تحميل دليل الأصناف الآن. بقي تسجيل الدخول محفوظاً؛ تحقق من الاتصال أو الصلاحية ثم اضغط «تحديث» لإعادة المحاولة.</div>';
+   const count=$('catalogResultCount');if(count)count.textContent='تعذر تحديث نتائج الدليل';
+   const pagination=$('catalogPagination');if(pagination)pagination.innerHTML='';
+  }
+  throw error;
  }finally{if(requestToken===state.catalogRequestToken)table?.removeAttribute('aria-busy');}
 }
 async function toggleCatalogProduct(id){
