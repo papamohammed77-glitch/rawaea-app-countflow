@@ -162,7 +162,7 @@ GitHub Actions Run `45886721963` — **SUCCESS** على HEAD `143283394d31faa2ee
 | إجمالي Playwright | 3/3 PASS |
 | إجمالي Workflow | SUCCESS |
 
-تحقق Playwright صراحة من أن Cloudflare Pages Production يطابق `main` على commit `143283394d31faa2ee6359694861c319881543d7f` عند تنفيذ Run `45886721963`. شملت الاختبارات عقود مستورد المؤسسة، مطابقة معرّفات العميل والعالم، عدم تمرير باركود UoM كـPrimary Client Barcode، الربط عبر RPC، وحارس الجلسات المفتوحة.
+تحقق Playwright صراحة من أن Cloudflare Pages Production يطابق `main` على commit `143283394d31faa2ee635273acc6c282041f7a1c` عند تنفيذ Run `45886721963`. شملت الاختبارات عقود مستورد المؤسسة، مطابقة معرّفات العميل والعالم، عدم تمرير باركود UoM كـPrimary Client Barcode، الربط عبر RPC، وحارس الجلسات المفتوحة.
 
 ## 10. قاعدة البيانات والبيانات التي لم تتغير
 
