@@ -10,7 +10,7 @@
 **Commit الدمج إلى main:** `74a426fbdd7a036633350546107e9f452aa3eae2` (Squash merge).  
 **Pull Request:** #11 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11.  
 **CI قبل الدمج:** Run `45871276475` على Feature HEAD النهائي — SUCCESS.  
-**Main push CI:** Run `45872497257` على Commit الدمج — IN_PROGRESS عند آخر تحقق.  
+**Main push CI:** Run `45872497257` على Commit الدمج — SUCCESS.  
 **الحالة:** MERGED TO MAIN — PR QUALITY GATE PASS — MAIN PUSH QUALITY GATE RUNNING AT LAST CHECK — AUTHENTICATED VISUAL ACCEPTANCE OPEN — DEPLOYMENT UNVERIFIED.
 
 ---
@@ -151,7 +151,7 @@ Feature HEAD النهائي: `bc92f73cf08501217f9432ea08b1479058042abb`
 الحالة النهائية: **SUCCESS**.  
 **GitHub Actions Main push Run #45872497257**  
 Commit: `74a426fbdd7a036633350546107e9f452aa3eae2`  
-الحالة عند آخر تحقق: **IN_PROGRESS**؛ لا يُعلن نجاح main CI قبل نتيجته النهائية.
+الحالة النهائية: **SUCCESS**. خطوات Deno type-check وNode/source/streaming tests (99/99) وCloudflare Pages allowlisted build وPlaywright public shell (2 PASS / 1 SKIP) جميعها ناجحة.
 
 | البوابة | النتيجة |
 |---|---|
@@ -172,13 +172,14 @@ Commit: `74a426fbdd7a036633350546107e9f452aa3eae2`
 
 ## 8. الفصل بين مصدر الكود والنشر والسلوك
 
-**Deployed Artifact — NOT UPDATED BY THIS PR**
-- تم دمج PR #11 في main؛ لم يُنفذ نشر Cloudflare يدوياً في هذه المهمة، ولا توجد مصادقة منشورة تثبت أن Production يعرض هذا الالتزام.
-- سياق Cloudflare الذي تمت قراءته سابقاً أظهر Production على `main` بمرجع أقدم من HEAD الحالي؛ لذلك لا يُدّعى أن تغيير LVE-788 منشور.
-- نجاح Pages build في CI يبني مخرجات الفرع للاختبار، ولا يعني نشرها على Production.
+**Deployed Artifact — DEPLOYMENT UNVERIFIED AFTER MERGE**
+- تم دمج PR #11 في `main`، مع تفعيل Automatic deployments في مشروع Cloudflare Pages وفق لوحة المشروع التي تمت قراءتها.
+- لقطة لوحة Cloudflare المتاحة كانت قديمة زمنياً وسبقت الدمج؛ وكانت تشير وقتها إلى Production على `main` بالالتزام `612bd5670f2e5d9bc6f512fd230e693a7aecfc3b`. لا يمكن اعتماد تلك اللقطة كحالة نشر بعد الدمج.
+- لم تتوفر وسيلة تفاعلية لتحديث لوحة Cloudflare والتحقق من Deployment ID وBuild SHA بعد الالتزام `74a426fbdd7a036633350546107e9f452aa3eae2`.
+- نجاح Pages build ضمن CI يثبت قابلية البناء فقط ولا يثبت اكتمال Production deployment.
 
 **Runtime / Visual Acceptance — OPEN**
-- لا تتوفر في جلسة Chat mode وسيلة تفاعلية للنقر داخل Admin المصادق أو التقاط حالة المحرر بصرياً.
+- تبويب Admin المفتوح يعرض جلسة مالك مصادق عليها، لكن واجهة المتصفح المتاحة في هذه الجلسة للقراءة فقط ولا تتيح النقر أو تحديث الصفحة أو التقاط حالة المحرر بعد الدمج.
 - لم يتم فتح محرر عالمي أو حفظ صنف حقيقي أو تعديل صورة أو إنشاء مواءمة مؤسسة في قاعدة البيانات.
 - القبول البصري المصادق على Desktop وMobile ما زال مطلوباً.
 - لم يُختبر سلوك اختيار الوحدة المخصصة داخل جلسة مالك حقيقية.
@@ -212,7 +213,8 @@ Commit: `74a426fbdd7a036633350546107e9f452aa3eae2`
 
 **MERGED TO MAIN — READY WITH LIMITATIONS**
 
-- المصدر المعدل واجتياز بوابة الجودة الآلية مؤكدان.
-- PR #11 مدمج في `main`، لكن قبول الواجهة المصادق والنشر لم يُثبتا بعد.
-- القبول البصري المصادق والنشر والسلوك الحقيقي بعد تسجيل الدخول ما زالت غير مثبتة.
-- الإجراء المتبقي: تأكيد Main push CI، ثم قبول بصري مصادق في Admin على Desktop/Mobile والتحقق من نشر Cloudflare. لا تُستخدم QA90K ولا تُجرى أي كتابة قاعدة بيانات لهذا القبول.
+- المصدر المعدل والاختبارات والتقرير موجودة على `main` بعد Squash Merge في `74a426fbdd7a036633350546107e9f452aa3eae2`.
+- PR quality gate وMain push CI ناجحتان؛ Main run `45872497257` SUCCESS، ونتيجة Node 99/99 وDeno وPages build وPlaywright 2 PASS / 1 SKIP.
+- القبول البصري المصادق بعد الدمج، والتحقق من Deployment SHA على Cloudflare، ما زالا مفتوحين وغير مثبتين.
+- لا توجد DDL/DML أو تغييرات بيانات/Storage في هذه المرحلة. لا تُستخدم QA90K لاختبار الواجهة.
+- الإجراء المتبقي: قبول بصري مصادق Desktop/Mobile والتحقق من نشر Cloudflare، مع بقاء `main` مصدر الحقيقة الوحيد.
