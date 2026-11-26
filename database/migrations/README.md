@@ -277,3 +277,40 @@ Open end-to-end gate: authenticated image upload, Admin thumbnail, Counter thumb
 - ملف Camera integrity استُعيد من نص سجل Supabase الفعلي؛ كود واجهة الكاميرا لم يُنقل إلى صفحات main بسبب كون `shelf-images` عاماً، وبسبب بقاء اختبار التصوير المصادق مفتوحاً.
 - لا تعِد تشغيل هذه الملفات على `rawaea-staging` أو أي بيئة. تحقق من سجل الإصدار قبل أي إجراء مستقبلي.
 - هذه الاستعادة تغلق فجوة مصادر إصدارات 2026-11-23/24 المذكورة هنا، ولا تدّعي أن كل تاريخ CountFlow الأقدم صار baseline قابلاً لإعادة الإنشاء؛ الأرشيف التاريخي السابق يظل مرجعاً مستقلاً.
+
+
+## 2026-11-26 — LVE-790: Client catalog import upsert and unit-of-measure parity
+
+LVE-790 added a bounded owner-only batch RPC for importing an institution's item file into the unified CountFlow catalogue. The RPC resolves global identity by canonical SKU, primary barcode, registered catalog identifier, alternate-UoM barcode, or an existing institution-local identifier. A matched global product is never updated by this path. Missing global products are created through the existing global-master triggers and then linked to the selected client. Institution-specific differences are saved in `count_client_products`.
+
+### Source SQL files and live ledger mappings
+
+| Repository source file | Live Supabase migration version | Live ledger name |
+|---|---:|---|
+| `20261126190000_countflow_client_catalog_import_upsert_v1.sql` | `20261126185715` | `countflow_client_catalog_import_upsert_v1` |
+| `20261126190500_countflow_client_catalog_import_upsert_row_atomicity_v2.sql` | `20261126185813` | `countflow_client_catalog_import_upsert_row_atomicity_v2` |
+| `20261126191000_countflow_client_catalog_import_uom_override_v3.sql` | `20261126191110` | `countflow_client_catalog_import_uom_override_v3` |
+
+The timestamps above intentionally distinguish the Git filename prefix from the version actually recorded by Supabase. Always use the live ledger version when referring to applied state; do not rename or replay these files to make timestamps match.
+
+### RPC contract and safeguards
+
+- RPC: `public.count_upsert_client_catalog_chunk(uuid,jsonb)`; accepts 1–500 rows per call.
+- Runs with `SECURITY DEFINER` and an empty `search_path`; checks a non-null `auth.uid()`, `counting_private.is_platform_owner()`, and an active `count_clients` target before processing any row.
+- Execute privilege: `authenticated` only; `PUBLIC` and `anon` are revoked. Anonymous execute was verified false; authenticated execute verified true. The platform-owner check is enforced inside the function and must not be removed.
+- Advisory transaction locks serialize concurrent imports of SKU, barcode, alternate-unit barcode, and institution identifier keys before resolving the canonical product.
+- If identity resolves to more than one global product, the row is rejected as ambiguous instead of guessing.
+- Existing global rows remain immutable in this import path. Differences in name/category/SKU/barcode/base unit are expressed as client overlays where supported.
+- Alternate-unit name, factor and barcode differences are compared semantically and stored in the client's `units_override` rather than replacing global `units`.
+- New global products are inserted only after no existing identity match is found; a new master must have a name and base unit. Existing products may be linked with identity fields even when the institution file omits a repeated global base-unit value.
+- Client overlay insert/update is atomic per row via `ON CONFLICT (client_id,catalog_product_id) DO UPDATE`. Duplicate counters and the per-chunk seen-product set are updated only after the overlay write succeeds.
+- Result counters distinguish new global masters, matched global products, new client links, updated client links, duplicates ignored, and rejected rows.
+
+### Data and operational boundary
+
+- The import RPC writes only `count_catalog_products` and `count_client_products`; it does not write `count_products`, expected balances, count entries, reconciliation, costs, or inventory ledgers.
+- No import RPC was called during LVE-790. No client records, catalog rows, mappings, operational test data, or QA90K rows were created or modified.
+- Latest read-only check during LVE-790 found 0 rows in `count_catalog_products`, 0 in `count_client_products`, 41,000 in `count_products`, 0 in `count_entries`, and 0 clients (0 active clients). Consequently the client-import workflow is implemented and its database contract/security verified, but a real customer-file import could not be end-to-end exercised without an active client and an approved business file.
+- The CountFlow counter's existing `count_record_entry` and recount RPC contracts accept the selected unit name; the installed `count_entries` trigger snapshots `unit_factor_to_base` and `base_quantity`. The browser must send the entered quantity in its selected unit and must not multiply it by the conversion factor.
+
+These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
