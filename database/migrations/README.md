@@ -347,4 +347,11 @@ A fresh read-only schema/function/grant check confirmed the two migrations are i
 
 Live schema/function/ACL verification confirmed both migrations in the Supabase ledger. For both public RPCs, `authenticated` execute is true and `anon` execute is false. These source migrations must not be replayed; consult the live migration ledger first.
 
+
+| Repository source file | Live Supabase migration version | Live ledger name |
+|---|---:|---|
+| `20261126192500_countflow_client_import_uom_barcode_primary_conflict_v5.sql` | `20261126195037` | `countflow_client_import_uom_barcode_primary_conflict_v5` |
+
+The v5 import guard prevents a barcode that matches the global primary barcode or one of the matched global product's alternate-UoM barcodes from being written into `count_client_products.client_barcode`. The code remains the primary identity or the alternate-unit barcode in the appropriate source. This avoids a project attachment promoting a carton barcode to the product's primary barcode while retaining the same barcode on an alternate UoM, which the project master trigger correctly rejects.
+
 These migrations are additive and preserve the existing three catalogue scopes: global catalogue, client overlays, and project-scoped `count_products`. Do not create a parallel `count_products_master` or `count_product_units` model.
