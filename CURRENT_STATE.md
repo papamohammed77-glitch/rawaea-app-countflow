@@ -1,3 +1,34 @@
+## LVE-2026-11-26-786 — تحليل وحدات الأصناف وتدقيق المستودع المعتمد
+
+**Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
+**التقرير:** `Reports/LVE-2026-11-26-786_ITEM_UOM_AND_REPOSITORY_CONSOLIDATION.md`.  
+**مستودع CountFlow المعتمد الوحيد:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**HEAD قبل التوثيق:** `628a2c21d8c00175ba30c050ab28ac0394c801fc`.  
+**Commit التقرير:** `c016a929d3812625fc88b421744e76e8a76612a1`.  
+**الحالة:** DESIGN AUDIT COMPLETE — REPOSITORY CONSOLIDATION VERIFIED — NO APPLICATION/DATABASE CHANGES.
+
+### القرار التنفيذي
+- CountFlow لديه بالفعل `base_unit` و`units` متعددة مع `factor_to_base` وباركود بديل وmetadata لفئة القياس/الدقة/نوع الصنف.
+- شاشة `countflow.html` لديها اختيار وحدة العد؛ الخادم يثبت معامل التحويل ويحسب `base_quantity`.
+- يجب تبسيط نموذج الصنف UI، وليس اختزال العقد أو حذف الوحدات المتعددة.
+- «بالوزن» اختيار طريقة قياس/نوع صنف، وليس وحدة كمية؛ يلزم اختيار وحدة كتلة فعلية مثل كجم/جرام.
+- يوجد خطر محتمل لتغيير وحدة الأساس بعد اكتمال جلسة بسبب نطاق guard الحالي؛ لا تغيير backend دون موافقة Migration منفصلة.
+- يوجد تعارض بين تقرير LVE-781 و`findProduct()` الحالي بشأن البحث بباركود الوحدة البديلة؛ الحالة CONFLICT / NOT CONFIRMED.
+
+### تدقيق المستودع
+- قائمة GitHub لدى المالك تضم 4 مستودعات؛ واحد فقط هو CountFlow المستقل. مستودعات ERP الثلاثة مشاريع منفصلة ولا تُحذف ضمن تنظيف CountFlow.
+- نسخة CountFlow المضمنة في `erp-frontend/companies/company-2/Counting`: 73 ملفاً؛ 55 مطابقاً تماماً؛ 18 مختلفاً؛ 0 مفقود من المستودع المستقل. لا نسخ بالجملة ولا تعديل ERP.
+- PR #7 وPR #8 مغلقان وغير مدمجين؛ PR #8 واسع ومتباعد ولا يُنقل بالجملة.
+- PR #9 هو LVE-785 النشط، مفتوح وغير مدمج، HEAD `8363da59dc6ab0160eb95c08813f156772577a43`; CI Run `45854351134` SUCCESS؛ قبول المالك البصري المصادق ما زال OPEN.
+- خمس migrations القديمة في PR #8 تطابق محتوى ملفات main التي تحمل versions المطابقة لسجل التنفيذ؛ لا حاجة إلى نسخ/إعادة تسمية/إعادة تطبيق. ملفات migrations التسعة الأخرى المسجلة في staging موجودة أيضاً في شجرة main.
+- بنية المستودع الحالية (صفحات التطبيقات في الجذر، Core/SW، database/migrations، functions، tests، Reports) مناسبة لمسارات Pages وService Worker؛ لا نقل مجلدات في هذه الجولة.
+
+### الحدود
+- لا نقل ملفات، لأن التدقيق أثبت عدم وجود ملفات CountFlow مفقودة في المستودع المعتمد.
+- لا DDL/DML/Migration/RLS/GRANT/RPC/Edge deploy، ولا تعديل RAWAEA ERP، ولا حذف فروع أو مستودعات.
+- التنفيذ التالي المقترح: UI-only UOM simplification في ملفات CountFlow الحالية مع اختبارات؛ ثم backend history guard ودقة لكل وحدة بعد موافقة مستقلة.
+
+---
 ## LVE-2026-11-26-784 — تدقيق استخراج تبويب الأصناف المرجعي من RAWAEA ERP
 
 **Last Verified Event:** 26 نوفمبر 2026 (Africa/Cairo).  
