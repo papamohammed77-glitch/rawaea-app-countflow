@@ -1561,20 +1561,20 @@ test("Unified catalogue filters preserve the PostgREST builder across async enri
  assert.equal(client.calls.then,1,"Only the explicit institution-ID lookup should execute inside the helper");
  assert.deepEqual(client.calls.range,[[0,499]],"Institution identifier lookup must remain bounded");
  assert.equal(catalog.calls.then,0,"The final catalogue query must not execute before the caller awaits it");
- assert.match(catalog.calls.or.at(-1),/id\\.in\\.\\(product-1\\)/,"Institution-specific matches must be included in the final unified search");
- assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\\(q,f,clientId\\);q=filtered\\.query\\.range\\(offset,offset\\+pageSize-1\\)/,"CSV export must paginate the preserved builder");
- assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\\(q,filters,state\\.catalogClientId\\);[\\s\\S]{0,180}q=filtered\\.query\\.range\\(\\(page-1\\)\\*size,page\\*size-1\\)/,"Catalogue list must paginate the preserved builder");
+ assert.match(catalog.calls.or.at(-1),/id\.in\.\(product-1\)/,"Institution-specific matches must be included in the final unified search");
+ assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\(q,f,clientId\);q=filtered\.query\.range\(offset,offset\+pageSize-1\)/,"CSV export must paginate the preserved builder");
+ assert.match(admin,/const filtered=await applyUnifiedCatalogFilters\(q,filters,state\.catalogClientId\);[\s\S]{0,180}q=filtered\.query\.range\(\(page-1\)\*size,page\*size-1\)/,"Catalogue list must paginate the preserved builder");
 });
 
 test("Catalogue bootstrap failures do not discard a valid authenticated session", () => {
  const admin=read("countflow-admin.html");
- assert.equal((admin.match(/await loadCatalog\\(\\)\\.catch\\(error=>fail\\('تعذر تحميل دليل الأصناف الموحد',error\\)\\)/g)||[]).length,2,
+ assert.equal((admin.match(/await loadCatalog\(\)\.catch\(error=>fail\('تعذر تحميل دليل الأصناف الموحد',error\)\)/g)||[]).length,2,
   "Both owner and client bootstrap paths must isolate catalogue loading failures");
- assert.match(admin,/if\\(state\\.user\\)\\{showApp\\(\\);fail\\('تعذر تحميل بعض بيانات النظام\\./,
+ assert.match(admin,/if\(state\.user\)\{showApp\(\);fail\('تعذر تحميل بعض بيانات النظام\./,
   "A recoverable startup data failure must preserve the authenticated app shell");
- assert.match(admin,/showLogin\\(friendlyErrorMessage\\(e\\)\\)/,
+ assert.match(admin,/showLogin\(friendlyErrorMessage\(e\)\)/,
   "Only a bootstrap failure without an authenticated user should return to login");
- assert.match(admin,/if\\(!membership\\)\\{await db\\.auth\\.signOut\\(\\);state\\.user=null;showLogin/,
+ assert.match(admin,/if\(!membership\)\{await db\.auth\.signOut\(\);state\.user=null;showLogin/,
   "Explicit authorization failures must still sign out rather than being masked");
 });
 
