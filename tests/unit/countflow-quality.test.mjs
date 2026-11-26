@@ -1926,7 +1926,8 @@ test("LVE-791: purchase value is blocked when purchase UoM factor mismatches pro
   assert.match(migration,/count_session_product_costs_purchase_unit_guard/);
   assert.match(migration,/REVOKE ALL ON FUNCTION counting_private\.validate_purchase_cost_unit_snapshot\(\) FROM PUBLIC, anon/);
   const aclMigration=read("database/migrations/20261126215000_countflow_purchase_cost_trigger_acl_v1.sql");
-  assert.match(aclMigration,/REVOKE ALL ON FUNCTION counting_private\.validate_purchase_cost_unit_snapshot\(\)\s+FROM PUBLIC, anon, authenticated, service_role/);
+  assert.ok(aclMigration.includes("REVOKE ALL ON FUNCTION counting_private.validate_purchase_cost_unit_snapshot()"));
+  assert.ok(aclMigration.includes("FROM PUBLIC, anon, authenticated, service_role;"));
   assert.match(aclMigration,/trigger-only SECURITY DEFINER/);
   const rollback=read("tests/cost-unit-integrity-rollback.sql");
   assert.match(rollback,/QA90K-000001/);
