@@ -153,6 +153,17 @@
 - Cost-unit rollback smoke: PASS. The new trigger added `PURCHASE_UNIT_FACTOR_MISMATCH` to an invalid purchase UoM factor, removed it after correction to `each / 1`, then the transaction rolled back. Post-check: 0 cost rows for the QA session, the committed import row has its original blank cost values, and the existing 90k QA batch remains `committing / 41,000 accepted / 0 rejected`.
 - Separate 5k and 90k import rollback calls failed inside the SQL tool before a result was returned. Both were followed by read-only residue checks: zero `QA_5K_Rollback` and `QA_90K_Rollback` projects, zero corresponding batches/products. They are **NOT VERIFIED**, not passed.
 
+
+### 6.2 تضييق صلاحيات دالة التحقق — trigger-only
+
+بعد مراجعة ACL والمشغلات الحية، تبيّن أن `validate_purchase_cost_unit_snapshot()` لا تستدعى من العميل ولا من التطبيق كـRPC؛ هي مربوطة فقط بمشغّلين BEFORE INSERT/UPDATE. لذلك أُضيف ترحيل ثانٍ:
+
+`database/migrations/20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`
+
+- يسحب EXECUTE من PUBLIC وanon وauthenticated وservice_role.
+- جرى اختبار ذلك قبل التطبيق داخل معاملة rollback: سُحبت صلاحية التنفيذ مؤقتًا، ثم أُدخلت لقطة تكلفة QA غير صحيحة من مالك قاعدة البيانات؛ اشتغل المشغّل وأعاد التحذير المتوقع، ثم ROLLBACK.
+- هذا يقلل سطح SECURITY DEFINER؛ لا يمكن استدعاء الدالة كـRPC من واجهة Data API.
+
 ## 7. فجوات لم تُغلق بعد — لا تُخفى
 
 ### 7.1 تصدير 90,000 صنف وما فوق
