@@ -22,6 +22,10 @@
 - لا DML دائم على دفعة QA90K أو على بيانات الجرد/التسوية/التكلفة.
 - لم تُعدّل جداول أو وظائف ERP القديمة. تغيير CountFlow في قاعدة البيانات هو trigger validation على cost snapshots/import rows؛ وCountFlow Edge Function `counting-export-session` نُشرت بالإصدار 16 مع `verify_jwt=true`.
 
+### تضييق ACL للمشغّل
+- الترحيل الثاني: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`.
+- تم التحقق من أن مشغّلي BEFORE INSERT/UPDATE يعملان دون أي EXECUTE grants إلى PUBLIC/anon/authenticated/service_role؛ الدالة مخصصة للتشغيل عبر trigger فقط.
+
 ### المتبقي
 - تصدير 90k+ لا يزال يتجاوز preflight المحافظ 160 MiB؛ الحل الصحيح background/streaming/resumable pipeline وليس رفع حد الذاكرة.
 - `MAX_LINES=150000` و`MAX_ENTRIES=150000` لا يثبتان سعة 90k × مواقع متعددة.
