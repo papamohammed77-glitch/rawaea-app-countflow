@@ -23,8 +23,8 @@
 - لم تُعدّل جداول أو وظائف ERP القديمة. تغيير CountFlow في قاعدة البيانات هو trigger validation على cost snapshots/import rows؛ وCountFlow Edge Function `counting-export-session` نُشرت بالإصدار 16 مع `verify_jwt=true`.
 
 ### تضييق ACL للمشغّل
-- الترحيل الثاني: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`.
-- تم التحقق من أن مشغّلي BEFORE INSERT/UPDATE يعملان دون أي EXECUTE grants إلى PUBLIC/anon/authenticated/service_role؛ الدالة مخصصة للتشغيل عبر trigger فقط.
+- الترحيل الثاني: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`؛ النسخة الحية `20261126215042`.
+- تم التحقق من أن مشغّلي BEFORE INSERT/UPDATE يعملان دون أي EXECUTE grants إلى PUBLIC/anon/authenticated/service_role؛ live ACL = false للأدوار الأربعة، والدالة مخصصة للتشغيل عبر trigger فقط.
 
 ### المتبقي
 - تصدير 90k+ لا يزال يتجاوز preflight المحافظ 160 MiB؛ الحل الصحيح background/streaming/resumable pipeline وليس رفع حد الذاكرة.
