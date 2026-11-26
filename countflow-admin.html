@@ -139,9 +139,26 @@
 .cf-catalog-tabs,.cf-catalog-editor-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px}
 .cf-catalog-tab,.cf-catalog-editor-tabs button{background:#f8fafc;color:#475569;border:1px solid #e8edf3;padding:9px 13px;font-size:12px;border-radius:10px}
 .cf-catalog-tab.active,.cf-catalog-editor-tabs button.active{background:#2563eb;border-color:#2563eb;color:#fff}
-.cf-catalog-toolbar{box-shadow:none;padding:14px}.cf-catalog-search-row{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(150px,.7fr) minmax(140px,.6fr);gap:10px;align-items:end}
+.cf-catalog-toolbar{box-shadow:none;padding:14px}
+.cf-catalog-primary-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:2px 0 13px;border-bottom:1px solid var(--line);margin-bottom:13px}
+.cf-catalog-primary-actions>div:first-child{display:grid;gap:3px}.cf-catalog-primary-actions b{font-size:14px;color:var(--navy)}.cf-catalog-primary-actions small{font-size:11px;color:var(--muted);line-height:1.6}
+.cf-catalog-primary-actions .actions{margin:0;display:flex;gap:8px;flex-wrap:wrap}
+#catalogOpenGlobalImport{min-height:42px;padding:10px 18px;background:#1d4ed8;color:#fff;border:1px solid #1d4ed8;box-shadow:0 5px 14px #1d4ed826}
+#catalogOpenGlobalImport:hover{background:#1e40af;transform:translateY(-1px)}
+#catalogOpenClientImport:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.cf-catalog-search-row{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(150px,.7fr) minmax(140px,.6fr);gap:10px;align-items:end}
 .cf-catalog-search-row .field{min-width:0}.cf-catalog-search-row input,.cf-catalog-search-row select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .cf-catalog-actions{margin-top:10px}.cf-catalog-table{min-width:880px}.cf-catalog-table thead th{position:sticky;top:0;background:#f8fafc;z-index:4}
+.cf-catalog-lookup{display:grid;gap:10px;padding:12px 14px;margin-bottom:14px;border:1px solid #cbd5e1;border-radius:13px;background:#f8fafc}
+.cf-catalog-lookup>div:first-child{display:grid;gap:3px}.cf-catalog-lookup>div:first-child b{font-size:13px}.cf-catalog-lookup>div:first-child small{font-size:11px;color:var(--muted);line-height:1.6}
+.cf-catalog-lookup-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.cf-catalog-lookup-controls input{min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cf-catalog-lookup-results{display:grid;gap:6px}.cf-catalog-lookup-result{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:9px}
+.cf-catalog-lookup-result small{color:var(--muted);overflow-wrap:anywhere}
+.cf-catalog-import-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.cf-catalog-import-summary span{display:block;padding:9px 10px;background:#f8fafc;border:1px solid var(--line);border-radius:9px;font-size:11px;line-height:1.5}
+.cf-catalog-import-summary b{display:block;font-size:17px;color:var(--navy);font-variant-numeric:tabular-nums}
+
 .cf-catalog-sort{padding:0;background:transparent;color:inherit;font-weight:800;border-radius:0}.cf-catalog-sort:hover{transform:none;color:#2563eb}
 .cf-catalog-scope-panel{display:grid;grid-template-columns:minmax(220px,360px) minmax(0,1fr);align-items:end;gap:12px;box-shadow:none}.cf-catalog-scope-panel select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .cf-catalog-custom-units{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}.cf-checkline{display:flex;gap:9px;align-items:flex-start;font-size:12px;font-weight:800}.cf-catalog-editor-panel{min-height:220px}
@@ -2431,37 +2448,45 @@ const CF_BASE_UNIT_SUGGESTIONS={
  other:['وحدة','عبوة']
 };
 function getGlobalBaseUnitValue(){
- const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),backing=$('globalBaseUnit');
- const value=select?.value==='__custom__'?String(custom?.value||'').trim():String(select?.value||'').trim();
+ const select=$('globalBaseUnitChoice'),backing=$('globalBaseUnit');
+ const value=String(select?.value||'').trim();
  if(backing)backing.value=value;
  return value;
 }
-function setGlobalBaseUnit(value=''){
- const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),backing=$('globalBaseUnit');
- if(!select||!custom||!backing)return;
+function setGlobalBaseUnit(value='',preserveExisting=true){
+ const select=$('globalBaseUnitChoice'),backing=$('globalBaseUnit');
+ if(!select||!backing)return;
  const current=String(value||'').trim(),unitClass=$('globalUnitClass')?.value||'other';
  const choices=CF_BASE_UNIT_SUGGESTIONS[unitClass]||[];
- select.innerHTML='<option value="">اختر الوحدة الأساسية</option>'+choices.map(item=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+'<option value="__custom__">وحدة مخصصة…</option>';
- const known=choices.find(item=>item===current);
- if(current&&known){select.value=known;custom.value='';custom.classList.add('hidden');custom.required=false;backing.value=known;}
- else if(current){select.value='__custom__';custom.value=current;custom.classList.remove('hidden');custom.required=true;backing.value=current;}
- else{select.value='';custom.value='';custom.classList.add('hidden');custom.required=false;backing.value='';}
+ const legacy=!!(preserveExisting&&current&&!choices.includes(current));
+ select.innerHTML='<option value="">اختر الوحدة الأساسية</option>'+choices.map(item=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+(legacy?'<option value="'+esc(current)+'" data-legacy="true">'+esc(current)+' — وحدة محفوظة من سجل سابق</option>':'');
+ select.value=current&&(choices.includes(current)||legacy)?current:'';
+ backing.value=select.value;
  const hint=$('globalBaseUnitHint');
- if(hint)hint.textContent=unitClass==='mass'?'للوحدات الوزنية اختر كجم أو جرام أو اكتب وحدة كتلة أخرى.':unitClass==='count'?'اختر وحدة عدد مناسبة مثل قطعة أو حبة أو كرتونة.':'اختر الوحدة المناسبة لنمط القياس، أو أدخل وحدة مخصصة.';
+ if(hint)hint.textContent=unitClass==='mass'?'وحدات الكتلة المتاحة: كجم، جرام، ملجم، طن، رطل وغيرها من الوحدات المعتمدة.':unitClass==='count'?'وحدات العدد المتاحة: قطعة، علبة، كرتونة، عبوة وغيرها.':'اختر وحدة من القائمة المقيدة حسب نمط القياس؛ القيم القديمة تظهر للقراءة والتحرير فقط.';
+}
+function setClientBaseUnit(value='',preserveExisting=true){
+ const select=$('clientProductUnit');if(!select)return;
+ const current=String(value||'').trim(),unitClass=$('clientUnitClass')?.value||'other';
+ const choices=CF_BASE_UNIT_SUGGESTIONS[unitClass]||[];
+ const legacy=!!(preserveExisting&&current&&!choices.includes(current));
+ select.innerHTML='<option value="">اختر الوحدة الأساسية</option>'+choices.map(item=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+(legacy?'<option value="'+esc(current)+'" data-legacy="true">'+esc(current)+' — وحدة محفوظة</option>':'');
+ select.value=current&&(choices.includes(current)||legacy)?current:'';
 }
 function bindGlobalBaseUnitSelector(){
- const select=$('globalBaseUnitChoice'),custom=$('globalBaseUnitCustom'),unitClass=$('globalUnitClass');
- if(!select||!custom||select.dataset.bound==='true')return;
+ const select=$('globalBaseUnitChoice'),unitClass=$('globalUnitClass'),clientUnitClass=$('clientUnitClass');
+ if(!select||select.dataset.bound==='true')return;
  select.dataset.bound='true';
- select.addEventListener('change',()=>{
-  if(select.value==='__custom__'){custom.classList.remove('hidden');custom.required=true;if(!custom.value.trim())custom.focus();}
-  else{custom.classList.add('hidden');custom.required=false;custom.value='';}
-  getGlobalBaseUnitValue();
- });
- custom.addEventListener('input',()=>getGlobalBaseUnitValue());
+ select.addEventListener('change',()=>getGlobalBaseUnitValue());
  unitClass?.addEventListener('change',()=>{
-  const current=getGlobalBaseUnitValue();
-  setGlobalBaseUnit(!current&&unitClass.value==='mass'?'كجم':current);
+  const current=getGlobalBaseUnitValue(),dimension=inferProductUnitClass(current);
+  const keep=current&&(CF_BASE_UNIT_SUGGESTIONS[unitClass.value]||[]).includes(current);
+  setGlobalBaseUnit(keep?current:(unitClass.value==='mass'?'كجم':''),false);
+ });
+ clientUnitClass?.addEventListener('change',()=>{
+  const current=$('clientProductUnit')?.value||'';
+  const choices=CF_BASE_UNIT_SUGGESTIONS[clientUnitClass.value]||[];
+  setClientBaseUnit(choices.includes(current)?current:'',false);
  });
 }
 function switchGlobalProductTab(tab='basic',focus=false){
@@ -2520,7 +2545,10 @@ function bindGlobalProductTabs(){
  $('globalImageCurrent').textContent=p?.image_storage_path?'جار تجهيز معاينة الصورة…':'لا توجد صورة مرتبطة بهذا الصنف.';
  renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);setUnitMetaFields('global',p?.units||[],$('globalBaseUnit').value);
  if(!p){$('globalItemKind').value='BARCODED';$('globalBarcodeType').value='AUTO';$('globalUnitClass').value='other';$('globalUnitPrecision').value='3';}
- setGlobalBaseUnit(p?.base_unit||'');
+ $('globalCatalogLookupPanel')?.classList.toggle('hidden',!!p);
+ if($('globalCatalogLookupResults'))$('globalCatalogLookupResults').textContent='';
+ if($('globalCatalogLookupInput')&&!p)$('globalCatalogLookupInput').value='';
+ setGlobalBaseUnit(p?.base_unit||'',true);
  $('globalProductFormTitle').textContent=p?'تفاصيل الصنف وتعديل بياناته':'إضافة صنف جديد';$('globalProductSave').textContent=p?'حفظ بيانات الصنف':'إضافة الصنف';
  $('catalogGlobalView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogWorkspaceSelector').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');
  $('clientCatalogEditorShell')?.classList.add('hidden');resetClientProductForm();
@@ -2560,9 +2588,9 @@ async function openUnifiedCatalogItem(product){
  const custom=!!(mapping?.base_unit_override||mapping?.units_override);
  $('clientUnitsOverrideToggle').checked=custom;
  $('clientUnitsOverrideFields').classList.toggle('hidden',!custom);
- $('clientProductUnit').value=mapping?.base_unit_override||'';
+ setUnitMetaFields('client',mapping?.units_override||product.units||[], mapping?.base_unit_override||product.base_unit||'');
+ setClientBaseUnit(mapping?.base_unit_override||product.base_unit||'',true);
  renderCatalogUnitEditor('clientProductUnitsEditor',mapping?.units_override||[]);
- setUnitMetaFields('client',mapping?.units_override||product.units||[], $('clientProductUnit').value||product.base_unit||'');
  $('clientProductFormTitle').textContent=mapping?'تعديل بيانات المؤسسة لهذا الصنف':'إضافة بيانات المؤسسة لهذا الصنف';
  openClientCatalogEditor();
  $('catalogProductEditor').classList.remove('hidden');
@@ -2570,7 +2598,7 @@ async function openUnifiedCatalogItem(product){
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function resetClientProductForm(){
- $('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');$('clientProductUnit').value='';renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
+ $('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');setClientBaseUnit('',false);renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
 }
 function openClientCatalogEditor(){
  if(!state.canManageClientCatalog)return notify('لا تملك صلاحية إدارة مواءمات المؤسسة.',true);
