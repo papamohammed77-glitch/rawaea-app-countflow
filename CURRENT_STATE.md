@@ -1,3 +1,56 @@
+## LVE-2026-11-26-783 — استعادة التسليم وقبول Admin
+
+**Last Verified Event:** 26 نوفمبر 2026 (Africa/Cairo).  
+**التقرير:** Reports/LVE-2026-11-26-783_HANDOVER_UI_ACCEPTANCE.md.  
+**المستودع التشغيلي الوحيد:** papamohammed77-glitch/rawaea-app-countflow.  
+**الفرع:** main.  
+**رأس main قبل تحديث التوثيق LVE-783:** c5202f0af8668fe2d08d7090ee5d97ab3abf494b.  
+**آخر التزام كود/اختبار:** e2ade95dda70d954e7aeb2466adf5db5484d8f1b.  
+**التقرير السابق:** LVE-780 ثم LVE-781 ثم LVE-782؛ لا تعِد تنفيذها.
+
+### استعادة المعرفة والحوكمة
+- تمت مراجعة CURRENT_STATE.md بالكامل، إلى جانب AGENTS.md وUSER_FIRST_ENGINEERING_PROTOCOL.md وARCHITECTURE.md وDEPLOYMENT.md وREADME.md والتقارير LVE-780 وLVE-781 وLVE-782.
+- تمت مراجعة فرع main وHEAD ومقارنة الالتزامات ومصدر Admin وService Worker واختباراته.
+- التزامات main الثلاثة بعد e2ade95 توثيقية فقط؛ لا تغييرات على ملفات التطبيق بعد SHA المصدر أعلاه.
+- دستور RAWAEA ERP المرفق بالطلب تمت قراءته كاملاً، لكنه خاص بـRAWAEA ERP وSMART ERP وليس دستور CountFlow. حوكمة CountFlow في AGENTS.md وبقية وثائقه هي الحاكمة؛ لا تخلط المستودعين.
+- لا تغييرات مصدر أو قاعدة بيانات أو Edge في هذا الحدث. جميع استعلامات Supabase قراءة فقط.
+
+### مصدر التطبيق والتحقق
+- countflow-admin.html blob: 90f77a6fff4914d0854e537251464fc61ac71204.
+- countflow-sw.js blob: ffeeabe90ac059eaa93f2e0b356a6172c04ea909؛ الإصدار countflow-sw-20261125-9.
+- tests/unit/countflow-quality.test.mjs blob: a01c2bf7de34a28143099c291da590227cfaa43a.
+- LVE-782 أصلح ReferenceError بسبب فقدان تعريف previewGlobalCatalogImport وcommitGlobalCatalogImport وresetGlobalCatalogImport قبل ربط الأزرار؛ هذا منع تسجيل مستمعي التنقل وأوقف كل التبويبات. التعريفات وربطها موجودة الآن في المصدر.
+- GitHub Actions Run 45702250074 / #368 على e2ade95: SUCCESS؛ Node 92/92، Deno PASS، Pages allowlisted build PASS، Playwright public production login shell 3/3 PASS، وProduction build-info SHA parity PASS.
+- Playwright غلاف دخول عام دون جلسة مصادقة؛ لا يثبت قبول Admin الداخلي بعد دخول المالك.
+- صفحة Production تمت قراءتها من التبويب المتصل فقط. لا جلسة مالك مصادق عليها مثبتة هنا، وأدوات المتصفح في هذه الجلسة لا تسمح بالنقر والتنقل التفاعلي. القبول البصري المصادق على Desktop وMobile يبقى OPEN.
+
+### Supabase rawaea-staging — قراءة فقط
+- المشروع: hfzznsiprnwkpayskzhu.
+- 33/33 جدول CountFlow count_* عليه RLS.
+- owner@rawaea.com: حساب Auth واحد مؤكد.
+- count_clients=0، count_catalog_products=0، count_client_products=0، count_products=41,000، count_projects=1، count_sessions=1، count_import_batches=1، count_import_rows=90,000.
+- دفعة QA90K f799c5c1-b766-4712-b74f-c0bb19836ddc حالتها committing؛ 90,000 صف مصدر، 41,000 مقبول، صفر مرفوض، completed_at NULL. الجلسة المرتبطة d435854f-1646-4549-9c12-2936f74a4052 ما زالت planned. لا تستأنفها أو توقفها أو تحذفها أو تعِد استيرادها ولا تستخدمها للاختبار.
+- فجوة decimal_precision التي سجلها LVE-780 أُغلقت في المصدر وقاعدة البيانات بعد LVE-781: Trigger count_entries_unit_conversion_guard ينفذ counting_private.set_count_entry_unit_factor() قبل إدراج/تحديث count_entries، ويفرض دقة الصنف من metadata ويثبت unit_factor_to_base.
+- سجل الترحيلات الحي يسجل countflow_item_master_barcode_uom_integrity_v1 عند النسخة 20261125202923 وcountflow_item_master_helper_acl_v1 عند 20261125203023. أرقام الوقت في أسماء ملفات SQL لا تطابق ledger؛ ledger هو مرجع التنفيذ. لا تعِد تشغيل الترحيلات.
+- counting-export-session ACTIVE v15 وverify_jwt=true؛ counting-provision-member ACTIVE v7 وverify_jwt=true.
+- لا DDL أو DML أو RPC writes أو GRANT/RLS/ACL أو Edge deploy.
+
+### Surgical ChangeSet ونتيجة LVE-783
+- أضيف تقرير عربي واحد: Reports/LVE-2026-11-26-783_HANDOVER_UI_ACCEPTANCE.md.
+- يُحدّث هذا القسم فقط في مقدمة CURRENT_STATE؛ جميع السجل التاريخي أدناه محفوظ كما هو.
+- لا تعديل على ملفات runtime أو الاختبارات أو قاعدة البيانات.
+- READY WITH LIMITATIONS: استعادة المعرفة والمصدر وCI مثبتة؛ القبول البصري/التفاعلي لواجهة Admin بعد مصادقة المالك لا يزال OPEN.
+
+### تعليمات الاستئناف
+1. استأنف من main وافحص HEAD قبل أي تغيير.
+2. الخطوة التالية هي قبول Admin تفاعلياً بعد دخول المالك الحالي على Desktop وMobile: Overview، دليل العملاء، Global/Client/Project، محرر الصنف، مواءمات المؤسسة، ومعاينة الاستيراد.
+3. لا تحفظ تعديلات حقيقية أثناء القبول الأولي، ولا تضغط زر استيراد/اعتماد.
+4. اختبارات الكتابة ببيانات QA اصطناعية تتطلب بوابة موافقة مستقلة محددة؛ استخدم مجموعة منفصلة قابلة للإزالة فقط، ولا تقترب من دفعة QA90K الحالية.
+5. لا تكرر LVE-780/781/782، ولا تدمج PR #6 أو تعدل فرع الكاميرا، ولا تلمس RAWAEA ERP أو SMART ERP.
+6. بعد كل مرحلة، حدّث تقرير Reports/ وCURRENT_STATE.md، واستخدم تصنيفات CONFIRMED / UNKNOWN / CONFLICT / UNVERIFIED.
+
+---
+
 ## LVE-2026-11-25-782 — إصلاح توقف تنقل CountFlow Admin
 
 **Last Verified Event:** 25 نوفمبر 2026 — Africa/Cairo  
