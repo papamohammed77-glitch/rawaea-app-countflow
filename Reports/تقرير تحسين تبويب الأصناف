@@ -1,0 +1,241 @@
+بعد مراجعة تقرير `LVE-2026-11-26-787`، تبين أن النظام الأم قد تجاوز الروائع في بعض الجوانب (دعم وحدات متعددة، باركود للوحدة)، لكنه لا يزال يحتاج إلى تحسين الواجهة لتعكس "فكرتك" (قائمة منسدلة للوحدات، فصل نمط القياس عن الوحدة، بساطة الاستخدام).
+
+بناءً على ذلك، هذا هو **التعديل النهائي المطلوب** لتبويب الأصناف في `countflow-admin.html`، مصمم ليتوافق مع ما تم تنفيذه، ويحقق رؤيتك.
+
+---
+
+### 🎯 التصميم المستهدف (صفحة واحدة، 3 تبويبات)
+
+1. **التبويب الأول: البيانات الأساسية**
+   - اسم الصنف، الباركود الأساسي (أو زر توليد تلقائي).
+   - التصنيف (قائمة منسدلة).
+   - **نمط القياس** (قائمة منسدلة: عدد/قطعة، وزن، حجم). عند اختيار "وزن"، يُجبر النظام الوحدة الأساسية على أن تكون "كجم" أو "جرام".
+   - **الوحدة الأساسية** (قائمة منسدلة بناءً على نمط القياس).
+   - صورة الصنف (اختياري).
+
+2. **التبويب الثاني: الوحدات البديلة (Multi-UOM)**
+   - جدول ديناميكي يسمح بإضافة أكثر من وحدة بديلة.
+   - كل صف يحتوي على: (اسم الوحدة، معامل التحويل (كم من الوحدة الأساسية)، باركود الوحدة). هذا يتوافق مع متطلبات الجرد (مسح الكرتونة أو القطعة).
+   - زر "إضافة وحدة بديلة".
+
+3. **التبويب الثالث: متقدم (الأسعار والمورد)**
+   - سعر التكلفة، سعر البيع، المورد.
+   - هذه الحقول اختيارية ولا توقف الحفظ.
+
+---
+
+### 💻 الكود الجاهز (لإضافته إلى `countflow-admin.html`)
+
+#### 1. دالة فتح صفحة الصنف (HTML + JS)
+استبدل دالة `openItemPage` الحالية بهذا الكود (أو أضف هذا الهيكل):
+
+```javascript
+function openItemPage(itemCode) {
+    var item = itemCode ? state.products.find(p => p.sku === itemCode || p.barcode === itemCode) : null;
+    var isEdit = !!item;
+    var title = isEdit ? 'تعديل الصنف' : 'إضافة صنف جديد';
+    var container = document.getElementById('mainContent'); // أو rw-page-container
+    if (!container) return;
+
+    var html = `
+    <div class="p-4 max-w-4xl mx-auto" dir="rtl">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-black"><i class="fa-solid fa-box-open ml-2 text-blue-600"></i>${title}</h2>
+            <button onclick="renderItemsView()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold hover:bg-gray-200">
+                <i class="fa-solid fa-arrow-right ml-1"></i> عودة للقائمة
+            </button>
+        </div>
+
+        <!-- التبويبات -->
+        <div class="flex flex-wrap gap-2 border-b pb-3 mb-6">
+            <button onclick="switchItemTab('basic')" class="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white" id="item-tab-basic">البيانات الأساسية</button>
+            <button onclick="switchItemTab('units')" class="px-4 py-2 rounded-xl font-bold text-sm text-gray-500" id="item-tab-units">الوحدات البديلة</button>
+            <button onclick="switchItemTab('advanced')" class="px-4 py-2 rounded-xl font-bold text-sm text-gray-500" id="item-tab-advanced">متقدم (أسعار ومورد)</button>
+        </div>
+
+        <!-- تبويب البيانات الأساسية -->
+        <div id="item-panel-basic">
+            <div class="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">اسم الصنف <span class="text-rose-600">*</span></label>
+                        <input id="item-name" value="${item ? item.name : ''}" class="p-2.5 bg-gray-50 border rounded-lg" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">الباركود الأساسي</label>
+                        <div class="flex gap-2">
+                            <input id="item-barcode" value="${item ? item.barcode : ''}" class="flex-1 p-2.5 bg-gray-50 border rounded-lg" placeholder="امسح أو اكتب الباركود">
+                            <button onclick="generateInternalBarcode()" class="bg-gray-100 px-3 rounded-lg text-sm font-bold hover:bg-gray-200">توليد</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">التصنيف</label>
+                        <select id="item-category" class="p-2.5 bg-gray-50 border rounded-lg">
+                            <option value="">بدون تصنيف</option>
+                            <!-- يتم ملؤها ديناميكياً -->
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">نمط القياس</label>
+                        <select id="item-measure-type" onchange="onMeasureTypeChange()" class="p-2.5 bg-gray-50 border rounded-lg">
+                            <option value="COUNT" ${item && item.measure_type === 'COUNT' ? 'selected' : ''}>عدد (قطعة/علبة/كرتونة)</option>
+                            <option value="WEIGHT" ${item && item.measure_type === 'WEIGHT' ? 'selected' : ''}>وزن (كجم/جرام)</option>
+                            <option value="VOLUME" ${item && item.measure_type === 'VOLUME' ? 'selected' : ''}>حجم (لتر/مليلتر)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">الوحدة الأساسية</label>
+                        <select id="item-base-unit" class="p-2.5 bg-gray-50 border rounded-lg">
+                            <!-- يتم ملؤها بناءً على نمط القياس -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويب الوحدات البديلة -->
+        <div id="item-panel-units" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                <p class="text-sm text-gray-600">أضف وحدات بديلة (مثل: كرتونة = 12 قطعة) مع باركود خاص لكل وحدة ليتمكن مسؤول الجرد من مسحها.</p>
+                <table class="w-full text-sm">
+                    <thead class="text-xs text-gray-500">
+                        <tr>
+                            <th class="pb-2 text-right">اسم الوحدة</th>
+                            <th class="pb-2 text-right">معامل التحويل (كم من الوحدة الأساسية)</th>
+                            <th class="pb-2 text-right">باركود الوحدة</th>
+                            <th class="w-8"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="alt-units-body">
+                        <!-- الصفوف الديناميكية -->
+                    </tbody>
+                </table>
+                <button onclick="addAltUnitRow()" class="w-full rounded-lg border-2 border-dashed py-2 text-sm font-bold text-slate-600 hover:border-blue-500">+ إضافة وحدة بديلة</button>
+            </div>
+        </div>
+
+        <!-- تبويب متقدم -->
+        <div id="item-panel-advanced" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">سعر التكلفة</label>
+                        <input id="item-cost" type="number" value="${item ? item.cost_price || 0 : 0}" class="p-2.5 bg-gray-50 border rounded-lg">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-bold mb-1">سعر البيع</label>
+                        <input id="item-sales" type="number" value="${item ? item.sales_price || 0 : 0}" class="p-2.5 bg-gray-50 border rounded-lg">
+                    </div>
+                    <div class="flex flex-col md:col-span-2">
+                        <label class="text-sm font-bold mb-1">المورد</label>
+                        <input id="item-supplier" value="${item ? item.supplier_name || '' : ''}" class="p-2.5 bg-gray-50 border rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الحفظ -->
+        <div class="flex justify-end gap-3 mt-6">
+            ${isEdit ? '<button onclick="deleteItemFromPage()" class="px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold mr-auto"><i class="fa-solid fa-trash ml-1"></i> حذف الصنف</button>' : ''}
+            <button onclick="renderItemsView()" class="px-5 py-2.5 border rounded-xl font-bold">إلغاء</button>
+            <button onclick="saveItemFromPage(${isEdit})" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow"><i class="fa-solid fa-check ml-1"></i> حفظ</button>
+        </div>
+    </div>`;
+
+    container.innerHTML = html;
+
+    // ملء التصنيفات
+    loadCategoriesIntoSelect(item);
+    // تهيئة الوحدات
+    onMeasureTypeChange();
+    if (isEdit) {
+        // تحميل الوحدات البديلة الموجودة
+        loadAltUnits(item);
+    }
+    window._currentEditItem = item;
+}
+```
+
+#### 2. دوال مساعدة (الوحدات، التصنيفات، الحفظ)
+
+```javascript
+function switchItemTab(tab) {
+    ['basic', 'units', 'advanced'].forEach(t => {
+        document.getElementById('item-panel-' + t).classList.add('hidden');
+        document.getElementById('item-tab-' + t).classList.remove('bg-blue-600', 'text-white');
+        document.getElementById('item-tab-' + t).classList.add('text-gray-500');
+    });
+    document.getElementById('item-panel-' + tab).classList.remove('hidden');
+    document.getElementById('item-tab-' + tab).classList.add('bg-blue-600', 'text-white');
+    document.getElementById('item-tab-' + tab).classList.remove('text-gray-500');
+}
+
+function onMeasureTypeChange() {
+    const type = document.getElementById('item-measure-type').value;
+    const baseSelect = document.getElementById('item-base-unit');
+    let options = '';
+    if (type === 'COUNT') {
+        options = `<option value="PCS">قطعة</option><option value="BOX">علبة</option><option value="CTN">كرتونة</option>`;
+    } else if (type === 'WEIGHT') {
+        options = `<option value="KG">كيلوجرام</option><option value="G">جرام</option>`;
+    } else if (type === 'VOLUME') {
+        options = `<option value="L">لتر</option><option value="ML">مليلتر</option>`;
+    }
+    baseSelect.innerHTML = options;
+}
+
+function addAltUnitRow(unitName = '', factor = '', barcode = '') {
+    const tbody = document.getElementById('alt-units-body');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td class="py-2 pl-2"><input type="text" class="alt-name w-full rounded-lg border p-2 text-sm" value="${unitName}" placeholder="مثال: كرتونة"></td>
+        <td class="py-2 pl-2"><input type="number" class="alt-factor w-full rounded-lg border p-2 text-sm" value="${factor}" placeholder="مثال: 12"></td>
+        <td class="py-2 pl-2"><input type="text" class="alt-barcode w-full rounded-lg border p-2 text-sm font-mono" value="${barcode}" placeholder="باركود الوحدة"></td>
+        <td class="py-2 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500 hover:text-rose-700">✕</button></td>
+    `;
+    tbody.appendChild(row);
+}
+
+function generateInternalBarcode() {
+    // توليد باركود داخلي بادئة 20 (GS1)
+    const prefix = '20';
+    const random = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    document.getElementById('item-barcode').value = prefix + random;
+}
+
+function saveItemFromPage(isEdit) {
+    // جمع البيانات وإرسالها إلى Supabase
+    // ... (منطق الحفظ)
+}
+```
+
+---
+
+### 📝 البرومبت الجاهز للمساعد المنفذ (انسخه واعطه له)
+
+> **Role:** Executor Assistant.
+> **Task:** Update the "Items" tab in `countflow-admin.html` to match the agreed UI design.
+> 
+> **Context:** We have a single-page item editor (not a modal). The backend already supports multiple alternative units (`count_product_units` table) and unit barcodes (LVE-787). Your task is to update the frontend to expose these features cleanly.
+> 
+> **Step 1: Replace the `openItemPage` function** with the HTML/JS template provided in the prompt. Ensure it includes 3 tabs: (Basic Info, Alternative Units, Advanced).
+> **Step 2: Add the helper functions** (`switchItemTab`, `onMeasureTypeChange`, `addAltUnitRow`, `generateInternalBarcode`, `saveItemFromPage`) to the JavaScript section.
+> **Step 3: Integrate with Supabase:**
+> - When saving, construct a payload that includes the item master data, the `measure_type`, and an array of `units` (each with `unit_name`, `conversion_factor`, `barcode`).
+> - Use the existing `count_save_product` RPC (or equivalent) to save the data.
+> **Step 4: Ensure the UI is styled with Tailwind CSS** and matches the professional look of the rest of the admin panel.
+> **Step 5: Test the implementation** by adding a new item with two alternative units (e.g., Carton=12, Box=6) and verifying it saves correctly.
+> 
+> **Deliverable:** Commit and push. Update `CURRENT_STATE.md` with a 3-line summary.
+
+---
+
+### 💡 ما الذي تم تحسينه في هذا التعديل؟
+
+1. **فصل "نمط القياس" عن "الوحدة":** كما أوصى تقرير LVE-787، لا يمكن اختيار "بالوزن" كوحدة. بل يختار المستخدم "وزن" كنمط، ثم يختار "كجم" أو "جرام" كوحدة.
+2. **قائمة منسدلة للوحدة الأساسية:** بدلاً من النص الحر (الذي يسبب أخطاء إملائية)، الوحدات محددة مسبقاً.
+3. **دعم وحدات بديلة متعددة:** مع إمكانية إضافة باركود لكل وحدة، مما يتوافق مع متطلبات الجرد.
+4. **3 تبويبات واضحة:** (أساسي، وحدات، متقدم) لتقليل الفوضى البصرية.
+5. **توليد باركود داخلي:** للأصناف التي لا تملك باركود (مخبوزات، لحوم).
+
+هذا التعديل **لا يعيد بناء ما تم** في LVE-787، بل **يحسّن الواجهة** لتتوافق مع رؤيتك وقواعد البساطة والاحترافية.
