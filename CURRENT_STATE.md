@@ -3,13 +3,13 @@
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.
 **المستودع والفرع:** papamohammed77-glitch/rawaea-app-countflow / main فقط.
 **آخر Commit كود واختبارات:** 22e1e4d2bab68d4211ad068f653dd6411392bdb5.
-**آخر HEAD تحقق منه CI وProduction parity:** 143283394d31faa2ee635273acc6c282041f7a1c (تغيير README فقط بعد Commit الكود والاختبارات).
+**آخر HEAD تحقق منه CI وProduction parity:** df724268addab4882b0b3c66936ddb98d6e2b67f (تغيير README فقط بعد Commit الكود والاختبارات).
 **التقرير التنفيذي:** Reports/LVE-2026-11-26-790_CATALOG_IMPORT_IDENTITY_UOM_AND_COUNTER_BARCODE.md.
 **ملف Admin:** countflow-admin.html — blob 2e1a65000052ffd68b5c9ad7a3a4f4d21ea067be.
 **ملف العد:** countflow.html — blob 2feaccac1467498677ee90c05ec08191902c9572.
 **الاختبارات:** tests/unit/countflow-quality.test.mjs — blob 88f23173714de630d9d554b1d7d142868ec47562.
-**CI:** Run 45886721963 — SUCCESS على HEAD 143283394d31faa2ee635273acc6c282041f7a1c: Node 109/109، Deno PASS، Pages build PASS، Playwright 3/3 PASS.
-**Production parity:** PASS — Playwright أثبت أن rawaea-app-countflow.pages.dev يعرض HEAD نفسه 143283394d31faa2ee635273acc6c282041f7a1c.
+**CI:** Run 45887391745 — SUCCESS على HEAD df724268addab4882b0b3c66936ddb98d6e2b67f: Node 109/109، Deno PASS، Pages build PASS، Playwright 3/3 PASS.
+**Production parity:** PASS — Playwright أثبت أن rawaea-app-countflow.pages.dev يعرض HEAD نفسه df724268addab4882b0b3c66936ddb98d6e2b67f.
 **الحالة:** IMPLEMENTED ON MAIN — 109/109 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — REAL CLIENT IMPORT / AUTHENTICATED OWNER VISUAL ACCEPTANCE OPEN.
 
 ### 1. مصدر الحقيقة ونطاق العمل
@@ -87,12 +87,12 @@
 - لم تُعدّل أو تُحذف أو تُستأنف دفعة QA90K. لا كتابة على count_products أو الأرصدة أو أحداث العد خلال هذه المهمة.
 
 ### 8. بوابة الجودة والنشر
-- GitHub Actions Run 45886721963 على HEAD 143283394d31faa2ee635273acc6c282041f7a1c: SUCCESS.
+- GitHub Actions Run 45887391745 على HEAD df724268addab4882b0b3c66936ddb98d6e2b67f: SUCCESS.
 - Node tests: 109/109 PASS.
 - Deno type-check لوظيفتي Edge الحالية: PASS.
 - Cloudflare Pages allowlisted build: PASS.
 - Playwright: 3/3 PASS؛ شمل مطابقة نشر Production مع HEAD نفسه وRTL/mobile/public login shell.
-- اختبار النشر أثبت صراحةً أن rawaea-app-countflow.pages.dev يطابق 143283394d31faa2ee635273acc6c282041f7a1c عند الفحص.
+- اختبار النشر أثبت صراحةً أن rawaea-app-countflow.pages.dev يطابق df724268addab4882b0b3c66936ddb98d6e2b67f عند الفحص.
 
 ### 9. حدود القبول والمتابعة
 - READY WITH LIMITATIONS: الكود، RPC، الترحيلات، اختبارات المصدر، وبوابة النشر مؤكدة؛ لكن استيراد عميل حقيقي لا يزال غير مختبر لعدم وجود عميل نشط وملف معتمد.

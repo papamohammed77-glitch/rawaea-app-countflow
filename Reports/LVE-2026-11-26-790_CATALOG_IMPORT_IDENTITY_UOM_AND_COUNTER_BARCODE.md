@@ -4,13 +4,13 @@
 **المستودع المعتمد:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **مسار التنفيذ:** `main` فقط؛ لا فروع مؤقتة ولا مستودعات موازية.  
 **آخر Commit كود واختبارات:** `22e1e4d2bab68d4211ad068f653dd6411392bdb5`.  
-**HEAD موثق ومتحقق منه عبر Cloudflare Pages:** `143283394d31faa2ee635273acc6c282041f7a1c` (تغيير README فقط بعد Commit الكود/الاختبارات).  
+**HEAD موثق ومتحقق منه عبر Cloudflare Pages:** `df724268addab4882b0b3c66936ddb98d6e2b67f` (تغيير README فقط بعد Commit الكود/الاختبارات).  
 **ملف Admin:** `countflow-admin.html` — blob `2e1a65000052ffd68b5c9ad7a3a4f4d21ea067be`.  
 **ملف العد الميداني:** `countflow.html` — blob `2feaccac1467498677ee90c05ec08191902c9572`.  
 **ملف الاختبارات:** `tests/unit/countflow-quality.test.mjs` — blob `88f23173714de630d9d554b1d7d142868ec47562`.  
 **Migration README:** تم تحديثه ليوثق ستة ترحيلات LVE-790 مع إصدارات سجل Supabase الحقيقية.  
-**CI:** Run `45886721963` على HEAD `143283394d31faa2ee635273acc6c282041f7a1c` — **SUCCESS**؛ Node 109/109، Deno PASS، Pages build PASS، Playwright 3/3 PASS.  
-**Production parity:** PASS — Playwright أكد أن Cloudflare Pages Production يطابق HEAD `143283394d31faa2ee635273acc6c282041f7a1c`.  
+**CI:** Run `45887391745` على HEAD `df724268addab4882b0b3c66936ddb98d6e2b67f` — **SUCCESS**؛ Node 109/109، Deno PASS، Pages build PASS، Playwright 3/3 PASS.  
+**Production parity:** PASS — Playwright أكد أن Cloudflare Pages Production يطابق HEAD `df724268addab4882b0b3c66936ddb98d6e2b67f`.  
 **الحالة:** IMPLEMENTED ON MAIN — 109/109 TESTS PASS — DENO/PAGES PASS — PLAYWRIGHT 3/3 PASS — PRODUCTION/MAIN PARITY PASS — REAL CLIENT IMPORT E2E / AUTHENTICATED OWNER VISUAL ACCEPTANCE OPEN.
 
 ---
@@ -149,7 +149,7 @@
 
 ## 9. الاختبارات والتحقق
 
-GitHub Actions Run `45886721963` — **SUCCESS** على HEAD `143283394d31faa2ee635273acc6c282041f7a1c`.
+GitHub Actions Run `45887391745` — **SUCCESS** على HEAD `df724268addab4882b0b3c66936ddb98d6e2b67f`.
 
 | بوابة | النتيجة |
 |---|---:|
@@ -162,7 +162,7 @@ GitHub Actions Run `45886721963` — **SUCCESS** على HEAD `143283394d31faa2ee
 | إجمالي Playwright | 3/3 PASS |
 | إجمالي Workflow | SUCCESS |
 
-تحقق Playwright صراحة من أن Cloudflare Pages Production يطابق `main` على commit `143283394d31faa2ee635273acc6c282041f7a1c` عند تنفيذ Run `45886721963`. شملت الاختبارات عقود مستورد المؤسسة، مطابقة معرّفات العميل والعالم، عدم تمرير باركود UoM كـPrimary Client Barcode، الربط عبر RPC، وحارس الجلسات المفتوحة.
+تحقق Playwright صراحة من أن Cloudflare Pages Production يطابق `main` على commit `df724268addab4882b0b3c66936ddb98d6e2b67f` عند تنفيذ Run `45887391745`. شملت الاختبارات عقود مستورد المؤسسة، مطابقة معرّفات العميل والعالم، عدم تمرير باركود UoM كـPrimary Client Barcode، الربط عبر RPC، وحارس الجلسات المفتوحة.
 
 ## 10. قاعدة البيانات والبيانات التي لم تتغير
 
