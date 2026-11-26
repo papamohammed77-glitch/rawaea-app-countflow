@@ -4,7 +4,7 @@
 **المستودع والفرع:** papamohammed77-glitch/rawaea-app-countflow / main فقط.
 **آخر Commit كود واختبارات:** 22e1e4d2bab68d4211ad068f653dd6411392bdb5.
 **آخر HEAD تحقق منه CI وProduction parity:** 143283394d31faa2ee635273acc6c282041f7a1c (تغيير README فقط بعد Commit الكود والاختبارات).
-**آخر تحديث للتقرير:** Commit 4fc14eb30c5834c190b3ba502bc81957fb207153.
+**التقرير التنفيذي:** Reports/LVE-2026-11-26-790_CATALOG_IMPORT_IDENTITY_UOM_AND_COUNTER_BARCODE.md.
 **ملف Admin:** countflow-admin.html — blob 2e1a65000052ffd68b5c9ad7a3a4f4d21ea067be.
 **ملف العد:** countflow.html — blob 2feaccac1467498677ee90c05ec08191902c9572.
 **الاختبارات:** tests/unit/countflow-quality.test.mjs — blob 88f23173714de630d9d554b1d7d142868ec47562.
