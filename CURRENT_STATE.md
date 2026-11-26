@@ -1,3 +1,75 @@
+## LVE-2026-11-26-788 — تنظيم محرر الصنف ووحدة الأساس
+
+**Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
+**التقرير التنفيذي:** `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`.  
+**التقرير المساعد المدروس:** `Reports/تقرير تحسين تبويب الأصناف` (blob `11bb86d93a64a2dff735902690e8898f58cbbe9e`).  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**فرع الاعتماد:** `main` — لم يتغير في LVE-788.  
+**Base commit:** `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`.  
+**فرع التنفيذ:** `work/lve-788-admin-item-editor-ux`.  
+**Feature HEAD بعد التوثيق:** سيثبت من رأس الفرع بعد هذا التحديث.  
+**PR #11:** https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/11 — OPEN / NOT MERGED.  
+**الحالة:** SOURCE IMPLEMENTED — CI PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — NOT DEPLOYED.
+
+### 1. نقطة الاستئناف
+- استُؤنف العمل من LVE-787 المدمج في main. لم تُعد كتابة دليل الأصناف الموحد أو البحث أو صفحة التفاصيل أو فصل Global/Client/Project.
+- أحدث Commit على main عند البدء كان `2c33e56cead187c7136f42fd14b6e6e11da9bdbe`؛ كان إضافة تقرير تحسين الأصناف فقط، دون تعديل Runtime.
+- التغيير الوظيفي محصور في محرر الصنف العالمي داخل `countflow-admin.html`؛ مواءمة المؤسسة وأصناف التكليف بقيت ضمن مساراتها الحالية.
+
+### 2. ما تم تنفيذه
+- تنظيم محرر الصنف في ثلاثة تبويبات داخلية: البيانات الأساسية، الوحدات البديلة، الإعدادات المتقدمة.
+- جعل الأقسام Accessible باستخدام tablist/tab/tabpanel وaria-selected، مع التنقل بالأسهم وHome/End.
+- وضع صورة الصنف في قسم البيانات الأساسية، مع الاحتفاظ بStorage الخاص وروابط العرض الموقعة الحالية.
+- نقل `unit_class` (نمط القياس) إلى البيانات الأساسية، مع فصلها عن `item_kind` (نوع تعريف الباركود).
+- إضافة قائمة لوحدة الأساس مرتبطة بنمط القياس وخيار وحدة مخصصة؛ تبقى القيمة النهائية في `base_unit` الموجود.
+- توسيع aliases للتعرف على الوحدات حتى تتسق مع `counting_private.infer_item_unit_class`، بما في ذلك oz/ounce وinch/in/ft وsqft/ft2.
+- الإبقاء على الوحدات البديلة المتعددة ومعامل `factor_to_base` وباركود كل وحدة وmetadata داخل `units` JSONB.
+- الإبقاء على مولد CFI والتحقق الحالي من GTIN/Code128 وعمليات الحفظ الحالية. لم يتم إنشاء جدول أو عمود أو RPC جديد.
+- عدم إضافة تكلفة أو سعر بيع أو مورد إلى الدليل؛ هذه الحقول/المعاني غير موجودة في عقد Item Master الحالي.
+
+### 3. الملفات والبصمات
+- `countflow-admin.html`: blob `b144a609f0ef5dad45dcc3cd25a5f198f50dab6f`.
+- `tests/unit/countflow-quality.test.mjs`: blob `b3a2fdb9762f201cf09743c3a9f4c9fec1bfb5d8`.
+- `Reports/LVE-2026-11-26-788_ADMIN_ITEM_EDITOR_UX.md`: تقرير التنفيذ العربي الجديد.
+- `CURRENT_STATE.md`: هذا التحديث فقط.
+- PR #11 يضم تعديلات Runtime واختبارات وتقارير/حالة؛ لا يوجد دمج إلى main.
+
+### 4. التحقق الآلي
+- GitHub Actions Run `45870843566`, HEAD `81f985dfb59c0e3864cf07f43ca7405e3e3a8e90`: SUCCESS.
+- Node tests: 99/99 PASS.
+- Deno type-check لوظيفتي Edge: PASS.
+- Cloudflare Pages allowlisted build: PASS.
+- Playwright discovery وPublic production shell: 2 PASS / 1 SKIP.
+- حالات الفشل الوسيطة كانت في اختباري وحدة جديدين (حد اقتطاع دالة inference وتوقع تصنيف square-foot) وتم تصحيحها؛ الاختبار النهائي على HEAD أعلاه أخضر بالكامل.
+- نجاح هذه البوابة لا يثبت فتح المحرر في جلسة المالك أو القبول البصري المصادق.
+
+### 5. حالة Supabase والسلامة
+- المشروع الوحيد الذي تمت قراءته: `rawaea-staging` / `hfzznsiprnwkpayskzhu`, ACTIVE_HEALTHY.
+- 33/33 CountFlow tables عليها RLS. سجل migrations الحي 191.
+- `counting-provision-member` v7 ACTIVE وJWT مطلوب؛ `counting-export-session` v15 ACTIVE وJWT مطلوب.
+- بيانات القراءة الحية وقت هذا الحدث: projects=1, members=4, sessions=1, products=41,000, catalog_products=0, client_products=0, clients=0, import_batches=1, import_rows=90,000, count_entries=0.
+- دفعة QA90K `f799c5c1-b766-4712-b74f-c0bb19836ddc` حالتها `committing`، بها 41,000 committed و49,000 staged؛ لم تُستأنف أو توقف أو تعدل أو تحذف.
+- لا DDL/DML/Migration/RLS/GRANT/Trigger/RPC definition/Edge deploy أو كتابة Storage في LVE-788.
+- SMART ERP / `fiilmooggumokxanwiyx` وملفات ERP لم تُلمس.
+
+### 6. Deployment / Runtime / Acceptance
+- PR #11 غير مدمج، لذلك تغيير LVE-788 غير منشور على Cloudflare Production.
+- CI بنى Pages من الفرع فقط؛ لا يساوي Deploy إلى Production.
+- القبول البصري المصادق داخل Admin على Desktop/Mobile، وتفاعل المحرر بحساب المالك: OPEN.
+- لم يتم إنشاء/تحديث صنف فعلي أو مواءمة مؤسسة أو رفع صورة في قاعدة البيانات.
+
+### 7. التراجع
+- Admin قبل LVE-788: blob `f3bf232b8a38935b38b673997d96e77d5acac561`.
+- Tests قبل LVE-788: blob `ce9ab49b6ffba6decdb3b4554597389aa52da93c`.
+- التراجع يكون عبر Revert لالتزامات PR #11 أو استعادة البصمتين في فرع مستقل؛ لا يوجد DB rollback مطلوب.
+
+### 8. الخطوة التالية
+أكمل قبولاً بصرياً مصادقاً لمحرر الصنف في PR #11 (Desktop/Mobile، التنقل بين الأقسام دون فقد المدخلات، فتح صنف قائم، وحدة أساسية مخصصة، الوحدات البديلة والصورة)، ثم قرر الدمج بعد قبول الواجهة. لا تستخدم بيانات QA90K ولا تنفذ كتابة قاعدة بيانات كجزء من القبول البصري.
+
+**Readiness:** READY WITH LIMITATIONS — CI/source gates PASS; authenticated visual and owner acceptance OPEN.
+
+---
+
 ## LVE-2026-11-26-787 — توحيد دليل الأصناف وتدقيق الفروع
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
