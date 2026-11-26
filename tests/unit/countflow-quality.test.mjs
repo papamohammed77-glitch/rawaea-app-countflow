@@ -1768,6 +1768,19 @@ test("LVE-790: batch client catalogue import enforces owner-only RPC and row-lev
  assert.ok(hardening.indexOf("v_catalog_inserted := v_catalog_inserted + 1")>hardening.indexOf("INSERT INTO public.count_client_products"),"New-master counters are committed only after client mapping succeeds");
 });
 
+test("LVE-790: institution alternate-unit differences are stored as client overrides, never global updates", () => {
+ const sql=read("database/migrations/20261126191000_countflow_client_catalog_import_uom_override_v3.sql");
+ assert.match(sql,/CREATE OR REPLACE FUNCTION public\.count_upsert_client_catalog_chunk/);
+ assert.match(sql,/jsonb_agg\(jsonb_build_array\([\s\S]{0,600}factor_to_base/);
+ assert.match(sql,/v_client_base_unit := coalesce\(v_client_base_unit, v_catalog\.base_unit\)/);
+ assert.match(sql,/v_client_units := v_units/);
+ assert.match(sql,/v_client_units IS NULL/);
+ assert.doesNotMatch(sql,/UPDATE public\.count_catalog_products/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.count_upsert_client_catalog_chunk\(uuid, jsonb\) TO authenticated/);
+ const readme=read("database/migrations/README.md");
+ for(const version of ["20261126185715","20261126185813","20261126191110"])assert.ok(readme.includes(version),"Migration README must map live ledger version "+version);
+});
+
 test("LVE-790: counter resolves alternate-unit barcodes and sends raw quantity plus actual scanned identifier", () => {
  const counter=read("countflow.html");
  assert.match(counter,/function counterUnitRows\(product\)/);
