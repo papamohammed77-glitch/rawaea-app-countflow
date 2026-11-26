@@ -1,50 +1,63 @@
 ## LVE-2026-11-26-787 — توحيد دليل الأصناف وتدقيق الفروع
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.  
-**التقرير:** `Reports/LVE-2026-11-26-787_UNIFIED_CATALOG_AND_BRANCH_AUDIT.md`.  
-**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
-**Default branch:** `main` — لم يتغير.  
-**فرع التنفيذ:** `work/lve-787-unified-catalog`.  
-**Pull Request:** #10 — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/10.  
-**Head اجتاز CI:** `3cb79d4bdfe7d02f98b365d5eee4b227c900a953`.  
-**CI:** Run #388 / `45861460737` — SUCCESS (96/96 Node, Deno, Pages build, Playwright 2/2).  
-**الحالة:** IMPLEMENTED ON PR — AUTOMATED GATES PASS — READY TO MERGE — AUTHENTICATED VISUAL ACCEPTANCE OPEN.
+**التقرير النهائي:** Reports/LVE-2026-11-26-787_UNIFIED_CATALOG_AND_BRANCH_AUDIT.md.  
+**المستودع المعتمد الوحيد:** papamohammed77-glitch/rawaea-app-countflow.  
+**Default branch:** main.  
+**PR #10:** MERGED — https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/10.  
+**Main merge commit:** 15225fbf963ace4df072faa9c9f60ad9b51d3f7b.  
+**Main push CI:** Run #391 / 45862039270 — SUCCESS.  
+**PR #9:** CLOSED — SUPERSEDED BY PR #10.  
+**الحالة:** MERGED TO MAIN — AUTOMATED QUALITY GATES PASS — AUTHENTICATED VISUAL ACCEPTANCE OPEN — PAGES DEPLOYMENT UNKNOWN.
 
 ### النتيجة التنفيذية
-- إزالة تبويبات Global / Client / Project من دليل الأصناف؛ أصبحت مساحة واحدة مع اختيار المؤسسة ونوع السجل.
-- دمج بيانات الصنف الأساسي وحقول المؤسسة المختارة في صف واحد وصفحة تفاصيل واحدة؛ بقيت قواعد البيانات والملكية والصلاحيات منفصلة.
-- البحث يدعم الحقول العامة وحقول المؤسسة (الاسم/SKU/الباركود/التصنيف) باستخدام نطاق المؤسسة المختارة.
-- CSV الموحد يصدر حقول الصنف الأساسي والمؤسسة المحددة في الصف نفسه.
-- نموذج الصنف أصبح صفحة واحدة؛ وحدات القياس والصورة والإعدادات ظاهرة دون خطوات محرر منفصلة.
-- اقتراحات لوحدة الأساس مع قيمة مخصصة، مع استمرار دعم وحدات بديلة متعددة ومعامل `factor_to_base`.
-- «بالوزن» ليس وحدة؛ اختيار صنف وزني يلزمه وحدة كتلة فعلية مثل كجم/جرام.
-- أصناف ملف التكليف ما زالت ضمن نفس مساحة الأصناف بمحدد السجل، مع بقاء `count_products` منفصلاً.
-- اختبارات الرجوع القديمة عُدلت لتؤكد تجربة التوحيد بدلاً من افتراض الشاشات المنفصلة.
+- دليل الأصناف أصبح مساحة موحدة؛ لا تبويبات Global / Client / Project منفصلة.
+- قائمة واحدة تعرض الصنف الأساسي وحقول المؤسسة المختارة في الصف نفسه. اختيار المؤسسة محدد نطاق وليس تبويباً.
+- صفحة تفاصيل واحدة تجمع بيانات الصنف الأساسية والحقول المحلية للمؤسسة. حقول المؤسسة تظل محفوظة عبر RPC count_upsert_client_product.
+- البحث يشمل الاسم وSKU والباركود العامين، والاسم وSKU والباركود والتصنيف الخاص بالمؤسسة المختارة.
+- CSV موحد يضم الحقول الأساسية والمحلية؛ القراءة مجزأة وبحدود معلنة.
+- محرر الصنف أصبح صفحة واحدة، مع اقتراحات وحدة أساس وقيمة مخصصة؛ بقيت الوحدات البديلة المتعددة ومعامل factor_to_base وباركود الوحدة مدعومة.
+- «بالوزن» نمط/نوع قياس، لا وحدة كمية؛ الصنف الوزني يتطلب وحدة كتلة فعلية مثل كجم/جرام.
+- أصناف التكليف لا تزال في نفس مساحة الأصناف من خلال اختيار نوع السجل، مع الحفاظ على سجلها وملكية بياناتها منفصلين.
+- لم تُدمج جداول count_catalog_products وcount_client_products وcount_products ولم تتغير صلاحياتها.
 
-### الملفات المتغيرة
-- `countflow-admin.html`
-- `tests/unit/countflow-quality.test.mjs`
-- هذا القسم في `CURRENT_STATE.md`
-- التقرير أعلاه.
-لا تغيير في SQL أو Edge أو Core أو Counter أو Supervisor أو Service Worker.
+### الملفات المعتمدة في main
+- countflow-admin.html
+- tests/unit/countflow-quality.test.mjs
+- Reports/LVE-2026-11-26-787_UNIFIED_CATALOG_AND_BRANCH_AUDIT.md
+- هذا القسم في CURRENT_STATE.md.
 
-### حدود السلامة والقبول
-- لا DDL/DML/Migration/RLS/GRANT/Trigger/RPC definition/Edge deployment.
-- لا بيانات جرد أو مواءمات أو أصناف أو مستخدمين أو جلسات جديدة، ولا أي تعديل على QA90K.
-- لا تعديل في RAWAEA ERP أو SMART ERP.
-- CI أثبت سلامة المصدر والبناء وغلاف الدخول العام فقط؛ لا يوجد قبول بصري مصادق عليه داخل Admin بعد تسجيل دخول المالك. يظل هذا القبول OPEN.
+### التحقق
+- PR CI Run #388 / 45861460737: SUCCESS — 96/96 Node tests، Deno، Pages allowlisted build، Playwright 2/2.
+- Main push Run #391 / 45862039270: SUCCESS — 96/96 Node tests، Deno، Pages allowlisted build، Playwright 2/2.
+- Playwright يثبت غلاف الدخول العام وRTL على Mobile فقط؛ لا يثبت تجربة Admin بعد مصادقة المالك.
+- القبول البصري المصادق على Desktop/Mobile داخل Admin: OPEN.
+- نشر Cloudflare Pages على الرابط الفعلي: UNKNOWN؛ لا تعتبر نجاح Pages build دليلاً على النشر.
 
-### حالة الفروع
-- `main` هو الفرع الافتراضي المعتمد؛ لم نغيره.
-- قبل LVE-787: 14 فرعاً إجمالاً (main + 13 work branches). بعد إنشاء فرع التنفيذ: 15 إجمالاً (main + 14 work branches).
-- PR #1–#5 merged؛ PR #6 مفتوح وغير مدمج؛ PR #7/#8 مغلقان وغير مدمجين؛ PR #9 أصبح superseded by PR #10؛ PR #10 هو التغيير الحالي.
-- GitHub connector المتاح لا يقدم Delete Branch/Ref ولا يسمح بطلب DELETE عام؛ لذلك لم تُحذف مراجع ولم يُتلف تاريخ أي فرع. يجب تنفيذ حذف المراجع القديمة من GitHub بوسيلة توفر صلاحية Delete Reference بعد تصنيفها. لا يغير ذلك أن main هو المرجع الوحيد للملفات المعتمدة.
-- يُغلق PR #9 بعد دمج PR #10، مع الإبقاء على PR #6 لحين استكمال بوابة اختبار الكاميرا، وعدم دمج تغييراتها غير المقبولة.
+### حدود السلامة
+- لا DDL / DML / Migration / RLS / GRANT / Trigger / RPC definition / Edge deploy.
+- لا سجلات أصناف أو مواءمات أو عمليات جرد أو إدخالات عد أو أرصدة جديدة.
+- QA90K لم تُلمس.
+- لا تغيير في RAWAEA ERP أو SMART ERP أو أي مستودع ERP.
+- لا تأثير على المخزون أو المالية أو الحسابات.
 
-### الخطوة التالية
-دمج PR #10 إلى `main` باستخدام Expected Head SHA `3cb79d4bdfe7d02f98b365d5eee4b227c900a953` بعد مراجعة حالة الدمج، ثم التحقق من CI على push إلى main، وإغلاق PR #9 باعتباره مستبدلاً. لا تدّعِ النشر أو القبول البصري دون أدلة مستقلة.
+### حالة الفروع وطلبات الدمج
+- main هو Default Branch ولم يتغير.
+- GitHub يعرض 15 فرعاً إجمالاً: main و14 فرع عمل. هذا لا يغير Default Branch؛ الملفات المعتمدة في هذا الحدث هي فقط ما دُمج في main.
+- PR #1–#5 merged. PR #6 الخاص بالكاميرا ما زال open/unmerged وبوابة الالتقاط الميداني لم تثبت؛ لا تدمجه قبل اختبارها.
+- PR #7 و#8 closed/unmerged؛ PR #9 closed/superseded؛ PR #10 merged.
+- لم تُحذف مراجع فروع. موصل GitHub المتاح لا يوفر Delete Branch/Ref ولا يسمح بطلب DELETE عام. لا تحرك مراجع الفروع قسرياً لإخفائها ولا تتلف تاريخها.
+- فروع PRs المدمجة، والفروع القديمة المتقدمة بصفر commits عن main، وفرعا LVE-785/LVE-787 مرشحة للحذف من GitHub بعد المراجعة الإدارية. احتفظ بفروع LVE-752 ذات commits الفريدة، وفرع الكاميرا، وفرع LVE-765 mainline إلى حين تدقيق كل كود غير مدمج.
+- فرع LVE-787 لم يعد مصدراً معتمداً بعد الدمج؛ main هو المرجع الوحيد للنسخة المعتمدة.
+
+### الخطوات المفتوحة
+1. اختبار بصري مصادق داخل Admin على Desktop وMobile، خاصة الدليل الموحد، تغيير المؤسسة، فتح تفاصيل الصنف، الحقول المحلية، وحدات القياس والصور.
+2. التحقق من نشر Cloudflare Pages عن طريق Deployment status/Build SHA ومراجعة الصفحة المنشورة.
+3. حذف المراجع المرشحة من GitHub بوسيلة توفر صلاحية Delete Reference، بعد تدقيق محتواها الفريد.
+4. عدم دمج PR #6 حتى تنجح اختبارات الكاميرا داخل سياق Counter مصرح به.
 
 ---
+
 
 ## LVE-2026-11-26-786 — تحليل وحدات الأصناف وتدقيق المستودع المعتمد
 
