@@ -260,6 +260,18 @@
 .cf-catalog-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
 .cf-catalog-image-panel{margin-top:12px}
 @media(max-width:600px){.cf-catalog-tabs{display:grid;grid-template-columns:1fr}.cf-catalog-tab{width:100%;text-align:center}}
+
+/* Enterprise team management — responsive and keyboard-accessible */
+.cf-team-kpis,.cf-team-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}
+.cf-team-kpis .stat,.cf-team-detail-grid article{min-width:0;border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--panel)}
+.cf-team-kpis .stat strong,.cf-team-detail-grid strong{display:block;font-size:clamp(22px,3vw,30px);line-height:1.2;margin-top:8px}
+.cf-team-detail-grid article small{display:block;color:var(--muted)}
+.cf-team-select{min-height:112px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font:inherit}
+.cf-team-table-actions{display:flex;flex-wrap:wrap;gap:6px}
+.cf-team-table-actions button{white-space:nowrap}
+.cf-team-roster-role{min-width:120px}
+@media(max-width:900px){.cf-team-kpis,.cf-team-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.cf-team-kpis,.cf-team-detail-grid{grid-template-columns:1fr 1fr}.cf-team-table-actions button{font-size:12px;padding:7px}}
 </style>
 </head>
 <body>
@@ -303,6 +315,7 @@
     <div class="nav-group">
      <div class="nav-group-title">الفريق والصلاحيات</div>
      <button class="nav" data-tab="members" data-icon="users">المستخدمون</button>
+     <button class="nav" data-tab="teams" data-icon="people-group">فرق العمل</button>
      <button class="nav" data-tab="roles" data-icon="user-shield">إدارة أدوار المستخدمين</button>
     </div>
     <div class="nav-group">
@@ -359,6 +372,9 @@
       <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>قيد التنفيذ</span><i class="fa-solid fa-play-circle" aria-hidden="true"></i></div><strong id="overviewActiveOperations">0</strong></article>
       <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أحداث العد</span><i class="fa-solid fa-barcode" aria-hidden="true"></i></div><strong id="overviewEntryEvents">0</strong></article>
       <article class="cf-overview-kpi tone-teal"><div class="cf-kpi-top"><span>تغطية الأصناف</span><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div><strong id="overviewCoverage">—</strong><small id="overviewCoverageCaption">نسبة الأصناف التي سُجل لها عدّ</small></article>
+      <article class="cf-overview-kpi tone-blue"><div class="cf-kpi-top"><span>عمليات هذا الشهر</span><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></div><strong id="overviewOperationsThisMonth">0</strong><small>تاريخ الإنشاء حسب توقيت القاهرة</small></article>
+      <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>فرق نشطة</span><i class="fa-solid fa-people-group" aria-hidden="true"></i></div><strong id="overviewActiveTeams">0</strong></article>
+      <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أفراد الفرق النشطة</span><i class="fa-solid fa-users" aria-hidden="true"></i></div><strong id="overviewActiveTeamPeople">0</strong></article>
      </div>
 
      <div class="cf-overview-analytics-grid">
@@ -380,6 +396,7 @@
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-check-double" aria-hidden="true"></i></span><div><small>عمليات مكتملة</small><strong id="overviewCompletedTotal">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></span><div><small>إسنادات نشطة</small><strong id="overviewAssignmentsTotal">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div><small>تغطية المواقع</small><strong id="overviewLocationCoverage">—</strong></div></article>
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-user-check" aria-hidden="true"></i></span><div><small>أفراد مسندون لعمليات نشطة</small><strong id="overviewAssignedPeople">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><div><small>آخر نشاط عدّ</small><strong id="overviewLastActivity">—</strong></div></article>
        </div>
 
@@ -443,6 +460,7 @@
       <div class="fields">
        <div class="field"><label for="projectName">اسم المشروع</label><input id="projectName" required maxlength="160"></div><div class="field"><label for="projectCode">كود المشروع</label><input id="projectCode" required maxlength="40" pattern="[A-Za-z0-9_-]{2,40}"></div>
        <div class="field"><label for="operationName">اسم العملية</label><input id="operationName" required maxlength="160"></div><div class="field"><label for="operationCode">كود العملية</label><input id="operationCode" maxlength="40" pattern="[A-Za-z0-9_-]{2,40}"></div>
+       <div class="field"><label for="operationType">نوع العملية</label><select id="operationType"><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
        <div class="field"><label for="branchName">الفرع / الموقع الرئيسي</label><input id="branchName" required maxlength="120"></div><div class="field"><label for="branchCode">كود الفرع</label><input id="branchCode" required maxlength="40"></div>
        <div class="field"><label for="operationStart">بداية التنفيذ</label><input id="operationStart" type="datetime-local"></div><div class="field"><label for="operationEnd">نهاية التنفيذ</label><input id="operationEnd" type="datetime-local"></div>
        <div class="field"><label for="operationTimezone">المنطقة الزمنية</label><select id="operationTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
@@ -563,6 +581,60 @@
       <div class="panel"><h3>المستخدمون وعضويات ملفات التكليف</h3><div class="cf-filter-grid"><input id="memberSearch" placeholder="بحث بالاسم أو اسم المستخدم"><select id="memberProjectFilter"><option value="">كل ملفات التكليف</option></select><select id="memberStatusFilter"><option value="">كل الحالات</option><option value="active">نشط</option><option value="paused">متوقف</option><option value="removed">مسحوب</option></select></div><div id="memberTable" class="tablewrap"><div class="empty">لا يوجد أعضاء بعد.</div></div></div>
      </div>
     </section>
+
+    <section id="tab-teams" class="section">
+     <div class="headrow">
+      <div><h2>إدارة فرق العمل</h2><p class="hint">كوّن فرقاً ثابتة قابلة لإعادة الاستخدام عبر عمليات الجرد، مع حفظ لقطة مستقلة لأعضاء كل عملية عند الإسناد.</p></div>
+      <button id="teamsRefresh" type="button" class="soft">تحديث الفرق</button>
+     </div>
+     <div class="cf-team-kpis">
+      <article class="stat"><small>إجمالي الفرق</small><strong id="teamsTotalCount">0</strong></article>
+      <article class="stat"><small>فرق نشطة</small><strong id="teamsActiveCount">0</strong></article>
+      <article class="stat"><small>عمليات نشطة ضمن الفرق</small><strong id="teamsActiveOperations">0</strong></article>
+      <article class="stat"><small>أعضاء مؤهلون للعد</small><strong id="teamsActiveMembers">0</strong></article>
+     </div>
+     <div class="split">
+      <div class="panel">
+       <h3>إنشاء فريق جديد</h3>
+       <form id="teamForm">
+        <div class="field"><label for="teamProject">ملف التكليف</label><select id="teamProject" required></select></div>
+        <div class="field"><label for="teamName">اسم الفريق</label><input id="teamName" required minlength="2" maxlength="120" placeholder="مثال: فريق الجرد الرئيسي"></div>
+        <div class="field"><label for="teamDescription">وصف الفريق (اختياري)</label><textarea id="teamDescription" rows="3" maxlength="1000" placeholder="نطاق العمل أو التخصص"></textarea></div>
+        <div class="actions"><button type="submit" class="primary">إنشاء الفريق</button></div>
+        <p class="hint">لا يتم إنشاء حسابات أو تغيير صلاحيات المستخدمين من هنا. أضف فقط أعضاء التكليف النشطين الذين لديهم صلاحية تسجيل العد.</p>
+       </form>
+      </div>
+      <div class="panel">
+       <h3>سجل الفرق وأداؤها</h3>
+       <div class="cf-filter-grid">
+        <select id="teamProjectFilter"><option value="">كل ملفات التكليف</option></select>
+        <select id="teamStatusFilter"><option value="">كل الحالات</option><option value="active">نشط</option><option value="paused">متوقف مؤقتاً</option><option value="archived">مؤرشف</option></select>
+        <input id="teamSearch" placeholder="بحث باسم الفريق أو الكود">
+       </div>
+       <div id="teamTable" class="tablewrap"><div class="empty">جار تحميل الفرق…</div></div>
+      </div>
+     </div>
+     <div id="teamDetailPanel" class="panel hidden">
+      <div class="headrow">
+       <div><h3 id="teamDetailTitle">أعضاء الفريق</h3><p id="teamDetailMeta" class="hint"></p></div>
+       <div class="actions"><button id="teamPauseButton" type="button" class="soft">إيقاف مؤقت</button><button id="teamArchiveButton" type="button" class="danger">أرشفة الفريق</button><button id="teamDetailClose" type="button" class="soft">إغلاق</button></div>
+      </div>
+      <div class="cf-team-detail-grid">
+       <article><small>أعضاء مؤهلون ونشطون</small><strong id="teamDetailMembers">0</strong></article>
+       <article><small>عمليات مسندة</small><strong id="teamDetailAssignedOperations">0</strong></article>
+       <article><small>عمليات قيد التنفيذ</small><strong id="teamDetailActiveOperations">0</strong></article>
+       <article><small>أحداث العد المسجلة</small><strong id="teamDetailEntries">0</strong></article>
+      </div>
+      <div class="field">
+       <label for="teamMemberSelect">إضافة أعضاء مؤهلين للعد</label>
+       <select id="teamMemberSelect" class="cf-team-select" multiple size="7"></select>
+       <div class="actions"><button id="teamAddMembers" type="button" class="primary">إضافة إلى الفريق</button></div>
+       <p class="hint">المستخدم الذي لا يحمل صلاحية count.entry.create لن يظهر هنا ولن تقبل قاعدة البيانات إضافته، حتى لو كان دوره يحمل اسماً تشغيلياً.</p>
+      </div>
+      <div id="teamRosterTable" class="tablewrap"><div class="empty">اختر فريقاً لعرض أعضائه.</div></div>
+     </div>
+    </section>
+
     <section id="tab-locations" class="section">
      <div class="headrow"><h2>الهيكل المكاني للجرد</h2></div>
      <div class="split">
@@ -582,11 +654,13 @@
     
     <div id="operationCreateModal" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="operationCreateTitle"><div class="dialog-card cf-modal-wide"><div class="headrow"><div><h3 id="operationCreateTitle">إنشاء عملية جرد جديدة</h3><p class="hint">حدد ملف التكليف وفريق التنفيذ وإعدادات الجرد قبل إنشاء العملية.</p></div><button id="closeOperationCreateModalTop" type="button" class="soft">إغلاق</button></div><div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label for="sessionProject">ملف التكليف</label><select id="sessionProject" required></select></div><div class="fields">
       <div class="field"><label for="sessionName">اسم العملية</label><input id="sessionName" required maxlength="160"></div><div class="field"><label for="sessionOperationCode">كود العملية</label><input id="sessionOperationCode" maxlength="40"></div>
+      <div class="field"><label for="sessionOperationType">نوع العملية</label><select id="sessionOperationType"><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
       <div class="field"><label for="sessionBranch">الفرع / النطاق الرئيسي (اختياري)</label><select id="sessionBranch"><option value="">بدون تحديد فرع</option></select></div><div class="field"><label for="sessionTimezone">المنطقة الزمنية</label><select id="sessionTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
       <div class="field"><label for="sessionStart">البداية</label><input id="sessionStart" type="datetime-local"></div><div class="field"><label for="sessionEnd">النهاية</label><input id="sessionEnd" type="datetime-local"></div>
       <div class="field"><label for="sessionPriority">الأولوية</label><select id="sessionPriority"><option value="1">حرجة</option><option value="2">عالية</option><option value="3" selected>عادية</option><option value="4">منخفضة</option><option value="5">لاحقاً</option></select></div><div class="field"><label for="sessionMode">طريقة العد</label><select id="sessionMode"><option value="barcode">باركود</option><option value="mixed" selected>مختلط</option><option value="manual">يدوي</option></select></div>
       <div class="field full"><label for="sessionInstructions">تعليمات</label><input id="sessionInstructions" maxlength="2000"></div></div>
-      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeam">فريق هذه العملية — اختر أعضاء التكليف النشطين</label><select id="sessionTeam" class="cf-team-select" multiple size="6"></select><p class="hint">سيتم إسناد الأعضاء المختارين إلى هذه العملية بعد الإنشاء. ويمكن إضافة أعضاء أو تعديل إسنادهم لاحقاً من تفاصيل العملية.</p></div><div class="cf-grid-2"><label><input id="sessionShowExpected" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="sessionCaptureImages" type="checkbox" checked> السماح بالصور</label><label><input id="sessionRequireImages" type="checkbox"> إلزام الصور</label><label><input id="sessionAllowUnknown" type="checkbox"> السماح بصنف غير معروف</label></div>
+      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeams">الفرق الجاهزة لهذه العملية</label><select id="sessionTeams" class="cf-team-select" multiple size="5"></select><p class="hint">يمكن اختيار فريق أو أكثر، وسيتم تثبيت أعضائه وقت إنشاء العملية. يمكنك إعادة استخدام الفريق نفسه في عمليات أخرى.</p></div>
+      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeam">أفراد إضافيون (اختياري)</label><select id="sessionTeam" class="cf-team-select" multiple size="5"></select><p class="hint">اختر أفراداً إضافيين عند الحاجة. إذا كان الفرد موجوداً ضمن فريق محدد فلن تنشأ له إسنادات مكررة.</p></div><div class="cf-grid-2"><label><input id="sessionShowExpected" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="sessionCaptureImages" type="checkbox" checked> السماح بالصور</label><label><input id="sessionRequireImages" type="checkbox"> إلزام الصور</label><label><input id="sessionAllowUnknown" type="checkbox"> السماح بصنف غير معروف</label></div>
       <div class="actions"><button class="primary" type="submit">إنشاء العملية وإسناد الفريق</button><button id="closeOperationCreateModal" class="soft" type="button">إلغاء</button></div><p class="hint">لا تنشأ قيود كمية بمجرد إنشاء العملية.</p></form></div></div></div>
     <section id="tab-operations" class="section">
      <div class="headrow"><div><h2>سجل عمليات الجرد — جميع ملفات التكليف</h2><p class="hint">السجل الإداري الشامل. افتح أي عملية لمراجعة الفريق والتقدم والتسوية والمزامنة والتصدير.</p></div><div class="actions"><button id="newOperationButton" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد جديدة</button><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div></div>
@@ -609,7 +683,12 @@
       </div>
       <div class="split">
        <div class="panel">
-        <h3>فريق عملية الجرد</h3>
+        <h3>الفرق المسندة لهذه العملية</h3>
+        <div class="field"><label for="operationAddTeam">إضافة فريق جاهز</label><select id="operationAddTeam"><option value="">اختر فريقاً</option></select></div>
+        <button id="operationAssignTeam" type="button" class="primary">إسناد الفريق إلى العملية</button>
+        <div id="operationTeamAssignments" class="tablewrap" style="margin-top:12px"><div class="empty">لا توجد فرق مسندة.</div></div>
+        <hr style="margin:16px 0;border-color:var(--line)">
+        <h3>إسناد أفراد إضافيين</h3>
         <div class="field"><label>إضافة مستخدم مسجل في التكليف</label><select id="operationAddMember"><option value="">اختر المستخدم</option></select></div>
         <button id="operationAssignMember" type="button" class="soft">إضافة إلى العملية</button>
         <div id="operationTeamList" class="tablewrap" style="margin-top:12px"><div class="empty">لا يوجد فريق مسند بعد.</div></div>
@@ -679,7 +758,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],clientDirectoryRows:[],clientDirectoryManagers:[],clientDirectoryPage:1,clientDirectoryPageSize:25,clientDirectoryTotal:0,clientSort:'created_at',clientSortAsc:false,clientSearchTimer:null,roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogImageUrls:new Map(),catalogImageToken:0,catalogRequestToken:0,catalogEditorImageToken:0,catalogSearchTimer:null,globalImagePreviewObjectUrl:null,globalImageCleared:false,catalogClientId:null,catalogOptionProducts:[],catalogClientRows:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',globalCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}},clientCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}},productImportChecksum:'',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],clientDirectoryRows:[],clientDirectoryManagers:[],clientDirectoryPage:1,clientDirectoryPageSize:25,clientDirectoryTotal:0,clientSort:'created_at',clientSortAsc:false,clientSearchTimer:null,roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogImageUrls:new Map(),catalogImageToken:0,catalogRequestToken:0,catalogEditorImageToken:0,catalogSearchTimer:null,globalImagePreviewObjectUrl:null,globalImageCleared:false,catalogClientId:null,catalogOptionProducts:[],catalogClientRows:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',platformKpis:{},teamRows:[],teamRosterRows:[],teamSelectedId:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',globalCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}},clientCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}},productImportChecksum:'',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
