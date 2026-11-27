@@ -954,6 +954,122 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('productTable').querySelectorAll('[data-toggle-product]').forEach(b=>b.onclick=()=>toggleProduct(b.dataset.toggleProduct));
   $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>loadProductsPage(Number(b.dataset.productPage),state.productQuery).catch(e=>fail('تعذر تحميل صفحة الأصناف',e)));
  }
+
+ function memberCanCount(member){
+  if(!member||member.status!=='active')return false;
+  const role=state.roles.find(r=>r.id===member.role_id);
+  return Boolean(role&&role.is_active&&role.scope==='project'&&state.rolePermissions.get(member.role_id)?.has('count.entry.create'));
+ }
+ function teamStatusName(status){return ({active:'نشط',paused:'متوقف مؤقتاً',archived:'مؤرشف'})[status]||status||'—';}
+ async function loadTeams(preferredProjectId=null){
+  const ids=state.projects.map(p=>p.id).filter(Boolean);
+  if(!ids.length){state.teamRows=[];renderTeams();return;}
+  const rows=[];let offset=0,pageSize=500;
+  while(true){
+   const {data,error}=await db.from('count_team_overview').select('*').in('project_id',ids).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
+   if(error)throw error;
+   const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+  }
+  state.teamRows=rows;
+  const projectOptions='<option value="">كل ملفات التكليف</option>'+state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
+  const currentFilter=$('teamProjectFilter')?.value||'';
+  if($('teamProjectFilter')){$('teamProjectFilter').innerHTML=projectOptions;if(ids.includes(currentFilter))$('teamProjectFilter').value=currentFilter;else if(preferredProjectId&&ids.includes(preferredProjectId))$('teamProjectFilter').value=preferredProjectId;}
+  if($('teamProject')){$('teamProject').innerHTML='<option value="">اختر ملف التكليف</option>'+state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');const p=preferredProjectId||state.project?.id;if(p&&ids.includes(p))$('teamProject').value=p;}
+  const projectForKpi=$('teamProjectFilter')?.value||null;
+  const {data:kpiData,error:kpiError}=await db.rpc('count_admin_platform_kpis',{p_project_id:projectForKpi});
+  if(kpiError)console.warn('[CountFlow Admin] team KPI query failed',kpiError);
+  const kpi=Array.isArray(kpiData)?(kpiData[0]||{}):(kpiData||{});
+  $('teamsTotalCount').textContent=rows.length.toLocaleString('ar-EG');
+  $('teamsActiveCount').textContent=rows.filter(x=>x.status==='active').length.toLocaleString('ar-EG');
+  $('teamsActiveOperations').textContent=rows.reduce((n,x)=>n+Number(x.active_operations||0),0).toLocaleString('ar-EG');
+  $('teamsActiveMembers').textContent=Number(kpi.active_team_people??0).toLocaleString('ar-EG');
+  renderTeams();
+  if(state.teamSelectedId&&rows.some(x=>x.team_id===state.teamSelectedId))await loadTeamDetail(state.teamSelectedId);
+ }
+ function renderTeams(){
+  if(!$('teamTable'))return;
+  const projectId=$('teamProjectFilter')?.value||'',status=$('teamStatusFilter')?.value||'',q=($('teamSearch')?.value||'').trim().toLowerCase();
+  const rows=(state.teamRows||[]).filter(t=>{
+   const p=state.projects.find(x=>x.id===t.project_id);
+   return (!projectId||t.project_id===projectId)&&(!status||t.status===status)&&(!q||[t.team_name,t.team_code,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q)));
+  });
+  $('teamTable').innerHTML=rows.length?'<table><thead><tr><th>الفريق</th><th>ملف التكليف</th><th>الأعضاء المؤهلون</th><th>العمليات النشطة</th><th>العمليات المكتملة</th><th>أحداث العد</th><th>الحالة</th><th>إدارة</th></tr></thead><tbody>'+rows.map(t=>{
+   const p=state.projects.find(x=>x.id===t.project_id);
+   const canManage=state.memberManageProjects?.has(t.project_id);
+   const actions='<div class="cf-team-table-actions"><button type="button" class="soft" data-open-team="'+esc(t.team_id)+'">الأعضاء والأداء</button>'+(canManage&&t.status==='active'?'<button type="button" class="soft" data-pause-team="'+esc(t.team_id)+'">إيقاف</button>':'')+(canManage&&t.status!=='archived'?'<button type="button" class="danger" data-archive-team="'+esc(t.team_id)+'">أرشفة</button>':'')+'</div>';
+   return '<tr><td><b>'+esc(t.team_name)+'</b><span class="sub">'+esc(t.team_code)+'</span></td><td>'+esc(p?.name||'—')+'</td><td>'+Number(t.active_members||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.active_operations||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.completed_operations||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.entry_events||0).toLocaleString('ar-EG')+'</td><td>'+statusPill(t.status==='active'?'active':t.status==='paused'?'paused':'completed')+' <small>'+esc(teamStatusName(t.status))+'</small></td><td>'+actions+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد فرق تطابق المرشحات. أنشئ فريقاً أو غيّر نطاق البحث.</div>';
+  $('teamTable').querySelectorAll('[data-open-team]').forEach(b=>b.onclick=()=>loadTeamDetail(b.dataset.openTeam).catch(e=>fail('تعذر تحميل أعضاء الفريق',e)));
+  $('teamTable').querySelectorAll('[data-pause-team]').forEach(b=>b.onclick=()=>setTeamStatus(b.dataset.pauseTeam,'paused'));
+  $('teamTable').querySelectorAll('[data-archive-team]').forEach(b=>b.onclick=()=>setTeamStatus(b.dataset.archiveTeam,'archived'));
+ }
+ async function loadTeamDetail(teamId){
+  const team=state.teamRows.find(x=>x.team_id===teamId);if(!team)return notify('الفريق غير موجود في النطاق الحالي.',true);
+  state.teamSelectedId=teamId;
+  const {data,error}=await db.from('count_team_members').select('id,member_id,team_role,status,created_at,updated_at').eq('team_id',teamId).order('created_at',{ascending:true});
+  if(error)throw error;
+  state.teamRosterRows=data||[];
+  const project=state.projects.find(p=>p.id===team.project_id);
+  $('teamDetailPanel').classList.remove('hidden');
+  $('teamDetailTitle').textContent=team.team_name;
+  $('teamDetailMeta').textContent=team.team_code+' · '+(project?.name||'ملف التكليف')+' · '+teamStatusName(team.status);
+  $('teamDetailMembers').textContent=Number(team.active_members||0).toLocaleString('ar-EG');
+  $('teamDetailAssignedOperations').textContent=Number(team.assigned_operations||0).toLocaleString('ar-EG');
+  $('teamDetailActiveOperations').textContent=Number(team.active_operations||0).toLocaleString('ar-EG');
+  $('teamDetailEntries').textContent=Number(team.entry_events||0).toLocaleString('ar-EG');
+  const activeMemberIds=new Set(state.teamRosterRows.filter(x=>x.status==='active').map(x=>x.member_id));
+  const options=(state.allMembers||[]).filter(m=>m.project_id===team.project_id&&memberCanCount(m)&&!activeMemberIds.has(m.id));
+  $('teamMemberSelect').innerHTML=options.length?options.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join(''):'<option value="" disabled>لا يوجد أعضاء مؤهلون جدد للإضافة</option>';
+  const map=new Map((state.allMembers||[]).map(m=>[m.id,m]));
+  $('teamRosterTable').innerHTML=state.teamRosterRows.length?'<table><thead><tr><th>المستخدم</th><th>الدور في الفريق</th><th>حالة العضوية</th><th>تاريخ الإضافة</th><th>إجراء</th></tr></thead><tbody>'+state.teamRosterRows.map(tm=>{
+   const m=map.get(tm.member_id)||{};
+   const canManage=state.memberManageProjects?.has(team.project_id);
+   const roleControl=canManage&&tm.status==='active'?'<select class="cf-team-roster-role" data-team-member-role="'+esc(tm.member_id)+'"><option value="member" '+(tm.team_role==='member'?'selected':'')+'>عضو</option><option value="leader" '+(tm.team_role==='leader'?'selected':'')+'>قائد فريق</option></select>':esc(tm.team_role==='leader'?'قائد فريق':'عضو');
+   const action=canManage&&tm.status==='active'?'<button type="button" class="danger" data-remove-team-member="'+esc(tm.member_id)+'">إزالة من الفريق</button>': '—';
+   return '<tr><td><b>'+esc(m.display_name||'عضو غير معروف')+'</b><span class="sub">'+esc(m.username||'')+' · '+esc(roleName(m.role,m.role_id))+'</span></td><td>'+roleControl+'</td><td>'+statusPill(tm.status==='active'?'active':'paused')+' <small>'+esc(tm.status)+'</small></td><td>'+date(tm.created_at)+'</td><td>'+action+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لم تتم إضافة أعضاء لهذا الفريق بعد.</div>';
+  $('teamMemberSelect').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamAddMembers').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamPauseButton').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamArchiveButton').disabled=!state.memberManageProjects?.has(team.project_id)||team.status==='archived';
+  $('teamPauseButton').textContent=team.status==='paused'?'الفريق متوقف':'إيقاف مؤقت';
+  $('teamPauseButton').disabled=team.status!=='active'||!state.memberManageProjects?.has(team.project_id);
+  $('teamArchiveButton').disabled=team.status==='archived'||!state.memberManageProjects?.has(team.project_id);
+  $('teamRosterTable').querySelectorAll('[data-team-member-role]').forEach(sel=>sel.onchange=async()=>{
+   try{const {error}=await db.rpc('count_team_set_member_role',{p_team_id:teamId,p_member_id:sel.dataset.teamMemberRole,p_team_role:sel.value});if(error)throw error;notify('تم تحديث دور العضو داخل الفريق.');await loadTeams(team.project_id);}
+   catch(e){fail('تعذر تحديث دور العضو',e);await loadTeamDetail(teamId);}
+  });
+  $('teamRosterTable').querySelectorAll('[data-remove-team-member]').forEach(btn=>btn.onclick=async()=>{
+   if(!await confirmAction('إزالة هذا العضو من قائمة الفريق المستقبلية؟ لن تتغير لقطة العضوية في العمليات السابقة.',{title:'إزالة عضو من الفريق',confirmText:'إزالة'}))return;
+   try{const {error}=await db.rpc('count_team_remove_member',{p_team_id:teamId,p_member_id:btn.dataset.removeTeamMember});if(error)throw error;notify('تمت إزالة العضو من الفريق مع الحفاظ على سجلات العمليات السابقة.');await loadTeams(team.project_id);}
+   catch(e){fail('تعذر إزالة العضو من الفريق',e);}
+  });
+  $('teamDetailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+ async function setTeamStatus(teamId,status){
+  const team=state.teamRows.find(x=>x.team_id===teamId);if(!team)return;
+  const label=status==='archived'?'أرشفة الفريق':'إيقاف الفريق مؤقتاً';
+  if(!await confirmAction((status==='archived'?'أرشفة':'إيقاف')+' "'+team.team_name+'"؟ سيتم الحفاظ على العضويات والعمليات السابقة ولن تُحذف البيانات.',{title:label,confirmText:status==='archived'?'أرشفة':'إيقاف'}))return;
+  try{const {error}=await db.rpc('count_team_set_status',{p_team_id:teamId,p_status:status});if(error)throw error;notify(status==='archived'?'تمت أرشفة الفريق دون حذف تاريخه.':'تم إيقاف الفريق مؤقتاً.');await loadTeams(team.project_id);}
+  catch(e){fail('تعذر تغيير حالة الفريق',e);}
+ }
+ async function createTeamFromForm(e){
+  e.preventDefault();const projectId=$('teamProject').value,name=$('teamName').value.trim(),description=$('teamDescription').value.trim();
+  if(!projectId||!name)return notify('اختر ملف التكليف واكتب اسم الفريق.',true);
+  if(!state.memberManageProjects?.has(projectId))return notify('لا تملك صلاحية إدارة فرق هذا الملف.',true);
+  const form=e.currentTarget;setBusy(form,true);
+  try{const {data,error}=await db.rpc('count_team_create',{p_project_id:projectId,p_name:name,p_description:description||null});if(error)throw error;
+   form.reset();$('teamProject').value=projectId;notify('تم إنشاء الفريق '+(data?.code||'')+' بنجاح.');await loadTeams(projectId);if(data?.id)await loadTeamDetail(data.id);
+  }catch(err){fail('تعذر إنشاء الفريق',err);}finally{setBusy(form,false);}
+ }
+ async function addMembersToTeam(){
+  const team=state.teamRows.find(x=>x.team_id===state.teamSelectedId);if(!team)return;
+  const memberIds=[...$('teamMemberSelect').selectedOptions].map(o=>o.value).filter(Boolean);
+  if(!memberIds.length)return notify('اختر عضواً واحداً على الأقل.',true);
+  try{const {data,error}=await db.rpc('count_team_add_members',{p_team_id:team.team_id,p_member_ids:memberIds});if(error)throw error;notify('تمت إضافة '+Number(data?.added_or_reactivated||memberIds.length)+' عضو إلى الفريق.');await loadTeams(team.project_id);}
+  catch(e){fail('تعذر إضافة أعضاء الفريق',e);}
+ }
+
  function renderMembers(){
   const all=state.allMembers||[],q=$('memberSearch').value.trim().toLowerCase();
   const projectFilter=$('memberProjectFilter')?.value||'',statusFilter=$('memberStatusFilter')?.value||'';
