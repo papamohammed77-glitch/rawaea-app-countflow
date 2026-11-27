@@ -3,12 +3,13 @@
 **Last Verified Event:** 27 نوفمبر 2026 — Africa/Cairo.  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`.  
-**فرع المهمة:** `work/lve-792-enterprise-teams-operation-types-kpis`.  
-**PR:** [#13](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/13) — الدمج قيد الانتظار عند هذا التحديث.  
-**آخر كود CI:** `fd7fb9e812a4941e86d565076a4ae59981a4cbe4`.  
-**CI run:** `46027766126` — SUCCESS: Node 112/112، Deno PASS، Cloudflare Pages PASS، Playwright 2 PASS / 1 SKIPPED.  
+**فرع التنفيذ:** `work/lve-792-enterprise-teams-operation-types-kpis` (تم الدمج؛ يتبقى تنظيفه يدويًا).  
+**PR:** [#13](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/13) — MERGED (Squash).  
+**Merge/main SHA:** `676700459ff7901c89d5c45df9b5d585c8dcff64`.  
+**CI main:** [run 46028386490](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46028386490) — SUCCESS: Node 112/112، Deno PASS، Cloudflare Pages PASS، Playwright 3/3 PASS مع Production/Main SHA parity.  
+**CI PR head قبل الدمج:** run `46028185071` — SUCCESS، Node 112/112، Deno وPages PASS، Playwright 2 PASS / 1 SKIPPED.  
 **التقرير التفصيلي:** `Reports/FINAL_EXECUTION_REPORT_LVE-792.md`.  
-**الحالة:** DATABASE APPLIED / SOURCE CI PASS / OWNER VISUAL ACCEPTANCE OPEN / 90K+ EXPORT LIMITATION OPEN.
+**الحالة:** MERGED ON MAIN / SUPABASE MIGRATIONS APPLIED / CI AND PRODUCTION PARITY PASS / OWNER AUTHENTICATED VISUAL ACCEPTANCE OPEN / 90K+ EXPORT LIMITATION OPEN.
 
 ### ما تغير
 - تأسيس `count_teams`, `count_team_members`, `count_session_teams`, `count_session_team_members` بنطاق project، RLS، سياسات قراءة، علاقات مركبة وسجل تدقيق.
@@ -45,6 +46,11 @@
 - Security Advisor ما زال يكشف 65 public ERP tables بلا RLS وخمس وظائف ERP قديمة متاحة لـanon وتحذير حماية كلمات المرور المسربة؛ خارج CountFlow ولم تُمس.
 - لم تُجرّب اختبارات استيراد 5k/90k التي تعذرت في LVE-791؛ لا تصنف PASS.
 - رؤية المالك لم تكتمل بعد؛ هذه مرحلة تأسيس لا إعلان اكتمال المنصة.
+
+### الدمج والتنظيف
+- تم دمج PR #13 إلى main بــSquash؛ merge SHA `676700459ff7901c89d5c45df9b5d585c8dcff64`.
+- CI main run `46028386490` نجح؛ Node 112/112 وDeno وCloudflare Pages وPlaywright 3/3؛ الاختبار الأول أثبت Production/Main SHA parity.
+- فرع `work/lve-792-enterprise-teams-operation-types-kpis` ما زال موجودًا؛ أدوات GitHub المتاحة لا تتضمن DELETE ref/branch، ولم يُدّعَ حذفه. يلزم تنظيفه يدويًا.
 
 ### انحراف حوكمة موثق
 - ملف migration `20261127120000_countflow_team_member_count_permission_v1.sql` أُنشئ أولًا على main بالخطأ في commit `6c7e2587f71a10d43d1050d0014938d593e0f5d5`.
