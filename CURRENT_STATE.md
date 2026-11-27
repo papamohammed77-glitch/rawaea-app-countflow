@@ -1,3 +1,61 @@
+## LVE-2026-11-27-792 — فرق العمل، تصنيف العمليات، مؤشرات المنصة وأمان عرض العمليات
+
+**Last Verified Event:** 27 نوفمبر 2026 — Africa/Cairo.  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`.  
+**فرع المهمة:** `work/lve-792-enterprise-teams-operation-types-kpis`.  
+**PR:** [#13](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/13) — الدمج قيد الانتظار عند هذا التحديث.  
+**آخر كود CI:** `fd7fb9e812a4941e86d565076a4ae59981a4cbe4`.  
+**CI run:** `46027766126` — SUCCESS: Node 112/112، Deno PASS، Cloudflare Pages PASS، Playwright 2 PASS / 1 SKIPPED.  
+**التقرير التفصيلي:** `Reports/FINAL_EXECUTION_REPORT_LVE-792.md`.  
+**الحالة:** DATABASE APPLIED / SOURCE CI PASS / OWNER VISUAL ACCEPTANCE OPEN / 90K+ EXPORT LIMITATION OPEN.
+
+### ما تغير
+- تأسيس `count_teams`, `count_team_members`, `count_session_teams`, `count_session_team_members` بنطاق project، RLS، سياسات قراءة، علاقات مركبة وسجل تدقيق.
+- فصل `count_sessions.operation_type` عن `counting_mode`.
+- الحفاظ على `count_assignments` كعقد الإسناد الذي تستهلكه التطبيقات الميدانية؛ إسناد الفرق ينشئ/يعيد استخدام سجلاته مع snapshot تاريخي لكل عملية.
+- إسناد الفرق وأفراد العد مقيد بصلاحية دور نشطة `count.entry.create`؛ المراجع مرفوض كعضو عد؛ الإزالة تحفظ الأثر ولا تحذف سجلات مكتملة.
+- إنشاء عملية مع فرقها وأفرادها يتم عبر RPC ذري.
+- مؤشرات عامة ومؤشرات فريق، وRealtime يشمل الإسنادات وجداول الفرق.
+- تبويب فرق العمل داخل Owner Admin، مرشح نوع العملية، تفاصيل فرق العملية وروابط تطبيقات المندوب/المشرف/المراجع.
+- `count_operation_overview` أصبح `security_invoker=true`، وanon لا يملك SELECT؛ اختبرنا القراءة من حسابات QA لأدوار counter وsupervisor وauditor وplatform owner.
+
+### ترحيلات Supabase الحية
+| الترحيل | الإصدار الحي |
+|---|---:|
+| `countflow_enterprise_team_operation_foundation_v1` | 20261127151642 |
+| `countflow_team_assignment_snapshot_reactivation_v1` | 20261127151814 |
+| `countflow_team_member_count_permission_v1` | 20261127152236 |
+| `countflow_team_roster_permission_revocation_guard_v1` | 20261127152523 |
+| `countflow_count_capable_individual_assignment_v1` | 20261127153223 |
+| `countflow_operation_overview_invoker_security_v1` | 20261127154310 |
+
+### اختبار DB والبيانات
+- `tests/team-operation-rollback.sql` اجتاز التنفيذ داخل transaction تنتهي بـROLLBACK.
+- القراءة بعد الاختبار: 0 فرق، 0 عضويات فرق، 0 إسنادات فرق لعمليات، 0 snapshots، 0 count_assignments؛ الجلسة الأصلية الوحيدة باقية؛ دفعة QA الوحيدة وصفوفها الـ90,000 باقية دون تغيير.
+- لا عملاء أو فروع أو عمليات عد فعلية أو أحداث عد في بيئة staging الحالية؛ لا تُفسر QA data كبيانات عمل معتمدة.
+- لم تُنشأ حسابات Auth ولم تُنشأ حركات مخزون أو قيود مالية.
+
+### مخاطر وحدود قائمة
+- تصدير 90k+ متعدد المواقع لا يزال يحتاج background/resumable chunked pipeline؛ مصدّر الذاكرة الحالي غير كافٍ.
+- لم يكتمل اختبار Admin المصادق أو الكاميرا/Offline/الأجهزة الفعلية.
+- نموذج الفريق الحالي مسند إلى العملية؛ توزيع المواقع داخل العملية يحتاج استكمال قواعد التشغيل من المالك.
+- تعريفات الإنتاجية ومعدل إعادة العد وفروق الهدف تحتاج موافقة المالك قبل اعتمادها KPI رسميًا.
+- سياسة تكلفة المخزون والعملة/FX غير معتمدة.
+- Security Advisor ما زال يكشف 65 public ERP tables بلا RLS وخمس وظائف ERP قديمة متاحة لـanon وتحذير حماية كلمات المرور المسربة؛ خارج CountFlow ولم تُمس.
+- لم تُجرّب اختبارات استيراد 5k/90k التي تعذرت في LVE-791؛ لا تصنف PASS.
+- رؤية المالك لم تكتمل بعد؛ هذه مرحلة تأسيس لا إعلان اكتمال المنصة.
+
+### انحراف حوكمة موثق
+- ملف migration `20261127120000_countflow_team_member_count_permission_v1.sql` أُنشئ أولًا على main بالخطأ في commit `6c7e2587f71a10d43d1050d0014938d593e0f5d5`.
+- ملف migration `20261127160000_countflow_operation_overview_invoker_security_v1.sql` أُنشئ أولًا على main بالخطأ في commit `4d20e3b05892bddf39a8980d11165e56ca476fa4`.
+- نُسخت الملفات إلى فرع LVE-792، وترحيلاتها مطبقة. لم يُعد كتابة تاريخ main ولم تُعكس migrations مطبقة.
+- بعد الدمج، فرع المهمة يحتاج حذفًا يدويًا؛ تكامل GitHub المتاح في هذه الجلسة لا يتيح DELETE ref.
+
+**التالي:** بعد الدمج استكمال سرد المالك، ثم تحويل المتبقي إلى خريطة فجوات كاملة؛ لا تعاد migrations المطبقة ولا يبدأ العمل من الصفر.
+
+---
+
 ## LVE-2026-11-26-791 — اكتمال نطاق تسليم الكتالوج وحراسة وحدة تكلفة الشراء
 
 **Last Verified Event:** 26 نوفمبر 2026 — Africa/Cairo.
