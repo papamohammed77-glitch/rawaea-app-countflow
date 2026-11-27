@@ -1934,3 +1934,65 @@ test("LVE-791: purchase value is blocked when purchase UoM factor mismatches pro
   assert.match(rollback,/QA_INVALID_PURCHASE_UNIT/);
   assert.match(rollback,/ROLLBACK;/);
 });
+
+
+test("Owner Admin reusable teams, operation taxonomy and guarded assignment workflows are wired end-to-end", () => {
+  const admin = read("countflow-admin.html");
+  const foundation = read("database/migrations/20261127100000_countflow_enterprise_team_operation_foundation_v1.sql");
+  const reactivation = read("database/migrations/20261127110000_countflow_team_assignment_snapshot_reactivation_v1.sql");
+  const permissionGuard = read("database/migrations/20261127120000_countflow_team_member_count_permission_v1.sql");
+  const permissionRevocation = read("database/migrations/20261127130000_countflow_team_roster_permission_revocation_guard_v1.sql");
+  const individual = read("database/migrations/20261127140000_countflow_count_capable_individual_assignment_v1.sql");
+  const rollback = read("tests/team-operation-rollback.sql");
+
+  for (const table of ["count_teams", "count_team_members", "count_session_teams", "count_session_team_members"]) {
+    assert.match(foundation, new RegExp("CREATE TABLE IF NOT EXISTS public\\\\." + table));
+    assert.match(foundation, new RegExp("ALTER TABLE public\\\\." + table + " ENABLE ROW LEVEL SECURITY"));
+    assert.match(foundation, new RegExp("CREATE POLICY " + table + "_read"));
+  }
+  assert.match(foundation, /operation_type text NOT NULL DEFAULT 'unclassified'/);
+  assert.match(foundation, /count_assignments_project_scope_guard/);
+  assert.match(foundation, /count_team_assign_to_session_impl/);
+  assert.match(foundation, /assignment_origin/);
+  assert.match(foundation, /CREATE OR REPLACE VIEW public\\.count_team_overview/);
+  assert.match(foundation, /CREATE OR REPLACE FUNCTION public\\.count_admin_platform_kpis/);
+  assert.match(foundation, /CREATE OR REPLACE FUNCTION public\\.count_create_session_with_teams/);
+  assert.match(reactivation, /v_previous_origin/);
+  assert.match(reactivation, /TEAM_MEMBER_ASSIGNMENT_PAUSED/);
+  assert.match(permissionGuard, /count\\.entry\\.create/);
+  assert.match(permissionRevocation, /LEFT JOIN public\\.count_roles r/);
+  assert.match(permissionRevocation, /r\\.id IS NULL OR rp\\.role_id IS NULL/);
+  assert.match(individual, /count_assign_member_to_session/);
+  assert.match(individual, /count_remove_member_from_session/);
+  assert.match(individual, /SESSION_MEMBER_NOT_COUNT_CAPABLE/);
+  assert.match(individual, /MEMBER_ASSIGNED_VIA_TEAM_USE_TEAM_UNASSIGN/);
+  assert.match(individual, /SET status='paused'/);
+
+  assert.match(admin, /data-tab="teams"/);
+  assert.match(admin, /id="tab-teams"/);
+  assert.match(admin, /async function loadTeams\\(/);
+  assert.match(admin, /async function loadTeamDetail\\(/);
+  assert.match(admin, /count_team_create/);
+  assert.match(admin, /count_team_add_members/);
+  assert.match(admin, /count_team_set_member_role/);
+  assert.match(admin, /count_team_remove_member/);
+  assert.match(admin, /count_team_set_status/);
+  assert.match(admin, /id="sessionOperationType"/);
+  assert.match(admin, /id="sessionTeams"/);
+  assert.match(admin, /count_create_session_with_teams/);
+  assert.match(admin, /count_create_operation_with_teams/);
+  assert.match(admin, /count_team_assign_to_session/);
+  assert.match(admin, /count_team_unassign_from_session/);
+  assert.match(admin, /count_assign_member_to_session/);
+  assert.match(admin, /count_remove_member_from_session/);
+  assert.match(admin, /count_admin_platform_kpis/);
+  assert.match(admin, /overviewActiveTeamPeople/);
+  assert.match(admin, /'count_assignments','count_teams','count_team_members','count_session_teams','count_session_team_members'/);
+  assert.match(admin, /memberCanCount/);
+  assert.match(admin, /countflow-control\\.html/);
+  assert.match(rollback, /LVE792_AUDITOR_WAS_ALLOWED_IN_COUNT_TEAM/);
+  assert.match(rollback, /LVE792_AUDITOR_WAS_ALLOWED_DIRECT_ASSIGNMENT/);
+  assert.match(rollback, /count_assign_member_to_session/);
+  assert.match(rollback, /count_remove_member_from_session/);
+  assert.match(rollback.trim(), /ROLLBACK;$/);
+});
