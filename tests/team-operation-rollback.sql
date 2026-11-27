@@ -77,6 +77,17 @@ BEGIN
     RAISE EXCEPTION 'LVE792_AUTH_OWNER_REQUIRED';
   END IF;
 
+  IF NOT (SELECT reloptions @> ARRAY['security_invoker=true']
+          FROM pg_class WHERE oid='public.count_operation_overview'::regclass) THEN
+    RAISE EXCEPTION 'LVE792_OPERATION_OVERVIEW_NOT_INVOKER_SECURITY';
+  END IF;
+  IF has_table_privilege('anon','public.count_operation_overview','SELECT') THEN
+    RAISE EXCEPTION 'LVE792_ANON_CAN_READ_OPERATION_OVERVIEW';
+  END IF;
+  IF NOT has_table_privilege('authenticated','public.count_projects','SELECT') THEN
+    RAISE EXCEPTION 'LVE792_AUTHENTICATED_PROJECT_READ_GRANT_MISSING';
+  END IF;
+
   -- Reusable team creation and roster management.
   v_result := public.count_team_create(v_project, 'QA_LVE792_TEAM_ROLLBACK', 'rollback-only team smoke test');
   v_team := (v_result->>'id')::uuid;
