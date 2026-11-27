@@ -23,6 +23,7 @@ DECLARE
   v_auditor uuid;
   v_team uuid;
   v_new_session uuid;
+  v_direct_session uuid;
   v_result jsonb;
   v_count bigint;
   v_type text;
@@ -212,6 +213,41 @@ BEGIN
     AND o.active_teams = 1
     AND o.active_team_members = 2;
   IF v_count <> 1 THEN RAISE EXCEPTION 'LVE792_OPERATION_OVERVIEW_FAILED:%', v_count; END IF;
+
+  -- Direct individual assignment: enforce count permission and preserve an auditable paused state.
+  v_result := public.count_create_session_with_teams(
+    v_project,'QA_LVE792_DIRECT_SESSION_ROLLBACK','QA-LVE792-DIRECT','spot_check',
+    NULL::uuid,NULL::timestamptz,NULL::timestamptz,'Africa/Cairo',3::smallint,'mixed',
+    false,true,false,false,'rollback-only direct assignment test',
+    ARRAY[]::uuid[],ARRAY[]::uuid[]
+  );
+  v_direct_session := (v_result->>'session_id')::uuid;
+
+  IF v_auditor IS NOT NULL THEN
+    BEGIN
+      PERFORM public.count_assign_member_to_session(v_direct_session,v_auditor);
+      RAISE EXCEPTION 'LVE792_AUDITOR_WAS_ALLOWED_DIRECT_ASSIGNMENT';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM <> 'SESSION_MEMBER_NOT_COUNT_CAPABLE' THEN RAISE; END IF;
+    END;
+  END IF;
+
+  v_result := public.count_assign_member_to_session(v_direct_session,v_counter);
+  SELECT count(*) INTO v_count FROM public.count_assignments
+  WHERE id=(v_result->>'assignment_id')::uuid
+    AND project_id=v_project AND status='assigned';
+  IF v_count <> 1 THEN RAISE EXCEPTION 'LVE792_DIRECT_ASSIGNMENT_FAILED:%',v_count; END IF;
+
+  v_result := public.count_remove_member_from_session(v_direct_session,v_counter);
+  IF v_result->>'status' <> 'paused' OR v_result->>'assignment_preserved' <> 'true' THEN
+    RAISE EXCEPTION 'LVE792_DIRECT_ASSIGNMENT_REMOVE_DID_NOT_PRESERVE:%',v_result;
+  END IF;
+
+  v_result := public.count_assign_member_to_session(v_direct_session,v_counter);
+  IF v_result->>'status' <> 'assigned' OR v_result->>'reactivated' <> 'true' THEN
+    RAISE EXCEPTION 'LVE792_DIRECT_ASSIGNMENT_REACTIVATION_FAILED:%',v_result;
+  END IF;
+  PERFORM public.count_remove_member_from_session(v_direct_session,v_counter);
 
   RAISE NOTICE 'PASS: reusable team, roster snapshot, safe unassign/reassign, project scope, atomic session, operation type and KPIs';
 END
