@@ -2547,7 +2547,7 @@ async function commitClientCatalogImport(){
   $('operationDetailTitle').textContent=s.name;
   $('operationDetailMeta').textContent=state.project.name+' · '+state.project.code+' · '+statusName(s.status)+' · أنشئت '+date(s.created_at);
   const editable=['planned','active','paused','review'].includes(s.status);
-  ['operationAddMember','operationAssignMember','operationCreateMember','operationImportFile','operationPreviewImport','operationCommitImport'].forEach(id=>{$(id).disabled=!editable;});
+  ['operationAddMember','operationAssignMember','operationAddTeam','operationAssignTeam','operationCreateMember','operationImportFile','operationPreviewImport','operationCommitImport'].forEach(id=>{$(id).disabled=!editable;});
   $('operationDetail').scrollIntoView({behavior:'smooth',block:'start'});
   await Promise.all([loadOperationTeam(),loadOperationMetrics(),loadOperationImportHistory(),loadOperationExportHistory(),loadOperationReconciliation()]);
  }
@@ -2562,18 +2562,41 @@ async function commitClientCatalogImport(){
   if(error)throw error;if((count||0)>maxRows)throw new Error('FETCH_LIMIT_EXCEEDED:'+table+':'+maxRows);
   return all;
  }
+
  async function loadOperationTeam(){
   const s=state.selectedSession;if(!s)return;
-  const [assignments,members]=await Promise.all([
+  const [assignments,members,links,teamResult]=await Promise.all([
    loadScopedOperationRows('count_assignments','id,member_id,location_id,status,assigned_at','session_id',s.id,'assigned_at'),
-   loadScopedOperationRows('count_members','id,display_name,username,role,status','project_id',s.project_id,'display_name')
+   loadScopedOperationRows('count_members','id,display_name,username,role,role_id,status','project_id',s.project_id,'display_name'),
+   db.from('count_session_teams').select('id,team_id,status,created_at,removed_at').eq('project_id',s.project_id).eq('session_id',s.id).order('created_at',{ascending:false}),
+   db.from('count_team_overview').select('*').eq('project_id',s.project_id).order('team_name')
   ]);
+  if(links.error)throw links.error;if(teamResult.error)throw teamResult.error;
   assignments.sort((a,b)=>String(b.assigned_at||'').localeCompare(String(a.assigned_at||'')));
   const map=Object.fromEntries(members.map(x=>[x.id,x])),used=new Set(assignments.map(x=>x.member_id));
-  $('operationAddMember').innerHTML='<option value="">اختر مستخدماً متاحاً</option>'+members.filter(m=>m.status==='active'&&!used.has(m.id)).map(m=>'<option value="'+m.id+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role))+'</option>').join('');
-  $('operationTeamCount').textContent=used.size;
-  $('operationTeamList').innerHTML=assignments.length?'<table><thead><tr><th>المستخدم</th><th>الدور</th><th>نطاق الإسناد</th><th>الحالة</th><th>تاريخ الإسناد</th><th>إجراء</th></tr></thead><tbody>'+assignments.map(a=>{const m=map[a.member_id]||{},loc=state.locations.find(x=>x.id===a.location_id);return '<tr><td><b>'+esc(m.display_name||'عضو')+'</b><span class="sub">'+esc(m.username||'')+'</span></td><td>'+esc(roleName(m.role))+'</td><td>'+esc(loc?.name||'كل المواقع')+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.assigned_at)+'</td><td><button type="button" class="danger" data-remove-operation-member="'+a.member_id+'">إخراج من العملية</button></td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم يتم إسناد أعضاء لهذه العملية بعد.</div>';
-  document.querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
+  const canManage=Boolean(state.memberManageProjects?.has(s.project_id));
+  $('operationAddMember').innerHTML='<option value="">اختر مستخدماً متاحاً</option>'+members.filter(m=>memberCanCount(m)&&!used.has(m.id)).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join('');
+  $('operationAddMember').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationAssignMember').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationTeamCount').textContent=used.size.toLocaleString('ar-EG');
+  const teams=teamResult.data||[];
+  const activeLinks=(links.data||[]).filter(x=>x.status==='active');
+  const assignedTeamIds=new Set(activeLinks.map(x=>x.team_id));
+  $('operationAddTeam').innerHTML='<option value="">اختر فريقاً</option>'+teams.filter(t=>t.status==='active'&&!assignedTeamIds.has(t.team_id)).map(t=>'<option value="'+esc(t.team_id)+'">'+esc(t.team_name)+' · '+esc(t.team_code)+' · '+Number(t.active_members||0)+' عضو</option>').join('');
+  $('operationAddTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationAssignTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationTeamAssignments').innerHTML=(links.data||[]).length?'<table><thead><tr><th>الفريق</th><th>الأعضاء المؤهلون</th><th>عمليات نشطة</th><th>حالة الإسناد</th><th>تاريخ الإسناد</th><th>الإجراء</th></tr></thead><tbody>'+(links.data||[]).map(link=>{
+   const t=teams.find(x=>x.team_id===link.team_id)||{};
+   const action=canManage&&link.status==='active'&&['planned','active','paused','review'].includes(s.status)?'<button type="button" class="danger" data-unassign-operation-team="'+esc(link.team_id)+'">فصل الفريق</button>':'—';
+   return '<tr><td><b>'+esc(t.team_name||link.team_id)+'</b><span class="sub">'+esc(t.team_code||'')+'</span></td><td>'+Number(t.active_members||0)+'</td><td>'+Number(t.active_operations||0)+'</td><td>'+statusPill(link.status==='active'?'active':'paused')+' <small>'+esc(link.status==='active'?'مسند':'مفصول')+'</small></td><td>'+date(link.created_at)+'</td><td>'+action+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد فرق مسندة لهذه العملية.</div>';
+  $('operationTeamAssignments').querySelectorAll('[data-unassign-operation-team]').forEach(btn=>btn.onclick=async()=>{
+   if(!await confirmAction('فصل الفريق عن هذه العملية؟ سيظل سجل العد محفوظاً، ولن يُحذف الفريق أو أعضاؤه.',{title:'فصل فريق عن العملية',confirmText:'فصل الفريق'}))return;
+   try{const {error}=await db.rpc('count_team_unassign_from_session',{p_team_id:btn.dataset.unassignOperationTeam,p_session_id:s.id});if(error)throw error;notify('تم فصل الفريق وحفظ سجل العملية.');await loadOperationTeam();await loadGlobalOperations();}
+   catch(e){fail('تعذر فصل الفريق عن العملية',e);}
+  });
+  $('operationTeamList').innerHTML=assignments.length?'<table><thead><tr><th>المستخدم</th><th>الدور</th><th>نطاق الإسناد</th><th>الحالة</th><th>تاريخ الإسناد</th><th>إجراء</th></tr></thead><tbody>'+assignments.map(a=>{const m=map[a.member_id]||{},loc=state.locations.find(x=>x.id===a.location_id);const action=canManage&&a.status!=='done'?'<button type="button" class="danger" data-remove-operation-member="'+esc(a.member_id)+'">إزالة من العملية</button>':'—';return '<tr><td><b>'+esc(m.display_name||'عضو')+'</b><span class="sub">'+esc(m.username||'')+'</span></td><td>'+esc(roleName(m.role,m.role_id))+'</td><td>'+esc(loc?.name||'كل المواقع')+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.assigned_at)+'</td><td>'+action+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم يتم إسناد أفراد لهذه العملية بعد.</div>';
+  $('operationTeamList').querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
    const current=state.selectedSession;if(!current||!['planned','active','paused','review'].includes(current.status))return notify('العملية غير قابلة لتعديل الفريق في حالتها الحالية.',true);
    if(!await confirmAction('إخراج المستخدم من هذه العملية فقط؟ سيبقى حسابه وعضويته وسجل العد السابق محفوظاً.',{title:'إخراج عضو من العملية',confirmText:'إخراج من العملية'}))return;
    const {error}=await db.from('count_assignments').delete().eq('session_id',current.id).eq('member_id',b.dataset.removeOperationMember);
@@ -2581,6 +2604,15 @@ async function commitClientCatalogImport(){
    notify('تم إخراج المستخدم من هذه العملية فقط.');await loadOperationTeam();await loadGlobalOperations();
   });
  }
+ async function operationAssignTeam(){
+  const s=state.selectedSession,teamId=$('operationAddTeam').value;
+  if(!s||!teamId)return notify('اختر فريقاً نشطاً أولاً.',true);
+  if(!state.memberManageProjects?.has(s.project_id))return notify('لا تملك صلاحية إسناد فرق لهذا الملف.',true);
+  if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن إسناد فرق إلى عملية مغلقة.',true);
+  try{const {data,error}=await db.rpc('count_team_assign_to_session',{p_team_id:teamId,p_session_id:s.id});if(error)throw error;notify('تم إسناد الفريق ('+Number(data?.member_count||0)+' عضو) إلى العملية.');await loadOperationTeam();await loadGlobalOperations();}
+  catch(e){fail('تعذر إسناد الفريق إلى العملية',e);}
+ }
+
  async function operationAssignMember(){
   const s=state.selectedSession,memberId=$('operationAddMember').value;
   if(!s||!memberId)return notify('اختر مستخدماً متاحاً أولاً.',true);
