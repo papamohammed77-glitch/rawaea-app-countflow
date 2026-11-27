@@ -1082,13 +1082,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const matchesText=[x.display_name,x.username,x.role,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));
    return matchesText&&(!projectFilter||x.project_id===projectFilter)&&(!statusFilter||x.status===statusFilter);
   });
-  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
+  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>التطبيقات</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
    const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;
    const actions=self?'الحساب الحالي':(x.status==='removed'?'عضوية مسحوبة':'<button type="button" class="soft" data-member-reset-password="'+x.id+'">تغيير كلمة المرور</button>')+(canPause?' <button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':'');
    const project=p,allowedRoles=state.roles.filter(r=>r.scope==='project'&&r.is_active&&(r.is_system||r.client_id===project?.client_id));
    const canChangeRole=Boolean(state.memberManageProjects?.has(x.project_id)&&!self&&x.status!=='removed'&&allowedRoles.length);
    const roleCell=canChangeRole?'<div class="cf-inline-actions"><select data-member-role="'+x.id+'" aria-label="الدور الجديد للمستخدم">'+allowedRoles.map(r=>'<option value="'+r.id+'" '+(r.id===x.role_id?'selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select><button type="button" class="soft" data-save-member-role="'+x.id+'">حفظ الدور</button></div>':esc(roleName(x.role,x.role_id));
-   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleCell+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
+   const appLinks=x.role==='counter'?'<a class="link" href="./countflow.html" target="_blank" rel="noopener">تطبيق المندوب</a>':x.role==='supervisor'?'<a class="link" href="./Countflow-supervisor.html" target="_blank" rel="noopener">تطبيق المشرف</a>':x.role==='auditor'?'<a class="link" href="./countflow-control.html" target="_blank" rel="noopener">تطبيق المراجع</a>':'—';
+   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleCell+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td>'+appLinks+'</td><td><div class="actions">'+actions+'</div></td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات تطابق المرشحات ضمن النطاق المسموح لحسابك.</div>';
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
   $('memberTable').querySelectorAll('[data-save-member-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveMemberRole));
@@ -2318,7 +2319,7 @@ async function commitClientCatalogImport(){
    }
    const [members,sessions]=await Promise.all([
     loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,role_id,status,last_seen_at,created_at',ids,'created_at'),
-    loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
+    loadGlobalRows('count_sessions','id,project_id,name,status,operation_type,created_at,started_at,closed_at',ids,'created_at')
    ]);
    state.allMembers=members;state.allSessions=sessions;state.assignmentCounts={};
    const permissionChecks=await Promise.all(state.projects.map(async project=>{const check=await db.rpc('count_can_manage_project_members',{p_project_id:project.id});if(check.error){console.warn('[CountFlow Admin] team-management permission check failed',project.id,check.error);return [project.id,false];}return [project.id,check.data===true];}));
@@ -2337,6 +2338,8 @@ async function commitClientCatalogImport(){
    $('kMembers').textContent=members.filter(x=>x.status==='active').length;
    $('kSessions').textContent=sessions.length;
    renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
+   if($('tab-teams')?.classList.contains('active'))await loadTeams().catch(e=>console.warn('[CountFlow Admin] team list refresh failed',e));
+   if(state.selectedSession&&$('operationDetail')&&!$('operationDetail').classList.contains('hidden'))await loadOperationTeam().catch(e=>console.warn('[CountFlow Admin] operation team refresh failed',e));
    await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard query failed',e));
   });
  }
@@ -2352,7 +2355,7 @@ async function commitClientCatalogImport(){
    const rows=[];let offset=0;const pageSize=500,maxRows=10000;
    while(true){
     const {data,error}=await db.from('count_operation_overview')
-     .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at')
+     .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at,operation_created_at,operation_type,active_teams,active_team_members')
      .in('project_id',projectIds).order('planned_start_at',{ascending:false}).range(offset,offset+pageSize-1);
     if(error)throw error;
     const page=data||[];rows.push(...page);
@@ -2360,7 +2363,11 @@ async function commitClientCatalogImport(){
     if(page.length<pageSize)break;
     offset+=pageSize;
    }
+   const selectedProjectId=$('overviewProjectFilter')?.value||null;
+   const {data:kpiData,error:kpiError}=await db.rpc('count_admin_platform_kpis',{p_project_id:selectedProjectId});
+   if(kpiError)throw kpiError;
    if(requestToken!==state.overviewRequestToken)return;
+   state.platformKpis=Array.isArray(kpiData)?(kpiData[0]||{}):(kpiData||{});
    state.overviewRows=rows;state.overviewLoadedAt=Date.now();state.overviewError=null;
    renderAdminOverview();
   }catch(error){
@@ -2391,6 +2398,11 @@ async function commitClientCatalogImport(){
   const activeOperations=rows.filter(x=>x.operation_status==='active').length;
   const completedOperations=rows.filter(x=>x.operation_status==='completed').length;
   const activeAssignments=sum(rows,'active_assignments');
+  const platformKpis=state.platformKpis||{};
+  $('overviewOperationsThisMonth').textContent=fmt(platformKpis.operations_this_month);
+  $('overviewActiveTeams').textContent=fmt(platformKpis.active_teams);
+  $('overviewActiveTeamPeople').textContent=fmt(platformKpis.active_team_people);
+  $('overviewAssignedPeople').textContent=fmt(platformKpis.active_assigned_people);
   $('overviewTotalOperations').textContent=fmt(rows.length);
   $('overviewActiveOperations').textContent=fmt(activeOperations);
   $('overviewEntryEvents').textContent=fmt(totalEntries);
@@ -2470,9 +2482,9 @@ async function commitClientCatalogImport(){
   $('operationResultCount').textContent=rows.length+' عملية';
   const pageSize=50,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));state.operationPage=Math.min(state.operationPage,totalPages);
   const page=rows.slice((state.operationPage-1)*pageSize,state.operationPage*pageSize);
-  const cols=[['created_at','تاريخ الإنشاء'],['client','الجهة المتعاقدة'],['code','رقم التكليف'],['name','اسم العملية'],['status','الحالة'],['team','الفريق'],['started_at','بدء التنفيذ'],['closed_at','الإغلاق']];
+  const cols=[['created_at','تاريخ الإنشاء'],['client','الجهة المتعاقدة'],['code','رقم التكليف'],['name','اسم العملية'],['operation_type','نوع العملية'],['status','الحالة'],['team','أفراد مسندون'],['started_at','بدء التنفيذ'],['closed_at','الإغلاق']];
   const head='<thead><tr>'+cols.map(([k,label])=>'<th><button type="button" class="link" data-sort-operation="'+k+'">'+label+(state.operationSort===k?(state.operationSortAsc?' ↑':' ↓'):'')+'</button></th>').join('')+'<th>إجراء</th></tr></thead>';
-  const body=page.map(x=>{const p=state.projects.find(v=>v.id===x.project_id)||{};return '<tr><td>'+date(x.created_at)+'</td><td><b>'+esc(p.name||'—')+'</b></td><td>'+esc(p.code||'—')+'</td><td><b>'+esc(x.name)+'</b></td><td>'+statusPill(x.status)+'</td><td>'+Number(state.assignmentCounts[x.id]||0)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td><td><button type="button" class="soft" data-open-operation="'+x.id+'">فتح / معاينة</button></td></tr>';}).join('');
+  const body=page.map(x=>{const p=state.projects.find(v=>v.id===x.project_id)||{},type=({full_inventory:'جرد شامل',cycle_count:'جرد دوري',spot_check:'جرد جزئي',recount:'إعادة جرد',audit:'تدقيق',other:'أخرى'})[x.operation_type]||'غير مصنف';return '<tr><td>'+date(x.created_at)+'</td><td><b>'+esc(p.name||'—')+'</b></td><td>'+esc(p.code||'—')+'</td><td><b>'+esc(x.name)+'</b></td><td>'+type+'</td><td>'+statusPill(x.status)+'</td><td>'+Number(state.assignmentCounts[x.id]||0)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td><td><button type="button" class="soft" data-open-operation="'+x.id+'">فتح / معاينة</button></td></tr>';}).join('');
   $('operationsTable').innerHTML=rows.length?'<table>'+head+'<tbody>'+body+'</tbody></table>':'<div class="empty">لا توجد عمليات تطابق معايير البحث.</div>';
   $('operationsPager').innerHTML='<span class="hint">صفحة '+state.operationPage+' من '+totalPages+' · '+rows.length+' عملية</span><button class="soft" type="button" id="operationPrev" '+(state.operationPage<=1?'disabled':'')+'>السابق</button><button class="soft" type="button" id="operationNext" '+(state.operationPage>=totalPages?'disabled':'')+'>التالي</button>';
   document.querySelectorAll('[data-sort-operation]').forEach(b=>b.onclick=()=>{const k=b.dataset.sortOperation;if(state.operationSort===k)state.operationSortAsc=!state.operationSortAsc;else{state.operationSort=k;state.operationSortAsc=true;}renderGlobalOperations();});
@@ -2491,7 +2503,7 @@ async function commitClientCatalogImport(){
  function subscribeGlobalRealtime(){
   stopGlobalRealtime();
   if(!state.projects.length||!state.user){state.overviewRealtimeStatus='IDLE';return;}
-  const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
+  const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries','count_assignments','count_teams','count_team_members','count_session_teams','count_session_team_members'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
   state.globalChannel=window.CF_Core.watchPostgresChanges(db,{
    channelName:'countflow-admin-global-'+state.user.id,
    filters,onInvalidate:scheduleGlobalRefresh,reconcileMs:30000,
