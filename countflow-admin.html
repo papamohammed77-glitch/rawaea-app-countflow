@@ -670,6 +670,7 @@
       <div class="fields">
        <div class="field"><label>اسم الجهة أو العملية أو رقم التكليف</label><input id="operationSearch" placeholder="كارفور، جرد يناير، CF-202701"></div>
        <div class="field"><label>حالة العملية</label><select id="operationStatus"><option value="">كل الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+       <div class="field"><label>نوع العملية</label><select id="operationTypeFilter"><option value="">كل الأنواع</option><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
        <div class="field"><label>من تاريخ الإنشاء</label><input id="operationFrom" type="date"></div>
        <div class="field"><label>إلى تاريخ الإنشاء</label><input id="operationTo" type="date"></div>
       </div>
@@ -699,7 +700,7 @@
          <div class="field"><label>اسم المستخدم</label><input id="operationNewUsername" maxlength="80"></div>
          <div class="field"><label>البريد الإلكتروني</label><input id="operationNewEmail" type="email"></div>
          <div class="field"><label>كلمة مرور أولية للحساب الجديد (اختيارية للحساب الموجود)</label><input id="operationNewPassword" type="password" autocomplete="new-password" placeholder="اتركها فارغة لربط حساب مؤكد موجود"></div>
-         <div class="field full"><label>الدور</label><select id="operationNewRole"><option value="counter">مندوب جرد</option><option value="auditor">مراجع / مدقق</option><option value="supervisor">مشرف جرد</option></select></div>
+         <div class="field full"><label>الدور</label><select id="operationNewRole"><option value="counter">مسؤول جرد / مندوب عدّ</option><option value="supervisor">مشرف جرد</option></select></div>
         </div>
         <button id="operationCreateMember" type="button" class="primary">إنشاء الحساب وإضافته للعملية</button>
         <p class="hint">البريد المؤكد الموجود يُعاد استخدامه دون تغيير كلمة المرور. الحساب الجديد يحتاج كلمة مرور أولية لا تقل عن 10 أحرف؛ البريد غير المؤكد أو العضوية غير النشطة لا يتم تجاوزها تلقائياً. إخراج المستخدم من العملية يحذف الإسناد لهذه العملية فقط ولا يحذف حسابه أو بيانات العد.</p>
@@ -2348,7 +2349,7 @@ async function commitClientCatalogImport(){
   const requestToken=(state.overviewRequestToken||0)+1;state.overviewRequestToken=requestToken;
   const projectIds=state.projects.map(p=>p.id).filter(Boolean);
   if(!projectIds.length){
-   state.overviewRows=[];state.overviewLoadedAt=Date.now();state.overviewError=null;
+   state.overviewRows=[];state.platformKpis={};state.overviewLoadedAt=Date.now();state.overviewError=null;
    renderAdminOverview();return;
   }
   try{
@@ -2472,10 +2473,10 @@ async function commitClientCatalogImport(){
   $('kReviewOperations').textContent=all.filter(x=>x.status==='review').length;
   $('kAllOperations').textContent=all.length;
   const q=($('operationSearch')?.value||'').trim().toLowerCase();
-  const status=$('operationStatus')?.value||'',from=$('operationFrom')?.value||'',to=$('operationTo')?.value||'';
+  const status=$('operationStatus')?.value||'',typeFilter=$('operationTypeFilter')?.value||'',from=$('operationFrom')?.value||'',to=$('operationTo')?.value||'';
   const rows=all.filter(x=>{
    const p=state.projects.find(v=>v.id===x.project_id)||{},hay=[p.name,p.code,x.name].join(' ').toLowerCase(),day=String(x.created_at||'').slice(0,10);
-   return (!q||hay.includes(q))&&(!status||x.status===status)&&(!from||day>=from)&&(!to||day<=to);
+   return (!q||hay.includes(q))&&(!status||x.status===status)&&(!typeFilter||x.operation_type===typeFilter)&&(!from||day>=from)&&(!to||day<=to);
   });
   const operationSortValue=(x,key)=>{if(key==='client'||key==='code'){const p=state.projects.find(v=>v.id===x.project_id)||{};return key==='client'?(p.name||''):(p.code||'');}if(key==='team')return Number(state.assignmentCounts[x.id]||0);return x[key]??'';};
   rows.sort((a,b)=>{const av=operationSortValue(a,state.operationSort),bv=operationSortValue(b,state.operationSort);let cmp;if(state.operationSort==='team')cmp=Number(av)-Number(bv);else if(['created_at','started_at','closed_at'].includes(state.operationSort))cmp=new Date(av||0)-new Date(bv||0);else cmp=String(av).localeCompare(String(bv),'ar',{numeric:true,sensitivity:'base'});return state.operationSortAsc?cmp:-cmp;});
@@ -2557,7 +2558,8 @@ async function commitClientCatalogImport(){
   try{await loadProjectData();}catch(e){fail('تعذر تحميل ملف التكليف',e);return;}
   activateTab('operations');$('operationDetail').classList.remove('hidden');
   $('operationDetailTitle').textContent=s.name;
-  $('operationDetailMeta').textContent=state.project.name+' · '+state.project.code+' · '+statusName(s.status)+' · أنشئت '+date(s.created_at);
+  const operationTypeLabel=({full_inventory:'جرد شامل',cycle_count:'جرد دوري',spot_check:'جرد جزئي / مفاجئ',recount:'إعادة جرد',audit:'تدقيق ومراجعة',other:'أخرى'})[s.operation_type]||'غير مصنف';
+  $('operationDetailMeta').textContent=state.project.name+' · '+state.project.code+' · '+operationTypeLabel+' · '+statusName(s.status)+' · أنشئت '+date(s.created_at);
   const editable=['planned','active','paused','review'].includes(s.status);
   ['operationAddMember','operationAssignMember','operationAddTeam','operationAssignTeam','operationCreateMember','operationImportFile','operationPreviewImport','operationCommitImport'].forEach(id=>{$(id).disabled=!editable;});
   $('operationDetail').scrollIntoView({behavior:'smooth',block:'start'});
@@ -2584,6 +2586,11 @@ async function commitClientCatalogImport(){
    db.from('count_team_overview').select('*').eq('project_id',s.project_id).order('team_name')
   ]);
   if(links.error)throw links.error;if(teamResult.error)throw teamResult.error;
+  const linkIds=(links.data||[]).map(x=>x.id);
+  const snapshotResult=linkIds.length?await db.from('count_session_team_members').select('session_team_id,member_id,status').in('session_team_id',linkIds):{data:[],error:null};
+  if(snapshotResult.error)throw snapshotResult.error;
+  const snapshotCounts=new Map();
+  (snapshotResult.data||[]).forEach(x=>snapshotCounts.set(x.session_team_id,(snapshotCounts.get(x.session_team_id)||0)+1));
   assignments.sort((a,b)=>String(b.assigned_at||'').localeCompare(String(a.assigned_at||'')));
   const map=Object.fromEntries(members.map(x=>[x.id,x])),used=new Set(assignments.map(x=>x.member_id));
   const canManage=Boolean(state.memberManageProjects?.has(s.project_id));
@@ -2597,10 +2604,10 @@ async function commitClientCatalogImport(){
   $('operationAddTeam').innerHTML='<option value="">اختر فريقاً</option>'+teams.filter(t=>t.status==='active'&&!assignedTeamIds.has(t.team_id)).map(t=>'<option value="'+esc(t.team_id)+'">'+esc(t.team_name)+' · '+esc(t.team_code)+' · '+Number(t.active_members||0)+' عضو</option>').join('');
   $('operationAddTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
   $('operationAssignTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
-  $('operationTeamAssignments').innerHTML=(links.data||[]).length?'<table><thead><tr><th>الفريق</th><th>الأعضاء المؤهلون</th><th>عمليات نشطة</th><th>حالة الإسناد</th><th>تاريخ الإسناد</th><th>الإجراء</th></tr></thead><tbody>'+(links.data||[]).map(link=>{
+  $('operationTeamAssignments').innerHTML=(links.data||[]).length?'<table><thead><tr><th>الفريق</th><th>أعضاء لقطة الإسناد</th><th>عمليات نشطة للفريق</th><th>حالة الإسناد</th><th>تاريخ الإسناد</th><th>الإجراء</th></tr></thead><tbody>'+(links.data||[]).map(link=>{
    const t=teams.find(x=>x.team_id===link.team_id)||{};
    const action=canManage&&link.status==='active'&&['planned','active','paused','review'].includes(s.status)?'<button type="button" class="danger" data-unassign-operation-team="'+esc(link.team_id)+'">فصل الفريق</button>':'—';
-   return '<tr><td><b>'+esc(t.team_name||link.team_id)+'</b><span class="sub">'+esc(t.team_code||'')+'</span></td><td>'+Number(t.active_members||0)+'</td><td>'+Number(t.active_operations||0)+'</td><td>'+statusPill(link.status==='active'?'active':'paused')+' <small>'+esc(link.status==='active'?'مسند':'مفصول')+'</small></td><td>'+date(link.created_at)+'</td><td>'+action+'</td></tr>';
+   return '<tr><td><b>'+esc(t.team_name||link.team_id)+'</b><span class="sub">'+esc(t.team_code||'')+'</span></td><td>'+Number(snapshotCounts.get(link.id)||0)+'</td><td>'+Number(t.active_operations||0)+'</td><td>'+statusPill(link.status==='active'?'active':'paused')+' <small>'+esc(link.status==='active'?'مسند':'مفصول')+'</small></td><td>'+date(link.created_at)+'</td><td>'+action+'</td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا توجد فرق مسندة لهذه العملية.</div>';
   $('operationTeamAssignments').querySelectorAll('[data-unassign-operation-team]').forEach(btn=>btn.onclick=async()=>{
    if(!await confirmAction('فصل الفريق عن هذه العملية؟ سيظل سجل العد محفوظاً، ولن يُحذف الفريق أو أعضاؤه.',{title:'فصل فريق عن العملية',confirmText:'فصل الفريق'}))return;
@@ -3954,8 +3961,8 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
  $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');loadAdminOverview().catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));};
  $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
- ['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
- $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
+ ['operationSearch','operationStatus','operationTypeFilter','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
+ $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationTypeFilter','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
  $('operationAssignMember').onclick=operationAssignMember;
  $('operationAssignTeam').onclick=operationAssignTeam;
  $('operationCreateMember').onclick=operationCreateMember;
