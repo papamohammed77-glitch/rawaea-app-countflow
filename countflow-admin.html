@@ -3761,8 +3761,9 @@ async function toggleCatalogProduct(id){
  $('projectForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);try{
   const clientId=state.platformOwner?$('projectClient').value:state.clientId;if(!clientId)throw new Error('اختر العميل أولاً.');const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
   const payload={p_client_id:clientId,p_project_name:$('projectName').value.trim(),p_project_code:$('projectCode').value.trim().toUpperCase(),p_operation_name:$('operationName').value.trim(),p_operation_code:$('operationCode').value.trim().toUpperCase()||null,p_branch_name:$('branchName').value.trim(),p_branch_code:$('branchCode').value.trim().toUpperCase(),p_planned_start_at:toIso('operationStart'),p_planned_end_at:toIso('operationEnd'),p_timezone:$('operationTimezone').value,p_priority:Number($('operationPriority').value),p_counting_mode:$('operationMode').value,p_show_expected_quantity:$('showExpectedQuantity').checked,p_capture_images:$('captureImages').checked,p_require_images:$('requireImages').checked,p_allow_unknown_products:$('allowUnknownProducts').checked,p_instructions:$('operationInstructions').value.trim()||null};
-  const {data,error}=await db.rpc('count_create_operation',payload);if(error)throw error;const projectId=data.project_id,sessionId=data.session_id;
-  notify('تم إنشاء المشروع والعملية والفرع في معاملة واحدة.');f.reset();$('captureImages').checked=true;$('operationMode').value='mixed';$('operationTimezone').value='Africa/Cairo';$('operationPriority').value='3';
+  payload.p_operation_type=$('operationType').value;
+  const {data,error}=await db.rpc('count_create_operation_with_teams',{...payload,p_operation_type:payload.p_operation_type,p_team_ids:[]});if(error)throw error;const projectId=data.project_id,sessionId=data.session_id;
+  notify('تم إنشاء المشروع والعملية والفرع في معاملة واحدة.');f.reset();$('captureImages').checked=true;$('operationMode').value='mixed';$('operationTimezone').value='Africa/Cairo';$('operationPriority').value='3';$('operationType').value='full_inventory';
   state.project=null;state.selectedSession=null;await loadProjects();state.project=state.projects.find(p=>p.id===projectId)||state.project;$('projectPicker').value=state.project?.id||'';await loadProjectData();await loadGlobalOperations();await selectOperation(sessionId);
  }catch(err){fail('تعذر إنشاء المشروع والعملية',err);}finally{setBusy(f,false);}});
  $('projectPicker').addEventListener('change',async()=>{resetProductForm();resetProductImport();$('productImportDetails').innerHTML='';state.project=state.projects.find(p=>p.id===$('projectPicker').value)||null;if(state.platformOwner){state.roleClientId=state.project?.client_id||null;if(state.project?.client_id){state.catalogClientId=state.project.client_id;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId;}}try{await loadProjectData();await loadRoleCatalog();}catch(e){fail('تعذر تحميل المشروع',e);}});
@@ -3866,15 +3867,21 @@ async function toggleCatalogProduct(id){
   if(state.project&&state.projects.some(p=>p.id===state.project.id))$('sessionProject').value=state.project.id;
   const branches=state.locations.filter(x=>['branch','site','store','warehouse'].includes(x.location_type)&&!x.parent_id);
   $('sessionBranch').innerHTML='<option value="">بدون تحديد فرع</option>'+branches.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
-  const keep=[...($('sessionTeam').selectedOptions||[])].map(x=>x.value);
-  const members=(state.members||[]).filter(m=>m.status==='active');
-  $('sessionTeam').innerHTML=members.length?members.map(m=>'<option value="'+esc(m.id)+'" '+(keep.includes(m.id)?'selected':'')+'>'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join(''):'<option value="" disabled>لا يوجد أعضاء نشطون في هذا التكليف؛ أضف المستخدمين أولاً</option>';
+  const keepMembers=[...($('sessionTeam').selectedOptions||[])].map(x=>x.value);
+  const members=(state.members||[]).filter(m=>memberCanCount(m));
+  $('sessionTeam').innerHTML=members.length?members.map(m=>'<option value="'+esc(m.id)+'" '+(keepMembers.includes(m.id)?'selected':'')+'>'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join():'<option value="" disabled>لا يوجد أعضاء نشطون لديهم صلاحية العد</option>';
+  const keepTeams=[...($('sessionTeams').selectedOptions||[])].map(x=>x.value);
+  const teams=(state.teamRows||[]).filter(t=>t.project_id===state.project?.id&&t.status==='active');
+  $('sessionTeams').innerHTML=teams.length?teams.map(t=>'<option value="'+esc(t.team_id)+'" '+(keepTeams.includes(t.team_id)?'selected':'')+'>'+esc(t.team_name)+' · '+esc(t.team_code)+' · '+Number(t.active_members||0)+' عضو</option>').join():'<option value="" disabled>لا توجد فرق نشطة في ملف التكليف</option>';
+  $('sessionTeams').disabled=!state.memberManageProjects?.has(state.project?.id);
+  $('sessionTeam').disabled=!state.memberManageProjects?.has(state.project?.id);
  }
+
  async function openOperationCreateModal(){
   if(!state.projects.length){notify('لا يوجد ملف تكليف متاح لإنشاء عملية داخله.',true);activateTab('projects');return;}
   if(!state.project||!state.projects.some(p=>p.id===state.project.id))state.project=state.projects[0];
   $('projectPicker').value=state.project.id;
-  try{await loadProjectData();renderOperationCreateOptions();}
+  try{await loadProjectData();await loadTeams(state.project.id);renderOperationCreateOptions();}
   catch(e){fail('تعذر تحميل فريق ملف التكليف',e);return;}
   $('sessionProject').value=state.project.id;
   $('operationCreateModal').classList.remove('hidden');
@@ -3891,20 +3898,22 @@ async function toggleCatalogProduct(id){
   const project=state.projects.find(p=>p.id===$('sessionProject').value);
   if(!project)return;
   state.project=project;$('projectPicker').value=project.id;
-  try{await loadProjectData();renderOperationCreateOptions();$('sessionProject').value=project.id;}
+  try{await loadProjectData();await loadTeams(project.id);renderOperationCreateOptions();$('sessionProject').value=project.id;}
   catch(e){fail('تعذر تحميل نطاق فريق العملية',e);}
  });
 
  $('newOperationButton').onclick=()=>{activateTab('operations');openOperationCreateModal();};
 $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تحديث مؤشرات الأداء')).catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));
  $('overviewNewOperation').onclick=()=>{activateTab('operations');openOperationCreateModal();};
- ['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
- $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');renderAdminOverview();};
+ $('overviewProjectFilter').addEventListener('change',()=>loadAdminOverview().catch(e=>fail('تعذر تحديث مؤشرات ملف التكليف',e)));
+ ['overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
+ $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');loadAdminOverview().catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));};
  $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
  ['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
  $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
  $('operationAssignMember').onclick=operationAssignMember;
+ $('operationAssignTeam').onclick=operationAssignTeam;
  $('operationCreateMember').onclick=operationCreateMember;
  $('previewOperation').onclick=previewOperation;
  $('exportOperationXlsx').onclick=()=>downloadOperationExport('xlsx');
@@ -3912,6 +3921,14 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
  $('exportOperationCsv').onclick=()=>downloadOperationExport('csv');
 
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user)loadGlobalOperations().catch(e=>console.warn('[CountFlow Admin] visibility refresh failed',e));});
+ $('teamForm').addEventListener('submit',createTeamFromForm);
+ $('teamAddMembers').addEventListener('click',addMembersToTeam);
+ $('teamDetailClose').addEventListener('click',()=>{$('teamDetailPanel').classList.add('hidden');state.teamSelectedId=null;});
+ $('teamsRefresh').addEventListener('click',()=>loadTeams().then(()=>notify('تم تحديث فرق العمل')).catch(e=>fail('تعذر تحديث الفرق',e)));
+ $('teamProjectFilter').addEventListener('change',()=>loadTeams().catch(e=>fail('تعذر تصفية الفرق',e)));
+ $('teamStatusFilter').addEventListener('change',renderTeams);
+ $('teamSearch').addEventListener('input',renderTeams);
+ $('teamProject').addEventListener('change',()=>{const project=state.projects.find(p=>p.id===$('teamProject').value);if(project)state.project=project;});
  $('memberForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.project)return notify('سجّل تكليفاً أولاً',true);const f=e.currentTarget;setBusy(f,true);try{
   const selectedRole=state.roles.find(r=>r.id===$('memberRole').value);if(!selectedRole)throw new Error('اختر دوراً صالحاً ومفعلاً.');const body={action:'create',project_id:state.project.id,email:$('memberEmail').value.trim(),password:$('memberPassword').value,display_name:$('memberName').value.trim(),username:$('memberUsername').value.trim(),role:selectedRole.role_key,role_id:selectedRole.id};
   const {data,error}=await db.functions.invoke('counting-provision-member',{body});
@@ -3933,36 +3950,43 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
   try{
    const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
    const selectedMemberIds=[...$('sessionTeam').selectedOptions].map(o=>o.value).filter(Boolean);
+   const selectedTeamIds=[...$('sessionTeams').selectedOptions].map(o=>o.value).filter(Boolean);
    const startValue=$('sessionStart').value,endValue=$('sessionEnd').value;
    if(endValue&&!startValue)throw new Error('حدد بداية العملية قبل تحديد نهايتها.');
    if(startValue&&endValue&&new Date(endValue)<=new Date(startValue))throw new Error('وقت نهاية العملية يجب أن يكون بعد وقت البداية.');
-   const {data,error}=await db.from('count_sessions').insert({
-    project_id:project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id,
-    operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
-    branch_location_id:$('sessionBranch').value||null,
-    planned_start_at:toIso('sessionStart'),planned_end_at:toIso('sessionEnd'),
-    schedule_timezone:$('sessionTimezone').value,priority:Number($('sessionPriority').value),
-    counting_mode:$('sessionMode').value,show_expected_quantity:$('sessionShowExpected').checked,
-    capture_images:$('sessionCaptureImages').checked,require_images:$('sessionRequireImages').checked,
-    allow_unknown_products:$('sessionAllowUnknown').checked,
-    instructions:$('sessionInstructions').value.trim()||null
-   }).select('id').single();
+   if(selectedMemberIds.some(id=>!memberCanCount(state.members.find(m=>m.id===id))))throw new Error('يتضمن الاختيار مستخدماً لا يملك صلاحية تسجيل العد.');
+   const payload={
+    p_project_id:project.id,
+    p_name:$('sessionName').value.trim(),
+    p_operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
+    p_operation_type:$('sessionOperationType').value,
+    p_branch_location_id:$('sessionBranch').value||null,
+    p_planned_start_at:toIso('sessionStart'),
+    p_planned_end_at:toIso('sessionEnd'),
+    p_timezone:$('sessionTimezone').value,
+    p_priority:Number($('sessionPriority').value),
+    p_counting_mode:$('sessionMode').value,
+    p_show_expected_quantity:$('sessionShowExpected').checked,
+    p_capture_images:$('sessionCaptureImages').checked,
+    p_require_images:$('sessionRequireImages').checked,
+    p_allow_unknown_products:$('sessionAllowUnknown').checked,
+    p_instructions:$('sessionInstructions').value.trim()||null,
+    p_member_ids:selectedMemberIds,
+    p_team_ids:selectedTeamIds
+   };
+   const {data,error}=await db.rpc('count_create_session_with_teams',payload);
    if(error)throw error;
-   let assignmentWarning='';
-   if(selectedMemberIds.length){
-    const assignmentRows=selectedMemberIds.map(memberId=>({session_id:data.id,member_id:memberId,location_id:null,status:'assigned'}));
-    const assigned=await db.from('count_assignments').upsert(assignmentRows,{onConflict:'session_id,member_id,location_id'});
-    if(assigned.error)assignmentWarning=' تم إنشاء العملية، لكن فشل إسناد بعض/كل أعضاء الفريق: '+assigned.error.message+'؛ يمكنك إكمال الإسناد من تفاصيل العملية.';
-   }
-   f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';
+   const sessionId=data?.session_id;
+   if(!sessionId)throw new Error('لم تُرجع قاعدة البيانات معرف العملية المنشأة.');
+   f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';$('sessionOperationType').value='full_inventory';
    closeOperationCreateModal();
-   await loadProjectData();await loadGlobalOperations();await selectOperation(data.id);
-   if(assignmentWarning)notify('تم إنشاء العملية بنجاح.'+assignmentWarning,true);
-   else notify('تم إنشاء العملية المخططة'+(selectedMemberIds.length?' وإسناد '+selectedMemberIds.length+' عضو/أعضاء':' دون إسناد فريق بعد')+'. لم تُسجل أي كميات أو حركة مخزون.');
-  }catch(err){fail('تعذر إنشاء العملية',err);}
+   await loadProjectData();await loadGlobalOperations();await loadTeams(project.id);await selectOperation(sessionId);
+   notify('تم إنشاء العملية وإسناد الفرق والأفراد في معاملة واحدة. لم تُسجل أي كميات أو حركة مخزون.');
+  }catch(err){fail('تعذر إنشاء العملية وإسناد الفريق',err);}
   finally{setBusy(f,false);}
  });
- document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')switchCatalogView(state.catalogView||'global');}));
+ 
+ document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='teams')loadTeams().catch(e=>fail('تعذر تحميل فرق العمل',e));if(b.dataset.tab==='products')switchCatalogView(state.catalogView||'global');}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
 
