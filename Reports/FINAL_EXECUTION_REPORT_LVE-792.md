@@ -6,8 +6,11 @@
 **Supabase:** `rawaea-staging` — `hfzznsiprnwkpayskzhu`  
 **فرع المهمة:** `work/lve-792-enterprise-teams-operation-types-kpis`  
 **PR:** [#13 — Reusable teams, operation taxonomy and live KPIs](https://github.com/papamohammed77-glitch/rawaea-app-countflow/pull/13)  
-**آخر SHA تحقّق منه CI للكود:** `fd7fb9e812a4941e86d565076a4ae59981a4cbe4`  
-**حالة العمل عند إعداد هذا التقرير:** جميع ترحيلات CountFlow الخاصة بهذه المرحلة مطبقة ومتحقق منها في staging؛ فحوصات المصدر والبناء ناجحة؛ الدمج لم يتم بعد.
+**آخر SHA على main بعد الدمج:** `676700459ff7901c89d5c45df9b5d585c8dcff64`  
+**PR:** #13 — MERGED (Squash) بتاريخ 27 نوفمبر 2026.  
+**CI الفرع قبل الدمج:** run `46028185071` — 112/112 Node، Deno PASS، Pages PASS، Playwright 2 PASS / 1 SKIPPED.  
+**CI main بعد الدمج:** [run 46028386490](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46028386490) — SUCCESS؛ Node 112/112، Deno PASS، Cloudflare Pages PASS، Playwright 3/3 PASS بما فيها Production/Main SHA parity.  
+**الحالة النهائية:** MERGED ON MAIN / SUPABASE MIGRATIONS APPLIED / CI PASS / OWNER AUTHENTICATED VISUAL ACCEPTANCE OPEN / 90K+ EXPORT LIMITATION OPEN.
 
 ---
 
