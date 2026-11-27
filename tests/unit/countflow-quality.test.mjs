@@ -1946,6 +1946,7 @@ test("Owner Admin reusable teams, operation taxonomy and guarded assignment work
   const permissionGuard = read("database/migrations/20261127120000_countflow_team_member_count_permission_v1.sql");
   const permissionRevocation = read("database/migrations/20261127130000_countflow_team_roster_permission_revocation_guard_v1.sql");
   const individual = read("database/migrations/20261127140000_countflow_count_capable_individual_assignment_v1.sql");
+  const overviewSecurity = read("database/migrations/20261127160000_countflow_operation_overview_invoker_security_v1.sql");
   const rollback = read("tests/team-operation-rollback.sql");
 
   for (const table of ["count_teams", "count_team_members", "count_session_teams", "count_session_team_members"]) {
@@ -1970,6 +1971,9 @@ test("Owner Admin reusable teams, operation taxonomy and guarded assignment work
   assert.match(individual, /SESSION_MEMBER_NOT_COUNT_CAPABLE/);
   assert.match(individual, /MEMBER_ASSIGNED_VIA_TEAM_USE_TEAM_UNASSIGN/);
   assert.match(individual, /SET status='paused'/);
+  assert.match(overviewSecurity, /security_invoker = true/);
+  assert.match(overviewSecurity, /REVOKE ALL ON public\.count_operation_overview FROM anon/);
+  assert.match(overviewSecurity, /GRANT SELECT ON public\.count_projects TO authenticated/);
 
   assert.match(admin, /data-tab="teams"/);
   assert.match(admin, /id="tab-teams"/);
