@@ -573,7 +573,7 @@ test("Admin dynamic metadata, import history and team roles use Arabic operator 
   assert.match(admin, /function locationTypeName\(s\)/);
   assert.match(admin, /esc\(locationTypeName\(x\.location_type\)\)/);
   assert.match(admin, /statusName\(s\.status\)/);
-  assert.match(admin, /roleName\(m\.role\)/);
+  assert.match(admin, /roleName\(x\.role,x\.role_id\)/);
   assert.match(admin, /exportFormatLabel\(b\.source_format\)/);
   assert.match(admin, /committing:'قيد الاعتماد'/);
   assert.match(admin, /'نشط':'نشط','موقوف':'موقوف'/);
@@ -867,8 +867,8 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
 test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 11);
-  assert.equal(new Set(navTabs).size, 11);
+  assert.equal(navTabs.length, 12);
+  assert.equal(new Set(navTabs).size, 12);
   assert.match(admin, /class="nav-group"/);
   assert.match(admin, /class="nav-group-title"/);
   assert.match(admin, /data-icon="gauge-high"/);
@@ -1089,7 +1089,10 @@ test("Admin operation creation is a dedicated modal with project scope and team 
   assert.match(admin, /id="sessionTeam"[^>]*multiple/);
   assert.match(admin, /async function openOperationCreateModal\(\)/);
   assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
-  assert.match(admin, /from\('count_assignments'\)\.upsert\(assignmentRows,\{onConflict:'session_id,member_id,location_id'\}\)/);
+  assert.match(admin, /db\.rpc\('count_create_session_with_teams',payload\)/);
+  assert.match(admin, /id="sessionTeams"/);
+  assert.match(admin, /count_assign_member_to_session/);
+  assert.doesNotMatch(admin, /from\('count_assignments'\)\.upsert\(assignmentRows/);
   assert.match(admin, /branch_location_id:\$\('sessionBranch'\)\.value\|\|null/);
   assert.doesNotMatch(admin, /newOperationButton'\)\.onclick=\(\)=>\{[\s\S]{0,300}sessionForm'\)\.scrollIntoView/);
   assert.equal((admin.match(/id="sessionForm"/g) || []).length, 1);
