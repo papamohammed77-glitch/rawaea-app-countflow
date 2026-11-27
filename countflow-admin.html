@@ -2611,7 +2611,7 @@ async function commitClientCatalogImport(){
   $('operationTeamList').querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
    const current=state.selectedSession;if(!current||!['planned','active','paused','review'].includes(current.status))return notify('العملية غير قابلة لتعديل الفريق في حالتها الحالية.',true);
    if(!await confirmAction('إخراج المستخدم من هذه العملية فقط؟ سيبقى حسابه وعضويته وسجل العد السابق محفوظاً.',{title:'إخراج عضو من العملية',confirmText:'إخراج من العملية'}))return;
-   const {error}=await db.from('count_assignments').delete().eq('session_id',current.id).eq('member_id',b.dataset.removeOperationMember);
+   const {error}=await db.rpc('count_remove_member_from_session',{p_session_id:current.id,p_member_id:b.dataset.removeOperationMember});
    if(error)return fail('تعذر إخراج المستخدم',error);
    notify('تم إخراج المستخدم من هذه العملية فقط.');await loadOperationTeam();await loadGlobalOperations();
   });
@@ -2629,7 +2629,7 @@ async function commitClientCatalogImport(){
   const s=state.selectedSession,memberId=$('operationAddMember').value;
   if(!s||!memberId)return notify('اختر مستخدماً متاحاً أولاً.',true);
   if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن إضافة أعضاء إلى عملية مكتملة أو ملغاة.',true);
-  const {error}=await db.from('count_assignments').upsert({session_id:s.id,member_id:memberId,location_id:null,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
+  const {error}=await db.rpc('count_assign_member_to_session',{p_session_id:s.id,p_member_id:memberId});
   if(error)return fail('تعذر إضافة المستخدم للعملية',error);
   notify('تمت إضافة المستخدم إلى العملية.');await loadOperationTeam();await loadGlobalOperations();
  }
@@ -2641,7 +2641,7 @@ async function commitClientCatalogImport(){
   try{
    const {data,error}=await db.functions.invoke('counting-provision-member',{body:payload});
    if(error)throw error;if(data?.error)throw new Error(data.message||data.error);if(!data?.ok||!data.member_id)throw new Error('استجابة إنشاء الحساب غير مكتملة.');
-   const {error:assignmentError}=await db.from('count_assignments').upsert({session_id:s.id,member_id:data.member_id,location_id:null,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
+   const {error:assignmentError}=await db.rpc('count_assign_member_to_session',{p_session_id:s.id,p_member_id:data.member_id});
    $('operationNewName').value='';$('operationNewUsername').value='';$('operationNewEmail').value='';$('operationNewPassword').value='';
    if(assignmentError)notify('أُنشئ الحساب وعضويته، لكن تعذر إسناده إلى العملية. أعد محاولة الإسناد من شاشة الفريق.',true);
    else notify((data.account_reused?'تم ربط حساب Auth الموجود دون تغيير كلمة مروره':'تم إنشاء حساب Auth جديد')+'؛ '+(data.membership_reused?'العضوية النشطة كانت موجودة بالفعل.':'تم إنشاء عضوية التكليف.')+' تمت معالجة الإسناد للعملية.');
