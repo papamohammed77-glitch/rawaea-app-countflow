@@ -20,6 +20,7 @@ DECLARE
   v_session uuid;
   v_counter uuid;
   v_supervisor uuid;
+  v_auditor uuid;
   v_team uuid;
   v_new_session uuid;
   v_result jsonb;
@@ -52,6 +53,14 @@ BEGIN
   ORDER BY m.created_at
   LIMIT 1;
 
+  SELECT m.id INTO v_auditor
+  FROM public.count_members m
+  WHERE m.project_id = v_project AND m.role = 'auditor'
+    AND m.status = 'active'
+    AND NOT counting_private.is_platform_owner_actor(m.user_id)
+  ORDER BY m.created_at
+  LIMIT 1;
+
   SELECT m.id INTO v_supervisor
   FROM public.count_members m
   WHERE m.project_id = v_project AND m.role = 'supervisor'
@@ -70,6 +79,18 @@ BEGIN
   -- Reusable team creation and roster management.
   v_result := public.count_team_create(v_project, 'QA_LVE792_TEAM_ROLLBACK', 'rollback-only team smoke test');
   v_team := (v_result->>'id')::uuid;
+
+  IF v_auditor IS NOT NULL THEN
+    BEGIN
+      PERFORM public.count_team_add_members(v_team, ARRAY[v_auditor]::uuid[]);
+      RAISE EXCEPTION 'LVE792_AUDITOR_WAS_ALLOWED_IN_COUNT_TEAM';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM <> 'TEAM_MEMBERS_MUST_BE_ACTIVE_COUNT_CAPABLE_IN_SAME_PROJECT' THEN
+        RAISE;
+      END IF;
+    END;
+  END IF;
+
   PERFORM public.count_team_add_members(v_team, ARRAY[v_counter,v_supervisor]::uuid[]);
   PERFORM public.count_team_set_member_role(v_team, v_supervisor, 'leader');
 
