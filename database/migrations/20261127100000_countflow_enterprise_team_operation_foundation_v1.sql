@@ -563,7 +563,7 @@ BEGIN
   SELECT v_project_id, p_team_id, x, 'member', 'active', (SELECT auth.uid())
   FROM (SELECT DISTINCT unnest(p_member_ids) AS x) selected
   ON CONFLICT (team_id, member_id)
-  DO UPDATE SET status = 'active', updated_at = now(), added_by = EXCLUDED.added_by;
+  DO UPDATE SET status = 'active', team_role = 'member', updated_at = now(), added_by = EXCLUDED.added_by;
 
   RETURN jsonb_build_object('team_id', p_team_id, 'added_or_reactivated', v_valid_count);
 END;
@@ -894,13 +894,6 @@ BEGIN
       AND NOT counting_private.is_platform_owner_actor(m.user_id)
   ) THEN
     RAISE EXCEPTION 'OPERATION_MEMBERS_MUST_BE_ACTIVE_IN_PROJECT';
-  END IF;
-  IF EXISTS (
-    SELECT 1 FROM public.count_members m
-    JOIN public.count_assignments a ON a.member_id = m.id
-    WHERE a.session_id IS NULL AND false
-  ) THEN
-    RAISE EXCEPTION 'INVALID_OPERATION_ASSIGNEES';
   END IF;
   IF EXISTS (
     SELECT 1 FROM public.count_team_members tm
