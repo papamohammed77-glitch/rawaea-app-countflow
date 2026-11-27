@@ -573,7 +573,7 @@ test("Admin dynamic metadata, import history and team roles use Arabic operator 
   assert.match(admin, /function locationTypeName\(s\)/);
   assert.match(admin, /esc\(locationTypeName\(x\.location_type\)\)/);
   assert.match(admin, /statusName\(s\.status\)/);
-  assert.match(admin, /roleName\(m\.role\)/);
+  assert.match(admin, /roleName\(x\.role,x\.role_id\)/);
   assert.match(admin, /exportFormatLabel\(b\.source_format\)/);
   assert.match(admin, /committing:'قيد الاعتماد'/);
   assert.match(admin, /'نشط':'نشط','موقوف':'موقوف'/);
@@ -867,8 +867,8 @@ test("Database image hardening keeps private Storage and rejects cross-project, 
 test("Admin UI uses grouped accessible navigation, icons, SweetAlert2 and sticky table headers", () => {
   const admin = read("countflow-admin.html");
   const navTabs = [...admin.matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(navTabs.length, 11);
-  assert.equal(new Set(navTabs).size, 11);
+  assert.equal(navTabs.length, 12);
+  assert.equal(new Set(navTabs).size, 12);
   assert.match(admin, /class="nav-group"/);
   assert.match(admin, /class="nav-group-title"/);
   assert.match(admin, /data-icon="gauge-high"/);
@@ -1089,7 +1089,10 @@ test("Admin operation creation is a dedicated modal with project scope and team 
   assert.match(admin, /id="sessionTeam"[^>]*multiple/);
   assert.match(admin, /async function openOperationCreateModal\(\)/);
   assert.match(admin, /newOperationButton'\)\.onclick=\(\)=>\{activateTab\('operations'\);openOperationCreateModal\(\);\}/);
-  assert.match(admin, /from\('count_assignments'\)\.upsert\(assignmentRows,\{onConflict:'session_id,member_id,location_id'\}\)/);
+  assert.match(admin, /db\.rpc\('count_create_session_with_teams',payload\)/);
+  assert.match(admin, /id="sessionTeams"/);
+  assert.match(admin, /count_assign_member_to_session/);
+  assert.doesNotMatch(admin, /from\('count_assignments'\)\.upsert\(assignmentRows/);
   assert.match(admin, /branch_location_id:\$\('sessionBranch'\)\.value\|\|null/);
   assert.doesNotMatch(admin, /newOperationButton'\)\.onclick=\(\)=>\{[\s\S]{0,300}sessionForm'\)\.scrollIntoView/);
   assert.equal((admin.match(/id="sessionForm"/g) || []).length, 1);
@@ -1933,4 +1936,70 @@ test("LVE-791: purchase value is blocked when purchase UoM factor mismatches pro
   assert.match(rollback,/QA90K-000001/);
   assert.match(rollback,/QA_INVALID_PURCHASE_UNIT/);
   assert.match(rollback,/ROLLBACK;/);
+});
+
+
+test("Owner Admin reusable teams, operation taxonomy and guarded assignment workflows are wired end-to-end", () => {
+  const admin = read("countflow-admin.html");
+  const foundation = read("database/migrations/20261127100000_countflow_enterprise_team_operation_foundation_v1.sql");
+  const reactivation = read("database/migrations/20261127110000_countflow_team_assignment_snapshot_reactivation_v1.sql");
+  const permissionGuard = read("database/migrations/20261127120000_countflow_team_member_count_permission_v1.sql");
+  const permissionRevocation = read("database/migrations/20261127130000_countflow_team_roster_permission_revocation_guard_v1.sql");
+  const individual = read("database/migrations/20261127140000_countflow_count_capable_individual_assignment_v1.sql");
+  const overviewSecurity = read("database/migrations/20261127160000_countflow_operation_overview_invoker_security_v1.sql");
+  const rollback = read("tests/team-operation-rollback.sql");
+
+  for (const table of ["count_teams", "count_team_members", "count_session_teams", "count_session_team_members"]) {
+    assert.match(foundation, new RegExp("CREATE TABLE IF NOT EXISTS public\\." + table));
+    assert.match(foundation, new RegExp("ALTER TABLE public\\." + table + " ENABLE ROW LEVEL SECURITY"));
+    assert.match(foundation, new RegExp("CREATE POLICY " + table + "_read"));
+  }
+  assert.match(foundation, /operation_type text NOT NULL DEFAULT 'unclassified'/);
+  assert.match(foundation, /count_assignments_project_scope_guard/);
+  assert.match(foundation, /count_team_assign_to_session_impl/);
+  assert.match(foundation, /assignment_origin/);
+  assert.match(foundation, /CREATE OR REPLACE VIEW public\.count_team_overview/);
+  assert.match(foundation, /CREATE OR REPLACE FUNCTION public\.count_admin_platform_kpis/);
+  assert.match(foundation, /CREATE OR REPLACE FUNCTION public\.count_create_session_with_teams/);
+  assert.match(reactivation, /v_previous_origin/);
+  assert.match(reactivation, /TEAM_MEMBER_ASSIGNMENT_PAUSED/);
+  assert.match(permissionGuard, /count\.entry\.create/);
+  assert.match(permissionRevocation, /LEFT JOIN public\.count_roles r/);
+  assert.match(permissionRevocation, /r\.id IS NULL OR rp\.role_id IS NULL/);
+  assert.match(individual, /count_assign_member_to_session/);
+  assert.match(individual, /count_remove_member_from_session/);
+  assert.match(individual, /SESSION_MEMBER_NOT_COUNT_CAPABLE/);
+  assert.match(individual, /MEMBER_ASSIGNED_VIA_TEAM_USE_TEAM_UNASSIGN/);
+  assert.match(individual, /SET status='paused'/);
+  assert.match(overviewSecurity, /security_invoker = true/);
+  assert.match(overviewSecurity, /REVOKE ALL ON public\.count_operation_overview FROM anon/);
+  assert.match(overviewSecurity, /GRANT SELECT ON public\.count_projects TO authenticated/);
+
+  assert.match(admin, /data-tab="teams"/);
+  assert.match(admin, /id="tab-teams"/);
+  assert.match(admin, /async function loadTeams\(/);
+  assert.match(admin, /async function loadTeamDetail\(/);
+  assert.match(admin, /count_team_create/);
+  assert.match(admin, /count_team_add_members/);
+  assert.match(admin, /count_team_set_member_role/);
+  assert.match(admin, /count_team_remove_member/);
+  assert.match(admin, /count_team_set_status/);
+  assert.match(admin, /id="sessionOperationType"/);
+  assert.match(admin, /id="sessionTeams"/);
+  assert.match(admin, /count_create_session_with_teams/);
+  assert.match(admin, /count_create_operation_with_teams/);
+  assert.match(admin, /count_team_assign_to_session/);
+  assert.match(admin, /count_team_unassign_from_session/);
+  assert.match(admin, /count_assign_member_to_session/);
+  assert.match(admin, /count_remove_member_from_session/);
+  assert.match(admin, /count_admin_platform_kpis/);
+  assert.match(admin, /overviewActiveTeamPeople/);
+  assert.match(admin, /'count_assignments','count_teams','count_team_members','count_session_teams','count_session_team_members'/);
+  assert.match(admin, /memberCanCount/);
+  assert.match(admin, /countflow-control\.html/);
+  assert.match(rollback, /LVE792_AUDITOR_WAS_ALLOWED_IN_COUNT_TEAM/);
+  assert.match(rollback, /LVE792_AUDITOR_WAS_ALLOWED_DIRECT_ASSIGNMENT/);
+  assert.match(rollback, /count_assign_member_to_session/);
+  assert.match(rollback, /count_remove_member_from_session/);
+  assert.match(rollback.trim(), /ROLLBACK;$/);
 });

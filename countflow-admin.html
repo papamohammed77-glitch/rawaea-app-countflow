@@ -260,6 +260,18 @@
 .cf-catalog-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
 .cf-catalog-image-panel{margin-top:12px}
 @media(max-width:600px){.cf-catalog-tabs{display:grid;grid-template-columns:1fr}.cf-catalog-tab{width:100%;text-align:center}}
+
+/* Enterprise team management — responsive and keyboard-accessible */
+.cf-team-kpis,.cf-team-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}
+.cf-team-kpis .stat,.cf-team-detail-grid article{min-width:0;border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--panel)}
+.cf-team-kpis .stat strong,.cf-team-detail-grid strong{display:block;font-size:clamp(22px,3vw,30px);line-height:1.2;margin-top:8px}
+.cf-team-detail-grid article small{display:block;color:var(--muted)}
+.cf-team-select{min-height:112px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font:inherit}
+.cf-team-table-actions{display:flex;flex-wrap:wrap;gap:6px}
+.cf-team-table-actions button{white-space:nowrap}
+.cf-team-roster-role{min-width:120px}
+@media(max-width:900px){.cf-team-kpis,.cf-team-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.cf-team-kpis,.cf-team-detail-grid{grid-template-columns:1fr 1fr}.cf-team-table-actions button{font-size:12px;padding:7px}}
 </style>
 </head>
 <body>
@@ -303,6 +315,7 @@
     <div class="nav-group">
      <div class="nav-group-title">الفريق والصلاحيات</div>
      <button class="nav" data-tab="members" data-icon="users">المستخدمون</button>
+     <button class="nav" data-tab="teams" data-icon="people-group">فرق العمل</button>
      <button class="nav" data-tab="roles" data-icon="user-shield">إدارة أدوار المستخدمين</button>
     </div>
     <div class="nav-group">
@@ -359,6 +372,9 @@
       <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>قيد التنفيذ</span><i class="fa-solid fa-play-circle" aria-hidden="true"></i></div><strong id="overviewActiveOperations">0</strong></article>
       <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أحداث العد</span><i class="fa-solid fa-barcode" aria-hidden="true"></i></div><strong id="overviewEntryEvents">0</strong></article>
       <article class="cf-overview-kpi tone-teal"><div class="cf-kpi-top"><span>تغطية الأصناف</span><i class="fa-solid fa-bullseye" aria-hidden="true"></i></div><strong id="overviewCoverage">—</strong><small id="overviewCoverageCaption">نسبة الأصناف التي سُجل لها عدّ</small></article>
+      <article class="cf-overview-kpi tone-blue"><div class="cf-kpi-top"><span>عمليات هذا الشهر</span><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></div><strong id="overviewOperationsThisMonth">0</strong><small>تاريخ الإنشاء حسب توقيت القاهرة</small></article>
+      <article class="cf-overview-kpi tone-green"><div class="cf-kpi-top"><span>فرق نشطة</span><i class="fa-solid fa-people-group" aria-hidden="true"></i></div><strong id="overviewActiveTeams">0</strong></article>
+      <article class="cf-overview-kpi tone-violet"><div class="cf-kpi-top"><span>أفراد الفرق النشطة</span><i class="fa-solid fa-users" aria-hidden="true"></i></div><strong id="overviewActiveTeamPeople">0</strong></article>
      </div>
 
      <div class="cf-overview-analytics-grid">
@@ -380,6 +396,7 @@
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-check-double" aria-hidden="true"></i></span><div><small>عمليات مكتملة</small><strong id="overviewCompletedTotal">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></span><div><small>إسنادات نشطة</small><strong id="overviewAssignmentsTotal">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div><small>تغطية المواقع</small><strong id="overviewLocationCoverage">—</strong></div></article>
+        <article><span class="cf-secondary-icon"><i class="fa-solid fa-user-check" aria-hidden="true"></i></span><div><small>أفراد مسندون لعمليات نشطة</small><strong id="overviewAssignedPeople">0</strong></div></article>
         <article><span class="cf-secondary-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><div><small>آخر نشاط عدّ</small><strong id="overviewLastActivity">—</strong></div></article>
        </div>
 
@@ -443,6 +460,7 @@
       <div class="fields">
        <div class="field"><label for="projectName">اسم المشروع</label><input id="projectName" required maxlength="160"></div><div class="field"><label for="projectCode">كود المشروع</label><input id="projectCode" required maxlength="40" pattern="[A-Za-z0-9_-]{2,40}"></div>
        <div class="field"><label for="operationName">اسم العملية</label><input id="operationName" required maxlength="160"></div><div class="field"><label for="operationCode">كود العملية</label><input id="operationCode" maxlength="40" pattern="[A-Za-z0-9_-]{2,40}"></div>
+       <div class="field"><label for="operationType">نوع العملية</label><select id="operationType"><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
        <div class="field"><label for="branchName">الفرع / الموقع الرئيسي</label><input id="branchName" required maxlength="120"></div><div class="field"><label for="branchCode">كود الفرع</label><input id="branchCode" required maxlength="40"></div>
        <div class="field"><label for="operationStart">بداية التنفيذ</label><input id="operationStart" type="datetime-local"></div><div class="field"><label for="operationEnd">نهاية التنفيذ</label><input id="operationEnd" type="datetime-local"></div>
        <div class="field"><label for="operationTimezone">المنطقة الزمنية</label><select id="operationTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
@@ -563,6 +581,60 @@
       <div class="panel"><h3>المستخدمون وعضويات ملفات التكليف</h3><div class="cf-filter-grid"><input id="memberSearch" placeholder="بحث بالاسم أو اسم المستخدم"><select id="memberProjectFilter"><option value="">كل ملفات التكليف</option></select><select id="memberStatusFilter"><option value="">كل الحالات</option><option value="active">نشط</option><option value="paused">متوقف</option><option value="removed">مسحوب</option></select></div><div id="memberTable" class="tablewrap"><div class="empty">لا يوجد أعضاء بعد.</div></div></div>
      </div>
     </section>
+
+    <section id="tab-teams" class="section">
+     <div class="headrow">
+      <div><h2>إدارة فرق العمل</h2><p class="hint">كوّن فرقاً ثابتة قابلة لإعادة الاستخدام عبر عمليات الجرد، مع حفظ لقطة مستقلة لأعضاء كل عملية عند الإسناد.</p></div>
+      <button id="teamsRefresh" type="button" class="soft">تحديث الفرق</button>
+     </div>
+     <div class="cf-team-kpis">
+      <article class="stat"><small>إجمالي الفرق</small><strong id="teamsTotalCount">0</strong></article>
+      <article class="stat"><small>فرق نشطة</small><strong id="teamsActiveCount">0</strong></article>
+      <article class="stat"><small>عمليات نشطة ضمن الفرق</small><strong id="teamsActiveOperations">0</strong></article>
+      <article class="stat"><small>أعضاء مؤهلون للعد</small><strong id="teamsActiveMembers">0</strong></article>
+     </div>
+     <div class="split">
+      <div class="panel">
+       <h3>إنشاء فريق جديد</h3>
+       <form id="teamForm">
+        <div class="field"><label for="teamProject">ملف التكليف</label><select id="teamProject" required></select></div>
+        <div class="field"><label for="teamName">اسم الفريق</label><input id="teamName" required minlength="2" maxlength="120" placeholder="مثال: فريق الجرد الرئيسي"></div>
+        <div class="field"><label for="teamDescription">وصف الفريق (اختياري)</label><textarea id="teamDescription" rows="3" maxlength="1000" placeholder="نطاق العمل أو التخصص"></textarea></div>
+        <div class="actions"><button type="submit" class="primary">إنشاء الفريق</button></div>
+        <p class="hint">لا يتم إنشاء حسابات أو تغيير صلاحيات المستخدمين من هنا. أضف فقط أعضاء التكليف النشطين الذين لديهم صلاحية تسجيل العد.</p>
+       </form>
+      </div>
+      <div class="panel">
+       <h3>سجل الفرق وأداؤها</h3>
+       <div class="cf-filter-grid">
+        <select id="teamProjectFilter"><option value="">كل ملفات التكليف</option></select>
+        <select id="teamStatusFilter"><option value="">كل الحالات</option><option value="active">نشط</option><option value="paused">متوقف مؤقتاً</option><option value="archived">مؤرشف</option></select>
+        <input id="teamSearch" placeholder="بحث باسم الفريق أو الكود">
+       </div>
+       <div id="teamTable" class="tablewrap"><div class="empty">جار تحميل الفرق…</div></div>
+      </div>
+     </div>
+     <div id="teamDetailPanel" class="panel hidden">
+      <div class="headrow">
+       <div><h3 id="teamDetailTitle">أعضاء الفريق</h3><p id="teamDetailMeta" class="hint"></p></div>
+       <div class="actions"><button id="teamPauseButton" type="button" class="soft">إيقاف مؤقت</button><button id="teamArchiveButton" type="button" class="danger">أرشفة الفريق</button><button id="teamDetailClose" type="button" class="soft">إغلاق</button></div>
+      </div>
+      <div class="cf-team-detail-grid">
+       <article><small>أعضاء مؤهلون ونشطون</small><strong id="teamDetailMembers">0</strong></article>
+       <article><small>عمليات مسندة</small><strong id="teamDetailAssignedOperations">0</strong></article>
+       <article><small>عمليات قيد التنفيذ</small><strong id="teamDetailActiveOperations">0</strong></article>
+       <article><small>أحداث العد المسجلة</small><strong id="teamDetailEntries">0</strong></article>
+      </div>
+      <div class="field">
+       <label for="teamMemberSelect">إضافة أعضاء مؤهلين للعد</label>
+       <select id="teamMemberSelect" class="cf-team-select" multiple size="7"></select>
+       <div class="actions"><button id="teamAddMembers" type="button" class="primary">إضافة إلى الفريق</button></div>
+       <p class="hint">المستخدم الذي لا يحمل صلاحية count.entry.create لن يظهر هنا ولن تقبل قاعدة البيانات إضافته، حتى لو كان دوره يحمل اسماً تشغيلياً.</p>
+      </div>
+      <div id="teamRosterTable" class="tablewrap"><div class="empty">اختر فريقاً لعرض أعضائه.</div></div>
+     </div>
+    </section>
+
     <section id="tab-locations" class="section">
      <div class="headrow"><h2>الهيكل المكاني للجرد</h2></div>
      <div class="split">
@@ -582,11 +654,13 @@
     
     <div id="operationCreateModal" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="operationCreateTitle"><div class="dialog-card cf-modal-wide"><div class="headrow"><div><h3 id="operationCreateTitle">إنشاء عملية جرد جديدة</h3><p class="hint">حدد ملف التكليف وفريق التنفيذ وإعدادات الجرد قبل إنشاء العملية.</p></div><button id="closeOperationCreateModalTop" type="button" class="soft">إغلاق</button></div><div class="panel"><h3>إنشاء جلسة جديدة</h3><form id="sessionForm"><div class="field"><label for="sessionProject">ملف التكليف</label><select id="sessionProject" required></select></div><div class="fields">
       <div class="field"><label for="sessionName">اسم العملية</label><input id="sessionName" required maxlength="160"></div><div class="field"><label for="sessionOperationCode">كود العملية</label><input id="sessionOperationCode" maxlength="40"></div>
+      <div class="field"><label for="sessionOperationType">نوع العملية</label><select id="sessionOperationType"><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
       <div class="field"><label for="sessionBranch">الفرع / النطاق الرئيسي (اختياري)</label><select id="sessionBranch"><option value="">بدون تحديد فرع</option></select></div><div class="field"><label for="sessionTimezone">المنطقة الزمنية</label><select id="sessionTimezone"><option value="Africa/Cairo">القاهرة</option><option value="Asia/Riyadh">الرياض</option><option value="Asia/Dubai">دبي</option><option value="UTC">UTC</option></select></div>
       <div class="field"><label for="sessionStart">البداية</label><input id="sessionStart" type="datetime-local"></div><div class="field"><label for="sessionEnd">النهاية</label><input id="sessionEnd" type="datetime-local"></div>
       <div class="field"><label for="sessionPriority">الأولوية</label><select id="sessionPriority"><option value="1">حرجة</option><option value="2">عالية</option><option value="3" selected>عادية</option><option value="4">منخفضة</option><option value="5">لاحقاً</option></select></div><div class="field"><label for="sessionMode">طريقة العد</label><select id="sessionMode"><option value="barcode">باركود</option><option value="mixed" selected>مختلط</option><option value="manual">يدوي</option></select></div>
       <div class="field full"><label for="sessionInstructions">تعليمات</label><input id="sessionInstructions" maxlength="2000"></div></div>
-      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeam">فريق هذه العملية — اختر أعضاء التكليف النشطين</label><select id="sessionTeam" class="cf-team-select" multiple size="6"></select><p class="hint">سيتم إسناد الأعضاء المختارين إلى هذه العملية بعد الإنشاء. ويمكن إضافة أعضاء أو تعديل إسنادهم لاحقاً من تفاصيل العملية.</p></div><div class="cf-grid-2"><label><input id="sessionShowExpected" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="sessionCaptureImages" type="checkbox" checked> السماح بالصور</label><label><input id="sessionRequireImages" type="checkbox"> إلزام الصور</label><label><input id="sessionAllowUnknown" type="checkbox"> السماح بصنف غير معروف</label></div>
+      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeams">الفرق الجاهزة لهذه العملية</label><select id="sessionTeams" class="cf-team-select" multiple size="5"></select><p class="hint">يمكن اختيار فريق أو أكثر، وسيتم تثبيت أعضائه وقت إنشاء العملية. يمكنك إعادة استخدام الفريق نفسه في عمليات أخرى.</p></div>
+      <div class="field full" style="margin:4px 0 12px"><label for="sessionTeam">أفراد إضافيون (اختياري)</label><select id="sessionTeam" class="cf-team-select" multiple size="5"></select><p class="hint">اختر أفراداً إضافيين عند الحاجة. إذا كان الفرد موجوداً ضمن فريق محدد فلن تنشأ له إسنادات مكررة.</p></div><div class="cf-grid-2"><label><input id="sessionShowExpected" type="checkbox"> إظهار الرصيد الدفتري</label><label><input id="sessionCaptureImages" type="checkbox" checked> السماح بالصور</label><label><input id="sessionRequireImages" type="checkbox"> إلزام الصور</label><label><input id="sessionAllowUnknown" type="checkbox"> السماح بصنف غير معروف</label></div>
       <div class="actions"><button class="primary" type="submit">إنشاء العملية وإسناد الفريق</button><button id="closeOperationCreateModal" class="soft" type="button">إلغاء</button></div><p class="hint">لا تنشأ قيود كمية بمجرد إنشاء العملية.</p></form></div></div></div>
     <section id="tab-operations" class="section">
      <div class="headrow"><div><h2>سجل عمليات الجرد — جميع ملفات التكليف</h2><p class="hint">السجل الإداري الشامل. افتح أي عملية لمراجعة الفريق والتقدم والتسوية والمزامنة والتصدير.</p></div><div class="actions"><button id="newOperationButton" class="primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> إنشاء عملية جرد جديدة</button><button id="refreshOperations" class="soft" type="button">تحديث الآن</button></div></div>
@@ -596,6 +670,7 @@
       <div class="fields">
        <div class="field"><label>اسم الجهة أو العملية أو رقم التكليف</label><input id="operationSearch" placeholder="كارفور، جرد يناير، CF-202701"></div>
        <div class="field"><label>حالة العملية</label><select id="operationStatus"><option value="">كل الحالات</option><option value="planned">مخططة</option><option value="active">قيد التنفيذ</option><option value="paused">متوقفة مؤقتاً</option><option value="review">قيد المراجعة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select></div>
+       <div class="field"><label>نوع العملية</label><select id="operationTypeFilter"><option value="">كل الأنواع</option><option value="full_inventory">جرد شامل</option><option value="cycle_count">جرد دوري</option><option value="spot_check">جرد جزئي / مفاجئ</option><option value="recount">إعادة جرد</option><option value="audit">تدقيق ومراجعة</option><option value="other">أخرى</option></select></div>
        <div class="field"><label>من تاريخ الإنشاء</label><input id="operationFrom" type="date"></div>
        <div class="field"><label>إلى تاريخ الإنشاء</label><input id="operationTo" type="date"></div>
       </div>
@@ -609,7 +684,12 @@
       </div>
       <div class="split">
        <div class="panel">
-        <h3>فريق عملية الجرد</h3>
+        <h3>الفرق المسندة لهذه العملية</h3>
+        <div class="field"><label for="operationAddTeam">إضافة فريق جاهز</label><select id="operationAddTeam"><option value="">اختر فريقاً</option></select></div>
+        <button id="operationAssignTeam" type="button" class="primary">إسناد الفريق إلى العملية</button>
+        <div id="operationTeamAssignments" class="tablewrap" style="margin-top:12px"><div class="empty">لا توجد فرق مسندة.</div></div>
+        <hr style="margin:16px 0;border-color:var(--line)">
+        <h3>إسناد أفراد إضافيين</h3>
         <div class="field"><label>إضافة مستخدم مسجل في التكليف</label><select id="operationAddMember"><option value="">اختر المستخدم</option></select></div>
         <button id="operationAssignMember" type="button" class="soft">إضافة إلى العملية</button>
         <div id="operationTeamList" class="tablewrap" style="margin-top:12px"><div class="empty">لا يوجد فريق مسند بعد.</div></div>
@@ -620,7 +700,7 @@
          <div class="field"><label>اسم المستخدم</label><input id="operationNewUsername" maxlength="80"></div>
          <div class="field"><label>البريد الإلكتروني</label><input id="operationNewEmail" type="email"></div>
          <div class="field"><label>كلمة مرور أولية للحساب الجديد (اختيارية للحساب الموجود)</label><input id="operationNewPassword" type="password" autocomplete="new-password" placeholder="اتركها فارغة لربط حساب مؤكد موجود"></div>
-         <div class="field full"><label>الدور</label><select id="operationNewRole"><option value="counter">مندوب جرد</option><option value="auditor">مراجع / مدقق</option><option value="supervisor">مشرف جرد</option></select></div>
+         <div class="field full"><label>الدور</label><select id="operationNewRole"><option value="counter">مسؤول جرد / مندوب عدّ</option><option value="supervisor">مشرف جرد</option></select></div>
         </div>
         <button id="operationCreateMember" type="button" class="primary">إنشاء الحساب وإضافته للعملية</button>
         <p class="hint">البريد المؤكد الموجود يُعاد استخدامه دون تغيير كلمة المرور. الحساب الجديد يحتاج كلمة مرور أولية لا تقل عن 10 أحرف؛ البريد غير المؤكد أو العضوية غير النشطة لا يتم تجاوزها تلقائياً. إخراج المستخدم من العملية يحذف الإسناد لهذه العملية فقط ولا يحذف حسابه أو بيانات العد.</p>
@@ -679,7 +759,7 @@
  const SUPABASE_PUBLISHABLE_KEY=window.CF_Core.PUBLISHABLE_KEY;
  const db=window.CF_Core.createClient({auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $=id=>document.getElementById(id);
- const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],clientDirectoryRows:[],clientDirectoryManagers:[],clientDirectoryPage:1,clientDirectoryPageSize:25,clientDirectoryTotal:0,clientSort:'created_at',clientSortAsc:false,clientSearchTimer:null,roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogImageUrls:new Map(),catalogImageToken:0,catalogRequestToken:0,catalogEditorImageToken:0,catalogSearchTimer:null,globalImagePreviewObjectUrl:null,globalImageCleared:false,catalogClientId:null,catalogOptionProducts:[],catalogClientRows:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',globalCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}},clientCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}},productImportChecksum:'',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
+ const state={user:null,platformOwner:false,clientId:null,clientRole:null,clients:[],clientDirectoryRows:[],clientDirectoryManagers:[],clientDirectoryPage:1,clientDirectoryPageSize:25,clientDirectoryTotal:0,clientSort:'created_at',clientSortAsc:false,clientSearchTimer:null,roles:[],permissions:[],roleMap:new Map(),rolePermissions:new Map(),catalogProducts:[],catalogPage:1,catalogTotal:0,catalogSort:'name',catalogSortAsc:true,catalogImageUrls:new Map(),catalogImageToken:0,catalogRequestToken:0,catalogEditorImageToken:0,catalogSearchTimer:null,globalImagePreviewObjectUrl:null,globalImageCleared:false,catalogClientId:null,catalogOptionProducts:[],catalogClientRows:[],catalogView:'global',canManageClientCatalog:false,overviewRows:[],overviewLoadedAt:null,overviewRequestToken:0,overviewError:null,overviewRealtimeStatus:'CONNECTING',platformKpis:{},teamRows:[],teamRosterRows:[],teamSelectedId:null,project:null,projects:[],products:[],members:[],locations:[],sessions:[],allMembers:[],allSessions:[],assignmentCounts:{},productImageUrls:new Map(),productImageToken:0,editingProductImageRef:null,productImageCleared:false,productImagePreviewObjectUrl:null,passwordResetMemberId:null,selectedSession:null,workflowSessionId:null,workflowData:null,operationImportRows:[],operationImportRowCount:0,operationImportFormat:'csv',globalCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,stats:{processed:0,inserted:0,updated:0,duplicates:0,rejected:0,errors:[]}},clientCatalogImport:{file:null,count:0,headers:[],sample:[],mapping:{},busy:false,checksum:'',sourceFormat:'',stats:{processed:0,catalogInserted:0,catalogMatched:0,clientInserted:0,clientUpdated:0,duplicates:0,rejected:0,errors:[]}},productImportChecksum:'',productImportRows:[],productImportRowCount:0,productImportHeaders:[],productImportMapping:{},productImportMappingId:null,productImportSourceFormat:'csv',productImportFileName:'',productPage:1,productTotal:0,productQuery:'',productScrollTop:0,operationSort:'created_at',operationSortAsc:false,operationPage:1,globalChannel:null,globalRefreshTimer:null,globalPollTimer:null,busy:false};
  const IMPORT_DETAIL_PAGE_SIZE=500,MAX_PRODUCT_IMAGE_BYTES=1024*1024;let importDetailBatchId=null,importDetailTargetId='productImportDetails',importDetailOffsets={errors:0,warnings:0},importDetailTotals={errors:0,warnings:0};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const notify=(msg,bad=false)=>{const el=$('toast');el.textContent=msg;el.style.background=bad?'#8f2630':'var(--navy)';el.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.add('hidden'),3600)};
@@ -875,6 +955,122 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
   $('productTable').querySelectorAll('[data-toggle-product]').forEach(b=>b.onclick=()=>toggleProduct(b.dataset.toggleProduct));
   $('productPager').querySelectorAll('[data-product-page]').forEach(b=>b.onclick=()=>loadProductsPage(Number(b.dataset.productPage),state.productQuery).catch(e=>fail('تعذر تحميل صفحة الأصناف',e)));
  }
+
+ function memberCanCount(member){
+  if(!member||member.status!=='active')return false;
+  const role=state.roles.find(r=>r.id===member.role_id);
+  return Boolean(role&&role.is_active&&role.scope==='project'&&state.rolePermissions.get(member.role_id)?.has('count.entry.create'));
+ }
+ function teamStatusName(status){return ({active:'نشط',paused:'متوقف مؤقتاً',archived:'مؤرشف'})[status]||status||'—';}
+ async function loadTeams(preferredProjectId=null){
+  const ids=state.projects.map(p=>p.id).filter(Boolean);
+  if(!ids.length){state.teamRows=[];renderTeams();return;}
+  const rows=[];let offset=0,pageSize=500;
+  while(true){
+   const {data,error}=await db.from('count_team_overview').select('*').in('project_id',ids).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
+   if(error)throw error;
+   const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize;
+  }
+  state.teamRows=rows;
+  const projectOptions='<option value="">كل ملفات التكليف</option>'+state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');
+  const currentFilter=$('teamProjectFilter')?.value||'';
+  if($('teamProjectFilter')){$('teamProjectFilter').innerHTML=projectOptions;if(ids.includes(currentFilter))$('teamProjectFilter').value=currentFilter;else if(preferredProjectId&&ids.includes(preferredProjectId))$('teamProjectFilter').value=preferredProjectId;}
+  if($('teamProject')){$('teamProject').innerHTML='<option value="">اختر ملف التكليف</option>'+state.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.code)+'</option>').join('');const p=preferredProjectId||state.project?.id;if(p&&ids.includes(p))$('teamProject').value=p;}
+  const projectForKpi=$('teamProjectFilter')?.value||null;
+  const {data:kpiData,error:kpiError}=await db.rpc('count_admin_platform_kpis',{p_project_id:projectForKpi});
+  if(kpiError)console.warn('[CountFlow Admin] team KPI query failed',kpiError);
+  const kpi=Array.isArray(kpiData)?(kpiData[0]||{}):(kpiData||{});
+  $('teamsTotalCount').textContent=rows.length.toLocaleString('ar-EG');
+  $('teamsActiveCount').textContent=rows.filter(x=>x.status==='active').length.toLocaleString('ar-EG');
+  $('teamsActiveOperations').textContent=rows.reduce((n,x)=>n+Number(x.active_operations||0),0).toLocaleString('ar-EG');
+  $('teamsActiveMembers').textContent=Number(kpi.active_team_people??0).toLocaleString('ar-EG');
+  renderTeams();
+  if(state.teamSelectedId&&rows.some(x=>x.team_id===state.teamSelectedId))await loadTeamDetail(state.teamSelectedId);
+ }
+ function renderTeams(){
+  if(!$('teamTable'))return;
+  const projectId=$('teamProjectFilter')?.value||'',status=$('teamStatusFilter')?.value||'',q=($('teamSearch')?.value||'').trim().toLowerCase();
+  const rows=(state.teamRows||[]).filter(t=>{
+   const p=state.projects.find(x=>x.id===t.project_id);
+   return (!projectId||t.project_id===projectId)&&(!status||t.status===status)&&(!q||[t.team_name,t.team_code,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q)));
+  });
+  $('teamTable').innerHTML=rows.length?'<table><thead><tr><th>الفريق</th><th>ملف التكليف</th><th>الأعضاء المؤهلون</th><th>العمليات النشطة</th><th>العمليات المكتملة</th><th>أحداث العد</th><th>الحالة</th><th>إدارة</th></tr></thead><tbody>'+rows.map(t=>{
+   const p=state.projects.find(x=>x.id===t.project_id);
+   const canManage=state.memberManageProjects?.has(t.project_id);
+   const actions='<div class="cf-team-table-actions"><button type="button" class="soft" data-open-team="'+esc(t.team_id)+'">الأعضاء والأداء</button>'+(canManage&&t.status==='active'?'<button type="button" class="soft" data-pause-team="'+esc(t.team_id)+'">إيقاف</button>':'')+(canManage&&t.status!=='archived'?'<button type="button" class="danger" data-archive-team="'+esc(t.team_id)+'">أرشفة</button>':'')+'</div>';
+   return '<tr><td><b>'+esc(t.team_name)+'</b><span class="sub">'+esc(t.team_code)+'</span></td><td>'+esc(p?.name||'—')+'</td><td>'+Number(t.active_members||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.active_operations||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.completed_operations||0).toLocaleString('ar-EG')+'</td><td>'+Number(t.entry_events||0).toLocaleString('ar-EG')+'</td><td>'+statusPill(t.status==='active'?'active':t.status==='paused'?'paused':'completed')+' <small>'+esc(teamStatusName(t.status))+'</small></td><td>'+actions+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد فرق تطابق المرشحات. أنشئ فريقاً أو غيّر نطاق البحث.</div>';
+  $('teamTable').querySelectorAll('[data-open-team]').forEach(b=>b.onclick=()=>loadTeamDetail(b.dataset.openTeam).catch(e=>fail('تعذر تحميل أعضاء الفريق',e)));
+  $('teamTable').querySelectorAll('[data-pause-team]').forEach(b=>b.onclick=()=>setTeamStatus(b.dataset.pauseTeam,'paused'));
+  $('teamTable').querySelectorAll('[data-archive-team]').forEach(b=>b.onclick=()=>setTeamStatus(b.dataset.archiveTeam,'archived'));
+ }
+ async function loadTeamDetail(teamId){
+  const team=state.teamRows.find(x=>x.team_id===teamId);if(!team)return notify('الفريق غير موجود في النطاق الحالي.',true);
+  state.teamSelectedId=teamId;
+  const {data,error}=await db.from('count_team_members').select('id,member_id,team_role,status,created_at,updated_at').eq('team_id',teamId).order('created_at',{ascending:true});
+  if(error)throw error;
+  state.teamRosterRows=data||[];
+  const project=state.projects.find(p=>p.id===team.project_id);
+  $('teamDetailPanel').classList.remove('hidden');
+  $('teamDetailTitle').textContent=team.team_name;
+  $('teamDetailMeta').textContent=team.team_code+' · '+(project?.name||'ملف التكليف')+' · '+teamStatusName(team.status);
+  $('teamDetailMembers').textContent=Number(team.active_members||0).toLocaleString('ar-EG');
+  $('teamDetailAssignedOperations').textContent=Number(team.assigned_operations||0).toLocaleString('ar-EG');
+  $('teamDetailActiveOperations').textContent=Number(team.active_operations||0).toLocaleString('ar-EG');
+  $('teamDetailEntries').textContent=Number(team.entry_events||0).toLocaleString('ar-EG');
+  const activeMemberIds=new Set(state.teamRosterRows.filter(x=>x.status==='active').map(x=>x.member_id));
+  const options=(state.allMembers||[]).filter(m=>m.project_id===team.project_id&&memberCanCount(m)&&!activeMemberIds.has(m.id));
+  $('teamMemberSelect').innerHTML=options.length?options.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join(''):'<option value="" disabled>لا يوجد أعضاء مؤهلون جدد للإضافة</option>';
+  const map=new Map((state.allMembers||[]).map(m=>[m.id,m]));
+  $('teamRosterTable').innerHTML=state.teamRosterRows.length?'<table><thead><tr><th>المستخدم</th><th>الدور في الفريق</th><th>حالة العضوية</th><th>تاريخ الإضافة</th><th>إجراء</th></tr></thead><tbody>'+state.teamRosterRows.map(tm=>{
+   const m=map.get(tm.member_id)||{};
+   const canManage=state.memberManageProjects?.has(team.project_id);
+   const roleControl=canManage&&tm.status==='active'?'<select class="cf-team-roster-role" data-team-member-role="'+esc(tm.member_id)+'"><option value="member" '+(tm.team_role==='member'?'selected':'')+'>عضو</option><option value="leader" '+(tm.team_role==='leader'?'selected':'')+'>قائد فريق</option></select>':esc(tm.team_role==='leader'?'قائد فريق':'عضو');
+   const action=canManage&&tm.status==='active'?'<button type="button" class="danger" data-remove-team-member="'+esc(tm.member_id)+'">إزالة من الفريق</button>': '—';
+   return '<tr><td><b>'+esc(m.display_name||'عضو غير معروف')+'</b><span class="sub">'+esc(m.username||'')+' · '+esc(roleName(m.role,m.role_id))+'</span></td><td>'+roleControl+'</td><td>'+statusPill(tm.status==='active'?'active':'paused')+' <small>'+esc(tm.status)+'</small></td><td>'+date(tm.created_at)+'</td><td>'+action+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لم تتم إضافة أعضاء لهذا الفريق بعد.</div>';
+  $('teamMemberSelect').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamAddMembers').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamPauseButton').disabled=!state.memberManageProjects?.has(team.project_id)||team.status!=='active';
+  $('teamArchiveButton').disabled=!state.memberManageProjects?.has(team.project_id)||team.status==='archived';
+  $('teamPauseButton').textContent=team.status==='paused'?'الفريق متوقف':'إيقاف مؤقت';
+  $('teamPauseButton').disabled=team.status!=='active'||!state.memberManageProjects?.has(team.project_id);
+  $('teamArchiveButton').disabled=team.status==='archived'||!state.memberManageProjects?.has(team.project_id);
+  $('teamRosterTable').querySelectorAll('[data-team-member-role]').forEach(sel=>sel.onchange=async()=>{
+   try{const {error}=await db.rpc('count_team_set_member_role',{p_team_id:teamId,p_member_id:sel.dataset.teamMemberRole,p_team_role:sel.value});if(error)throw error;notify('تم تحديث دور العضو داخل الفريق.');await loadTeams(team.project_id);}
+   catch(e){fail('تعذر تحديث دور العضو',e);await loadTeamDetail(teamId);}
+  });
+  $('teamRosterTable').querySelectorAll('[data-remove-team-member]').forEach(btn=>btn.onclick=async()=>{
+   if(!await confirmAction('إزالة هذا العضو من قائمة الفريق المستقبلية؟ لن تتغير لقطة العضوية في العمليات السابقة.',{title:'إزالة عضو من الفريق',confirmText:'إزالة'}))return;
+   try{const {error}=await db.rpc('count_team_remove_member',{p_team_id:teamId,p_member_id:btn.dataset.removeTeamMember});if(error)throw error;notify('تمت إزالة العضو من الفريق مع الحفاظ على سجلات العمليات السابقة.');await loadTeams(team.project_id);}
+   catch(e){fail('تعذر إزالة العضو من الفريق',e);}
+  });
+  $('teamDetailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+ async function setTeamStatus(teamId,status){
+  const team=state.teamRows.find(x=>x.team_id===teamId);if(!team)return;
+  const label=status==='archived'?'أرشفة الفريق':'إيقاف الفريق مؤقتاً';
+  if(!await confirmAction((status==='archived'?'أرشفة':'إيقاف')+' "'+team.team_name+'"؟ سيتم الحفاظ على العضويات والعمليات السابقة ولن تُحذف البيانات.',{title:label,confirmText:status==='archived'?'أرشفة':'إيقاف'}))return;
+  try{const {error}=await db.rpc('count_team_set_status',{p_team_id:teamId,p_status:status});if(error)throw error;notify(status==='archived'?'تمت أرشفة الفريق دون حذف تاريخه.':'تم إيقاف الفريق مؤقتاً.');await loadTeams(team.project_id);}
+  catch(e){fail('تعذر تغيير حالة الفريق',e);}
+ }
+ async function createTeamFromForm(e){
+  e.preventDefault();const projectId=$('teamProject').value,name=$('teamName').value.trim(),description=$('teamDescription').value.trim();
+  if(!projectId||!name)return notify('اختر ملف التكليف واكتب اسم الفريق.',true);
+  if(!state.memberManageProjects?.has(projectId))return notify('لا تملك صلاحية إدارة فرق هذا الملف.',true);
+  const form=e.currentTarget;setBusy(form,true);
+  try{const {data,error}=await db.rpc('count_team_create',{p_project_id:projectId,p_name:name,p_description:description||null});if(error)throw error;
+   form.reset();$('teamProject').value=projectId;notify('تم إنشاء الفريق '+(data?.code||'')+' بنجاح.');await loadTeams(projectId);if(data?.id)await loadTeamDetail(data.id);
+  }catch(err){fail('تعذر إنشاء الفريق',err);}finally{setBusy(form,false);}
+ }
+ async function addMembersToTeam(){
+  const team=state.teamRows.find(x=>x.team_id===state.teamSelectedId);if(!team)return;
+  const memberIds=[...$('teamMemberSelect').selectedOptions].map(o=>o.value).filter(Boolean);
+  if(!memberIds.length)return notify('اختر عضواً واحداً على الأقل.',true);
+  try{const {data,error}=await db.rpc('count_team_add_members',{p_team_id:team.team_id,p_member_ids:memberIds});if(error)throw error;notify('تمت إضافة '+Number(data?.added_or_reactivated||memberIds.length)+' عضو إلى الفريق.');await loadTeams(team.project_id);}
+  catch(e){fail('تعذر إضافة أعضاء الفريق',e);}
+ }
+
  function renderMembers(){
   const all=state.allMembers||[],q=$('memberSearch').value.trim().toLowerCase();
   const projectFilter=$('memberProjectFilter')?.value||'',statusFilter=$('memberStatusFilter')?.value||'';
@@ -887,13 +1083,14 @@ function statusName(s){const key=String(s||'').toLowerCase(),labels={active:'ق�
    const matchesText=[x.display_name,x.username,x.role,p?.name,p?.code].some(v=>String(v||'').toLowerCase().includes(q));
    return matchesText&&(!projectFilter||x.project_id===projectFilter)&&(!statusFilter||x.status===statusFilter);
   });
-  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
+  $('memberTable').innerHTML=rows.length?'<table><thead><tr><th>المستخدم</th><th>التكليف</th><th>الدور</th><th>الحالة</th><th>آخر نشاط</th><th>التطبيقات</th><th>إدارة الحساب والعضوية</th></tr></thead><tbody>'+rows.map(x=>{
    const p=state.projects.find(v=>v.id===x.project_id),self=state.user?.id===x.user_id,canPause=x.status!=='removed'&&!self;
    const actions=self?'الحساب الحالي':(x.status==='removed'?'عضوية مسحوبة':'<button type="button" class="soft" data-member-reset-password="'+x.id+'">تغيير كلمة المرور</button>')+(canPause?' <button type="button" class="'+(x.status==='active'?'danger':'soft')+'" data-member-state="'+x.id+'">'+(x.status==='active'?'إيقاف مؤقت':'استئناف العضوية')+'</button>':'');
    const project=p,allowedRoles=state.roles.filter(r=>r.scope==='project'&&r.is_active&&(r.is_system||r.client_id===project?.client_id));
    const canChangeRole=Boolean(state.memberManageProjects?.has(x.project_id)&&!self&&x.status!=='removed'&&allowedRoles.length);
    const roleCell=canChangeRole?'<div class="cf-inline-actions"><select data-member-role="'+x.id+'" aria-label="الدور الجديد للمستخدم">'+allowedRoles.map(r=>'<option value="'+r.id+'" '+(r.id===x.role_id?'selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select><button type="button" class="soft" data-save-member-role="'+x.id+'">حفظ الدور</button></div>':esc(roleName(x.role,x.role_id));
-   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleCell+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td><div class="actions">'+actions+'</div></td></tr>';
+   const appLinks=x.role==='counter'?'<a class="link" href="./countflow.html" target="_blank" rel="noopener">تطبيق المندوب</a>':x.role==='supervisor'?'<a class="link" href="./Countflow-supervisor.html" target="_blank" rel="noopener">تطبيق المشرف</a>':x.role==='auditor'?'<a class="link" href="./countflow-control.html" target="_blank" rel="noopener">تطبيق المراجع</a>':'—';
+   return '<tr><td><b>'+esc(x.display_name)+'</b><span class="sub">'+esc(x.username)+'</span></td><td>'+esc(p?.name||'تكليف غير معروف')+'</td><td>'+roleCell+'</td><td>'+statusPill(x.status)+'</td><td>'+date(x.last_seen_at)+'</td><td>'+appLinks+'</td><td><div class="actions">'+actions+'</div></td></tr>';
   }).join('')+'</tbody></table>':'<div class="empty">لا توجد عضويات تطابق المرشحات ضمن النطاق المسموح لحسابك.</div>';
   $('memberTable').querySelectorAll('[data-member-state]').forEach(b=>b.onclick=()=>changeMemberStatus(b.dataset.memberState));
   $('memberTable').querySelectorAll('[data-save-member-role]').forEach(b=>b.onclick=()=>saveMemberRole(b.dataset.saveMemberRole));
@@ -2123,7 +2320,7 @@ async function commitClientCatalogImport(){
    }
    const [members,sessions]=await Promise.all([
     loadGlobalRows('count_members','id,project_id,user_id,display_name,username,role,role_id,status,last_seen_at,created_at',ids,'created_at'),
-    loadGlobalRows('count_sessions','id,project_id,name,status,created_at,started_at,closed_at',ids,'created_at')
+    loadGlobalRows('count_sessions','id,project_id,name,status,operation_type,created_at,started_at,closed_at',ids,'created_at')
    ]);
    state.allMembers=members;state.allSessions=sessions;state.assignmentCounts={};
    const permissionChecks=await Promise.all(state.projects.map(async project=>{const check=await db.rpc('count_can_manage_project_members',{p_project_id:project.id});if(check.error){console.warn('[CountFlow Admin] team-management permission check failed',project.id,check.error);return [project.id,false];}return [project.id,check.data===true];}));
@@ -2142,6 +2339,8 @@ async function commitClientCatalogImport(){
    $('kMembers').textContent=members.filter(x=>x.status==='active').length;
    $('kSessions').textContent=sessions.length;
    renderMembers();renderRoles();renderCustomRoles();renderGlobalOperations();
+   if($('tab-teams')?.classList.contains('active'))await loadTeams().catch(e=>console.warn('[CountFlow Admin] team list refresh failed',e));
+   if(state.selectedSession&&$('operationDetail')&&!$('operationDetail').classList.contains('hidden'))await loadOperationTeam().catch(e=>console.warn('[CountFlow Admin] operation team refresh failed',e));
    await loadAdminOverview().catch(e=>console.warn('[CountFlow Admin] dashboard query failed',e));
   });
  }
@@ -2150,14 +2349,14 @@ async function commitClientCatalogImport(){
   const requestToken=(state.overviewRequestToken||0)+1;state.overviewRequestToken=requestToken;
   const projectIds=state.projects.map(p=>p.id).filter(Boolean);
   if(!projectIds.length){
-   state.overviewRows=[];state.overviewLoadedAt=Date.now();state.overviewError=null;
+   state.overviewRows=[];state.platformKpis={};state.overviewLoadedAt=Date.now();state.overviewError=null;
    renderAdminOverview();return;
   }
   try{
    const rows=[];let offset=0;const pageSize=500,maxRows=10000;
    while(true){
     const {data,error}=await db.from('count_operation_overview')
-     .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at')
+     .select('project_id,project_name,project_code,project_status,session_id,operation_name,operation_code,operation_status,planned_start_at,planned_end_at,schedule_timezone,priority,counting_mode,active_products,entry_events,counted_products,counted_locations,active_counters,assigned_members,active_assignments,location_count,last_counted_at,operation_created_at,operation_type,active_teams,active_team_members')
      .in('project_id',projectIds).order('planned_start_at',{ascending:false}).range(offset,offset+pageSize-1);
     if(error)throw error;
     const page=data||[];rows.push(...page);
@@ -2165,7 +2364,11 @@ async function commitClientCatalogImport(){
     if(page.length<pageSize)break;
     offset+=pageSize;
    }
+   const selectedProjectId=$('overviewProjectFilter')?.value||null;
+   const {data:kpiData,error:kpiError}=await db.rpc('count_admin_platform_kpis',{p_project_id:selectedProjectId});
+   if(kpiError)throw kpiError;
    if(requestToken!==state.overviewRequestToken)return;
+   state.platformKpis=Array.isArray(kpiData)?(kpiData[0]||{}):(kpiData||{});
    state.overviewRows=rows;state.overviewLoadedAt=Date.now();state.overviewError=null;
    renderAdminOverview();
   }catch(error){
@@ -2196,6 +2399,11 @@ async function commitClientCatalogImport(){
   const activeOperations=rows.filter(x=>x.operation_status==='active').length;
   const completedOperations=rows.filter(x=>x.operation_status==='completed').length;
   const activeAssignments=sum(rows,'active_assignments');
+  const platformKpis=state.platformKpis||{};
+  $('overviewOperationsThisMonth').textContent=fmt(platformKpis.operations_this_month);
+  $('overviewActiveTeams').textContent=fmt(platformKpis.active_teams);
+  $('overviewActiveTeamPeople').textContent=fmt(platformKpis.active_team_people);
+  $('overviewAssignedPeople').textContent=fmt(platformKpis.active_assigned_people);
   $('overviewTotalOperations').textContent=fmt(rows.length);
   $('overviewActiveOperations').textContent=fmt(activeOperations);
   $('overviewEntryEvents').textContent=fmt(totalEntries);
@@ -2265,19 +2473,19 @@ async function commitClientCatalogImport(){
   $('kReviewOperations').textContent=all.filter(x=>x.status==='review').length;
   $('kAllOperations').textContent=all.length;
   const q=($('operationSearch')?.value||'').trim().toLowerCase();
-  const status=$('operationStatus')?.value||'',from=$('operationFrom')?.value||'',to=$('operationTo')?.value||'';
+  const status=$('operationStatus')?.value||'',typeFilter=$('operationTypeFilter')?.value||'',from=$('operationFrom')?.value||'',to=$('operationTo')?.value||'';
   const rows=all.filter(x=>{
    const p=state.projects.find(v=>v.id===x.project_id)||{},hay=[p.name,p.code,x.name].join(' ').toLowerCase(),day=String(x.created_at||'').slice(0,10);
-   return (!q||hay.includes(q))&&(!status||x.status===status)&&(!from||day>=from)&&(!to||day<=to);
+   return (!q||hay.includes(q))&&(!status||x.status===status)&&(!typeFilter||x.operation_type===typeFilter)&&(!from||day>=from)&&(!to||day<=to);
   });
   const operationSortValue=(x,key)=>{if(key==='client'||key==='code'){const p=state.projects.find(v=>v.id===x.project_id)||{};return key==='client'?(p.name||''):(p.code||'');}if(key==='team')return Number(state.assignmentCounts[x.id]||0);return x[key]??'';};
   rows.sort((a,b)=>{const av=operationSortValue(a,state.operationSort),bv=operationSortValue(b,state.operationSort);let cmp;if(state.operationSort==='team')cmp=Number(av)-Number(bv);else if(['created_at','started_at','closed_at'].includes(state.operationSort))cmp=new Date(av||0)-new Date(bv||0);else cmp=String(av).localeCompare(String(bv),'ar',{numeric:true,sensitivity:'base'});return state.operationSortAsc?cmp:-cmp;});
   $('operationResultCount').textContent=rows.length+' عملية';
   const pageSize=50,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));state.operationPage=Math.min(state.operationPage,totalPages);
   const page=rows.slice((state.operationPage-1)*pageSize,state.operationPage*pageSize);
-  const cols=[['created_at','تاريخ الإنشاء'],['client','الجهة المتعاقدة'],['code','رقم التكليف'],['name','اسم العملية'],['status','الحالة'],['team','الفريق'],['started_at','بدء التنفيذ'],['closed_at','الإغلاق']];
+  const cols=[['created_at','تاريخ الإنشاء'],['client','الجهة المتعاقدة'],['code','رقم التكليف'],['name','اسم العملية'],['operation_type','نوع العملية'],['status','الحالة'],['team','أفراد مسندون'],['started_at','بدء التنفيذ'],['closed_at','الإغلاق']];
   const head='<thead><tr>'+cols.map(([k,label])=>'<th><button type="button" class="link" data-sort-operation="'+k+'">'+label+(state.operationSort===k?(state.operationSortAsc?' ↑':' ↓'):'')+'</button></th>').join('')+'<th>إجراء</th></tr></thead>';
-  const body=page.map(x=>{const p=state.projects.find(v=>v.id===x.project_id)||{};return '<tr><td>'+date(x.created_at)+'</td><td><b>'+esc(p.name||'—')+'</b></td><td>'+esc(p.code||'—')+'</td><td><b>'+esc(x.name)+'</b></td><td>'+statusPill(x.status)+'</td><td>'+Number(state.assignmentCounts[x.id]||0)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td><td><button type="button" class="soft" data-open-operation="'+x.id+'">فتح / معاينة</button></td></tr>';}).join('');
+  const body=page.map(x=>{const p=state.projects.find(v=>v.id===x.project_id)||{},type=({full_inventory:'جرد شامل',cycle_count:'جرد دوري',spot_check:'جرد جزئي',recount:'إعادة جرد',audit:'تدقيق',other:'أخرى'})[x.operation_type]||'غير مصنف';return '<tr><td>'+date(x.created_at)+'</td><td><b>'+esc(p.name||'—')+'</b></td><td>'+esc(p.code||'—')+'</td><td><b>'+esc(x.name)+'</b></td><td>'+type+'</td><td>'+statusPill(x.status)+'</td><td>'+Number(state.assignmentCounts[x.id]||0)+'</td><td>'+date(x.started_at)+'</td><td>'+date(x.closed_at)+'</td><td><button type="button" class="soft" data-open-operation="'+x.id+'">فتح / معاينة</button></td></tr>';}).join('');
   $('operationsTable').innerHTML=rows.length?'<table>'+head+'<tbody>'+body+'</tbody></table>':'<div class="empty">لا توجد عمليات تطابق معايير البحث.</div>';
   $('operationsPager').innerHTML='<span class="hint">صفحة '+state.operationPage+' من '+totalPages+' · '+rows.length+' عملية</span><button class="soft" type="button" id="operationPrev" '+(state.operationPage<=1?'disabled':'')+'>السابق</button><button class="soft" type="button" id="operationNext" '+(state.operationPage>=totalPages?'disabled':'')+'>التالي</button>';
   document.querySelectorAll('[data-sort-operation]').forEach(b=>b.onclick=()=>{const k=b.dataset.sortOperation;if(state.operationSort===k)state.operationSortAsc=!state.operationSortAsc;else{state.operationSort=k;state.operationSortAsc=true;}renderGlobalOperations();});
@@ -2296,7 +2504,7 @@ async function commitClientCatalogImport(){
  function subscribeGlobalRealtime(){
   stopGlobalRealtime();
   if(!state.projects.length||!state.user){state.overviewRealtimeStatus='IDLE';return;}
-  const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
+  const filters=[];state.projects.forEach(p=>['count_sessions','count_members','count_entries','count_assignments','count_teams','count_team_members','count_session_teams','count_session_team_members'].forEach(table=>filters.push({table,filter:'project_id=eq.'+p.id,event:'*'})));
   state.globalChannel=window.CF_Core.watchPostgresChanges(db,{
    channelName:'countflow-admin-global-'+state.user.id,
    filters,onInvalidate:scheduleGlobalRefresh,reconcileMs:30000,
@@ -2350,9 +2558,10 @@ async function commitClientCatalogImport(){
   try{await loadProjectData();}catch(e){fail('تعذر تحميل ملف التكليف',e);return;}
   activateTab('operations');$('operationDetail').classList.remove('hidden');
   $('operationDetailTitle').textContent=s.name;
-  $('operationDetailMeta').textContent=state.project.name+' · '+state.project.code+' · '+statusName(s.status)+' · أنشئت '+date(s.created_at);
+  const operationTypeLabel=({full_inventory:'جرد شامل',cycle_count:'جرد دوري',spot_check:'جرد جزئي / مفاجئ',recount:'إعادة جرد',audit:'تدقيق ومراجعة',other:'أخرى'})[s.operation_type]||'غير مصنف';
+  $('operationDetailMeta').textContent=state.project.name+' · '+state.project.code+' · '+operationTypeLabel+' · '+statusName(s.status)+' · أنشئت '+date(s.created_at);
   const editable=['planned','active','paused','review'].includes(s.status);
-  ['operationAddMember','operationAssignMember','operationCreateMember','operationImportFile','operationPreviewImport','operationCommitImport'].forEach(id=>{$(id).disabled=!editable;});
+  ['operationAddMember','operationAssignMember','operationAddTeam','operationAssignTeam','operationCreateMember','operationImportFile','operationPreviewImport','operationCommitImport'].forEach(id=>{$(id).disabled=!editable;});
   $('operationDetail').scrollIntoView({behavior:'smooth',block:'start'});
   await Promise.all([loadOperationTeam(),loadOperationMetrics(),loadOperationImportHistory(),loadOperationExportHistory(),loadOperationReconciliation()]);
  }
@@ -2367,30 +2576,67 @@ async function commitClientCatalogImport(){
   if(error)throw error;if((count||0)>maxRows)throw new Error('FETCH_LIMIT_EXCEEDED:'+table+':'+maxRows);
   return all;
  }
+
  async function loadOperationTeam(){
   const s=state.selectedSession;if(!s)return;
-  const [assignments,members]=await Promise.all([
+  const [assignments,members,links,teamResult]=await Promise.all([
    loadScopedOperationRows('count_assignments','id,member_id,location_id,status,assigned_at','session_id',s.id,'assigned_at'),
-   loadScopedOperationRows('count_members','id,display_name,username,role,status','project_id',s.project_id,'display_name')
+   loadScopedOperationRows('count_members','id,display_name,username,role,role_id,status','project_id',s.project_id,'display_name'),
+   db.from('count_session_teams').select('id,team_id,status,created_at,removed_at').eq('project_id',s.project_id).eq('session_id',s.id).order('created_at',{ascending:false}),
+   db.from('count_team_overview').select('*').eq('project_id',s.project_id).order('team_name')
   ]);
+  if(links.error)throw links.error;if(teamResult.error)throw teamResult.error;
+  const linkIds=(links.data||[]).map(x=>x.id);
+  const snapshotResult=linkIds.length?await db.from('count_session_team_members').select('session_team_id,member_id,status').in('session_team_id',linkIds):{data:[],error:null};
+  if(snapshotResult.error)throw snapshotResult.error;
+  const snapshotCounts=new Map();
+  (snapshotResult.data||[]).forEach(x=>snapshotCounts.set(x.session_team_id,(snapshotCounts.get(x.session_team_id)||0)+1));
   assignments.sort((a,b)=>String(b.assigned_at||'').localeCompare(String(a.assigned_at||'')));
   const map=Object.fromEntries(members.map(x=>[x.id,x])),used=new Set(assignments.map(x=>x.member_id));
-  $('operationAddMember').innerHTML='<option value="">اختر مستخدماً متاحاً</option>'+members.filter(m=>m.status==='active'&&!used.has(m.id)).map(m=>'<option value="'+m.id+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role))+'</option>').join('');
-  $('operationTeamCount').textContent=used.size;
-  $('operationTeamList').innerHTML=assignments.length?'<table><thead><tr><th>المستخدم</th><th>الدور</th><th>نطاق الإسناد</th><th>الحالة</th><th>تاريخ الإسناد</th><th>إجراء</th></tr></thead><tbody>'+assignments.map(a=>{const m=map[a.member_id]||{},loc=state.locations.find(x=>x.id===a.location_id);return '<tr><td><b>'+esc(m.display_name||'عضو')+'</b><span class="sub">'+esc(m.username||'')+'</span></td><td>'+esc(roleName(m.role))+'</td><td>'+esc(loc?.name||'كل المواقع')+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.assigned_at)+'</td><td><button type="button" class="danger" data-remove-operation-member="'+a.member_id+'">إخراج من العملية</button></td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم يتم إسناد أعضاء لهذه العملية بعد.</div>';
-  document.querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
+  const canManage=Boolean(state.memberManageProjects?.has(s.project_id));
+  $('operationAddMember').innerHTML='<option value="">اختر مستخدماً متاحاً</option>'+members.filter(m=>memberCanCount(m)&&!used.has(m.id)).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join('');
+  $('operationAddMember').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationAssignMember').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationTeamCount').textContent=used.size.toLocaleString('ar-EG');
+  const teams=teamResult.data||[];
+  const activeLinks=(links.data||[]).filter(x=>x.status==='active');
+  const assignedTeamIds=new Set(activeLinks.map(x=>x.team_id));
+  $('operationAddTeam').innerHTML='<option value="">اختر فريقاً</option>'+teams.filter(t=>t.status==='active'&&!assignedTeamIds.has(t.team_id)).map(t=>'<option value="'+esc(t.team_id)+'">'+esc(t.team_name)+' · '+esc(t.team_code)+' · '+Number(t.active_members||0)+' عضو</option>').join('');
+  $('operationAddTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationAssignTeam').disabled=!canManage||!['planned','active','paused','review'].includes(s.status);
+  $('operationTeamAssignments').innerHTML=(links.data||[]).length?'<table><thead><tr><th>الفريق</th><th>أعضاء لقطة الإسناد</th><th>عمليات نشطة للفريق</th><th>حالة الإسناد</th><th>تاريخ الإسناد</th><th>الإجراء</th></tr></thead><tbody>'+(links.data||[]).map(link=>{
+   const t=teams.find(x=>x.team_id===link.team_id)||{};
+   const action=canManage&&link.status==='active'&&['planned','active','paused','review'].includes(s.status)?'<button type="button" class="danger" data-unassign-operation-team="'+esc(link.team_id)+'">فصل الفريق</button>':'—';
+   return '<tr><td><b>'+esc(t.team_name||link.team_id)+'</b><span class="sub">'+esc(t.team_code||'')+'</span></td><td>'+Number(snapshotCounts.get(link.id)||0)+'</td><td>'+Number(t.active_operations||0)+'</td><td>'+statusPill(link.status==='active'?'active':'paused')+' <small>'+esc(link.status==='active'?'مسند':'مفصول')+'</small></td><td>'+date(link.created_at)+'</td><td>'+action+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">لا توجد فرق مسندة لهذه العملية.</div>';
+  $('operationTeamAssignments').querySelectorAll('[data-unassign-operation-team]').forEach(btn=>btn.onclick=async()=>{
+   if(!await confirmAction('فصل الفريق عن هذه العملية؟ سيظل سجل العد محفوظاً، ولن يُحذف الفريق أو أعضاؤه.',{title:'فصل فريق عن العملية',confirmText:'فصل الفريق'}))return;
+   try{const {error}=await db.rpc('count_team_unassign_from_session',{p_team_id:btn.dataset.unassignOperationTeam,p_session_id:s.id});if(error)throw error;notify('تم فصل الفريق وحفظ سجل العملية.');await loadOperationTeam();await loadGlobalOperations();}
+   catch(e){fail('تعذر فصل الفريق عن العملية',e);}
+  });
+  $('operationTeamList').innerHTML=assignments.length?'<table><thead><tr><th>المستخدم</th><th>الدور</th><th>نطاق الإسناد</th><th>الحالة</th><th>تاريخ الإسناد</th><th>إجراء</th></tr></thead><tbody>'+assignments.map(a=>{const m=map[a.member_id]||{},loc=state.locations.find(x=>x.id===a.location_id);const action=canManage&&a.status!=='done'?'<button type="button" class="danger" data-remove-operation-member="'+esc(a.member_id)+'">إزالة من العملية</button>':'—';return '<tr><td><b>'+esc(m.display_name||'عضو')+'</b><span class="sub">'+esc(m.username||'')+'</span></td><td>'+esc(roleName(m.role,m.role_id))+'</td><td>'+esc(loc?.name||'كل المواقع')+'</td><td>'+statusPill(a.status)+'</td><td>'+date(a.assigned_at)+'</td><td>'+action+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">لم يتم إسناد أفراد لهذه العملية بعد.</div>';
+  $('operationTeamList').querySelectorAll('[data-remove-operation-member]').forEach(b=>b.onclick=async()=>{
    const current=state.selectedSession;if(!current||!['planned','active','paused','review'].includes(current.status))return notify('العملية غير قابلة لتعديل الفريق في حالتها الحالية.',true);
    if(!await confirmAction('إخراج المستخدم من هذه العملية فقط؟ سيبقى حسابه وعضويته وسجل العد السابق محفوظاً.',{title:'إخراج عضو من العملية',confirmText:'إخراج من العملية'}))return;
-   const {error}=await db.from('count_assignments').delete().eq('session_id',current.id).eq('member_id',b.dataset.removeOperationMember);
+   const {error}=await db.rpc('count_remove_member_from_session',{p_session_id:current.id,p_member_id:b.dataset.removeOperationMember});
    if(error)return fail('تعذر إخراج المستخدم',error);
    notify('تم إخراج المستخدم من هذه العملية فقط.');await loadOperationTeam();await loadGlobalOperations();
   });
  }
+ async function operationAssignTeam(){
+  const s=state.selectedSession,teamId=$('operationAddTeam').value;
+  if(!s||!teamId)return notify('اختر فريقاً نشطاً أولاً.',true);
+  if(!state.memberManageProjects?.has(s.project_id))return notify('لا تملك صلاحية إسناد فرق لهذا الملف.',true);
+  if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن إسناد فرق إلى عملية مغلقة.',true);
+  try{const {data,error}=await db.rpc('count_team_assign_to_session',{p_team_id:teamId,p_session_id:s.id});if(error)throw error;notify('تم إسناد الفريق ('+Number(data?.member_count||0)+' عضو) إلى العملية.');await loadOperationTeam();await loadGlobalOperations();}
+  catch(e){fail('تعذر إسناد الفريق إلى العملية',e);}
+ }
+
  async function operationAssignMember(){
   const s=state.selectedSession,memberId=$('operationAddMember').value;
   if(!s||!memberId)return notify('اختر مستخدماً متاحاً أولاً.',true);
   if(!['planned','active','paused','review'].includes(s.status))return notify('لا يمكن إضافة أعضاء إلى عملية مكتملة أو ملغاة.',true);
-  const {error}=await db.from('count_assignments').upsert({session_id:s.id,member_id:memberId,location_id:null,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
+  const {error}=await db.rpc('count_assign_member_to_session',{p_session_id:s.id,p_member_id:memberId});
   if(error)return fail('تعذر إضافة المستخدم للعملية',error);
   notify('تمت إضافة المستخدم إلى العملية.');await loadOperationTeam();await loadGlobalOperations();
  }
@@ -2402,7 +2648,7 @@ async function commitClientCatalogImport(){
   try{
    const {data,error}=await db.functions.invoke('counting-provision-member',{body:payload});
    if(error)throw error;if(data?.error)throw new Error(data.message||data.error);if(!data?.ok||!data.member_id)throw new Error('استجابة إنشاء الحساب غير مكتملة.');
-   const {error:assignmentError}=await db.from('count_assignments').upsert({session_id:s.id,member_id:data.member_id,location_id:null,status:'assigned'},{onConflict:'session_id,member_id,location_id'});
+   const {error:assignmentError}=await db.rpc('count_assign_member_to_session',{p_session_id:s.id,p_member_id:data.member_id});
    $('operationNewName').value='';$('operationNewUsername').value='';$('operationNewEmail').value='';$('operationNewPassword').value='';
    if(assignmentError)notify('أُنشئ الحساب وعضويته، لكن تعذر إسناده إلى العملية. أعد محاولة الإسناد من شاشة الفريق.',true);
    else notify((data.account_reused?'تم ربط حساب Auth الموجود دون تغيير كلمة مروره':'تم إنشاء حساب Auth جديد')+'؛ '+(data.membership_reused?'العضوية النشطة كانت موجودة بالفعل.':'تم إنشاء عضوية التكليف.')+' تمت معالجة الإسناد للعملية.');
@@ -3566,8 +3812,9 @@ async function toggleCatalogProduct(id){
  $('projectForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;setBusy(f,true);try{
   const clientId=state.platformOwner?$('projectClient').value:state.clientId;if(!clientId)throw new Error('اختر العميل أولاً.');const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
   const payload={p_client_id:clientId,p_project_name:$('projectName').value.trim(),p_project_code:$('projectCode').value.trim().toUpperCase(),p_operation_name:$('operationName').value.trim(),p_operation_code:$('operationCode').value.trim().toUpperCase()||null,p_branch_name:$('branchName').value.trim(),p_branch_code:$('branchCode').value.trim().toUpperCase(),p_planned_start_at:toIso('operationStart'),p_planned_end_at:toIso('operationEnd'),p_timezone:$('operationTimezone').value,p_priority:Number($('operationPriority').value),p_counting_mode:$('operationMode').value,p_show_expected_quantity:$('showExpectedQuantity').checked,p_capture_images:$('captureImages').checked,p_require_images:$('requireImages').checked,p_allow_unknown_products:$('allowUnknownProducts').checked,p_instructions:$('operationInstructions').value.trim()||null};
-  const {data,error}=await db.rpc('count_create_operation',payload);if(error)throw error;const projectId=data.project_id,sessionId=data.session_id;
-  notify('تم إنشاء المشروع والعملية والفرع في معاملة واحدة.');f.reset();$('captureImages').checked=true;$('operationMode').value='mixed';$('operationTimezone').value='Africa/Cairo';$('operationPriority').value='3';
+  payload.p_operation_type=$('operationType').value;
+  const {data,error}=await db.rpc('count_create_operation_with_teams',{...payload,p_operation_type:payload.p_operation_type,p_team_ids:[]});if(error)throw error;const projectId=data.project_id,sessionId=data.session_id;
+  notify('تم إنشاء المشروع والعملية والفرع في معاملة واحدة.');f.reset();$('captureImages').checked=true;$('operationMode').value='mixed';$('operationTimezone').value='Africa/Cairo';$('operationPriority').value='3';$('operationType').value='full_inventory';
   state.project=null;state.selectedSession=null;await loadProjects();state.project=state.projects.find(p=>p.id===projectId)||state.project;$('projectPicker').value=state.project?.id||'';await loadProjectData();await loadGlobalOperations();await selectOperation(sessionId);
  }catch(err){fail('تعذر إنشاء المشروع والعملية',err);}finally{setBusy(f,false);}});
  $('projectPicker').addEventListener('change',async()=>{resetProductForm();resetProductImport();$('productImportDetails').innerHTML='';state.project=state.projects.find(p=>p.id===$('projectPicker').value)||null;if(state.platformOwner){state.roleClientId=state.project?.client_id||null;if(state.project?.client_id){state.catalogClientId=state.project.client_id;if($('catalogClientScope'))$('catalogClientScope').value=state.catalogClientId;}}try{await loadProjectData();await loadRoleCatalog();}catch(e){fail('تعذر تحميل المشروع',e);}});
@@ -3671,15 +3918,21 @@ async function toggleCatalogProduct(id){
   if(state.project&&state.projects.some(p=>p.id===state.project.id))$('sessionProject').value=state.project.id;
   const branches=state.locations.filter(x=>['branch','site','store','warehouse'].includes(x.location_type)&&!x.parent_id);
   $('sessionBranch').innerHTML='<option value="">بدون تحديد فرع</option>'+branches.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.code)+' · '+esc(x.name)+'</option>').join('');
-  const keep=[...($('sessionTeam').selectedOptions||[])].map(x=>x.value);
-  const members=(state.members||[]).filter(m=>m.status==='active');
-  $('sessionTeam').innerHTML=members.length?members.map(m=>'<option value="'+esc(m.id)+'" '+(keep.includes(m.id)?'selected':'')+'>'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join(''):'<option value="" disabled>لا يوجد أعضاء نشطون في هذا التكليف؛ أضف المستخدمين أولاً</option>';
+  const keepMembers=[...($('sessionTeam').selectedOptions||[])].map(x=>x.value);
+  const members=(state.members||[]).filter(m=>memberCanCount(m));
+  $('sessionTeam').innerHTML=members.length?members.map(m=>'<option value="'+esc(m.id)+'" '+(keepMembers.includes(m.id)?'selected':'')+'>'+esc(m.display_name)+' · '+esc(m.username)+' · '+esc(roleName(m.role,m.role_id))+'</option>').join():'<option value="" disabled>لا يوجد أعضاء نشطون لديهم صلاحية العد</option>';
+  const keepTeams=[...($('sessionTeams').selectedOptions||[])].map(x=>x.value);
+  const teams=(state.teamRows||[]).filter(t=>t.project_id===state.project?.id&&t.status==='active');
+  $('sessionTeams').innerHTML=teams.length?teams.map(t=>'<option value="'+esc(t.team_id)+'" '+(keepTeams.includes(t.team_id)?'selected':'')+'>'+esc(t.team_name)+' · '+esc(t.team_code)+' · '+Number(t.active_members||0)+' عضو</option>').join():'<option value="" disabled>لا توجد فرق نشطة في ملف التكليف</option>';
+  $('sessionTeams').disabled=!state.memberManageProjects?.has(state.project?.id);
+  $('sessionTeam').disabled=!state.memberManageProjects?.has(state.project?.id);
  }
+
  async function openOperationCreateModal(){
   if(!state.projects.length){notify('لا يوجد ملف تكليف متاح لإنشاء عملية داخله.',true);activateTab('projects');return;}
   if(!state.project||!state.projects.some(p=>p.id===state.project.id))state.project=state.projects[0];
   $('projectPicker').value=state.project.id;
-  try{await loadProjectData();renderOperationCreateOptions();}
+  try{await loadProjectData();await loadTeams(state.project.id);renderOperationCreateOptions();}
   catch(e){fail('تعذر تحميل فريق ملف التكليف',e);return;}
   $('sessionProject').value=state.project.id;
   $('operationCreateModal').classList.remove('hidden');
@@ -3696,20 +3949,22 @@ async function toggleCatalogProduct(id){
   const project=state.projects.find(p=>p.id===$('sessionProject').value);
   if(!project)return;
   state.project=project;$('projectPicker').value=project.id;
-  try{await loadProjectData();renderOperationCreateOptions();$('sessionProject').value=project.id;}
+  try{await loadProjectData();await loadTeams(project.id);renderOperationCreateOptions();$('sessionProject').value=project.id;}
   catch(e){fail('تعذر تحميل نطاق فريق العملية',e);}
  });
 
  $('newOperationButton').onclick=()=>{activateTab('operations');openOperationCreateModal();};
 $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تحديث مؤشرات الأداء')).catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));
  $('overviewNewOperation').onclick=()=>{activateTab('operations');openOperationCreateModal();};
- ['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
- $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');renderAdminOverview();};
+ $('overviewProjectFilter').addEventListener('change',()=>loadAdminOverview().catch(e=>fail('تعذر تحديث مؤشرات ملف التكليف',e)));
+ ['overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).addEventListener('change',renderAdminOverview));
+ $('overviewReset').onclick=()=>{['overviewProjectFilter','overviewStatusFilter','overviewFrom','overviewTo'].forEach(id=>$(id).value='');loadAdminOverview().catch(e=>fail('تعذر تحديث لوحة المؤشرات',e));};
  $('refreshOperations').onclick=()=>loadGlobalOperations().then(()=>notify('تم تحديث جميع عمليات الجرد والمستخدمين')).catch(e=>fail('تعذر التحديث',e));
  $('applyOperationFilters').onclick=()=>{state.operationPage=1;renderGlobalOperations();};
- ['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
- $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
+ ['operationSearch','operationStatus','operationTypeFilter','operationFrom','operationTo'].forEach(id=>$(id).addEventListener(id==='operationSearch'?'input':'change',()=>{state.operationPage=1;renderGlobalOperations();}));
+ $('resetOperationFilters').onclick=()=>{['operationSearch','operationStatus','operationTypeFilter','operationFrom','operationTo'].forEach(id=>$(id).value='');state.operationPage=1;renderGlobalOperations();};
  $('operationAssignMember').onclick=operationAssignMember;
+ $('operationAssignTeam').onclick=operationAssignTeam;
  $('operationCreateMember').onclick=operationCreateMember;
  $('previewOperation').onclick=previewOperation;
  $('exportOperationXlsx').onclick=()=>downloadOperationExport('xlsx');
@@ -3717,6 +3972,14 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
  $('exportOperationCsv').onclick=()=>downloadOperationExport('csv');
 
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user)loadGlobalOperations().catch(e=>console.warn('[CountFlow Admin] visibility refresh failed',e));});
+ $('teamForm').addEventListener('submit',createTeamFromForm);
+ $('teamAddMembers').addEventListener('click',addMembersToTeam);
+ $('teamDetailClose').addEventListener('click',()=>{$('teamDetailPanel').classList.add('hidden');state.teamSelectedId=null;});
+ $('teamsRefresh').addEventListener('click',()=>loadTeams().then(()=>notify('تم تحديث فرق العمل')).catch(e=>fail('تعذر تحديث الفرق',e)));
+ $('teamProjectFilter').addEventListener('change',()=>loadTeams().catch(e=>fail('تعذر تصفية الفرق',e)));
+ $('teamStatusFilter').addEventListener('change',renderTeams);
+ $('teamSearch').addEventListener('input',renderTeams);
+ $('teamProject').addEventListener('change',()=>{const project=state.projects.find(p=>p.id===$('teamProject').value);if(project)state.project=project;});
  $('memberForm').addEventListener('submit',async e=>{e.preventDefault();if(!state.project)return notify('سجّل تكليفاً أولاً',true);const f=e.currentTarget;setBusy(f,true);try{
   const selectedRole=state.roles.find(r=>r.id===$('memberRole').value);if(!selectedRole)throw new Error('اختر دوراً صالحاً ومفعلاً.');const body={action:'create',project_id:state.project.id,email:$('memberEmail').value.trim(),password:$('memberPassword').value,display_name:$('memberName').value.trim(),username:$('memberUsername').value.trim(),role:selectedRole.role_key,role_id:selectedRole.id};
   const {data,error}=await db.functions.invoke('counting-provision-member',{body});
@@ -3738,36 +4001,43 @@ $('overviewRefresh').onclick=()=>loadAdminOverview().then(()=>notify('تم تح�
   try{
    const toIso=id=>$(id).value?new Date($(id).value).toISOString():null;
    const selectedMemberIds=[...$('sessionTeam').selectedOptions].map(o=>o.value).filter(Boolean);
+   const selectedTeamIds=[...$('sessionTeams').selectedOptions].map(o=>o.value).filter(Boolean);
    const startValue=$('sessionStart').value,endValue=$('sessionEnd').value;
    if(endValue&&!startValue)throw new Error('حدد بداية العملية قبل تحديد نهايتها.');
    if(startValue&&endValue&&new Date(endValue)<=new Date(startValue))throw new Error('وقت نهاية العملية يجب أن يكون بعد وقت البداية.');
-   const {data,error}=await db.from('count_sessions').insert({
-    project_id:project.id,name:$('sessionName').value.trim(),status:'planned',created_by:state.user.id,
-    operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
-    branch_location_id:$('sessionBranch').value||null,
-    planned_start_at:toIso('sessionStart'),planned_end_at:toIso('sessionEnd'),
-    schedule_timezone:$('sessionTimezone').value,priority:Number($('sessionPriority').value),
-    counting_mode:$('sessionMode').value,show_expected_quantity:$('sessionShowExpected').checked,
-    capture_images:$('sessionCaptureImages').checked,require_images:$('sessionRequireImages').checked,
-    allow_unknown_products:$('sessionAllowUnknown').checked,
-    instructions:$('sessionInstructions').value.trim()||null
-   }).select('id').single();
+   if(selectedMemberIds.some(id=>!memberCanCount(state.members.find(m=>m.id===id))))throw new Error('يتضمن الاختيار مستخدماً لا يملك صلاحية تسجيل العد.');
+   const payload={
+    p_project_id:project.id,
+    p_name:$('sessionName').value.trim(),
+    p_operation_code:$('sessionOperationCode').value.trim().toUpperCase()||null,
+    p_operation_type:$('sessionOperationType').value,
+    p_branch_location_id:$('sessionBranch').value||null,
+    p_planned_start_at:toIso('sessionStart'),
+    p_planned_end_at:toIso('sessionEnd'),
+    p_timezone:$('sessionTimezone').value,
+    p_priority:Number($('sessionPriority').value),
+    p_counting_mode:$('sessionMode').value,
+    p_show_expected_quantity:$('sessionShowExpected').checked,
+    p_capture_images:$('sessionCaptureImages').checked,
+    p_require_images:$('sessionRequireImages').checked,
+    p_allow_unknown_products:$('sessionAllowUnknown').checked,
+    p_instructions:$('sessionInstructions').value.trim()||null,
+    p_member_ids:selectedMemberIds,
+    p_team_ids:selectedTeamIds
+   };
+   const {data,error}=await db.rpc('count_create_session_with_teams',payload);
    if(error)throw error;
-   let assignmentWarning='';
-   if(selectedMemberIds.length){
-    const assignmentRows=selectedMemberIds.map(memberId=>({session_id:data.id,member_id:memberId,location_id:null,status:'assigned'}));
-    const assigned=await db.from('count_assignments').upsert(assignmentRows,{onConflict:'session_id,member_id,location_id'});
-    if(assigned.error)assignmentWarning=' تم إنشاء العملية، لكن فشل إسناد بعض/كل أعضاء الفريق: '+assigned.error.message+'؛ يمكنك إكمال الإسناد من تفاصيل العملية.';
-   }
-   f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';
+   const sessionId=data?.session_id;
+   if(!sessionId)throw new Error('لم تُرجع قاعدة البيانات معرف العملية المنشأة.');
+   f.reset();$('sessionCaptureImages').checked=true;$('sessionMode').value='mixed';$('sessionTimezone').value='Africa/Cairo';$('sessionPriority').value='3';$('sessionOperationType').value='full_inventory';
    closeOperationCreateModal();
-   await loadProjectData();await loadGlobalOperations();await selectOperation(data.id);
-   if(assignmentWarning)notify('تم إنشاء العملية بنجاح.'+assignmentWarning,true);
-   else notify('تم إنشاء العملية المخططة'+(selectedMemberIds.length?' وإسناد '+selectedMemberIds.length+' عضو/أعضاء':' دون إسناد فريق بعد')+'. لم تُسجل أي كميات أو حركة مخزون.');
-  }catch(err){fail('تعذر إنشاء العملية',err);}
+   await loadProjectData();await loadGlobalOperations();await loadTeams(project.id);await selectOperation(sessionId);
+   notify('تم إنشاء العملية وإسناد الفرق والأفراد في معاملة واحدة. لم تُسجل أي كميات أو حركة مخزون.');
+  }catch(err){fail('تعذر إنشاء العملية وإسناد الفريق',err);}
   finally{setBusy(f,false);}
  });
- document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='products')switchCatalogView(state.catalogView||'global');}));
+ 
+ document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{activateTab(b.dataset.tab);if(b.dataset.tab==='license'&&state.platformOwner)loadLicenseSettings();if(b.dataset.tab==='clients'&&state.platformOwner)loadClients();if(b.dataset.tab==='roles'){renderRoles();loadRoleCatalog();}if(b.dataset.tab==='members')renderMembers();if(b.dataset.tab==='teams')loadTeams().catch(e=>fail('تعذر تحميل فرق العمل',e));if(b.dataset.tab==='products')switchCatalogView(state.catalogView||'global');}));
  $('refreshBtn').onclick=async()=>{try{await loadProjects();notify('تم تحديث البيانات من قاعدة CountFlow');}catch(e){fail('تعذر التحديث',e);}};
  $('logoutBtn').onclick=async()=>{stopGlobalRealtime();await db.auth.signOut();state.user=null;state.project=null;showLogin();};
 
