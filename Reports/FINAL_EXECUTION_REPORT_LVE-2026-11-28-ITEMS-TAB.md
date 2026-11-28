@@ -1,12 +1,14 @@
-# تقرير تنفيذ LVE-2026-11-28-ITEMS-TAB — المرحلة الأولى
+# تقرير تنفيذ LVE-2026-11-28-ITEMS-TAB — المرحلتين الأولى والثانية
 
-**الحالة:** PHASE 1 COMPLETED; PHASE 2 SOURCE IMPLEMENTED — CI verification pending.  
+**الحالة:** PHASE 1 + PHASE 2 COMPLETED — final source, tests, CI, and Production/Main parity PASS.  
 **Last Verified Event:** 28 نوفمبر 2026 — Africa/Cairo.  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **الفرع:** `main` فقط.  
 **Base HEAD:** `097ab07feb1d9e1da8851adef84c34b8f60c3ad3`.  
-**Source commit:** `107a1ff284e06e498e79479f015f7c4c613a957c`.  
-**CI:** [GitHub Actions run 46174583822 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46174583822).
+**Phase 1 source commit:** `107a1ff284e06e498e79479f015f7c4c613a957c`.  
+**Phase 2 source commits:** `56a9773def8a3835c8f0a6ebd22fefda33a29530` and corrective `a0bce597d6ebd726d4da954fe07203b45e236108`.  
+**CI Phase 1:** [run 46174583822 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46174583822).  
+**CI Phase 2 final:** [run 46176209223 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46176209223).
 
 ## 1. ما تم التحقق منه قبل التنفيذ
 
@@ -70,6 +72,8 @@
 - زر "توليد رمز محلي 20" وزر "نسخ الرمز".
 - مؤشر تحقق حي يوضح نوع الرمز ونتيجة التحقق مع رسائل عربية موجهة للمستخدم.
 - تنسيق responsive لحقل الإدخال والأزرار ومؤشر الحالة.
+- أزيل زر CFI قديم كان يكرر HTML id الخاص بزر توليد RCN؛ أصبح CFI fallback خادمياً واضحاً عند اختيار بدون باركود.
+- أضيف اختبار يثبت أن معرّفات عناصر الباركود فريدة، وأن النص يوضح أن توليد البادئة لا يساوي تخصيص GS1.
 
 ### معيار الرمز
 - RCN-13 يتكون من بادئة 20–29 + 10 أرقام مرجعية + Check Digit من GS1 Mod-10.
@@ -90,7 +94,8 @@
 - اختبار رفض check digit غير صحيح.
 - اختبار وجود لوحة التحقق والنسخ والفحص المسبق للتكرار.
 - اختبار بقاء lookup في Counter للباركود الأساسي والوحدات والرمز الفعلي الممسوح.
-- CI لهذه المرحلة ما زال قيد التشغيل عند كتابة هذه النسخة من التقرير؛ لا تصنف المرحلة PASS حتى صدور SUCCESS ومطابقة Production.
+- CI الأول [46176012661](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46176012661) على SHA 56a9773 نجح: 117/117 Node، Deno type-check PASS، Pages build PASS، وPlaywright 3/3 مع Production/Main parity. كشفت مراجعة ما بعد CI duplicate id لزر CFI القديم، وتم حذفه وإضافة اختبار uniqueness في commit a0bce597d6ebd726d4da954fe07203b45e236108.
+- CI النهائي بعد التصحيح [46176209223](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46176209223) — SUCCESS: 118/118 Node PASS، صفر FAIL وصفر SKIPPED؛ Deno type-check PASS؛ Cloudflare Pages build PASS؛ Playwright 3/3 PASS. Playwright أكد أن Production يطابق SHA a0bce597d6ebd726d4da954fe07203b45e236108.
 
 ### الملفات
 - countflow-admin.html — واجهة RCN والتحقق والنسخ والفحص المسبق.
@@ -105,9 +110,22 @@
 - لم أترك أي فرع، أي بيانات تجريبية، أي ملفات مؤقتة.
 
 
+### تحقق بيانات Supabase بعد المرحلتين 1 و2 — قراءة فقط
+| الجدول/المؤشر | العدد |
+|---|---:|
+| count_catalog_products | 0 |
+| count_catalog_product_identifiers | 0 |
+| count_client_products | 0 |
+| count_products | 41,000 |
+| count_entries | 0 |
+| count_clients | 0 |
+| projects with client_id | 0 |
+
+لا يوجد إدخال أو تعديل سجلات أثناء المرحلتين. اختبارات RCN تعمل على مولد ورقم تحقق داخل Node، ولم تنشئ منتجات أو معرّفات في قاعدة البيانات. دفعة QA90K لم تُمس.
+
 ## 9. نقطة التسليم
 
 - **المرحلة 1:** COMPLETED — صفحة الصنف/التبويبات الثلاثة موجودة، فجوة اختيار التصنيف أُغلقت، CI ناجح 115/115، Deno/Pages ناجحان، وProduction يطابق SHA المصدر.
-- المرحلة 2: المصدر منفذ؛ CI وProduction/Main parity قيد التحقق. لا تُعلن مكتملة قبل توثيق التشغيل النهائي.
+- المرحلة 2: COMPLETED — RCN-13 UI and server contract verified, 118/118 Node, Deno/Pages PASS, Playwright 3/3, Production/Main SHA parity PASS.
 - المرحلة 3 لم تبدأ: تدقيق تكامل الوحدات البديلة والتحويل في Admin/Counter/الخادم.
 - لا تبدأ المرحلة التالية قبل إغلاق بوابة المرحلة الثانية في CURRENT_STATE.
