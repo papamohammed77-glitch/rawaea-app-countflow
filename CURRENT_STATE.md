@@ -7,7 +7,7 @@
 **الفرع:** `main` فقط — لا فرع عمل جديد.  
 **الترحيلات القائمة:** `20261123211241/countflow_shelf_image_camera_mvp_v1` و`20261123211841/countflow_shelf_image_integrity_and_cleanup_v1` — كلاهما موجود في سجل قاعدة البيانات؛ لم يُعَد تطبيقهما.  
 **الملفات المعدلة:** `countflow.html`, `countflow-sw.js`, `tests/unit/countflow-quality.test.mjs`, `database/migrations/README.md`, `CURRENT_STATE.md`; وأضيف `Reports/FINAL_EXECUTION_REPORT_LVE-794.md`.  
-**CI:** سيُثبت رقم التشغيل ونتيجة التحقق النهائي في هذا السجل بعد فحص CI على التزام main الناتج.  
+**CI الأول:** run `46091988083` — FAILURE؛ Deno type-check PASS، Node 111/114 PASS. كشفت الاختبارات 3 assertions قديمة/غير صحيحة بعد النقل (pagehide callback، Service Worker cache version، ومكان فحص نسخة SW في اختبار LVE-794). جرى إصلاحها وتحديث availability عند عودة الاتصال في الالتزام التالي؛ CI لإعادة التحقق PENDING.  
 **الحالة:** SOURCE PORT PENDING CI — AUTHENTICATED PHONE E2E OPEN — PUBLIC BUCKET RISK DISCLOSED.
 
 ### ما تم نقله

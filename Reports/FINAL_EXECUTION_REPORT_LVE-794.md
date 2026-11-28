@@ -138,7 +138,7 @@
 
 ## 8. نتائج CI والنشر
 
-**CI على الالتزام الجديد:** PENDING عند إنشاء هذا التقرير؛ يجب انتظار GitHub Actions على `main` والتحقق من جميع الوظائف، وخصوصًا Node quality tests وDeno وPages وPlaywright/Production SHA parity.  
+**CI الأول:** run [46091988083](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46091988083) — FAILURE. Deno type-check نجح، لكن Node suite أعادت 111/114 PASS. الإخفاقات الثلاثة كانت في شروط اختبار: توقع صيغة pagehide القديمة، توقع Service Worker cache build السابق، وفحص قيمة Service Worker داخل HTML بدلاً من ملف SW. لم يظهر فشل runtime/DB في هذه المحاولة؛ بقية خطوات Pages وPlaywright لم تعمل بسبب توقف البوابة. تم تعديل assertions لتطابق العقد الحالي، مع تحديث زر التصوير عند عودة الاتصال؛ إعادة CI بعد الإصلاح ما زالت PENDING.  
 **Production parity:** يجب أن يثبت CI أو سجل Cloudflare أن إصدار Production يطابق commit main الناتج.  
 **القبول الميداني:** OPEN حتى تنفيذ الاختبار المصادق من هاتف داخل جلسة QA نشطة وموقع مسند.  
 **قرار المهمة:** `READY WITH LIMITATIONS` فقط بعد CI الأخضر ومطابقة النشر؛ لا تعني اكتمال CountFlow.

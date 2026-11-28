@@ -427,7 +427,7 @@ test("Counter barcode camera exposes accessible states, safe permission errors a
   assert.match(counter, /video\.pause\(\);video\.srcObject=null/);
   assert.match(counter, /document\.hidden&&\(stream\|\|cameraStarting\)\)cameraStop\(/);
   assert.match(counter, /b\.dataset\.tab!=='count'&&\(stream\|\|cameraStarting\)\)cameraStop\(/);
-  assert.match(counter, /addEventListener\('pagehide',\(\)=>cameraStop\(/);
+  assert.match(counter, /addEventListener\('pagehide',\(\)=>\{cameraStop\(/);
   assert.match(counter, /now-lastCameraFrameAt<200|now-lastScanFrameAt<200/);
   const barcodeCamera = counter.slice(counter.indexOf("function setCameraState"), counter.indexOf("function cameraStop"));
   assert.doesNotMatch(barcodeCamera, /count_shelf_images|uploadShelfImage|shelf-image-input/i, "Barcode camera lifecycle must remain separate from shelf-photo capture");
@@ -1518,7 +1518,7 @@ test("Admin product unit summaries exclude precision metadata from alternate-uni
  assert.equal(helpers.productUnitRows(saved).length, 1);
  assert.equal(helpers.productUnitRows(saved)[0].name, "case");
  const sw = read("countflow-sw.js");
- assert.match(sw, /countflow-sw-20261125-9/);
+ assert.match(sw, /countflow-sw-20261128-1/);
 });
 
 test("Global catalogue importer handlers are defined and use bounded owner RPC batches", () => {
@@ -2038,7 +2038,8 @@ test("LVE-794 shelf-photo capture is separate from barcode scanning and constrai
   assert.match(shelfCode, /from\('shelf-images'\)\.remove\(\[storagePath\]\)/);
   assert.match(shelfCode, /SHELF_IMAGE_CONTEXT_CHANGED/);
   assert.doesNotMatch(shelfCode, /getPublicUrl|console\.info\([^\n]*publicUrl/);
-  assert.match(counter, /countflow-sw-20261128-1/);
+  const serviceWorker = read("countflow-sw.js");
+  assert.match(serviceWorker, /countflow-sw-20261128-1/);
 });
 
 test("LVE-793: CountFlow FK performance indexes and RLS verification contract are tracked", () => {
