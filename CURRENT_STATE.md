@@ -7,7 +7,13 @@
 **الفرع:** `main` فقط — لا فرع عمل جديد.  
 **الترحيلات القائمة:** `20261123211241/countflow_shelf_image_camera_mvp_v1` و`20261123211841/countflow_shelf_image_integrity_and_cleanup_v1` — كلاهما موجود في سجل قاعدة البيانات؛ لم يُعَد تطبيقهما.  
 **الملفات المعدلة:** `countflow.html`, `countflow-sw.js`, `tests/unit/countflow-quality.test.mjs`, `database/migrations/README.md`, `CURRENT_STATE.md`; وأضيف `Reports/FINAL_EXECUTION_REPORT_LVE-794.md`.  
-**CI الأول:** run `46091988083` — FAILURE؛ Deno type-check PASS، Node 111/114 PASS. كشفت الاختبارات 3 assertions قديمة/غير صحيحة بعد النقل (pagehide callback، Service Worker cache version، ومكان فحص نسخة SW في اختبار LVE-794). جرى إصلاحها وتحديث availability عند عودة الاتصال في الالتزام التالي؛ CI لإعادة التحقق PENDING.  
+**Commits:** نقل الواجهة `6378432126c56b11455d3424ce83e171f91c4896`؛ تصحيح اختبارات/availability `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`.  
+**CI الأول:** run `46091988083` — FAILURE؛ Deno type-check PASS، Node 111/114 PASS. كانت الإخفاقات الثلاثة في assertions: صيغة pagehide بعد إضافة cleanup، وتوقع cache build السابق، وفحص نسخة SW من HTML بدلاً من ملفه.
+**تصحيح الاختبارات والسلوك:** commit `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`؛ تم تعديل الاختبارات الثلاثة وإعادة تحديث زر تصوير الرف عند عودة الاتصال.
+**CI النهائي:** [run 46092110067](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46092110067) — **SUCCESS** على SHA `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`: Node **114/114 PASS**، Deno type-check PASS، Cloudflare Pages allowlisted build PASS، Playwright **3/3 PASS**.
+**Production/Main parity:** Playwright أكد أن `https://rawaea-app-countflow.pages.dev` يعرض إصدار main المتوقع `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`.
+**ملاحظة:** هذا يثبت المصدر والبناء والغلاف العام ومطابقة النشر؛ لا يثبت اختبار تصوير/رفع هاتف مصادق.
+**PR #6:** مغلق بوصفه superseded وليس merged؛ رأس فرعه القديم ما زال موجودًا لحين تنظيف refs.  
 **الحالة:** SOURCE PORT PENDING CI — AUTHENTICATED PHONE E2E OPEN — PUBLIC BUCKET RISK DISCLOSED.
 
 ### ما تم نقله

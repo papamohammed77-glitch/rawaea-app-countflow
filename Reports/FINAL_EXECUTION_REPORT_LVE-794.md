@@ -5,7 +5,7 @@
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`  
 **قاعدة البيانات:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`  
 **نقطة main قبل التغيير:** `98c1ae2d9d828dbe98ff6793c11e9605bd91312a`  
-**العمل التاريخي:** PR #6 — `work/lve-765-camera-mvp` — كان مفتوحًا، Draft، وغير قابل للدمج المباشر بسبب تباعد تاريخ الفرع عن main.  
+**العمل التاريخي:** PR #6 — `work/lve-765-camera-mvp` — أُغلق بوصفه superseded وليس merged بعد نقل الميزة إلى main؛ فرع العمل نفسه لا يزال موجودًا حتى تنظيف refs.  
 **قرار التنفيذ:** نقل أجزاء الميزة المطلوبة جراحيًا إلى النسخة الحالية من `countflow.html`، لا نسخ ملف الفرع القديم فوق main ولا إعادة تطبيق SQL.
 
 ---
@@ -138,7 +138,10 @@
 
 ## 8. نتائج CI والنشر
 
-**CI الأول:** run [46091988083](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46091988083) — FAILURE. Deno type-check نجح، لكن Node suite أعادت 111/114 PASS. الإخفاقات الثلاثة كانت في شروط اختبار: توقع صيغة pagehide القديمة، توقع Service Worker cache build السابق، وفحص قيمة Service Worker داخل HTML بدلاً من ملف SW. لم يظهر فشل runtime/DB في هذه المحاولة؛ بقية خطوات Pages وPlaywright لم تعمل بسبب توقف البوابة. تم تعديل assertions لتطابق العقد الحالي، مع تحديث زر التصوير عند عودة الاتصال؛ إعادة CI بعد الإصلاح ما زالت PENDING.  
+**CI الأول:** run [46091988083](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46091988083) — FAILURE. Deno type-check نجح، لكن Node suite أعادت 111/114 PASS. الإخفاقات الثلاثة كانت في شروط اختبار قديمة/غير دقيقة بعد النقل: شكل callback الخاص بـpagehide، قيمة Service Worker cache build القديمة، وفحص نسخة Service Worker داخل HTML بدلاً من ملف SW. صُححت هذه الاختبارات في الالتزام `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`، كما أضيف تحديث فوري لإتاحة الزر عند عودة الاتصال.
+**CI النهائي:** [run 46092110067](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46092110067) — **SUCCESS** على SHA `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`: Node **114/114 PASS**، Deno type-check PASS، Cloudflare Pages allowlisted build PASS، وPlaywright **3/3 PASS**.
+**Production/Main SHA parity:** نجح اختبار Playwright `production login shell deployment matches the latest main source commit` وأكد أن Production يعرض `3ff1ec905ef3b346d22629b2045c5244ae74c0a3`.
+**الحد المتبقي:** لم يُنفذ اختبار هاتف حقيقي أو جلسة Counter مصادقة؛ هذا ليس جزءًا من اختبارات الغلاف العام.  
 **Production parity:** يجب أن يثبت CI أو سجل Cloudflare أن إصدار Production يطابق commit main الناتج.  
 **القبول الميداني:** OPEN حتى تنفيذ الاختبار المصادق من هاتف داخل جلسة QA نشطة وموقع مسند.  
 **قرار المهمة:** `READY WITH LIMITATIONS` فقط بعد CI الأخضر ومطابقة النشر؛ لا تعني اكتمال CountFlow.
