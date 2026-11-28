@@ -1660,7 +1660,7 @@ test("Catalogue exports are paginated read paths and debounced list requests rej
 });
 
 
-test("Global item editor exposes three accessible tabs and keeps image with basic details", () => {
+test.skip("Global item editor exposes three accessible tabs and keeps image with basic details", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/id="globalProductEditorTabs"[^>]*role="tablist"/);
  for(const key of ["basic","units","advanced"]) {
@@ -1807,7 +1807,7 @@ test("Global item editor retains CountFlow's actual barcode, image and multi-UOM
 });
 
 
-test("LVE-790: catalogue import actions are prominent, owner-scoped, streaming and identity-deduplicated", () => {
+test.skip("LVE-790: catalogue import actions are prominent, owner-scoped, streaming and identity-deduplicated", () => {
  const admin=read("countflow-admin.html");
  for(const id of ["catalogOpenGlobalImport","catalogOpenClientImport","catalogAddProduct","clientCatalogImportFile","clientCatalogImportPreview","clientCatalogImportCommit","clientCatalogImportSummary"]) {
   assert.ok(admin.includes('id="'+id+'"'),"Missing catalogue action/control "+id);
@@ -2142,4 +2142,34 @@ test("LVE-793: CountFlow FK performance indexes and RLS verification contract ar
   assert.match(verification, /relrowsecurity/);
   assert.match(verification, /pg_policy/);
   assert.doesNotMatch(migration, /public\.(?!count_)[a-z0-9_]+/i);
+});
+
+
+// LVE-2026-11-28: Items tab simplified workspace contract.
+test("Items workspace has one shared list and one import entry point", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../../countflow-admin.html", import.meta.url), "utf8");
+  if ((source.match(/id="catalogTable"/g) || []).length !== 1) throw new Error("Expected one shared Items table host");
+  if (!source.includes('id="catalogImportOpen"') || !source.includes('id="itemsImportModal"')) throw new Error("Expected one Import button and its modal");
+  if (source.includes('id="catalogOpenGlobalImport"') || source.includes('id="catalogOpenClientImport"')) throw new Error("Legacy import buttons must not be exposed");
+});
+
+test("Items editor is flat and derives technical item metadata automatically", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../../countflow-admin.html", import.meta.url), "utf8");
+  if (source.includes('id="globalProductEditorTabs"')) throw new Error("Nested editor tabs must be removed");
+  if (!source.includes('id="globalProductPanel-advanced"') || !source.includes('#globalProductPanel-advanced{display:none')) throw new Error("Advanced panel must be hidden");
+  if (!source.includes("function deriveItemMetadata") || !source.includes("function applyDerivedItemMetadata")) throw new Error("Automatic barcode and precision derivation is missing");
+  if (!source.includes("function setProjectBaseUnit")) throw new Error("Method-based base-unit selector is missing");
+});
+
+test("Items import keeps the current global, client and project processors", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../../countflow-admin.html", import.meta.url), "utf8");
+  for (const id of ["globalCatalogImportTools", "clientCatalogImportTools", "projectProductImportTools"]) {
+    if (!source.includes('id="' + id + '"')) throw new Error("Missing existing import processor " + id);
+  }
+  for (const rpc of ["count_upsert_catalog_products_chunk", "count_upsert_client_catalog_chunk", "count_stage_import_rows"]) {
+    if (!source.includes(rpc)) throw new Error("Missing existing import API " + rpc);
+  }
 });
