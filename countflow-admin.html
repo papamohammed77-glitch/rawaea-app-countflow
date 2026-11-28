@@ -551,11 +551,11 @@
             <button type="button" id="globalBarcodeCopy" class="soft" disabled>نسخ الرمز</button>
            </div>
           </div>
-          <small id="globalBarcodeHint" class="hint">يمكنك إدخال باركود المورد أو توليد رمز محلي مقيّد يبدأ بـ 20، مع رقم تحقق.</small>
+          <small id="globalBarcodeHint" class="hint">يمكنك إدخال باركود المورد أو توليد نمط RCN-13 محلي يبدأ بـ 20 مع رقم تحقق. التوليد لا يعني تخصيص البادئة أو اعتمادها من GS1.</small>
           <div id="globalBarcodeStatus" class="cf-catalog-barcode-status" data-state="empty" role="status" aria-live="polite">لم يُدخل باركود بعد.</div>
          </div>
          <div class="field"><label for="globalItemKind">نوع تعريف الصنف</label><select id="globalItemKind"><option value="BARCODED">صنف بباركود</option><option value="WEIGHED">صنف وزني (كجم / جرام)</option><option value="NO_BARCODE">بدون باركود (معرف داخلي)</option></select><small class="hint">هذا الاختيار يحدد هوية الباركود، وليس فئة وحدة القياس.</small></div>
-         <div class="field"><label>معرف الصنف الداخلي</label><button type="button" id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن</button><small class="hint">المعرف الداخلي يبدأ بـ CFI-، وليس EAN/UPC ولا يحل محل باركود GS1.</small></div>
+         <div class="field full cf-catalog-internal-id-note"><label>معرف CountFlow عند عدم توفر باركود</label><small class="hint">عند اختيار "بدون باركود" وترك حقل الرمز فارغاً، ينشئ الخادم معرف CFI داخلياً تلقائياً. يظل CFI منفصلاً عن باركود المورد ورموز GS1.</small></div>
          <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
          <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
          <div class="field"><label for="globalCategoryChoice">التصنيف</label><select id="globalCategoryChoice" aria-describedby="globalCategoryHint"><option value="">بدون تصنيف</option></select><input id="globalCategoryCustom" class="hidden" maxlength="120" autocomplete="off" placeholder="اكتب التصنيف الجديد" aria-label="التصنيف المخصص"><input id="globalCategory" type="hidden" value=""><small id="globalCategoryHint" class="hint">اختر تصنيفاً من القائمة أو أضف تصنيفاً جديداً؛ تظل قيمة التصنيف محفوظة في سجل الصنف.</small></div>
@@ -3017,13 +3017,13 @@ function renderGlobalBarcodeStatus(){
  if(!input||!status)return;
  const code=String(input.value||'').trim();
  if(copy)copy.disabled=!code;
- if(!code){status.dataset.state='empty';status.textContent='لم يُدخل باركود بعد.';if(hint)hint.textContent='يمكنك إدخال باركود المورد أو توليد رمز محلي مقيّد يبدأ بـ 20، مع رقم تحقق.';return;}
+ if(!code){status.dataset.state='empty';status.textContent='لم يُدخل باركود بعد.';if(hint)hint.textContent='يمكنك إدخال باركود المورد أو توليد نمط RCN-13 محلي يبدأ بـ 20 مع رقم تحقق. التوليد لا يعني تخصيص البادئة أو اعتمادها من GS1.';return;}
  try{
   const type=cfResolveBarcodeType(code,$('globalBarcodeType')?.value||'AUTO');
   if(cfIsRestrictedCirculationBarcode(code)){
    status.dataset.state='restricted';
-   status.textContent='رمز تداول مقيّد RCN-13 · بادئة 20–29 · رقم تحقق GS1 صحيح · ليس GTIN عالمياً.';
-   if(hint)hint.textContent='يُستخدم داخل النطاق الجغرافي/التشغيلي المخصص فقط. لا تستخدمه في تداول عالمي مفتوح أو كبديل لرقم GTIN المرخص.';
+   status.textContent='نمط RCN-13 محلي مقيّد · رقم تحقق Mod-10 صحيح · ليس GTIN عالمياً.';
+   if(hint)hint.textContent='هذا تحقق شكلي فقط؛ لا يثبت تخصيص نطاق من GS1. استخدمه داخل بيئة مقيدة، وبعد اعتماد منظمة GS1 المحلية عند الحاجة.';
   }else if(type==='INTERNAL'){
    status.dataset.state='internal';status.textContent='معرف CountFlow داخلي CFI؛ ليس باركود EAN/UPC.';
    if(hint)hint.textContent='يظل معرف CFI متاحاً للسجلات القديمة وللأصناف التي لا تحمل باركوداً خارجياً.';
@@ -3061,7 +3061,7 @@ async function handleGenerateGlobalBarcode(){
   $('globalItemKind').value=$('globalUnitClass').value==='mass'?'WEIGHED':'BARCODED';
   renderGlobalBarcodeStatus();
   $('globalBarcode').focus();$('globalBarcode').select();
-  notify('تم توليد رمز محلي RCN-13 بالبادئة 20 ورقم تحقق صحيح.');
+  notify('تم توليد نمط RCN-13 بالبادئة 20 ورقم تحقق صحيح؛ يلزم اعتماد GS1 المحلي للتداول المقيد الرسمي.');
  }catch(error){fail('تعذر توليد الرمز المحلي',error);}
  finally{button.disabled=false;}
 }

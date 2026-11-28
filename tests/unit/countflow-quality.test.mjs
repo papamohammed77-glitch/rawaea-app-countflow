@@ -1779,6 +1779,16 @@ test("LVE-2026-11-28-ITEMS-TAB: barcode entry exposes RCN status, uniqueness pre
  assert.match(counter,/scan_code:scannedProductCode\|\|product\.barcode\|\|product\.sku/,"Counter must preserve the exact identifier that was scanned");
 });
 
+test("LVE-2026-11-28-ITEMS-TAB: barcode editor has unique controls and preserves automatic legacy CFI fallback", () => {
+ const admin=read("countflow-admin.html");
+ for(const id of ["globalGenerateBarcode","globalBarcodeCopy","globalBarcodeStatus","globalBarcode","globalBarcodeHint"]) {
+  assert.equal((admin.match(new RegExp('id="'+id+'"',"g"))||[]).length,1,"Control ID must be unique: "+id);
+ }
+ assert.ok(admin.includes("معرف CountFlow عند عدم توفر باركود"));
+ assert.ok(admin.includes("ينشئ الخادم معرف CFI داخلياً تلقائياً"));
+ assert.equal(admin.includes('id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن'),false,"The obsolete duplicate CFI generator must be removed");
+ assert.ok(admin.includes("لا يعني تخصيص")||admin.includes("لا يثبت تخصيص"),"UI must not imply that generating a 20-prefix pattern grants a GS1 allocation");
+});
 test("Global item editor retains CountFlow's actual barcode, image and multi-UOM contracts", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/function cfGenerateInternalBarcode\(\)/);
