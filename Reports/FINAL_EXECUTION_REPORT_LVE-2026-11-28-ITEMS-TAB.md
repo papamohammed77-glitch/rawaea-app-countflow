@@ -1,10 +1,12 @@
 # تقرير تنفيذ LVE-2026-11-28-ITEMS-TAB — المرحلة الأولى
 
-**الحالة:** IN PROGRESS — source change pushed to main; verify the associated CI run before closing Phase 1.  
+**الحالة:** PHASE 1 COMPLETED — SOURCE + CI + PRODUCTION/MAIN SHA PARITY PASS; phase 2 not started.  
 **Last Verified Event:** 28 نوفمبر 2026 — Africa/Cairo.  
 **المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
 **الفرع:** `main` فقط.  
-**Base HEAD:** `097ab07feb1d9e1da8851adef84c34b8f60c3ad3`.
+**Base HEAD:** `097ab07feb1d9e1da8851adef84c34b8f60c3ad3`.  
+**Source commit:** `107a1ff284e06e498e79479f015f7c4c613a957c`.  
+**CI:** [GitHub Actions run 46174583822 — SUCCESS](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46174583822).
 
 ## 1. ما تم التحقق منه قبل التنفيذ
 
@@ -38,10 +40,15 @@
 ## 5. الاختبارات والنتائج
 
 - أضيف اختبار انحدار في `tests/unit/countflow-quality.test.mjs` لتثبيت عقد الاختيارات والاحتفاظ بالقيم السابقة وضم التصنيفات المحفوظة من النطاقين Global/Client.
-- بوابة GitHub Actions تُشغّل `node --test tests/unit/countflow-quality.test.mjs` وDeno type-check وبناء Pages؛ يجب قراءة نتيجة التشغيل الناتج عن هذا الالتزام قبل اعتبار المرحلة مغلقة.
+- GitHub Actions run `46174583822` على SHA `107a1ff284e06e498e79479f015f7c4c613a957c`: **SUCCESS**.
+- Node/source tests: **115/115 PASS**, 0 failures, 0 skipped.
+- Deno type-check: **PASS**.
+- Cloudflare Pages allowlisted build: **PASS**.
+- Playwright Production smoke: **3/3 PASS**؛ شمل build SHA parity وRTL mobile shell وpublic login shell.
+- Production/Main SHA parity: **PASS**؛ Cloudflare Production يطابق `main` على SHA `107a1ff284e06e498e79479f015f7c4c613a957c`.
 - **Supabase schema:** DATABASE VERIFIED READ-ONLY — لا جدول فئات؛ الحقول النصية الحالية هي العقد المعتمد. لا Migration مطلوبة لهذا التغيير.
 - **Existing data:** لم يحدث أي DML، ولم تُستخدم أي سجلات QA، ولم تُمس دفعة QA90K.
-- **Runtime visual acceptance:** UNKNOWN — لم يتم تسجيل دخول Admin تفاعلياً في هذه المرحلة.
+- **Authenticated Admin visual acceptance:** UNKNOWN — لم يتم تسجيل دخول Admin تفاعلياً؛ Playwright تحقق من الغلاف العام فقط.
 
 ## 6. السلامة والحوكمة
 
@@ -55,6 +62,6 @@
 
 ## 7. نقطة التسليم
 
-- **المرحلة 1:** صفحة الصنف والتبويبات الثلاثة كانت موجودة وأُكملت فجوة اختيار التصنيف؛ CI triggered on the main commit.
+- **المرحلة 1:** COMPLETED — صفحة الصنف/التبويبات الثلاثة موجودة، فجوة اختيار التصنيف أُغلقت، CI ناجح 115/115، Deno/Pages ناجحان، وProduction يطابق SHA المصدر.
 - **المرحلة 2 لم تبدأ:** استكمال الحقول الأساسية والتحقق من استراتيجية المعرف الداخلي ذي بادئة 20 ودلالته الصحيحة مقارنة بـGS1 وCFI الحالي.
 - لا تبدأ المرحلة التالية قبل التحقق من بوابة المرحلة الحالية وتحديث هذا التقرير و`CURRENT_STATE.md`.

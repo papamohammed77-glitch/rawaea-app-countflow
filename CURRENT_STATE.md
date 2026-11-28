@@ -1,10 +1,11 @@
 ## LVE-2026-11-28-ITEMS-TAB — صفحة الصنف الموحدة / المرحلة الأولى
 
 **Last Verified Event:** 28 نوفمبر 2026 — Africa/Cairo.  
+**CI checkpoint:** run `46174583822` — SUCCESS on `107a1ff284e06e498e79479f015f7c4c613a957c`.  
 **المستودع/الفرع:** `papamohammed77-glitch/rawaea-app-countflow` / `main` فقط.  
 **نقطة الأساس:** `097ab07feb1d9e1da8851adef84c34b8f60c3ad3`.  
 **مرجع قاعدة البيانات:** `rawaea-staging` / `hfzznsiprnwkpayskzhu` — قراءة فقط في هذه المرحلة.  
-**الحالة:** المرحلة 1 مكتملة على المصدر؛ المرحلة 2 لم تبدأ. المهمة الكاملة **IN PROGRESS**.
+**الحالة:** المرحلة 1 **COMPLETED — SOURCE + CI + PRODUCTION/MAIN SHA PARITY PASS**؛ المرحلة 2 لم تبدأ. المهمة الكاملة **IN PROGRESS**.
 
 ### نقطة الاستئناف والقرارات
 - تمت مراجعة الدستور، CURRENT_STATE.md كاملاً (2,486 سطراً)، وثيقة المهمة كاملة مع ملحق التنفيذ الفوري، README، AGENTS، ARCHITECTURE، USER_FIRST_ENGINEERING_PROTOCOL، مرجع `Reports/RW_Items.html`، وتقارير LVE-792/793/794 وتقارير الكتالوج LVE-785 إلى LVE-790.
@@ -20,10 +21,16 @@
 - إضافة اختبارات انحدار لقوائم التصنيف، والتصنيفات المخصصة والمحفوظة، ودمج التصنيفات المحملة من السجلات الحالية دون تكرار.
 - **Supabase:** قراءة فقط؛ لم يحدث DDL/DML/Migration/RLS/GRANT/RPC/Trigger/Storage أو Edge deployment.
 - **البيانات:** لم تُنشأ بيانات QA في هذه المرحلة؛ لم تُحذف أو تُعدل أي بيانات قائمة، وبالأخص لم تُمس دفعة QA90K التاريخية.
-- **التحقق:** اختبار المصدر الجديد سيعمل ضمن GitHub Actions بعد هذا الالتزام. لا تُعلن المرحلة PASS قبل ظهور نتيجة CI الفعلية.
+- **CI الفعلي:** GitHub Actions run [46174583822](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46174583822) على SHA `107a1ff284e06e498e79479f015f7c4c613a957c` — **SUCCESS**.
+- **Node/source tests:** 115/115 PASS، صفر FAIL، صفر SKIPPED؛ اختبار التصنيف الجديد ضمن المجموعة.
+- **Deno type-check:** PASS لوظيفتي Edge Functions الحاليتين.
+- **Cloudflare Pages allowlisted build:** PASS.
+- **Playwright Production:** 3/3 PASS؛ شمل اختبار تطابق `build-info.json` مع آخر SHA على `main`، غلاف الدخول RTL على الهاتف، وغلاف الدخول العام دون جلسة مصادقة.
+- **Production/Main parity:** PASS — Playwright أكد أن `https://rawaea-app-countflow.pages.dev` يخدم SHA `107a1ff284e06e498e79479f015f7c4c613a957c`.
+- **حد القبول:** لا تزال معاينة Admin البصرية والتفاعلية داخل جلسة مالك مصادق عليها UNKNOWN؛ اختبارات CI لا تثبت هذا المسار.
 
 ### تعليمات الاستكمال
-- المرحلة 1 مكتملة بعد نجاح CI على التزام هذه المرحلة.
+- المرحلة 1 **مكتملة**: المصدر والاختبارات وCI وProduction/Main SHA parity مثبتة على commit `107a1ff284e06e498e79479f015f7c4c613a957c`.
 - **المرحلة 2 لم تبدأ:** تدقيق/إكمال ربط الحقول الأساسية، ولا سيما هوية الباركود الداخلي ذي بادئة 20 ودقة التوافق مع GS1 وCFI الحالي.
 - لا تنتقل إلى مرحلة الوحدات أو الاستيراد حتى تثبيت نتيجة المرحلة 2 في CURRENT_STATE والتقرير.
 - لم يُنشأ أي فرع أو ملف مؤقت أو بيانات اختبار في قاعدة البيانات.
