@@ -536,7 +536,7 @@
          <div class="field"><label>معرف الصنف الداخلي</label><button type="button" id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن</button><small class="hint">المعرف الداخلي يبدأ بـ CFI-، وليس EAN/UPC ولا يحل محل باركود GS1.</small></div>
          <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
          <div class="field"><label for="globalBrand">العلامة التجارية</label><input id="globalBrand" maxlength="120"></div>
-         <div class="field"><label for="globalCategory">التصنيف</label><input id="globalCategory" maxlength="120" placeholder="اكتب التصنيف أو اختر من المقترحات عند توفرها"></div>
+         <div class="field"><label for="globalCategoryChoice">التصنيف</label><select id="globalCategoryChoice" aria-describedby="globalCategoryHint"><option value="">بدون تصنيف</option></select><input id="globalCategoryCustom" class="hidden" maxlength="120" autocomplete="off" placeholder="اكتب التصنيف الجديد" aria-label="التصنيف المخصص"><input id="globalCategory" type="hidden" value=""><small id="globalCategoryHint" class="hint">اختر تصنيفاً من القائمة أو أضف تصنيفاً جديداً؛ تظل قيمة التصنيف محفوظة في سجل الصنف.</small></div>
          <div class="field"><label for="globalUnitClass">نمط القياس</label><select id="globalUnitClass"><option value="count">عدد / قطعة</option><option value="mass">وزن / كتلة</option><option value="volume">حجم / سعة</option><option value="length">طول</option><option value="area">مساحة</option><option value="other">وحدة خاصة / تعبئة</option></select><small class="hint">يفصل نوع القياس عن اسم الوحدة نفسها؛ اختر الوزن ثم اختر كجم أو جرام كوحدة أساس.</small></div>
          <div class="field"><label for="globalBaseUnitChoice">الوحدة الأساسية</label><select id="globalBaseUnitChoice" required><option value="">اختر الوحدة الأساسية</option></select><input id="globalBaseUnit" type="hidden" value=""><small id="globalBaseUnitHint" class="hint">اختر وحدة معرفة مسبقاً وفق نمط القياس؛ لن يقبل المحرر قيماً نصية غير معتمدة.</small></div>
         </div>
@@ -554,7 +554,7 @@
           <div class="field"><label for="clientProductSku">SKU المؤسسة</label><input id="clientProductSku" maxlength="100"></div>
           <div class="field"><label for="clientProductBarcode">باركود المؤسسة (نصي)</label><input id="clientProductBarcode" inputmode="text" maxlength="120"></div>
           <div class="field"><label for="clientProductName">اسم المؤسسة</label><input id="clientProductName" maxlength="240"></div>
-          <div class="field"><label for="clientProductCategory">تصنيف المؤسسة</label><input id="clientProductCategory" maxlength="120"></div>
+          <div class="field"><label for="clientProductCategoryChoice">تصنيف المؤسسة</label><select id="clientProductCategoryChoice" aria-describedby="clientProductCategoryHint"><option value="">بدون تصنيف محلي</option></select><input id="clientProductCategoryCustom" class="hidden" maxlength="120" autocomplete="off" placeholder="اكتب تصنيف المؤسسة الجديد" aria-label="تصنيف المؤسسة المخصص"><input id="clientProductCategory" type="hidden" value=""><small id="clientProductCategoryHint" class="hint">اختر تصنيفاً أو أضف وصفاً محلياً لهذه المؤسسة.</small></div>
          </div>
          <div class="cf-catalog-custom-units"><label class="cf-checkline"><input id="clientUnitsOverrideToggle" type="checkbox"> تخصيص وحدة الأساس والتحويل لهذه المؤسسة</label>
           <div id="clientUnitsOverrideFields" class="hidden"><div class="field"><label for="clientProductUnit">وحدة الأساس للمؤسسة</label><select id="clientProductUnit"><option value="">اختر الوحدة الأساسية</option></select><small class="hint">الوحدات المتاحة تتغير بحسب نمط القياس المختار.</small></div><div class="field"><label for="clientItemKind">نوع الصنف</label><select id="clientItemKind"><option value="BARCODED">بباركود</option><option value="WEIGHED">وزني</option><option value="NO_BARCODE">بدون باركود</option></select></div><div class="field"><label for="clientBarcodeType">نوع الباركود</label><select id="clientBarcodeType"><option value="AUTO">تلقائي</option><option value="EAN8">EAN-8</option><option value="UPC_A">UPC-A</option><option value="EAN13">EAN-13</option><option value="GTIN14">GTIN-14</option><option value="CODE128">Code 128 / PLU</option><option value="INTERNAL">داخلي</option></select></div><div class="field"><label for="clientUnitClass">نمط القياس</label><select id="clientUnitClass"><option value="count" >عدد / قطعة</option><option value="mass" >وزن / كتلة</option><option value="volume" >حجم / سعة</option><option value="length" >طول</option><option value="area" >مساحة</option><option value="other" selected>وحدة خاصة / تعبئة</option></select></div><div class="field"><label for="clientUnitPrecision">دقة الكمية</label><select id="clientUnitPrecision"><option value="0" >0 منازل عشرية</option><option value="1" >1 منازل عشرية</option><option value="2" >2 منازل عشرية</option><option value="3" selected>3 منازل عشرية</option><option value="4" >4 منازل عشرية</option><option value="5" >5 منازل عشرية</option><option value="6" >6 منازل عشرية</option></select></div><div class="field"><label>الوحدات البديلة ومعامل التحويل</label><p class="hint">المعامل = عدد وحدات الأساس داخل الوحدة البديلة.</p><div id="clientProductUnitsEditor" class="product-unit-list"></div><button id="addClientProductUnit" class="soft" type="button">إضافة وحدة بديلة</button></div></div>
@@ -2941,6 +2941,54 @@ const CF_BASE_UNIT_SUGGESTIONS={
  area:['متر مربع','سم مربع','m2','sqm','sqft','ft2'],
  other:['وحدة','عبوة']
 };
+const CF_PRODUCT_CATEGORY_SUGGESTIONS=[
+ 'مواد غذائية','أغذية جافة','مشروبات','ألبان وأجبان','مخبوزات','لحوم ودواجن',
+ 'أسماك ومأكولات بحرية','خضروات وفاكهة','مجمدات','حلويات وتسالي','منظفات',
+ 'عناية شخصية','ورقيات ومناديل','مستلزمات منزلية','أدوات ومعدات',
+ 'ملابس ومنسوجات','إلكترونيات','قطع غيار','مواد خام','مواد تعبئة وتغليف','مستلزمات تشغيل'
+];
+function getCatalogCategoryChoices(){
+ const saved=[
+  ...(Array.isArray(state.catalogProducts)?state.catalogProducts.map(row=>row?.category):[]),
+  ...(Array.isArray(state.catalogClientRows)?state.catalogClientRows.map(row=>row?.category_override):[])
+ ];
+ const unique=new Map();
+ [...CF_PRODUCT_CATEGORY_SUGGESTIONS,...saved].forEach(raw=>{
+  const value=String(raw??'').trim();
+  if(value&&value.length<=120&&!unique.has(value.toLocaleLowerCase()))unique.set(value.toLocaleLowerCase(),value);
+ });
+ return [...unique.values()].sort((a,b)=>a.localeCompare(b,'ar'));
+}
+function setCatalogCategoryPicker(prefix,value=''){
+ const select=$(prefix+'CategoryChoice'),backing=$(prefix+'Category'),custom=$(prefix+'CategoryCustom');
+ if(!select||!backing||!custom)return;
+ const current=String(value??'').trim(),choices=getCatalogCategoryChoices();
+ const known=choices.find(item=>item.toLocaleLowerCase()===current.toLocaleLowerCase());
+ const legacy=current&&!known?current:'';
+ select.innerHTML='<option value="">بدون تصنيف</option>'
+  +choices.map(item=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')
+  +(legacy?'<option value="'+esc(legacy)+'" data-legacy="true">'+esc(legacy)+' — تصنيف محفوظ</option>':'')
+  +'<option value="__cf_add_category__">+ إضافة تصنيف جديد</option>';
+ select.value=known||legacy||'';
+ backing.value=current;
+ custom.value='';
+ custom.classList.add('hidden');
+}
+function bindCatalogCategoryPickers(){
+ ['global','client'].forEach(prefix=>{
+  const select=$(prefix+'CategoryChoice'),backing=$(prefix+'Category'),custom=$(prefix+'CategoryCustom');
+  if(!select||!backing||!custom||select.dataset.bound==='true')return;
+  select.dataset.bound='true';
+  select.addEventListener('change',()=>{
+   if(select.value==='__cf_add_category__'){
+    custom.classList.remove('hidden');custom.value='';backing.value='';custom.focus();return;
+   }
+   custom.classList.add('hidden');custom.value='';backing.value=select.value||'';
+  });
+  custom.addEventListener('input',()=>{backing.value=custom.value.trim();});
+  custom.addEventListener('blur',()=>{custom.value=custom.value.trim();backing.value=custom.value;});
+ });
+}
 function getGlobalBaseUnitValue(){
  const select=$('globalBaseUnitChoice'),backing=$('globalBaseUnit');
  const value=String(select?.value||'').trim();
@@ -3104,7 +3152,7 @@ function openGlobalProductEditor(product=null){
  if(!state.platformOwner)return notify('لا تملك صلاحية تعديل بيانات الصنف الأساسية.',true);
  const p=product||null;resetGlobalImagePreview();state.globalImageCleared=false;
  $('globalProductForm').classList.remove('hidden');$('unifiedProductReadOnlySummary')?.classList.add('hidden');
- $('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';$('globalCategory').value=p?.category||'';$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';
+ $('globalProductForm').reset();$('globalProductId').value=p?.id||'';$('globalSku').value=p?.canonical_sku||'';$('globalBarcode').value=p?.barcode||'';$('globalName').value=p?.name||'';$('globalBrand').value=p?.brand||'';setCatalogCategoryPicker('global',p?.category||'');$('globalBaseUnit').value=p?.base_unit||'';$('globalImageFile').value='';
  $('globalImageCurrent').textContent=p?.image_storage_path?'جار تجهيز معاينة الصورة…':'لا توجد صورة مرتبطة بهذا الصنف.';
  renderCatalogUnitEditor('globalProductUnitsEditor',p?.units||[]);setUnitMetaFields('global',p?.units||[],$('globalBaseUnit').value);
  if(!p){$('globalItemKind').value='BARCODED';$('globalBarcodeType').value='AUTO';$('globalUnitClass').value='other';$('globalUnitPrecision').value='3';}
@@ -3121,7 +3169,7 @@ function openGlobalProductEditor(product=null){
 function closeGlobalProductEditor(){
  $('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('projectProductsView').classList.add('hidden');$('catalogWorkspaceSelector').classList.remove('hidden');
  state.catalogView='global';if($('catalogMode'))$('catalogMode').value='global';
- $('globalProductForm').classList.remove('hidden');$('globalProductForm').reset();$('globalProductId').value='';$('globalProductSave').textContent='إضافة الصنف';$('globalImageCurrent').textContent='';state.globalImageCleared=false;resetGlobalImagePreview();renderCatalogUnitEditor('globalProductUnitsEditor',[]);resetClientProductForm();
+ $('globalProductForm').classList.remove('hidden');$('globalProductForm').reset();setCatalogCategoryPicker('global','');$('globalProductId').value='';$('globalProductSave').textContent='إضافة الصنف';$('globalImageCurrent').textContent='';state.globalImageCleared=false;resetGlobalImagePreview();renderCatalogUnitEditor('globalProductUnitsEditor',[]);resetClientProductForm();
 }
 async function openUnifiedCatalogItem(product){
  if(!product)return;
@@ -3146,7 +3194,7 @@ async function openUnifiedCatalogItem(product){
  $('clientProductSku').value=mapping?.client_sku||'';
  $('clientProductBarcode').value=mapping?.client_barcode||'';
  $('clientProductName').value=mapping?.name_override||'';
- $('clientProductCategory').value=mapping?.category_override||'';
+ setCatalogCategoryPicker('client',mapping?.category_override||'');
  $('clientProductImagePath').value=mapping?.image_storage_path_override||'';
  const custom=!!(mapping?.base_unit_override||mapping?.units_override);
  $('clientUnitsOverrideToggle').checked=custom;
@@ -3161,7 +3209,7 @@ async function openUnifiedCatalogItem(product){
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function resetClientProductForm(){
- $('clientProductForm').reset();$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');setClientBaseUnit('',false);renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
+ $('clientProductForm').reset();setCatalogCategoryPicker('client','');$('clientProductImagePath').value='';$('clientUnitClass').value='other';$('clientUnitPrecision').value='3';$('clientProductFormTitle').textContent='مواءمة صنف للمؤسسة';$('clientUnitsOverrideFields').classList.add('hidden');setClientBaseUnit('',false);renderCatalogUnitEditor('clientProductUnitsEditor',[]);$('clientCatalogEditorShell')?.classList.add('hidden');
 }
 function openClientCatalogEditor(){
  if(!state.canManageClientCatalog)return notify('لا تملك صلاحية إدارة مواءمات المؤسسة.',true);
@@ -3782,7 +3830,7 @@ async function toggleCatalogProduct(id){
  });
  $('catalogAddProduct').onclick=()=>openGlobalProductEditor(null);bindCatalogImportActions();$('globalProductCancel').onclick=closeGlobalProductEditor;$('globalProductCancelBottom').onclick=closeGlobalProductEditor;$('catalogExport').onclick=exportGlobalCatalogCsv;
  $('globalGenerateBarcode').onclick=()=>{const code=cfGenerateInternalBarcode();$('globalBarcode').value=code;$('globalItemKind').value='NO_BARCODE';$('globalBarcodeType').value='INTERNAL';};$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!getGlobalBaseUnitValue())setGlobalBaseUnit('كجم');else setGlobalBaseUnit(getGlobalBaseUnitValue());}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
- bindUnitPrecisionDefaults();bindGlobalBaseUnitSelector();bindGlobalProductTabs();
+ bindUnitPrecisionDefaults();bindGlobalBaseUnitSelector();bindGlobalProductTabs();bindCatalogCategoryPickers();
  $('catalogMode').addEventListener('change',()=>switchCatalogView($('catalogMode').value));
  $('catalogClientScope').addEventListener('change',async()=>{if(state.clientCatalogImport?.busy){$('catalogClientScope').value=state.catalogClientId||'';return notify('لا يمكن تغيير المؤسسة أثناء تنفيذ دفعة الاستيراد الحالية.',true);}if(state.clientCatalogImport?.file)resetClientCatalogImport();state.catalogClientId=$('catalogClientScope').value||null;updateCatalogImportActions();try{await refreshClientCatalogPermission();$('catalogClientScopeLabel').textContent=state.catalogClientId?'يتم عرض الحقول المحلية للمؤسسة المختارة بجوار بيانات الصنف الأساسي.':'اختر مؤسسة لعرض حقولها المحلية في الجدول وصفحة الصنف.';state.catalogPage=1;await loadCatalog();}catch(e){fail('تعذر تغيير المؤسسة المحددة',e);}});$('catalogResetFilters').onclick=()=>{$('catalogSearch').value='';$('catalogCategoryFilter').value='';$('catalogStatusFilter').value='active';state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر إعادة ضبط المرشحات',e));};
  function scheduleCatalogReload(){clearTimeout(state.catalogSearchTimer);state.catalogSearchTimer=setTimeout(()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تحديث نتائج البحث',e));},260);} $('catalogSearch').oninput=scheduleCatalogReload;$('catalogCategoryFilter').oninput=scheduleCatalogReload;$('catalogStatusFilter').onchange=()=>{state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر تغيير الحالة',e));};$('catalogRefresh').onclick=()=>loadCatalog().catch(e=>fail('تعذر التحديث',e));let catalogSearchTimer=null;

@@ -1711,6 +1711,40 @@ test("Global and institution base-unit selectors are constrained by measurement 
  assert.equal(inferred("sqft"),"area");
 });
 
+test("Global and institution category pickers offer standard choices, custom values, and preserve legacy categories", () => {
+ const admin=read("countflow-admin.html");
+ assert.ok(admin.includes('id="globalCategoryChoice" aria-describedby="globalCategoryHint"'));
+ assert.ok(admin.includes('id="globalCategoryCustom" class="hidden"'));
+ assert.ok(admin.includes('id="globalCategory" type="hidden"'));
+ assert.ok(admin.includes('id="clientProductCategoryChoice" aria-describedby="clientProductCategoryHint"'));
+ assert.ok(admin.includes('id="clientProductCategoryCustom" class="hidden"'));
+ assert.ok(admin.includes('id="clientProductCategory" type="hidden"'));
+ assert.ok(admin.includes("function getCatalogCategoryChoices()"));
+ assert.ok(admin.includes("function setCatalogCategoryPicker(prefix,value='')"));
+ assert.ok(admin.includes("function bindCatalogCategoryPickers()"));
+ assert.ok(admin.includes("__cf_add_category__"));
+ assert.ok(admin.includes('data-legacy="true"'),"Previously saved free-text categories must remain selectable");
+ assert.ok(admin.includes("setCatalogCategoryPicker('global',p?.category||'')"));
+ assert.ok(admin.includes("setCatalogCategoryPicker('client',mapping?.category_override||'')"));
+ assert.ok(admin.includes("p_category_override:$('clientProductCategory').value.trim()||null"));
+ const start=admin.indexOf("const CF_PRODUCT_CATEGORY_SUGGESTIONS=");
+ const end=admin.indexOf("function getCatalogCategoryChoices()",start);
+ assert.ok(start>=0&&end>start,"Missing centrally defined category suggestions");
+ const categorySource=admin.slice(start,end);
+ const categories=vm.runInNewContext("(()=>{"+categorySource+";return CF_PRODUCT_CATEGORY_SUGGESTIONS})()");
+ assert.ok(categories.length>=15,"The dropdown should provide useful first-use choices");
+ assert.equal(new Set(categories.map(value=>value.toLocaleLowerCase())).size,categories.length,"Suggested categories must be unique");
+ const helperEnd=admin.indexOf("function setCatalogCategoryPicker",end);
+ const helperSource=admin.slice(start,helperEnd);
+ const sandbox={state:{catalogProducts:[{category:"أدوات مخازن"},{category:"مواد غذائية"}],catalogClientRows:[{category_override:"تصنيف محلي"}]}};
+ vm.runInNewContext(helperSource+";this.getCatalogCategoryChoices=getCatalogCategoryChoices;",sandbox);
+ const choices=sandbox.getCatalogCategoryChoices();
+ assert.ok(choices.includes("أدوات مخازن"));
+ assert.ok(choices.includes("تصنيف محلي"));
+ assert.equal(choices.filter(value=>value.toLocaleLowerCase()==="مواد غذائية").length,1);
+ assert.equal(admin.includes("from('count_product_categories')"),false,"The picker must preserve the existing text-category contract rather than introduce a parallel taxonomy table");
+});
+
 test("Global item editor retains CountFlow's actual barcode, image and multi-UOM contracts", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/function cfGenerateInternalBarcode\(\)/);
