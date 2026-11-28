@@ -25,14 +25,14 @@ Only Operational Repo: https://github.com/papamohammed77-glitch/rawaea-app-count
 
 State File (Read First): https://raw.githubusercontent.com/papamohammed77-glitch/rawaea-app-countflow/main/CURRENT_STATE.md
 
-Operational Constitution (Read Fully): https://raw.githubusercontent.com/papamohammed77-glitch/rawaie-erp-New/refs/heads/main/doc/Draft/Reprots/writing-block-8888-10.md
+Methodology reference only (non-binding for CountFlow): https://raw.githubusercontent.com/papamohammed77-glitch/rawaie-erp-New/refs/heads/main/doc/Draft/Reprots/writing-block-8888-10.md — this belongs to another project. It may inform execution discipline only; it is NOT the CountFlow constitution and cannot override CountFlow owner instructions, AGENTS.md, architecture, or verified repository/database contracts.
 
 Reference Project (Design ONLY, DO NOT TOUCH): https://raw.githubusercontent.com/papamohammed77-glitch/erp-frontend/main/companies/company-1/main.html
 
 Database (Only Playground): rawaea-staging (https://hfzznsiprnwkpayskzhu.supabase.co).
 
 SECTION 3 — GOVERNANCE ORDER & EVIDENCE CLASSIFICATION
-When instructions conflict: (1) Owner decisions and the Constitution, (2) CURRENT_STATE.md after verification, (3) Current sources in GitHub/Supabase, (4) Historical reports, (5) Memory. Do not decide by guesswork. Use classifications: CONFIRMED, UNKNOWN, CONFLICT, UNVERIFIED. Separate Source Code, Production Database, Deployed Artifact, and Runtime Behavior.
+When instructions conflict: (1) Explicit current CountFlow owner decisions, (2) CountFlow-specific AGENTS.md / ARCHITECTURE.md / USER_FIRST_ENGINEERING_PROTOCOL.md, (3) verified current GitHub and Supabase sources, (4) CURRENT_STATE.md after live verification, (5) historical Reports as navigation/history only. External writing-block-8888-10.md is methodology inspiration only, not a CountFlow constitution. Memory never overrides current source evidence. Do not decide by guesswork. Use classifications: CONFIRMED, UNKNOWN, CONFLICT, UNVERIFIED. Separate Source Code, Production Database, Deployed Artifact, and Runtime Behavior.
 
 SECTION 4 — MANDATORY STARTUP ORDER
 
@@ -74,3 +74,11 @@ Update CURRENT_STATE.md with guidance for the next assistant.
 Declare readiness: READY, READY WITH LIMITATIONS, or BLOCKED.
 
 Your First Action: Acknowledge these rules. Read CURRENT_STATE.md and the Constitution. All historical files and records for the project are in the repository; please address any remaining knowledge gaps completely. Do not begin before acquiring a complete understanding of the project ، Then say "I'm ready to start The Mission" ، 
+
+
+## Owner correction — 2026-11-28
+
+- All new execution reports belong under `Reports/` in this repository.
+- `writing-block-8888-10.md` is a methodology reference borrowed from another project, not the CountFlow constitution.
+- The entire CountFlow environment and its current rows are experimental/incomplete. Verify current GitHub, live Supabase, deployed artifacts and runtime separately every turn; never elevate old reports to source of truth.
+- The only permitted Git branch is `main`. Do not create task branches or repositories. Remove all existing non-main branches when an explicit branch-deletion capability is available; never claim the cleanup finished unless a fresh branch listing contains only `main`.

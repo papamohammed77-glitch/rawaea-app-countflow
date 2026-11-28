@@ -1,3 +1,42 @@
+## LVE-2026-11-28-793 — فهارس FK لنطاق CountFlow وتصحيح حوكمة main-only
+
+**Last Verified Event:** 28 نوفمبر 2026 — Africa/Cairo.  
+**المستودع:** `papamohammed77-glitch/rawaea-app-countflow`.  
+**Supabase:** `rawaea-staging` / `hfzznsiprnwkpayskzhu`.  
+**نقطة البداية الفعلية قبل التعديل:** `2dfc997c415545220e4c3004e5bf4fa27406ed75`.  
+**ترحيل Supabase:** `countflow_fk_performance_indexes_v1` / `20261128000731` — APPLIED.  
+**اختبارات قاعدة البيانات:** SQL verification PASS؛ 37/37 جدول CountFlow لديه RLS وسياسة؛ 12/12 فهرس مطابق موجود.  
+**Advisor:** صفر unindexed-FK findings ضمن CountFlow؛ 19 finding متبقياً في جداول خارج نطاقه.  
+**CI بعد تغيير المستودع:** Pending until the GitHub Actions run for this commit is inspected.  
+**الحدود المفتوحة:** authenticated Admin acceptance، camera flow وPR #6، large export 90K+، team-to-location model، واستكمال migration ledger.  
+**سياسة الفروع:** المالك اعتمد `main` وحده؛ 17 فروع غير رئيسية ما زالت موجودة في آخر قائمة ولا تتيح أدوات GitHub الحالية حذف Git refs.  
+**التقرير:** `Reports/FINAL_EXECUTION_REPORT_LVE-793.md`.  
+**الحالة:** READY WITH LIMITATIONS — LVE-793 slice only; CountFlow project is NOT declared complete.
+
+### ما تم
+- إضافة 12 فهرس B-tree غير فريد لعلاقات FK الناقصة في `count_assignments`, `count_session_team_members`, `count_session_teams`, `count_sessions`, `count_team_members`, `count_teams`.
+- تجربة DDL داخل BEGIN/ROLLBACK وإثبات عدم بقاء أي فهرس تجريبي بعد rollback.
+- تطبيق الترحيل في Supabase وتأكيد الإصدار `20261128000731` وظهور كل الفهارس في `pg_indexes`.
+- إضافة `tests/countflow-fk-indexes-verify.sql` لاختبار كتالوج الفهارس وRLS دون كتابة بيانات.
+- إضافة اختبار Node ثابت يربط مصدر الترحيل باختبار التحقق.
+- تصحيح `AGENTS.md` وMaster Handover والبروتوكول: writing-block مرجع منهجي فقط و`main` هو الفرع الوحيد ومكان التقارير `Reports/`.
+
+### نتائج بيانات/أمان مهمة
+- عدد جداول CountFlow المرصود 37، وكلها RLS enabled ولها policy واحدة على الأقل. (تصحيح للعدد 36 الوارد في تحديث محادثة سابق؛ القراءة الحية تُظهر 37.)
+- لم تتغير أعداد السجلات؛ بقيت بيانات QA90K كما هي.
+- لم تُعدل جداول ERP أو ACL/RLS/RPC/Edge غير CountFlow.
+- التحذيرات العامة المتبقية من نوع RLS/anon/no-PK تخص نطاق ERP داخل نفس المشروع وليست جزءاً من CountFlow؛ لا تعالجها هنا.
+
+### تعليمات استكمال
+- لا تكرر أو تعِد تطبيق الترحيل؛ افحص ledger أولاً.
+- اختبر المصدّر القائم وصمم pipeline resumable حقيقياً قبل تغيير حدود الذاكرة.
+- لا تضف حقل موقع واحد إلى جدول الفريق؛ أتمم عقد الفريق متعدد المواقع أولاً.
+- لا تدمج PR #6 ما لم يثبت اختبار Counter المصادق من هاتف مع جلسة/موقع مسندين واختبارات الرفض السلبية.
+- لا تعتبر وجود ملفات 5K/90K rollback نجاحاً؛ نفذها مع إثبات rollback وقراءات قبل/بعد.
+- لا تعتبر التوثيق التاريخي مصدر الحقيقة؛ راجع HEAD وSupabase في بداية كل متابعة.
+
+---
+
 ## LVE-2026-11-27-792 — فرق العمل، تصنيف العمليات، مؤشرات المنصة وأمان عرض العمليات
 
 **Last Verified Event:** 27 نوفمبر 2026 — Africa/Cairo.  

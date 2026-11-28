@@ -1,5 +1,20 @@
 # CountFlow database migrations
 
+## 2026-11-28 — LVE-793 CountFlow foreign-key index coverage
+
+Tracked source: `20261128000731_countflow_fk_performance_indexes_v1.sql`.
+
+Live Supabase migration ledger:
+- Version: `20261128000731`
+- Name: `countflow_fk_performance_indexes_v1`
+
+The migration adds 12 non-unique B-tree indexes to the child-side assignment/team/queue foreign-key columns in CountFlow only. It does not alter table rows, constraints, RLS, grants, RPC bodies, or ERP objects. The change was first rehearsed inside an explicit transaction and rolled back; a post-rollback catalog query confirmed zero persisted rehearsal indexes. The permanent migration was then applied once through the Supabase migration tool.
+
+Read-only verification file: `tests/countflow-fk-indexes-verify.sql`. It verifies all 12 exact index definitions and that every public CountFlow base table has RLS enabled with at least one policy. It creates no fixtures and changes no data. The test was executed successfully against `rawaea-staging`: 37/37 CountFlow tables passed; 12 expected indexes were present.
+
+The Supabase Performance Advisor no longer reports an unindexed foreign key on a CountFlow table. Its remaining 19 findings belong to other public tables outside this repository's CountFlow scope and must not be remediated by this project.
+
+
 Live project: Supabase rawaea-staging (hfzznsiprnwkpayskzhu). Scope is CountFlow objects only.
 
 ## Selected SQL migration sources documented here (18 entries; 41 SQL files tracked at LVE-749)

@@ -2003,3 +2003,28 @@ test("Owner Admin reusable teams, operation taxonomy and guarded assignment work
   assert.match(rollback, /count_remove_member_from_session/);
   assert.match(rollback.trim(), /ROLLBACK;$/);
 });
+
+
+test("LVE-793: CountFlow FK performance indexes and RLS verification contract are tracked", () => {
+  const migration = read("database/migrations/20261128000731_countflow_fk_performance_indexes_v1.sql");
+  const verification = read("tests/countflow-fk-indexes-verify.sql");
+  const expected = [["idx_count_assignments_member_project_fk","count_assignments","member_id, project_id"],["idx_count_assignments_session_project_fk","count_assignments","session_id, project_id"],["idx_count_session_team_members_link_project_fk","count_session_team_members","session_team_id, project_id"],["idx_count_session_team_members_member_project_fk","count_session_team_members","member_id, project_id"],["idx_count_session_teams_assigned_by","count_session_teams","assigned_by"],["idx_count_session_teams_session_project_fk","count_session_teams","session_id, project_id"],["idx_count_session_teams_team_project_fk","count_session_teams","team_id, project_id"],["idx_count_sessions_queue_barrier_run_id","count_sessions","queue_barrier_run_id"],["idx_count_team_members_added_by","count_team_members","added_by"],["idx_count_team_members_member_project_fk","count_team_members","member_id, project_id"],["idx_count_team_members_team_project_fk","count_team_members","team_id, project_id"],["idx_count_teams_created_by","count_teams","created_by"]];
+
+  assert.equal(expected.length, 12);
+  assert.equal(new Set(expected.map(([name]) => name)).size, expected.length);
+  for (const [indexName, tableName, columns] of expected) {
+    const pattern = new RegExp(
+      "CREATE INDEX IF NOT EXISTS\\s+" + indexName + "\\s+ON\\s+public\\." + tableName + "\\s*\\(\\s*" + columns.replace(/, /g, "\\s*,\\s*") + "\\s*\\)",
+      "i",
+    );
+    assert.match(migration, pattern, "Missing or incorrect index definition: " + indexName);
+  }
+
+  assert.match(verification, /COUNTFLOW_EXPECTED_INDEX_MISSING_OR_INVALID/);
+  assert.match(verification, /COUNTFLOW_TABLE_WITHOUT_RLS_POLICY/);
+  assert.match(verification, /indisvalid/);
+  assert.match(verification, /indisready/);
+  assert.match(verification, /relrowsecurity/);
+  assert.match(verification, /pg_policy/);
+  assert.doesNotMatch(migration, /public\.(?!count_)[a-z0-9_]+/i);
+});

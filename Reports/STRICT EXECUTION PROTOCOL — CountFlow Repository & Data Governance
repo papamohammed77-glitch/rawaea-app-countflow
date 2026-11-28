@@ -37,14 +37,13 @@ After finishing testing, you MUST delete all test data from rawaea-staging. Leav
 
 If you need permanent test data (Seed Data), place it in seeds/qa_seed.sql in the repo, with clear instructions to run and delete.
 
-4. Branches — The Strict Rule
-ALLOWED to create ONLY ONE branch per task, with a clear name (e.g., feat/LVE-788-admin-ui).
+4. Branches — Owner Main-Only Policy (effective 2026-11-28)
 
-FORBIDDEN to work on more than one branch at a time.
-
-MANDATORY: After finishing the task, open a Pull Request, merge it into main immediately, then delete the branch.
-
-If the task fails, delete the branch. Do not leave it "hanging".
+- The owner has explicitly designated `main` as the ONLY allowed branch. Do not create work branches, test branches, temporary refs, forks, or additional repositories.
+- Re-read the current `main` HEAD immediately before every write. Build one reviewed atomic commit and move `main` only with an expected-SHA compare-and-swap; never force-push or overwrite concurrent owner work.
+- Run the repository CI after every source change and verify the resulting main commit and deployment before marking a change complete.
+- The owner has requested removal of every non-main branch. A branch is not considered deleted because its PR was closed or merged. Verify the complete branch list and report only `main` as the sole remaining branch after cleanup.
+- If the available execution connector has no explicit Git ref DELETE operation, do not emulate deletion by moving a branch to an arbitrary SHA, do not claim success, and record the exact remaining branch list and blocker. Do not create a new branch as a workaround.
 
 5. Temporary Files
 FORBIDDEN to upload files like test.js, debug.html, temp.sql, scratch.md to the repository.
@@ -71,11 +70,11 @@ Did you leave any branch, repository, or temporary file? (The answer must be "No
 7. Final Verification
 Before declaring the task complete, run this mental checklist:
 
-□ Am I on main or a task branch that will be merged?
+□ Does a fresh complete GitHub branch listing show `main` as the only branch?
 □ Is the only repository used rawaea-app-countflow?
 □ Is the only database used rawaea-staging?
 □ Did I delete all test data I created?
-□ Did I delete all temporary branches?
+□ Does no non-main branch remain?
 □ Did I delete all temporary files?
 □ Did I update CURRENT_STATE.md and Reports/?
 If any item is incomplete, do NOT declare completion.
