@@ -7,7 +7,9 @@
 **نقطة البداية الفعلية:** `2dfc997c415545220e4c3004e5bf4fa27406ed75`  
 **آخر حدث مصدر قبل هذه المهمة:** LVE-2026-11-27-792.  
 **ترحيل Supabase:** `countflow_fk_performance_indexes_v1` / `20261128000731` — APPLIED.  
-**النتيجة الحالية:** ترحيل قاعدة البيانات مطبق ومتحقق؛ اختبار SQL read-only نجح؛ تغييرات ملفات المستودع مُعدة لـCI؛ تنظيف الفروع محجوب بقدرة الاتصال الحالية.
+**التزام المصدر على main:** `a8bb0650e82a87a961416740b3f50db374d27e88`.  
+**CI main:** [run 46086708899](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46086708899) — SUCCESS: Node 113/113، Deno PASS، Cloudflare Pages PASS، Playwright 3/3 PASS، وProduction/Main SHA parity PASS.  
+**النتيجة الحالية:** ترحيل قاعدة البيانات مطبق ومتحقق؛ اختبارات SQL/Node وDeno وPages وPlaywright ناجحة؛ تنظيف الفروع محجوب بقدرة الاتصال الحالية.
 
 ---
 
@@ -125,7 +127,11 @@
 - اختبار SQL المباشر على Supabase: PASS.
 - فحص catalog بعد الترحيل: PASS.
 - Supabase Performance Advisor لنطاق CountFlow: PASS — صفر FK warnings لـCountFlow.
-- Node / Deno / Pages / Playwright بعد تعديل الملفات: pending until reading the GitHub Actions run for the new main commit. لا يُدّعى نجاحها قبل ظهور النتيجة.
+- GitHub Actions main run `46086708899` على الالتزام `a8bb0650e82a87a961416740b3f50db374d27e88`: **SUCCESS**.
+- Node: **113/113 PASS، 0 failed**.
+- Deno type check: **PASS**.
+- Cloudflare Pages allowlisted build: **PASS**.
+- Playwright: **3/3 PASS**؛ فحص Production shell تطابق مع SHA `a8bb0650e82a87a961416740b3f50db374d27e88`، RTL mobile shell PASS، وunauthenticated login shell PASS.
 - لا يوجد اختبار أداء زمني أو ضغط فعلي؛ بيانات staging الحالية لا تمثل تشغيل عميل أو حملاً إنتاجياً.
 
 ## 6. مراجعة معيارية للمنتجات المنافسة
@@ -163,7 +169,7 @@
 
 ## 9. قرار الجاهزية
 
-**READY WITH LIMITATIONS — LVE-793 performance-index slice.**
+**SOURCE COMMIT + CI + PRODUCTION PARITY PASS — LVE-793 performance-index slice.**
 
 المثبت: الإصلاح مطبق في Supabase، الفهارس الـ12 موجودة، اختبار SQL read-only ناجح، 37/37 CountFlow tables لديها RLS وسياسات، وAdvisor لا يرصد FK غير مفهرس داخل CountFlow.
 

@@ -7,11 +7,12 @@
 **ترحيل Supabase:** `countflow_fk_performance_indexes_v1` / `20261128000731` — APPLIED.  
 **اختبارات قاعدة البيانات:** SQL verification PASS؛ 37/37 جدول CountFlow لديه RLS وسياسة؛ 12/12 فهرس مطابق موجود.  
 **Advisor:** صفر unindexed-FK findings ضمن CountFlow؛ 19 finding متبقياً في جداول خارج نطاقه.  
-**CI بعد تغيير المستودع:** Pending until the GitHub Actions run for this commit is inspected.  
+**Main source/CI commit:** `a8bb0650e82a87a961416740b3f50db374d27e88`.  
+**CI main:** [run 46086708899](https://github.com/papamohammed77-glitch/rawaea-app-countflow/actions/runs/46086708899) — SUCCESS على SHA `a8bb0650e82a87a961416740b3f50db374d27e88`: Node 113/113 (0 fail)، Deno PASS، Cloudflare Pages PASS، Playwright 3/3 PASS مع Production/Main SHA parity.  
 **الحدود المفتوحة:** authenticated Admin acceptance، camera flow وPR #6، large export 90K+، team-to-location model، واستكمال migration ledger.  
 **سياسة الفروع:** المالك اعتمد `main` وحده؛ 17 فروع غير رئيسية ما زالت موجودة في آخر قائمة ولا تتيح أدوات GitHub الحالية حذف Git refs.  
 **التقرير:** `Reports/FINAL_EXECUTION_REPORT_LVE-793.md`.  
-**الحالة:** READY WITH LIMITATIONS — LVE-793 slice only; CountFlow project is NOT declared complete.
+**الحالة:** SOURCE COMMIT + CI + PRODUCTION PARITY PASS — LVE-793 slice only; CountFlow project is NOT declared complete.
 
 ### ما تم
 - إضافة 12 فهرس B-tree غير فريد لعلاقات FK الناقصة في `count_assignments`, `count_session_team_members`, `count_session_teams`, `count_sessions`, `count_team_members`, `count_teams`.
