@@ -289,7 +289,7 @@ Open end-to-end gate: authenticated image upload, Admin thumbnail, Counter thumb
 ### ضوابط الاستعادة
 - هذه الملفات توثق ترحيلات مطبقة بالفعل؛ لم تُنفذ خلال LVE-774 ولم يحدث أي DDL/DML أو تعديل صلاحيات.
 - طوابع الخمسة ملفات الخاصة بـControl وRBAC أصبحت مطابقة لقيم `version` في سجل Supabase؛ تم تحديث مسارات الاختبار إلى الأسماء المعتمدة.
-- ملف Camera integrity استُعيد من نص سجل Supabase الفعلي؛ كود واجهة الكاميرا لم يُنقل إلى صفحات main بسبب كون `shelf-images` عاماً، وبسبب بقاء اختبار التصوير المصادق مفتوحاً.
+- ملفا Camera MVP وintegrity موجودان على main ومطبقان في سجل Supabase. نُقلت واجهة التصوير إلى `countflow.html` في LVE-794 مع تحذير خصوصية واضح؛ تبقى تجربة الهاتف المصادق واختبارات الرفض مفتوحة. لا تعِد تطبيق الترحيلين.
 - لا تعِد تشغيل هذه الملفات على `rawaea-staging` أو أي بيئة. تحقق من سجل الإصدار قبل أي إجراء مستقبلي.
 - هذه الاستعادة تغلق فجوة مصادر إصدارات 2026-11-23/24 المذكورة هنا، ولا تدّعي أن كل تاريخ CountFlow الأقدم صار baseline قابلاً لإعادة الإنشاء؛ الأرشيف التاريخي السابق يظل مرجعاً مستقلاً.
 
@@ -391,3 +391,16 @@ Source migration: `20261126215000_countflow_purchase_cost_trigger_acl_v1.sql`.
 - A rollback-only database probe revoked EXECUTE from PUBLIC, anon, authenticated and service_role, then inserted an intentionally mismatched QA cost row as the database owner; trigger logic and the mismatch warning still executed correctly.
 - EXECUTE is therefore revoked persistently from all client/service roles. The function is not a PostgREST RPC and is not intended for direct invocation.
 - The trigger owner remains postgres; the function keeps an empty search_path and uses schema-qualified helper references.
+
+
+### 2026-11-28 — LVE-794: Port shelf-photo capture to main
+
+- The migrations `20261123211241_countflow_shelf_image_camera_mvp_v1` and `20261123211841_countflow_shelf_image_integrity_and_cleanup_v1` were already applied in `rawaea-staging`; this task did not replay or alter them.
+- `countflow.html` now contains a dedicated shelf-photo file-capture panel directly beneath the barcode input. It remains distinct from the live `BarcodeDetector` camera used to scan item codes.
+- The UI validates an active Counter membership, active session, selected location in the member's authorized location list, online status, JPEG/PNG/WebP MIME, and the 10 MiB maximum before upload. The Storage object path is scoped by project/session/member/location.
+- The original browser `File` is uploaded unchanged with `upsert:false`; after upload, a row is registered in `count_shelf_images`. If registration fails, the app attempts to remove the unregistered Storage object.
+- The `shelf-images` bucket is public. The interface warns the counter that anyone holding an object URL can view the image. The client does not print public URLs or object paths to the browser console.
+- Service Worker cache build is `countflow-sw-20261128-1`.
+- Automated source regression coverage is in `tests/unit/countflow-quality.test.mjs`; the barcode-camera isolation test now scopes its assertion to the barcode scanner lifecycle, not the entire page.
+- No SQL, DDL, DML, Storage setting, RLS, grant, Edge Function, Auth user, CountFlow count event, stock, or accounting data was changed.
+- Authenticated phone capture/upload, register creation, negative authorization cases and visual review remain OPEN; no active QA session/location assignment existed during this port.

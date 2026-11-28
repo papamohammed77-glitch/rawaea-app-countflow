@@ -429,7 +429,8 @@ test("Counter barcode camera exposes accessible states, safe permission errors a
   assert.match(counter, /b\.dataset\.tab!=='count'&&\(stream\|\|cameraStarting\)\)cameraStop\(/);
   assert.match(counter, /addEventListener\('pagehide',\(\)=>cameraStop\(/);
   assert.match(counter, /now-lastCameraFrameAt<200|now-lastScanFrameAt<200/);
-  assert.doesNotMatch(counter, /count_shelf_images|captureShelf/i, "Barcode UX must not activate the separate shelf-photo path");
+  const barcodeCamera = counter.slice(counter.indexOf("function setCameraState"), counter.indexOf("function cameraStop"));
+  assert.doesNotMatch(barcodeCamera, /count_shelf_images|uploadShelfImage|shelf-image-input/i, "Barcode camera lifecycle must remain separate from shelf-photo capture");
 
   const start = counter.indexOf("function cameraErrorMessage(error)");
   const end = counter.indexOf("async function cameraStart()", start);
@@ -2004,6 +2005,41 @@ test("Owner Admin reusable teams, operation taxonomy and guarded assignment work
   assert.match(rollback.trim(), /ROLLBACK;$/);
 });
 
+
+
+test("LVE-794 shelf-photo capture is separate from barcode scanning and constrained to active assigned CountFlow context", () => {
+  const counter = read("countflow.html");
+  const uiStart = counter.indexOf('id="shelf-camera-container"');
+  const uiEnd = counter.indexOf('<small class="scan-guidance">', uiStart);
+  assert.ok(uiStart >= 0 && uiEnd > uiStart, "Shelf camera panel must be placed immediately below barcode input");
+  const shelfUi = counter.slice(uiStart, uiEnd);
+  assert.match(shelfUi, /id="shelf-image-input" accept="image\/\*" capture="environment"/);
+  assert.match(shelfUi, /id="shelf-preview-image"/);
+  assert.match(shelfUi, /id="shelf-upload-button"[^>]*disabled/);
+  assert.match(shelfUi, /مخزن صور الرف عام/);
+
+  const start = counter.indexOf("const SHELF_IMAGE_MAX_BYTES");
+  const end = counter.indexOf("function esc(s)", start);
+  assert.ok(start >= 0 && end > start, "Missing shelf camera implementation block");
+  const shelfCode = counter.slice(start, end);
+  assert.match(shelfCode, /SHELF_IMAGE_MAX_BYTES=10\*1024\*1024/);
+  assert.match(shelfCode, /image\/jpeg/);
+  assert.match(shelfCode, /image\/png/);
+  assert.match(shelfCode, /image\/webp/);
+  assert.match(shelfCode, /member\.role!=='counter'/);
+  assert.match(shelfCode, /member\.status!=='active'/);
+  assert.match(shelfCode, /session\.status!=='active'/);
+  assert.match(shelfCode, /!navigator\.onLine/);
+  assert.match(shelfCode, /locations\.some/);
+  assert.match(shelfCode, /URL\.createObjectURL\(file\)/);
+  assert.match(shelfCode, /URL\.revokeObjectURL/);
+  assert.match(shelfCode, /upload\(storagePath,file,\{contentType:file\.type,cacheControl:'3600',upsert:false\}\)/);
+  assert.match(shelfCode, /from\('count_shelf_images'\)\.insert/);
+  assert.match(shelfCode, /from\('shelf-images'\)\.remove\(\[storagePath\]\)/);
+  assert.match(shelfCode, /SHELF_IMAGE_CONTEXT_CHANGED/);
+  assert.doesNotMatch(shelfCode, /getPublicUrl|console\.info\([^\n]*publicUrl/);
+  assert.match(counter, /countflow-sw-20261128-1/);
+});
 
 test("LVE-793: CountFlow FK performance indexes and RLS verification contract are tracked", () => {
   const migration = read("database/migrations/20261128000731_countflow_fk_performance_indexes_v1.sql");
