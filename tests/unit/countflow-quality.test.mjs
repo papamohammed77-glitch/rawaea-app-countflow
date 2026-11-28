@@ -1745,6 +1745,40 @@ test("Global and institution category pickers offer standard choices, custom val
  assert.equal(admin.includes("from('count_product_categories')"),false,"The picker must preserve the existing text-category contract rather than introduce a parallel taxonomy table");
 });
 
+test("LVE-2026-11-28-ITEMS-TAB: generated internal RCN-13 uses prefix 20 and the GS1 Mod-10 check digit", () => {
+ const admin=read("countflow-admin.html");
+ const start=admin.indexOf("function cfGs1CheckDigit(");
+ const end=admin.indexOf("function cfParseUnitRows(",start);
+ assert.ok(start>=0&&end>start,"GS1 check-digit and barcode helpers must remain a contiguous testable unit");
+ const source=admin.slice(start,end);
+ const sandbox={crypto:{getRandomValues(bytes){bytes.fill(7);return bytes;}}};
+ vm.runInNewContext(source+";this.generator=cfGenerateInternalBarcode;this.valid=cfIsValidGtin;this.check=cfGs1CheckDigit;this.restricted=cfIsRestrictedCirculationBarcode;this.resolve=cfResolveBarcodeType;",sandbox);
+ const code=sandbox.generator();
+ assert.match(code,/^20[0-9]{11}$/,"Generated local barcode must use the requested 20 prefix and be 13 digits");
+ assert.equal(code.length,13);
+ assert.equal(sandbox.valid(code),true,"Generated RCN-13 must have a valid GS1 Mod-10 check digit");
+ assert.equal(Number(code.slice(-1)),sandbox.check(code.slice(0,12)),"The final digit must be the GS1 Mod-10 check digit");
+ assert.equal(sandbox.restricted(code),true,"The UI must recognize the generated code as a restricted-circulation number");
+ assert.equal(sandbox.resolve(code,"EAN13"),"EAN13","RCN-13 uses the EAN-13 carrier/type in the existing CountFlow server contract");
+ assert.equal(sandbox.restricted("4006381333931"),false,"An ordinary EAN-13 must not be mislabeled as a local restricted code");
+ assert.equal(sandbox.valid("2001234567894"),false,"Invalid check digits must be rejected");
+});
+test("LVE-2026-11-28-ITEMS-TAB: barcode entry exposes RCN status, uniqueness preflight, and a copy action", () => {
+ const admin=read("countflow-admin.html"),counter=read("countflow.html");
+ assert.ok(admin.includes('id="globalGenerateBarcode"'),"The local-code generator must be visible in the item editor");
+ assert.ok(admin.includes('id="globalBarcodeCopy"'),"The item editor must provide a copy action");
+ assert.ok(admin.includes('id="globalBarcodeStatus"'),"The barcode validation result must be visible and announced");
+ assert.ok(admin.includes("function renderGlobalBarcodeStatus()"));
+ assert.ok(admin.includes("async function generateUniqueGlobalRestrictedBarcode()"));
+ assert.ok(admin.includes("count_catalog_product_identifiers"),"The generator must avoid previously registered catalogue identifiers");
+ assert.ok(admin.includes("function cfIsRestrictedCirculationBarcode(code)"));
+ assert.ok(admin.includes("globalItemKind').value=$('globalUnitClass').value==='mass'?'WEIGHED':'BARCODED'"));
+ assert.ok(admin.includes("globalBarcodeType').value='EAN13'"));
+ assert.match(counter,/eq\('barcode',code\)/,"Counter lookup must pass the numeric RCN through the existing exact primary-barcode lookup");
+ assert.match(counter,/contains\('units',\[\{barcode:code\}\]\)/,"Counter lookup must continue to resolve numeric RCN unit barcodes through the UoM resolver");
+ assert.match(counter,/scan_code:scannedProductCode\|\|product\.barcode\|\|product\.sku/,"Counter must preserve the exact identifier that was scanned");
+});
+
 test("Global item editor retains CountFlow's actual barcode, image and multi-UOM contracts", () => {
  const admin=read("countflow-admin.html");
  assert.match(admin,/function cfGenerateInternalBarcode\(\)/);

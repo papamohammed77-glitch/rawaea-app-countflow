@@ -259,7 +259,18 @@
 .cf-catalog-tab[aria-selected="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
 .cf-catalog-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
 .cf-catalog-image-panel{margin-top:12px}
-@media(max-width:600px){.cf-catalog-tabs{display:grid;grid-template-columns:1fr}.cf-catalog-tab{width:100%;text-align:center}}
+.cf-catalog-barcode-field{padding:14px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fff,#f8fafc)}
+.cf-catalog-barcode-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.cf-catalog-barcode-entry input{min-width:0;width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.cf-catalog-barcode-actions{display:flex;gap:7px;flex-wrap:wrap}
+.cf-catalog-barcode-actions button{min-height:42px;white-space:nowrap}
+.cf-catalog-barcode-actions button:disabled{opacity:.5;cursor:not-allowed}
+.cf-catalog-barcode-status{display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;color:var(--muted);font-size:12px;line-height:1.7}
+.cf-catalog-barcode-status[data-state="restricted"]{border-color:#fed7aa;background:#fff7ed;color:#9a3412}
+.cf-catalog-barcode-status[data-state="valid"]{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.cf-catalog-barcode-status[data-state="internal"]{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+.cf-catalog-barcode-status[data-state="invalid"]{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+@media(max-width:600px){.cf-catalog-tabs{display:grid;grid-template-columns:1fr}.cf-catalog-tab{width:100%;text-align:center}.cf-catalog-barcode-entry{grid-template-columns:1fr}.cf-catalog-barcode-actions{display:grid;grid-template-columns:1fr 1fr}.cf-catalog-barcode-actions button{width:100%}}
 
 /* Enterprise team management — responsive and keyboard-accessible */
 .cf-team-kpis,.cf-team-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}
@@ -531,7 +542,18 @@
         <div id="globalCatalogLookupPanel" class="cf-catalog-lookup"><div><b>ابحث في الدليل العالمي أولاً</b><small>اكتب باركوداً أو SKU أو جزءاً من اسم الصنف؛ عند اختيار نتيجة سنفتح سجلها الحالي بدلاً من إنشاء نسخة مكررة.</small></div><div class="cf-catalog-lookup-controls"><input id="globalCatalogLookupInput" type="search" maxlength="120" autocomplete="off" placeholder="باركود أو SKU أو اسم الصنف"><button id="globalCatalogLookupButton" type="button" class="soft">بحث في الدليل</button></div><div id="globalCatalogLookupResults" class="hint" role="status" aria-live="polite"></div></div>
         <div class="fields">
          <div class="field"><label for="globalSku">SKU العالمي</label><input id="globalSku" maxlength="100"></div>
-         <div class="field"><label for="globalBarcode">الباركود / PLU</label><input id="globalBarcode" inputmode="text" maxlength="120" placeholder="EAN / UPC / PLU؛ يحفظ الأصفار الأولى"></div>
+         <div class="field full cf-catalog-barcode-field">
+          <label for="globalBarcode">الباركود الأساسي أو الرمز المحلي</label>
+          <div class="cf-catalog-barcode-entry">
+           <input id="globalBarcode" inputmode="text" maxlength="120" autocomplete="off" placeholder="امسح الرمز أو أدخل EAN / UPC / PLU">
+           <div class="cf-catalog-barcode-actions">
+            <button type="button" id="globalGenerateBarcode" class="soft">توليد رمز محلي 20</button>
+            <button type="button" id="globalBarcodeCopy" class="soft" disabled>نسخ الرمز</button>
+           </div>
+          </div>
+          <small id="globalBarcodeHint" class="hint">يمكنك إدخال باركود المورد أو توليد رمز محلي مقيّد يبدأ بـ 20، مع رقم تحقق.</small>
+          <div id="globalBarcodeStatus" class="cf-catalog-barcode-status" data-state="empty" role="status" aria-live="polite">لم يُدخل باركود بعد.</div>
+         </div>
          <div class="field"><label for="globalItemKind">نوع تعريف الصنف</label><select id="globalItemKind"><option value="BARCODED">صنف بباركود</option><option value="WEIGHED">صنف وزني (كجم / جرام)</option><option value="NO_BARCODE">بدون باركود (معرف داخلي)</option></select><small class="hint">هذا الاختيار يحدد هوية الباركود، وليس فئة وحدة القياس.</small></div>
          <div class="field"><label>معرف الصنف الداخلي</label><button type="button" id="globalGenerateBarcode" class="soft">توليد كود داخلي آمن</button><small class="hint">المعرف الداخلي يبدأ بـ CFI-، وليس EAN/UPC ولا يحل محل باركود GS1.</small></div>
          <div class="field full"><label for="globalName">اسم الصنف</label><input id="globalName" required maxlength="240"></div>
@@ -2917,7 +2939,8 @@ function productUnitRows(units){
 function cfGs1CheckDigit(payload){const code=String(payload||'');if(!/^[0-9]+$/.test(code))return null;let sum=0,weight=3;for(let i=code.length-1;i>=0;i--){sum+=Number(code[i])*weight;weight=weight===3?1:3;}return (10-(sum%10))%10;}
 function cfIsValidGtin(code){const value=String(code||'');if(!/^[0-9]+$/.test(value)||![8,12,13,14].includes(value.length))return false;return Number(value.slice(-1))===cfGs1CheckDigit(value.slice(0,-1));}
 function cfResolveBarcodeType(code,requested='AUTO'){const value=String(code??'').trim(),kind=String(requested||'AUTO').toUpperCase();if(!value)return null;if(value!==String(code)||/[\u0000-\u001f\u007f]/.test(value))throw new Error('الباركود يحتوي مسافات طرفية أو رموز تحكم غير مسموحة.');if(kind==='AUTO'||kind==='UNKNOWN'){if(/^[0-9]+$/.test(value)&&[8,12,13,14].includes(value.length)){if(!cfIsValidGtin(value))throw new Error('رقم GTIN غير صحيح: راجع الطول ورقم التحقق GS1.');return ({8:'EAN8',12:'UPC_A',13:'EAN13',14:'GTIN14'})[value.length];}if(/^CFI-[A-F0-9-]{8,48}$/.test(value))return 'INTERNAL';if(!/^[ -~]{1,48}$/.test(value))throw new Error('Code 128 يقبل 1 إلى 48 حرفاً قابلاً للطباعة.');return 'CODE128';}if(['EAN8','UPC_A','EAN13','GTIN14'].includes(kind)){const lengths={EAN8:8,UPC_A:12,EAN13:13,GTIN14:14};if(value.length!==lengths[kind]||!cfIsValidGtin(value))throw new Error('الباركود '+kind+' غير صحيح أو رقم التحقق GS1 غير مطابق.');return kind;}if(kind==='INTERNAL'){if(!/^CFI-[A-F0-9-]{8,48}$/.test(value))throw new Error('المعرف الداخلي يجب أن يبدأ بـ CFI-.');return 'INTERNAL';}if(kind==='CODE128'){if(!/^[ -~]{1,48}$/.test(value))throw new Error('قيمة Code 128 يجب أن تكون 1 إلى 48 حرفاً قابلاً للطباعة.');return 'CODE128';}throw new Error('نوع الباركود المحدد غير مدعوم.');}
-function cfGenerateInternalBarcode(){const bytes=new Uint8Array(12);crypto.getRandomValues(bytes);return 'CFI-'+Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();}
+function cfIsRestrictedCirculationBarcode(code){const value=String(code||'');return /^2[0-9]\d{11}$/.test(value)&&cfIsValidGtin(value);}
+function cfGenerateInternalBarcode(){const digits=[];while(digits.length<10){const bytes=new Uint8Array(20);crypto.getRandomValues(bytes);for(const byte of bytes){if(byte<250&&digits.length<10)digits.push(String(byte%10));}}const payload='20'+digits.join('');return payload+String(cfGs1CheckDigit(payload));}
 function cfParseUnitRows(value){if(Array.isArray(value))return value;const raw=String(value??'').trim();if(!raw)return [];try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed;}catch(_){}return raw.split('|').map(part=>{const bits=part.trim().split(/[:=]/);if(bits.length<2)return null;const factor=Number(bits[1]);return bits[0].trim()&&Number.isFinite(factor)?{name:bits[0].trim(),factor_to_base:factor}:null;}).filter(Boolean);}
 function readProductUnitMeta(units,baseUnit){const meta=Array.isArray(units)?units.find(row=>row&&typeof row==='object'&&row[CF_UNIT_META_FLAG]===true):null,allowed=CF_UNIT_CLASSES.map(x=>x.value),validClass=meta&&allowed.includes(meta.unit_class),unitClass=validClass?meta.unit_class:inferProductUnitClass(baseUnit),precision=Number(meta?.decimal_precision);return {unit_class:unitClass,decimal_precision:Number.isInteger(precision)&&precision>=0&&precision<=6?precision:defaultProductUnitPrecision(unitClass),item_kind:['BARCODED','WEIGHED','NO_BARCODE'].includes(meta?.item_kind)?meta.item_kind:(unitClass==='mass'?'WEIGHED':'BARCODED'),barcode_type:['EAN8','UPC_A','EAN13','GTIN14','CODE128','INTERNAL'].includes(meta?.barcode_type)?meta.barcode_type:'AUTO',inferred:!validClass};}
 function withProductUnitMeta(units,unitClass,decimalPrecision,extra={}){const selected=CF_UNIT_CLASSES.some(x=>x.value===unitClass)?unitClass:'other',precision=Number(decimalPrecision);if(!Number.isInteger(precision)||precision<0||precision>6)throw new Error('دقة الكسور يجب أن تكون من صفر إلى 6 منازل عشرية.');const itemKind=['BARCODED','WEIGHED','NO_BARCODE'].includes(extra.item_kind)?extra.item_kind:null,barcodeType=['EAN8','UPC_A','EAN13','GTIN14','CODE128','INTERNAL'].includes(extra.barcode_type)?extra.barcode_type:null;return [...productUnitRows(units),{[CF_UNIT_META_FLAG]:true,unit_class:selected,decimal_precision:precision,...(itemKind?{item_kind:itemKind}:{}),...(barcodeType?{barcode_type:barcodeType}:{})}];}
@@ -2988,6 +3011,71 @@ function bindCatalogCategoryPickers(){
   custom.addEventListener('input',()=>{backing.value=custom.value.trim();});
   custom.addEventListener('blur',()=>{custom.value=custom.value.trim();backing.value=custom.value;});
  });
+}
+function renderGlobalBarcodeStatus(){
+ const input=$('globalBarcode'),status=$('globalBarcodeStatus'),hint=$('globalBarcodeHint'),copy=$('globalBarcodeCopy');
+ if(!input||!status)return;
+ const code=String(input.value||'').trim();
+ if(copy)copy.disabled=!code;
+ if(!code){status.dataset.state='empty';status.textContent='لم يُدخل باركود بعد.';if(hint)hint.textContent='يمكنك إدخال باركود المورد أو توليد رمز محلي مقيّد يبدأ بـ 20، مع رقم تحقق.';return;}
+ try{
+  const type=cfResolveBarcodeType(code,$('globalBarcodeType')?.value||'AUTO');
+  if(cfIsRestrictedCirculationBarcode(code)){
+   status.dataset.state='restricted';
+   status.textContent='رمز تداول مقيّد RCN-13 · بادئة 20–29 · رقم تحقق GS1 صحيح · ليس GTIN عالمياً.';
+   if(hint)hint.textContent='يُستخدم داخل النطاق الجغرافي/التشغيلي المخصص فقط. لا تستخدمه في تداول عالمي مفتوح أو كبديل لرقم GTIN المرخص.';
+  }else if(type==='INTERNAL'){
+   status.dataset.state='internal';status.textContent='معرف CountFlow داخلي CFI؛ ليس باركود EAN/UPC.';
+   if(hint)hint.textContent='يظل معرف CFI متاحاً للسجلات القديمة وللأصناف التي لا تحمل باركوداً خارجياً.';
+  }else{
+   status.dataset.state='valid';status.textContent='باركود '+type+' · الطول ورقم التحقق صحيحان.';
+   if(hint)hint.textContent='تم التحقق من صيغة الرمز ورقم التحقق قبل الحفظ؛ سيعيد الخادم التحقق عند الكتابة.';
+  }
+ }catch(error){
+  status.dataset.state='invalid';status.textContent='الرمز غير صالح: '+String(error?.message||error);
+  if(hint)hint.textContent='راجع عدد الأرقام ونوع الرمز ورقم التحقق، ثم أعد المحاولة.';
+ }
+}
+async function generateUniqueGlobalRestrictedBarcode(){
+ for(let attempt=0;attempt<8;attempt++){
+  const candidate=cfGenerateInternalBarcode();
+  const [primary,alternate,aliases]=await Promise.all([
+   db.from('count_catalog_products').select('id').ilike('barcode',candidate).limit(1),
+   db.from('count_catalog_products').select('id').contains('units',[{barcode:candidate}]).limit(1),
+   db.from('count_catalog_product_identifiers').select('id').or('normalized_value.eq.'+candidate+',identifier_value.eq.'+candidate).limit(1)
+  ]);
+  if(primary.error)throw primary.error;
+  if(alternate.error)throw alternate.error;
+  if(aliases.error)throw aliases.error;
+  if(!(primary.data||[]).length&&!(alternate.data||[]).length&&!(aliases.data||[]).length)return candidate;
+ }
+ throw new Error('تعذر توليد رمز غير مستخدم بعد عدة محاولات؛ أعد المحاولة.');
+}
+async function handleGenerateGlobalBarcode(){
+ const button=$('globalGenerateBarcode');if(button.disabled)return;
+ button.disabled=true;
+ try{
+  const code=await generateUniqueGlobalRestrictedBarcode();
+  $('globalBarcode').value=code;
+  $('globalBarcodeType').value='EAN13';
+  $('globalItemKind').value=$('globalUnitClass').value==='mass'?'WEIGHED':'BARCODED';
+  renderGlobalBarcodeStatus();
+  $('globalBarcode').focus();$('globalBarcode').select();
+  notify('تم توليد رمز محلي RCN-13 بالبادئة 20 ورقم تحقق صحيح.');
+ }catch(error){fail('تعذر توليد الرمز المحلي',error);}
+ finally{button.disabled=false;}
+}
+async function copyGlobalBarcode(){
+ const code=String($('globalBarcode')?.value||'').trim();
+ if(!code)return notify('لا يوجد رمز لنسخه.',true);
+ try{
+  if(!navigator.clipboard?.writeText)throw new Error('CLIPBOARD_UNAVAILABLE');
+  await navigator.clipboard.writeText(code);
+  notify('تم نسخ الباركود.');
+ }catch(_){
+  $('globalBarcode').focus();$('globalBarcode').select();
+  notify('تم تحديد الرمز؛ انسخه باستخدام Ctrl+C أو أمر النسخ في جهازك.',true);
+ }
 }
 function getGlobalBaseUnitValue(){
  const select=$('globalBaseUnitChoice'),backing=$('globalBaseUnit');
@@ -3159,7 +3247,7 @@ function openGlobalProductEditor(product=null){
  $('globalCatalogLookupPanel')?.classList.toggle('hidden',!!p);
  if($('globalCatalogLookupResults'))$('globalCatalogLookupResults').textContent='';
  if($('globalCatalogLookupInput')&&!p)$('globalCatalogLookupInput').value='';
- setGlobalBaseUnit(p?.base_unit||'',true);
+ setGlobalBaseUnit(p?.base_unit||'',true);renderGlobalBarcodeStatus();
  $('globalProductFormTitle').textContent=p?'تفاصيل الصنف وتعديل بياناته':'إضافة صنف جديد';$('globalProductSave').textContent=p?'حفظ بيانات الصنف':'إضافة الصنف';
  $('catalogGlobalView').classList.add('hidden');$('projectProductsView').classList.add('hidden');$('catalogWorkspaceSelector').classList.add('hidden');$('catalogProductEditor').classList.remove('hidden');
  $('clientCatalogEditorShell')?.classList.add('hidden');resetClientProductForm();
@@ -3169,7 +3257,7 @@ function openGlobalProductEditor(product=null){
 function closeGlobalProductEditor(){
  $('catalogProductEditor').classList.add('hidden');$('catalogGlobalView').classList.remove('hidden');$('projectProductsView').classList.add('hidden');$('catalogWorkspaceSelector').classList.remove('hidden');
  state.catalogView='global';if($('catalogMode'))$('catalogMode').value='global';
- $('globalProductForm').classList.remove('hidden');$('globalProductForm').reset();setCatalogCategoryPicker('global','');$('globalProductId').value='';$('globalProductSave').textContent='إضافة الصنف';$('globalImageCurrent').textContent='';state.globalImageCleared=false;resetGlobalImagePreview();renderCatalogUnitEditor('globalProductUnitsEditor',[]);resetClientProductForm();
+ $('globalProductForm').classList.remove('hidden');$('globalProductForm').reset();setCatalogCategoryPicker('global','');$('globalProductId').value='';$('globalProductSave').textContent='إضافة الصنف';$('globalImageCurrent').textContent='';state.globalImageCleared=false;resetGlobalImagePreview();renderCatalogUnitEditor('globalProductUnitsEditor',[]);renderGlobalBarcodeStatus();resetClientProductForm();
 }
 async function openUnifiedCatalogItem(product){
  if(!product)return;
@@ -3829,7 +3917,7 @@ async function toggleCatalogProduct(id){
   }catch(err){fail('تعذر حفظ الصنف العالمي',err);}finally{setBusy(f,false);}
  });
  $('catalogAddProduct').onclick=()=>openGlobalProductEditor(null);bindCatalogImportActions();$('globalProductCancel').onclick=closeGlobalProductEditor;$('globalProductCancelBottom').onclick=closeGlobalProductEditor;$('catalogExport').onclick=exportGlobalCatalogCsv;
- $('globalGenerateBarcode').onclick=()=>{const code=cfGenerateInternalBarcode();$('globalBarcode').value=code;$('globalItemKind').value='NO_BARCODE';$('globalBarcodeType').value='INTERNAL';};$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!getGlobalBaseUnitValue())setGlobalBaseUnit('كجم');else setGlobalBaseUnit(getGlobalBaseUnitValue());}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
+ $('globalGenerateBarcode').onclick=()=>handleGenerateGlobalBarcode();$('globalBarcodeCopy').onclick=copyGlobalBarcode;$('globalBarcode').addEventListener('input',renderGlobalBarcodeStatus);$('globalBarcodeType').addEventListener('change',renderGlobalBarcodeStatus);$('globalItemKind').onchange=()=>{if($('globalItemKind').value==='WEIGHED'){$('globalUnitClass').value='mass';$('globalUnitPrecision').value='3';if(!getGlobalBaseUnitValue())setGlobalBaseUnit('كجم');else setGlobalBaseUnit(getGlobalBaseUnitValue());}else if($('globalItemKind').value==='NO_BARCODE'&&!$('globalBarcode').value.trim())$('globalBarcodeType').value='INTERNAL';renderGlobalBarcodeStatus();};$('globalCatalogImportPreview').onclick=previewGlobalCatalogImport;$('globalCatalogImportCommit').onclick=commitGlobalCatalogImport;$('globalCatalogImportReset').onclick=resetGlobalCatalogImport;$('addGlobalProductUnit').onclick=()=>appendCatalogUnitRow('globalProductUnitsEditor');$('addClientProductUnit').onclick=()=>appendCatalogUnitRow('clientProductUnitsEditor');$('clientUnitsOverrideToggle').onchange=()=>$('clientUnitsOverrideFields').classList.toggle('hidden',!$('clientUnitsOverrideToggle').checked);$('clientProductReset').onclick=resetClientProductForm;$('clientCatalogEditorClose').onclick=resetClientProductForm;
  bindUnitPrecisionDefaults();bindGlobalBaseUnitSelector();bindGlobalProductTabs();bindCatalogCategoryPickers();
  $('catalogMode').addEventListener('change',()=>switchCatalogView($('catalogMode').value));
  $('catalogClientScope').addEventListener('change',async()=>{if(state.clientCatalogImport?.busy){$('catalogClientScope').value=state.catalogClientId||'';return notify('لا يمكن تغيير المؤسسة أثناء تنفيذ دفعة الاستيراد الحالية.',true);}if(state.clientCatalogImport?.file)resetClientCatalogImport();state.catalogClientId=$('catalogClientScope').value||null;updateCatalogImportActions();try{await refreshClientCatalogPermission();$('catalogClientScopeLabel').textContent=state.catalogClientId?'يتم عرض الحقول المحلية للمؤسسة المختارة بجوار بيانات الصنف الأساسي.':'اختر مؤسسة لعرض حقولها المحلية في الجدول وصفحة الصنف.';state.catalogPage=1;await loadCatalog();}catch(e){fail('تعذر تغيير المؤسسة المحددة',e);}});$('catalogResetFilters').onclick=()=>{$('catalogSearch').value='';$('catalogCategoryFilter').value='';$('catalogStatusFilter').value='active';state.catalogPage=1;loadCatalog().catch(e=>fail('تعذر إعادة ضبط المرشحات',e));};
