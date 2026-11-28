@@ -2389,6 +2389,16 @@ L3757 |  }catch(error){if(token===state.catalogEditorImageToken)$('globalImageCu
 L3758 | }
 ```
 
+### csvCell() — source lines 3759-3763
+
+```javascript
+L3759 | function csvCell(value){
+L3760 |  let text=value===null||value===undefined?'':(typeof value==='object'?JSON.stringify(value):String(value));
+L3761 |  if(typeof value==='string'&&/^[=+@-]/.test(text.trimStart()))text="'"+text;
+L3762 |  return '"'+text.replace(/"/g,'""')+'"';
+L3763 | }
+```
+
 ### downloadCatalogCsv() — lines 3764-3770
 
 ```javascript
@@ -5261,6 +5271,7 @@ L1987 |    const {error:mappingError}=await db.from('count_import_batches').upda
 L2043 |   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,error_report,created_at,session_id,metadata').eq('project_id',state.project.id).order('created_at',{ascending:false}).limit(20);
 ```
 
+L2696 |   const {data,error}=await db.from('count_import_batches').select('id,source_name,source_format,row_count,accepted_count,rejected_count,status,created_at,metadata').eq('session_id',s.id).order('created_at',{ascending:false}).limit(30);
 ### RPC count_stage_import_rows
 
 ```javascript
@@ -5500,8 +5511,7 @@ The full handlers above are repeated here only where they define the item payloa
 
 ## 10. Observations
 
-- The source uses the Supabase client alias `db`; no `supabase.from(...)` or `supabase.rpc(...)` identifier calls appear in this file. The item tables and RPCs are therefore listed from `db.from(...)` / `db.rpc(...)` call sites.
-- The unified item master uses `count_catalog_products`, client overrides use `count_client_products`, and project-scoped countable items remain in `count_products`; these are distinct data surfaces rather than one shared table.
-- There is no `openItemPage`, `saveItem`, `_handleSaveFromPage`, `_switchItemTab`, or category-modal CRUD function. The editor opens through `openGlobalProductEditor` / `openUnifiedCatalogItem`; saves occur in inline form submit listeners; category entry uses choice/custom fields.
-- The catalog UI deactivates/reactivates catalog items instead of hard-deleting them. The HTML does not expose a hard-delete Items action.
-- The global item save object contains name, brand, category, SKU/barcode, base unit, unit metadata and image path, but no item-master purchase/sales price or supplier fields; project import has separate optional purchase-cost metadata.
+- **Different persistence model than the requested names imply:** the source contains no `count_products_master` or `count_product_units` references. Project items use `count_products`; the unified catalog uses `count_catalog_products`, with alternate units stored in its `units` field rather than a separately referenced `count_product_units` table.
+- **The requested standalone CRUD/category functions are absent:** there is no `saveItem()`, `_handleSaveFromPage()`, `_handleDeleteFromPage()`, `_switchItemTab()`, `_loadCategoriesIntoSelect()`, or category-modal CRUD implementation. The actual save paths are three inline form-submit listeners; category selection is implemented through catalog picker/custom-value functions.
+- **Barcode function naming differs:** `generateInternalBarcode()` is absent; the actual helper is `cfGenerateInternalBarcode()`. Global catalog barcode generation additionally uses `generateUniqueGlobalRestrictedBarcode()` and checks catalog identifiers before returning a value.
+- **The database client is aliased:** item-related database calls use `db.from()`, `db.rpc()`, and `db.storage.from()`; there are no literal `supabase.from()` / `supabase.rpc()` call expressions in the extracted item paths. Import history also reads `count_import_batches` by session at source line 2696, in addition to the project-level history query.
